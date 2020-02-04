@@ -11,4 +11,4 @@ edition = "2018"
 [dependencies.sdl2]
 version = "0.33.0"
 default-features = false
-features = ["image"]
+features = ["image", "unsafe_textures"]
