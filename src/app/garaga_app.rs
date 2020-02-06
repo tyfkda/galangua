@@ -4,6 +4,8 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::render::{Texture, WindowCanvas};
 
+use super::game_event_queue::{GameEventQueue, GameEvent};
+use super::myshot::{MyShot};
 use super::player::{Player};
 use super::super::framework::{App};
 use super::super::util::fps_calc::{FpsCalc};
@@ -15,6 +17,8 @@ pub struct GaragaApp {
     texture: Option<Texture>,
 
     player: Player,
+    myshot: Option<MyShot>,
+    event_queue: GameEventQueue,
 }
 
 impl GaragaApp {
@@ -25,7 +29,25 @@ impl GaragaApp {
             texture: None,
 
             player: Player::new(),
+            myshot: None,
+            event_queue: GameEventQueue::new(),
         }
+    }
+
+    fn handle_event_queue(&mut self) {
+        let mut i = 0;
+        while i < self.event_queue.queue.len() {
+            let event = &self.event_queue.queue[i];
+            match event {
+                GameEvent::MyShot(x, y) => {
+                    if self.myshot.is_none() {
+                        self.myshot = Some(MyShot::new(*x, *y));
+                    }
+                },
+            }
+            i += 1;
+        }
+        self.event_queue.queue.clear();
     }
 }
 
@@ -59,7 +81,13 @@ impl App for GaragaApp {
     }
 
     fn update(&mut self) {
-        self.player.update(&self.pad);
+        self.player.update(&self.pad, &mut self.event_queue);
+        if let Some(myshot) = &mut self.myshot {
+            if !myshot.update() {
+                self.myshot = None;
+            }
+        }
+        self.handle_event_queue();
     }
 
     fn draw(&mut self, canvas: &mut WindowCanvas) -> Result<(), String> {
@@ -67,6 +95,9 @@ impl App for GaragaApp {
             canvas.clear();
 
             self.player.draw(canvas, texture)?;
+            if let Some(myshot) = &mut self.myshot {
+                myshot.draw(canvas, texture)?;
+            }
 
             canvas.present();
 
