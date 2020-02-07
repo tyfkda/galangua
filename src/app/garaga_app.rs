@@ -8,6 +8,7 @@ use sdl2::render::{Texture, WindowCanvas};
 use super::game_event_queue::{GameEventQueue, GameEvent};
 use super::myshot::{MyShot};
 use super::player::{Player};
+use super::star_manager::{StarManager};
 use super::super::framework::{App};
 use super::super::util::fps_calc::{FpsCalc};
 use super::super::util::pad::{Pad};
@@ -18,6 +19,7 @@ pub struct GaragaApp {
     texture: Option<Texture>,
     font_texture: Option<Texture>,
 
+    star_manager: StarManager,
     player: Player,
     myshot: Option<MyShot>,
     event_queue: GameEventQueue,
@@ -33,6 +35,7 @@ impl GaragaApp {
             texture: None,
             font_texture: None,
 
+            star_manager: StarManager::new(),
             player: Player::new(),
             myshot: None,
             event_queue: GameEventQueue::new(),
@@ -85,6 +88,7 @@ impl App for GaragaApp {
     }
 
     fn update(&mut self) {
+        self.star_manager.update();
         self.player.update(&self.pad, &mut self.event_queue);
         if let Some(myshot) = &mut self.myshot {
             if !myshot.update() {
@@ -98,7 +102,8 @@ impl App for GaragaApp {
     fn draw(&mut self, canvas: &mut WindowCanvas) -> Result<(), String> {
         canvas.clear();
 
-        if let Some(texture) = &self.texture {
+        if let Some(texture) = &mut self.texture {
+            self.star_manager.draw(canvas, texture)?;
             self.player.draw(canvas, texture)?;
             if let Some(myshot) = &mut self.myshot {
                 myshot.draw(canvas, texture)?;
