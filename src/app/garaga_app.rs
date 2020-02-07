@@ -1,7 +1,8 @@
 extern crate sdl2;
 
+use sdl2::image::{LoadTexture};
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::PixelFormatEnum;
+use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
 use super::game_event_queue::{GameEventQueue, GameEvent};
@@ -15,10 +16,13 @@ pub struct GaragaApp {
     pad: Pad,
     fps_calc: FpsCalc,
     texture: Option<Texture>,
+    font_texture: Option<Texture>,
 
     player: Player,
     myshot: Option<MyShot>,
     event_queue: GameEventQueue,
+    score: i32,
+    high_score: i32,
 }
 
 impl GaragaApp {
@@ -27,10 +31,14 @@ impl GaragaApp {
             pad: Pad::new(),
             fps_calc: FpsCalc::new(),
             texture: None,
+            font_texture: None,
 
             player: Player::new(),
             myshot: None,
             event_queue: GameEventQueue::new(),
+
+            score: 0,
+            high_score: 20_000,
         }
     }
 
@@ -61,21 +69,17 @@ impl App for GaragaApp {
     }
 
     fn init(&mut self, canvas: &mut WindowCanvas) -> Result<(), String> {
-        let texture_creator = canvas.texture_creator();
-        let mut texture = texture_creator.create_texture_streaming(PixelFormatEnum::RGB24, 16 * 2, 16 * 2)
-            .map_err(|e| e.to_string())?;
-        texture.with_lock(None, |buffer: &mut [u8], pitch: usize| {
-            for y in 0..16*2 {
-                for x in 0..16*2 {
-                    let offset = y*pitch + x*3;
-                    buffer[offset] = 255;
-                    buffer[offset + 1] = 255;
-                    buffer[offset + 2] = 255;
-                }
-            }
-        })?;
+        {
+            let texture_creator = canvas.texture_creator();
+            let texture = texture_creator.load_texture("assets/chr.png")?;
+            self.texture = Some(texture);
+        }
 
-        self.texture = Some(texture);
+        {
+            let texture_creator = canvas.texture_creator();
+            let texture = texture_creator.load_texture("assets/font.png")?;
+            self.font_texture = Some(texture);
+        }
 
         Ok(())
     }
@@ -85,29 +89,56 @@ impl App for GaragaApp {
         if let Some(myshot) = &mut self.myshot {
             if !myshot.update() {
                 self.myshot = None;
+                self.score += 100;
             }
         }
         self.handle_event_queue();
     }
 
     fn draw(&mut self, canvas: &mut WindowCanvas) -> Result<(), String> {
-        if let Some(texture) = &self.texture {
-            canvas.clear();
+        canvas.clear();
 
+        if let Some(texture) = &self.texture {
             self.player.draw(canvas, texture)?;
             if let Some(myshot) = &mut self.myshot {
                 myshot.draw(canvas, texture)?;
             }
-
-            canvas.present();
-
-            if self.fps_calc.update() {
-                canvas.window_mut().set_title(&format!("FPS {}", self.fps_calc.fps())).expect("");
-            }
-
-            Ok(())
-        } else {
-            Err("no texture".to_string())
         }
+
+        if let Some(font_texture) = &mut self.font_texture {
+            font_texture.set_color_mod(255, 0, 0);
+            draw_str(canvas, &font_texture, 16 * 2, 16 * 0, "1UP")?;
+            draw_str(canvas, &font_texture, 16 * 9, 16 * 0, "HIGH SCORE")?;
+            font_texture.set_color_mod(255, 255, 255);
+            draw_str(canvas, &font_texture, 16 * 1, 16 * 1, &format!("{:6}", self.score))?;
+            draw_str(canvas, &font_texture, 16 * 11, 16 * 1, &format!("{:6}", self.high_score))?;
+
+            font_texture.set_color_mod(128, 128, 128);
+            draw_str(canvas, &font_texture, 16 * 23, 0, &format!("FPS{:2}", self.fps_calc.fps()))?;
+            font_texture.set_color_mod(255, 255, 255);
+        }
+
+        canvas.present();
+
+        self.fps_calc.update();
+
+        Ok(())
     }
+}
+
+fn draw_str(canvas: &mut WindowCanvas, texture: &Texture, x: i32, y: i32, text: &str) -> Result<(), String> {
+    let w = 16;
+    let h = 16;
+    let mut x = x;
+
+    for c in text.chars() {
+        let u: i32 = ((c as i32) - (' ' as i32)) % 16 * 8;
+        let v: i32 = ((c as i32) - (' ' as i32)) / 16 * 8;
+        canvas.copy(&texture,
+                    Some(Rect::new(u, v, 8, 8)),
+                    Some(Rect::new(x, y, w, h)))?;
+        x += w as i32;
+    }
+
+    Ok(())
 }

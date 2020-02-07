@@ -9,6 +9,6 @@ use self::framework::{SdlAppFramework};
 
 pub fn main() -> Result<(), String> {
     let app = GaragaApp::new();
-    let mut framework = SdlAppFramework::new("Garaga", 240 * 2, 320 * 2, Box::new(app))?;
+    let mut framework = SdlAppFramework::new("Garaga", 224 * 2, 288 * 2, Box::new(app))?;
     framework.run()
 }

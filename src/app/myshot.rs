@@ -23,7 +23,9 @@ impl MyShot {
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
-        canvas.copy(&texture, None, Some(Rect::new((self.x - 1) * 2, (self.y - 3) * 2, 2 * 2, 6 * 2)))?;
+        canvas.copy(&texture,
+                    Some(Rect::new(16, 0, 8, 8)),
+                    Some(Rect::new((self.x - 4) * 2, (self.y - 8) * 2, 8 * 2, 8 * 2)))?;
 
         Ok(())
     }

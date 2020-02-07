@@ -1,4 +1,4 @@
-use std::time::{SystemTime};
+use std::time::{SystemTime, Duration};
 
 pub struct FpsCalc {
     fps: i32,
@@ -24,7 +24,7 @@ impl FpsCalc {
 
         self.fps = self.ndraw;
         self.ndraw = 0;
-        self.last_fps_time = now;
+        self.last_fps_time = self.last_fps_time + Duration::from_secs(1);
         true
     }
 

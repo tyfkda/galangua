@@ -14,8 +14,8 @@ pub struct Player {
 impl Player {
     pub fn new() -> Player {
         Player {
-            x: 240 / 2,
-            y: 280,
+            x: 224 / 2,
+            y: 288 - 16 - 8,
         }
     }
 
@@ -28,8 +28,8 @@ impl Player {
         }
         if pad.is_pressed(PAD_R) {
             self.x += 2;
-            if self.x > 240 - 8 {
-                self.x = 240 - 8;
+            if self.x > 224 - 8 {
+                self.x = 224 - 8;
             }
         }
         if pad.is_pressed(PAD_A) {
@@ -38,7 +38,9 @@ impl Player {
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
-        canvas.copy(&texture, None, Some(Rect::new((self.x - 8) * 2, (self.y - 8) * 2, 16 * 2, 16 * 2)))?;
+        canvas.copy(&texture,
+                    Some(Rect::new(0, 0, 16, 16)),
+                    Some(Rect::new((self.x - 8) * 2, (self.y - 8) * 2, 16 * 2, 16 * 2)))?;
 
         Ok(())
     }

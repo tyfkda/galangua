@@ -2,6 +2,7 @@ extern crate sdl2;
 
 use sdl2::Sdl;
 use sdl2::event::Event;
+use sdl2::image::{InitFlag};
 use sdl2::keyboard::Keycode;
 use sdl2::render::{WindowCanvas};
 use std::thread;
@@ -21,6 +22,7 @@ impl SdlAppFramework {
     pub fn new(title: &str, width: u32, height: u32, app: Box<dyn App>) -> Result<SdlAppFramework, String> {
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
+        let _image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?;
 
         let window = video_subsystem
             .window(title, width, height)
