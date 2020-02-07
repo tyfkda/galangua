@@ -32,8 +32,8 @@ impl Player {
                 self.x = 224 - 8;
             }
         }
-        if pad.is_pressed(PAD_A) {
-            event_queue.spawn_myshot(self.x, self.y);
+        if pad.is_trigger(PAD_A) {
+            event_queue.spawn_myshot(self.x, self.y - 8);
         }
     }
 

@@ -13,6 +13,8 @@ use super::super::framework::{App};
 use super::super::util::fps_calc::{FpsCalc};
 use super::super::util::pad::{Pad};
 
+const MYSHOT_COUNT: usize = 2;
+
 pub struct GaragaApp {
     pad: Pad,
     fps_calc: FpsCalc,
@@ -21,7 +23,7 @@ pub struct GaragaApp {
 
     star_manager: StarManager,
     player: Player,
-    myshot: Option<MyShot>,
+    myshots: [Option<MyShot>; MYSHOT_COUNT],
     event_queue: GameEventQueue,
     score: i32,
     high_score: i32,
@@ -37,7 +39,7 @@ impl GaragaApp {
 
             star_manager: StarManager::new(),
             player: Player::new(),
-            myshot: None,
+            myshots: Default::default(),
             event_queue: GameEventQueue::new(),
 
             score: 0,
@@ -49,16 +51,23 @@ impl GaragaApp {
         let mut i = 0;
         while i < self.event_queue.queue.len() {
             let event = &self.event_queue.queue[i];
-            match event {
+            match *event {
                 GameEvent::MyShot(x, y) => {
-                    if self.myshot.is_none() {
-                        self.myshot = Some(MyShot::new(*x, *y));
-                    }
+                    self.spawn_myshot(x, y);
                 },
             }
             i += 1;
         }
         self.event_queue.queue.clear();
+    }
+
+    fn spawn_myshot(&mut self, x: i32, y: i32) {
+        for i in 0..MYSHOT_COUNT {
+            if self.myshots[i].is_none() {
+                self.myshots[i] = Some(MyShot::new(x, y));
+                return;
+            }
+        }
     }
 }
 
@@ -88,12 +97,15 @@ impl App for GaragaApp {
     }
 
     fn update(&mut self) {
+        self.pad.update();
         self.star_manager.update();
         self.player.update(&self.pad, &mut self.event_queue);
-        if let Some(myshot) = &mut self.myshot {
-            if !myshot.update() {
-                self.myshot = None;
-                self.score += 100;
+        for i in 0..MYSHOT_COUNT {
+            if let Some(myshot) = &mut self.myshots[i] {
+                if !myshot.update() {
+                    self.myshots[i] = None;
+                    self.score += 100;
+                }
             }
         }
         self.handle_event_queue();
@@ -105,8 +117,11 @@ impl App for GaragaApp {
         if let Some(texture) = &mut self.texture {
             self.star_manager.draw(canvas, texture)?;
             self.player.draw(canvas, texture)?;
-            if let Some(myshot) = &mut self.myshot {
-                myshot.draw(canvas, texture)?;
+
+            for myshot in self.myshots.iter_mut() {
+                if let Some(myshot) = &myshot {
+                    myshot.draw(canvas, texture)?;
+                }
             }
         }
 
