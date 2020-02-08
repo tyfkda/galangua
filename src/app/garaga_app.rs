@@ -75,11 +75,8 @@ impl GaragaApp {
     }
 
     fn spawn_myshot(&mut self, x: i32, y: i32) {
-        for i in 0..MYSHOT_COUNT {
-            if self.myshots[i].is_none() {
-                self.myshots[i] = Some(MyShot::new(x, y));
-                return;
-            }
+        if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
+            *myshot_opt = Some(MyShot::new(x, y));
         }
     }
 
@@ -158,10 +155,8 @@ impl App for GaragaApp {
 
             self.player.draw(canvas, texture)?;
 
-            for myshot in self.myshots.iter() {
-                if let Some(myshot) = &myshot {
-                    myshot.draw(canvas, texture)?;
-                }
+            for myshot in self.myshots.iter().flat_map(|x| x) {
+                myshot.draw(canvas, texture)?;
             }
         }
 

@@ -27,18 +27,14 @@ impl EnemyManager {
     }
 
     pub fn update(&mut self, event_queue: &mut GameEventQueue) {
-        for enemy in self.enemies.iter_mut() {
-            if let Some(enemy) = enemy {
-                enemy.update(event_queue);
-            }
+        for enemy in self.enemies.iter_mut().flat_map(|x| x) {
+            enemy.update(event_queue);
         }
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &mut Texture) -> Result<(), String> {
-        for enemy in self.enemies.iter() {
-            if let Some(enemy) = &enemy {
-                enemy.draw(canvas, texture)?;
-            }
+        for enemy in self.enemies.iter().flat_map(|x| x) {
+            enemy.draw(canvas, texture)?;
         }
 
         Ok(())
@@ -50,11 +46,8 @@ impl EnemyManager {
             y,
         );
 
-        for i in 0..self.enemies.len() {
-            if self.enemies[i].is_none() {
-                self.enemies[i] = Some(enemy);
-                return;
-            }
+        if let Some(enemy_opt) = self.enemies.iter_mut().find(|x| x.is_none()) {
+            *enemy_opt = Some(enemy);
         }
     }
 
