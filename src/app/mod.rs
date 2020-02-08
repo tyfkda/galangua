@@ -1,3 +1,6 @@
+mod collision;
+mod enemy;
+mod enemy_manager;
 mod garaga_app;
 mod game_event_queue;
 mod myshot;
