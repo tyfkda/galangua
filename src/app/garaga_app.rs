@@ -15,7 +15,7 @@ use super::super::framework::{App};
 use super::super::util::fps_calc::{FpsCalc};
 use super::super::util::pad::{Pad};
 
-const MYSHOT_COUNT: usize = 2;
+const MYSHOT_COUNT: usize = 4;
 
 pub struct GaragaApp {
     pad: Pad,
@@ -75,6 +75,12 @@ impl GaragaApp {
     }
 
     fn spawn_myshot(&mut self, x: i32, y: i32) {
+        let max = if self.player.dual() { 4 } else { 2 };
+        let count = self.myshots.iter().flat_map(|x| x).count();
+        if count >= max {
+            return;
+        }
+
         if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
             *myshot_opt = Some(MyShot::new(x, y));
         }
