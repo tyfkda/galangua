@@ -1,7 +1,7 @@
 extern crate sdl2;
 
 use sdl2::keyboard::Keycode;
-use sdl2::render::{WindowCanvas};
+use sdl2::render::WindowCanvas;
 
 pub trait App {
     fn init(&mut self, canvas: &mut WindowCanvas) -> Result<(), String>;

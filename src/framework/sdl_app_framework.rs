@@ -2,13 +2,13 @@ extern crate sdl2;
 
 use sdl2::Sdl;
 use sdl2::event::Event;
-use sdl2::image::{InitFlag};
+use sdl2::image::InitFlag;
 use sdl2::keyboard::Keycode;
-use sdl2::render::{WindowCanvas};
+use sdl2::render::WindowCanvas;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
-use super::{App};
+use super::App;
 
 pub struct SdlAppFramework {
     pub sdl_context: Sdl,

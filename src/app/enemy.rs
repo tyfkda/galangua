@@ -4,7 +4,7 @@ use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
 use super::collision::{CollBox, Collidable};
-use super::game_event_queue::{GameEventQueue};
+use super::game_event_queue::GameEventQueue;
 
 pub struct Enemy {
     x: i32,

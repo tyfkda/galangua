@@ -5,10 +5,10 @@ use sdl2::render::WindowCanvas;
 
 use super::draw_util::draw_str;
 use super::game_manager::GameManager;
-use super::super::framework::{App};
+use super::super::framework::{App, SdlAppFramework};
 use super::super::framework::texture_manager::TextureManager;
-use super::super::util::fps_calc::{FpsCalc};
-use super::super::util::pad::{Pad};
+use super::super::util::fps_calc::FpsCalc;
+use super::super::util::pad::Pad;
 
 pub struct GaragaApp {
     pad: Pad,
@@ -25,6 +25,12 @@ impl GaragaApp {
             texture_manager: TextureManager::new(),
             game_manager: GameManager::new(),
         }
+    }
+
+    pub fn generate_and_run() -> Result<(), String> {
+        let app = GaragaApp::new();
+        let mut framework = SdlAppFramework::new("Garaga", 224 * 2, 288 * 2, Box::new(app))?;
+        framework.run()
     }
 }
 

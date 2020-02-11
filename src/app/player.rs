@@ -3,7 +3,7 @@ extern crate sdl2;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
-use super::game_event_queue::{GameEventQueue};
+use super::game_event_queue::GameEventQueue;
 use super::super::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
 
 pub struct Player {

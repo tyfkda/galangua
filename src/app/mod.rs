@@ -9,4 +9,4 @@ mod myshot;
 mod player;
 mod star_manager;
 
-pub use self::garaga_app::{GaragaApp};
+pub use self::garaga_app::GaragaApp;

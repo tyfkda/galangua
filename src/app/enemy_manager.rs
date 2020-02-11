@@ -4,8 +4,8 @@ use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
 use super::collision::{CollisionResult, Collidable};
-use super::enemy::{Enemy};
-use super::game_event_queue::{GameEventQueue};
+use super::enemy::Enemy;
+use super::game_event_queue::GameEventQueue;
 
 const MAX_ENEMY_COUNT: usize = 128;
 
