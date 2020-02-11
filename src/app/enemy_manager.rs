@@ -6,6 +6,7 @@ use std::mem::MaybeUninit;
 use super::collision::{CollisionResult, Collidable};
 use super::enemy::Enemy;
 use super::game_event_queue::GameEventQueue;
+use super::super::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 128;
 
@@ -40,10 +41,9 @@ impl EnemyManager {
         Ok(())
     }
 
-    pub fn spawn(&mut self, x: i32, y: i32) {
+    pub fn spawn(&mut self, pos: Vec2I) {
         let enemy = Enemy::new(
-            x,
-            y,
+            pos,
         );
 
         if let Some(enemy_opt) = self.enemies.iter_mut().find(|x| x.is_none()) {

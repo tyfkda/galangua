@@ -1,3 +1,4 @@
+use super::super::util::types::Vec2I;
 
 // Collision Result
 pub enum CollisionResult {
@@ -8,21 +9,19 @@ pub enum CollisionResult {
 
 // Collision Box
 pub struct CollBox {
-    pub left: i32,
-    pub top: i32,
-    pub width: i32,
-    pub height: i32,
+    pub top_left: Vec2I,
+    pub size: Vec2I,
 }
 
 impl CollBox {
     pub fn check_collision(&self, target: &CollBox) -> bool {
-        let r1 = self.left + self.width;
-        let b1 = self.top + self.height;
-        let r2 = target.left + target.width;
-        let b2 = target.top + target.height;
+        let r1 = self.top_left.x + self.size.x;
+        let b1 = self.top_left.y + self.size.y;
+        let r2 = target.top_left.x + target.size.x;
+        let b2 = target.top_left.y + target.size.y;
 
-        self.left < r2 && self.top < b2 &&
-            target.left < r1 && target.top < b1
+        self.top_left.x < r2 && self.top_left.y < b2 &&
+            target.top_left.x < r1 && target.top_left.y < b1
     }
 }
 

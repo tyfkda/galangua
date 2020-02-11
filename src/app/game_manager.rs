@@ -11,6 +11,7 @@ use super::player::Player;
 use super::star_manager::StarManager;
 use super::super::framework::texture_manager::TextureManager;
 use super::super::util::pad::Pad;
+use super::super::util::types::Vec2I;
 
 const MYSHOT_COUNT: usize = 4;
 
@@ -27,7 +28,7 @@ pub struct GameManager {
 impl GameManager {
     pub fn new() -> GameManager {
         let mut enemy_manager = EnemyManager::new();
-        enemy_manager.spawn(100, 100);
+        enemy_manager.spawn(Vec2I::new(100, 100));
 
         GameManager {
             star_manager: StarManager::new(),
@@ -94,8 +95,8 @@ impl GameManager {
         while i < self.event_queue.queue.len() {
             let event = &self.event_queue.queue[i];
             match *event {
-                GameEvent::MyShot(x, y) => {
-                    self.spawn_myshot(x, y);
+                GameEvent::MyShot(pos) => {
+                    self.spawn_myshot(pos);
                 },
                 GameEvent::AddScore(add) => {
                     self.score += add;
@@ -109,7 +110,7 @@ impl GameManager {
         self.event_queue.queue.clear();
     }
 
-    fn spawn_myshot(&mut self, x: i32, y: i32) {
+    fn spawn_myshot(&mut self, pos: Vec2I) {
         let max = if self.player.dual() { 4 } else { 2 };
         let count = self.myshots.iter().flat_map(|x| x).count();
         if count >= max {
@@ -117,7 +118,7 @@ impl GameManager {
         }
 
         if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
-            *myshot_opt = Some(MyShot::new(x, y));
+            *myshot_opt = Some(MyShot::new(pos));
         }
     }
 

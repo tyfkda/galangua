@@ -5,41 +5,40 @@ use sdl2::render::{Texture, WindowCanvas};
 
 use super::game_event_queue::GameEventQueue;
 use super::super::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
+use super::super::util::types::Vec2I;
 
 pub struct Player {
-    x: i32,
-    y: i32,
+    pos: Vec2I,
     dual: bool,
 }
 
 impl Player {
     pub fn new() -> Player {
         Player {
-            x: 224 / 2,
-            y: 288 - 16 - 8,
+            pos: Vec2I::new(224 / 2,288 - 16 - 8),
             dual: true,
         }
     }
 
     pub fn update(&mut self, pad: &Pad, event_queue: &mut GameEventQueue) {
         if pad.is_pressed(PAD_L) {
-            self.x -= 2;
-            if self.x < 8 {
-                self.x = 8;
+            self.pos.x -= 2;
+            if self.pos.x < 8 {
+                self.pos.x = 8;
             }
         }
         if pad.is_pressed(PAD_R) {
-            self.x += 2;
+            self.pos.x += 2;
 
             let right = if self.dual { 224 - 8 - 16 } else { 224 - 8 };
-            if self.x > right {
-                self.x = right;
+            if self.pos.x > right {
+                self.pos.x = right;
             }
         }
         if pad.is_trigger(PAD_A) {
-            event_queue.spawn_myshot(self.x, self.y - 8);
+            event_queue.spawn_myshot(Vec2I::new(self.pos.x, self.pos.y - 8));
             if self.dual {
-                event_queue.spawn_myshot(self.x + 16, self.y - 8);
+                event_queue.spawn_myshot(Vec2I::new(self.pos.x + 16, self.pos.y - 8));
             }
         }
     }
@@ -47,11 +46,11 @@ impl Player {
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
         canvas.copy(&texture,
                     Some(Rect::new(0, 0, 16, 16)),
-                    Some(Rect::new((self.x - 8) * 2, (self.y - 8) * 2, 16 * 2, 16 * 2)))?;
+                    Some(Rect::new((self.pos.x - 8) * 2, (self.pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
         if self.dual {
             canvas.copy(&texture,
                         Some(Rect::new(0, 0, 16, 16)),
-                        Some(Rect::new((self.x + 8) * 2, (self.y - 8) * 2, 16 * 2, 16 * 2)))?;
+                        Some(Rect::new((self.pos.x + 8) * 2, (self.pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
         }
 
         Ok(())

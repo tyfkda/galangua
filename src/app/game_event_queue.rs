@@ -1,3 +1,5 @@
+use super::super::util::types::Vec2I;
+
 pub struct GameEventQueue {
     pub queue: Vec<GameEvent>,
 }
@@ -9,8 +11,8 @@ impl GameEventQueue {
         }
     }
 
-    pub fn spawn_myshot(&mut self, x: i32, y: i32) {
-        self.queue.push(GameEvent::MyShot(x, y));
+    pub fn spawn_myshot(&mut self, pos: Vec2I) {
+        self.queue.push(GameEvent::MyShot(pos));
     }
 
     pub fn add_score(&mut self, add: u32) {
@@ -19,6 +21,6 @@ impl GameEventQueue {
 }
 
 pub enum GameEvent {
-    MyShot(i32, i32),
+    MyShot(Vec2I),
     AddScore(u32),
 }
