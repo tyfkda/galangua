@@ -28,3 +28,15 @@ impl<T> ResourceManager<T> {
         self.resource_map.get_mut(key)
     }
 }
+
+#[test]
+fn test_resource_manager() {
+    let mut resource_manager = ResourceManager::new();
+    assert_eq!(Ok(()), resource_manager.load(".", &vec!["key1.foo", "key2.bar"], |path| {
+        Ok(String::from(path))
+    }));
+
+    assert_eq!(Some(&mut String::from("./key1.foo")), resource_manager.get_mut("key1"));
+    assert_eq!(Some(&mut String::from("./key2.bar")), resource_manager.get_mut("key2"));
+    assert_eq!(None, resource_manager.get_mut("non-exist-key"));
+}

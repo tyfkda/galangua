@@ -49,3 +49,17 @@ fn get_key_bit(key: Keycode) -> u8 {
         _ => 0,
     }
 }
+
+#[test]
+fn test_trigger() {
+    let mut pad = Pad::new();
+    pad.on_key_down(Keycode::Space);
+    pad.update();
+
+    assert_eq!(true, pad.is_pressed(PAD_A));
+    assert_eq!(true, pad.is_trigger(PAD_A));
+
+    pad.update();
+    assert_eq!(true, pad.is_pressed(PAD_A));
+    assert_eq!(false, pad.is_trigger(PAD_A));
+}
