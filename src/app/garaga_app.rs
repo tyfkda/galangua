@@ -1,6 +1,5 @@
 extern crate sdl2;
 
-use sdl2::image::{LoadTexture};
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
@@ -12,6 +11,7 @@ use super::myshot::{MyShot};
 use super::player::{Player};
 use super::star_manager::{StarManager};
 use super::super::framework::{App};
+use super::super::framework::texture_manager::TextureManager;
 use super::super::util::fps_calc::{FpsCalc};
 use super::super::util::pad::{Pad};
 
@@ -20,8 +20,7 @@ const MYSHOT_COUNT: usize = 4;
 pub struct GaragaApp {
     pad: Pad,
     fps_calc: FpsCalc,
-    texture: Option<Texture>,
-    font_texture: Option<Texture>,
+    texture_manager: TextureManager,
 
     star_manager: StarManager,
     player: Player,
@@ -40,8 +39,7 @@ impl GaragaApp {
         GaragaApp {
             pad: Pad::new(),
             fps_calc: FpsCalc::new(),
-            texture: None,
-            font_texture: None,
+            texture_manager: TextureManager::new(),
 
             star_manager: StarManager::new(),
             player: Player::new(),
@@ -112,17 +110,7 @@ impl App for GaragaApp {
     }
 
     fn init(&mut self, canvas: &mut WindowCanvas) -> Result<(), String> {
-        {
-            let texture_creator = canvas.texture_creator();
-            let texture = texture_creator.load_texture("assets/chr.png")?;
-            self.texture = Some(texture);
-        }
-
-        {
-            let texture_creator = canvas.texture_creator();
-            let texture = texture_creator.load_texture("assets/font.png")?;
-            self.font_texture = Some(texture);
-        }
+        self.texture_manager.load(canvas, "assets", &vec!["chr.png", "font.png"])?;
 
         Ok(())
     }
@@ -154,7 +142,7 @@ impl App for GaragaApp {
     fn draw(&mut self, canvas: &mut WindowCanvas) -> Result<(), String> {
         canvas.clear();
 
-        if let Some(texture) = &mut self.texture {
+        if let Some(texture) = self.texture_manager.get_mut("chr") {
             self.star_manager.draw(canvas, texture)?;
 
             self.enemy_manager.draw(canvas, texture)?;
@@ -166,7 +154,7 @@ impl App for GaragaApp {
             }
         }
 
-        if let Some(font_texture) = &mut self.font_texture {
+        if let Some(font_texture) = self.texture_manager.get_mut("font") {
             font_texture.set_color_mod(255, 0, 0);
             draw_str(canvas, &font_texture, 16 * 2, 16 * 0, "1UP")?;
             draw_str(canvas, &font_texture, 16 * 9, 16 * 0, "HIGH SCORE")?;
