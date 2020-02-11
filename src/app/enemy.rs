@@ -9,16 +9,24 @@ use super::super::util::types::Vec2I;
 
 pub struct Enemy {
     pos: Vec2I,
+    vel: Vec2I,
 }
 
 impl Enemy {
-    pub fn new(pos: Vec2I) -> Enemy {
+    pub fn new(pos: Vec2I, vel: Vec2I) -> Enemy {
         Enemy {
             pos,
+            vel,
         }
     }
 
+    pub fn pos(&self) -> Vec2I {
+        self.pos
+    }
+
     pub fn update(&mut self, _event_queue: &mut GameEventQueue) {
+        self.pos.x += self.vel.x;
+        self.pos.y += self.vel.y;
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {

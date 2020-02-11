@@ -1,5 +1,6 @@
 extern crate sdl2;
 
+use rand::Rng;
 use sdl2::render::WindowCanvas;
 
 use super::collision::CollisionResult;
@@ -23,26 +24,32 @@ pub struct GameManager {
     event_queue: GameEventQueue,
     score: u32,
     high_score: u32,
+    frame_count: u32,
 }
 
 impl GameManager {
     pub fn new() -> GameManager {
-        let mut enemy_manager = EnemyManager::new();
-        enemy_manager.spawn(Vec2I::new(100, 100));
-
         GameManager {
             star_manager: StarManager::new(),
             player: Player::new(),
             myshots: Default::default(),
-            enemy_manager,
+            enemy_manager: EnemyManager::new(),
             event_queue: GameEventQueue::new(),
 
             score: 0,
             high_score: 20_000,
+            frame_count: 0,
         }
     }
 
     pub fn update(&mut self, pad: &Pad) {
+        self.frame_count += 1;
+        if self.frame_count % 50 == 0 {
+            let mut rng = rand::thread_rng();
+            let x = rng.gen_range(0 + 8, 224 - 8);
+            self.enemy_manager.spawn(Vec2I::new(x, -8), Vec2I::new(0, 2));
+        }
+
         self.star_manager.update();
         self.player.update(&pad, &mut self.event_queue);
         for i in 0..MYSHOT_COUNT {

@@ -28,8 +28,13 @@ impl EnemyManager {
     }
 
     pub fn update(&mut self, event_queue: &mut GameEventQueue) {
-        for enemy in self.enemies.iter_mut().flat_map(|x| x) {
-            enemy.update(event_queue);
+        for enemy_opt in self.enemies.iter_mut() {
+            if let Some(enemy) = enemy_opt {
+                enemy.update(event_queue);
+                if out_of_screen(enemy.pos()) {
+                    *enemy_opt = None;
+                }
+            }
         }
     }
 
@@ -41,9 +46,10 @@ impl EnemyManager {
         Ok(())
     }
 
-    pub fn spawn(&mut self, pos: Vec2I) {
+    pub fn spawn(&mut self, pos: Vec2I, vel: Vec2I) {
         let enemy = Enemy::new(
             pos,
+            vel,
         );
 
         if let Some(enemy_opt) = self.enemies.iter_mut().find(|x| x.is_none()) {
@@ -65,4 +71,9 @@ impl EnemyManager {
         }
         return CollisionResult::NoHit;
     }
+}
+
+fn out_of_screen(pos: Vec2I) -> bool {
+    pos.x < -16 || pos.x > 224 + 16
+        || pos.y < -16 || pos.y > 288 + 16
 }
