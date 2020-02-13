@@ -3,7 +3,7 @@ extern crate sdl2;
 use rand::Rng;
 use sdl2::render::WindowCanvas;
 
-use super::collision::CollisionResult;
+use super::collision::{CollisionResult, Collidable};
 use super::draw_util::draw_str;
 use super::enemy_manager::EnemyManager;
 use super::game_event_queue::{GameEventQueue, GameEvent};
@@ -25,6 +25,7 @@ pub struct GameManager {
     score: u32,
     high_score: u32,
     frame_count: u32,
+    is_over: bool,
 }
 
 impl GameManager {
@@ -39,6 +40,7 @@ impl GameManager {
             score: 0,
             high_score: 20_000,
             frame_count: 0,
+            is_over: false,
         }
     }
 
@@ -92,6 +94,10 @@ impl GameManager {
             font_texture.set_color_mod(255, 255, 255);
             draw_str(canvas, &font_texture, 16 * 1, 16 * 1, &format!("{:5}0", self.score / 10))?;
             draw_str(canvas, &font_texture, 16 * 11, 16 * 1, &format!("{:5}0", self.high_score / 10))?;
+
+            if self.is_over {
+                draw_str(canvas, &font_texture, (28 - 10) / 2 * 16, 16 * 10, "GAME OVER")?;
+            }
         }
 
         Ok(())
@@ -110,6 +116,9 @@ impl GameManager {
                     if self.score > self.high_score {
                         self.high_score = self.score;
                     }
+                },
+                GameEvent::DeadPlayer => {
+                    self.is_over = true;
                 },
             }
             i += 1;
@@ -130,9 +139,14 @@ impl GameManager {
     }
 
     fn check_collision(&mut self) {
+        self.check_collision_myshot_enemy();
+        self.check_collision_player_enemy();
+    }
+
+    fn check_collision_myshot_enemy(&mut self) {
         for myshot_opt in self.myshots.iter_mut() {
             if let Some(myshot) = &myshot_opt {
-                match self.enemy_manager.check_myshot_collision(&Box::new(myshot)) {
+                match self.enemy_manager.check_collision(&myshot.get_collbox(), 1) {
                     CollisionResult::NoHit => { /* no hit */ },
                     _ => {
                         *myshot_opt = None;
@@ -140,6 +154,36 @@ impl GameManager {
                         break;
                     },
                 }
+            }
+        }
+    }
+
+    fn check_collision_player_enemy(&mut self) {
+        if self.player.dead() {
+            return;
+        }
+
+        let player_collbox = self.player.get_collbox();
+        match self.enemy_manager.check_collision(&player_collbox, 100) {
+            CollisionResult::NoHit => { /* no hit */ },
+            CollisionResult::Hit(pos, _) => {
+                if self.player.crash(&pos) {
+                    self.event_queue.dead_player();
+                }
+                return;
+            },
+        }
+
+        if self.player.dual() {
+            let dual_collbox = self.player.dual_collbox();
+            match self.enemy_manager.check_collision(&dual_collbox, 100) {
+                CollisionResult::NoHit => { /* no hit */ },
+                CollisionResult::Hit(pos, _) => {
+                    if self.player.crash(&pos) {
+                        self.event_queue.dead_player();
+                    }
+                    return;
+                },
             }
         }
     }

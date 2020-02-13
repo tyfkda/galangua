@@ -3,8 +3,7 @@ use super::super::util::types::Vec2I;
 // Collision Result
 pub enum CollisionResult {
     NoHit,
-    Hit,
-    Destroy,
+    Hit(Vec2I, bool),
 }
 
 // Collision Box
@@ -46,13 +45,9 @@ fn test_collbox_check_collision() {
 pub trait Collidable {
     fn get_collbox(&self) -> CollBox;
 
-    fn collide_with(&self, target: &Box<&dyn Collidable>) -> CollisionResult {
+    fn collide_with(&self, target: &Box<&dyn Collidable>) -> bool {
         let collbox1 = self.get_collbox();
         let collbox2 = target.get_collbox();
-        if collbox1.check_collision(&collbox2) {
-            CollisionResult::Hit
-        } else {
-            CollisionResult::NoHit
-        }
+        collbox1.check_collision(&collbox2)
     }
 }

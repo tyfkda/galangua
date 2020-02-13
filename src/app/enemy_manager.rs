@@ -3,7 +3,7 @@ extern crate sdl2;
 use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
-use super::collision::{CollisionResult, Collidable};
+use super::collision::{CollisionResult, CollBox, Collidable};
 use super::enemy::Enemy;
 use super::game_event_queue::GameEventQueue;
 use super::super::util::types::Vec2I;
@@ -57,15 +57,13 @@ impl EnemyManager {
         }
     }
 
-    pub fn check_myshot_collision(&mut self, myshot: &Box<&dyn Collidable>) -> CollisionResult {
+    pub fn check_collision(&mut self, target: &CollBox, _power: u32) -> CollisionResult {
         for enemy_opt in self.enemies.iter_mut() {
             if let Some(enemy) = &enemy_opt {
-                match enemy.collide_with(myshot) {
-                    CollisionResult::NoHit => { /* no hit */ },
-                    _ => {
-                        *enemy_opt = None;
-                        return CollisionResult::Destroy;
-                    },
+                if enemy.get_collbox().check_collision(target) {
+                    let pos = enemy.pos();
+                    *enemy_opt = None;
+                    return CollisionResult::Hit(pos, true);
                 }
             }
         }

@@ -18,9 +18,14 @@ impl GameEventQueue {
     pub fn add_score(&mut self, add: u32) {
         self.queue.push(GameEvent::AddScore(add));
     }
+
+    pub fn dead_player(&mut self) {
+        self.queue.push(GameEvent::DeadPlayer);
+    }
 }
 
 pub enum GameEvent {
     MyShot(Vec2I),
     AddScore(u32),
+    DeadPlayer,
 }
