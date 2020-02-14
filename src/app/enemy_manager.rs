@@ -57,13 +57,16 @@ impl EnemyManager {
         }
     }
 
-    pub fn check_collision(&mut self, target: &CollBox, _power: u32) -> CollisionResult {
-        for enemy_opt in self.enemies.iter_mut() {
-            if let Some(enemy) = &enemy_opt {
+    pub fn check_collision(&mut self, target: &CollBox, power: u32) -> CollisionResult {
+        for mut enemy_opt in self.enemies.iter_mut() {
+            if let Some(enemy) = &mut enemy_opt {
                 if enemy.get_collbox().check_collision(target) {
                     let pos = enemy.pos();
-                    *enemy_opt = None;
-                    return CollisionResult::Hit(pos, true);
+                    let destroyed = enemy.set_damage(power);
+                    if destroyed {
+                        *enemy_opt = None;
+                    }
+                    return CollisionResult::Hit(pos, destroyed);
                 }
             }
         }

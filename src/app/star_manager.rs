@@ -52,7 +52,7 @@ impl StarManager {
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &mut Texture) -> Result<(), String> {
         for star in self.stars.iter() {
-            if (self.frame_count + star.t) & 63 < 32 {
+            if (self.frame_count + star.t) & 31 < 16 {
                 continue;
             }
 

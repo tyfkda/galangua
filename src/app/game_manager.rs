@@ -89,11 +89,13 @@ impl GameManager {
 
         if let Some(font_texture) = texture_manager.get_mut("font") {
             font_texture.set_color_mod(255, 0, 0);
-            draw_str(canvas, &font_texture, 16 * 2, 16 * 0, "1UP")?;
+            if (self.frame_count & 31) < 16 {
+                draw_str(canvas, &font_texture, 16 * 2, 16 * 0, "1UP")?;
+            }
             draw_str(canvas, &font_texture, 16 * 9, 16 * 0, "HIGH SCORE")?;
             font_texture.set_color_mod(255, 255, 255);
-            draw_str(canvas, &font_texture, 16 * 1, 16 * 1, &format!("{:5}0", self.score / 10))?;
-            draw_str(canvas, &font_texture, 16 * 11, 16 * 1, &format!("{:5}0", self.high_score / 10))?;
+            draw_str(canvas, &font_texture, 16 * 0, 16 * 1, &format!("{:6}0", self.score / 10))?;
+            draw_str(canvas, &font_texture, 16 * 10, 16 * 1, &format!("{:6}0", self.high_score / 10))?;
 
             if self.is_over {
                 draw_str(canvas, &font_texture, (28 - 10) / 2 * 16, 16 * 10, "GAME OVER")?;
@@ -148,9 +150,11 @@ impl GameManager {
             if let Some(myshot) = &myshot_opt {
                 match self.enemy_manager.check_collision(&myshot.get_collbox(), 1) {
                     CollisionResult::NoHit => { /* no hit */ },
-                    _ => {
+                    CollisionResult::Hit(_, destroyed) => {
                         *myshot_opt = None;
-                        self.event_queue.add_score(100);
+                        if destroyed {
+                            self.event_queue.add_score(100);
+                        }
                         break;
                     },
                 }
