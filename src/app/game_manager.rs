@@ -1,6 +1,5 @@
 extern crate sdl2;
 
-use rand::Rng;
 use sdl2::render::WindowCanvas;
 
 use super::collision::{CollisionResult, Collidable};
@@ -46,12 +45,6 @@ impl GameManager {
 
     pub fn update(&mut self, pad: &Pad) {
         self.frame_count += 1;
-        if self.frame_count % 50 == 0 {
-            let mut rng = rand::thread_rng();
-            let x = rng.gen_range(0 + 8, 224 - 8);
-            self.enemy_manager.spawn(Vec2I::new(x, -8), Vec2I::new(0, 2));
-        }
-
         self.star_manager.update();
         self.player.update(&pad, &mut self.event_queue);
         for i in 0..MYSHOT_COUNT {

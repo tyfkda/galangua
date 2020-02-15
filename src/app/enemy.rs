@@ -7,6 +7,7 @@ use sdl2::render::{Texture, WindowCanvas};
 use super::collision::{CollBox, Collidable};
 use super::game_event_queue::GameEventQueue;
 use super::super::util::types::Vec2I;
+use super::super::util::math::{SIN_TABLE, COS_TABLE};
 
 enum EnemyType {
     Bee,
@@ -18,12 +19,13 @@ pub struct Enemy {
     enemy_type: EnemyType,
     life: u32,
     pos: Vec2I,
-    vel: Vec2I,
     angle: i32,
+    speed: i32,
+    vangle: i32,
 }
 
 impl Enemy {
-    pub fn new(pos: Vec2I, vel: Vec2I) -> Enemy {
+    pub fn new(pos: Vec2I, angle: i32, speed: i32) -> Enemy {
         let mut rng = rand::thread_rng();
         let enemy_type = match rng.gen_range(0, 3) {
             1 => EnemyType::Butterfly,
@@ -34,24 +36,29 @@ impl Enemy {
             EnemyType::Owl => 2,
             _ => 1,
         };
-        let angle = rng.gen_range(0, 16);
+        let mut rng = rand::thread_rng();
+        let vangle = rng.gen_range(-512, 512);
 
         Enemy {
             enemy_type,
             life,
-            pos,
-            vel,
+            pos: Vec2I::new(pos.x * 256, pos.y * 256),
             angle,
+            speed,
+            vangle,
         }
     }
 
     pub fn pos(&self) -> Vec2I {
-        self.pos
+        Vec2I::new((self.pos.x + 128) / 256, (self.pos.y + 128) / 256)
     }
 
     pub fn update(&mut self, _event_queue: &mut GameEventQueue) {
-        self.pos.x += self.vel.x;
-        self.pos.y += self.vel.y;
+        self.angle += self.vangle;
+        let (vx, vy) = calc_velocity(self.angle, self.speed);
+
+        self.pos.x += vx;
+        self.pos.y += vy;
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
@@ -65,11 +72,11 @@ impl Enemy {
             EnemyType::Owl => 48,
         };
 
-        let angle: f64 = ((self.angle & 15) as f64) * (360.0 / 16.0);
-
+        let angle = calc_display_angle(self.angle);
+        let pos = self.pos();
         canvas.copy_ex(&texture,
                        Some(Rect::new(src_u, src_v, 16, 16)),
-                       Some(Rect::new((self.pos.x - 8) * 2, (self.pos.y - 8) * 2, 16 * 2, 16 * 2)),
+                       Some(Rect::new((pos.x - 8) * 2, (pos.y - 8) * 2, 16 * 2, 16 * 2)),
                        angle,
                        None,
                        false, false)?;
@@ -90,9 +97,28 @@ impl Enemy {
 
 impl Collidable for Enemy {
     fn get_collbox(&self) -> CollBox {
+        let pos = self.pos();
         CollBox {
-            top_left: Vec2I::new(self.pos.x - 8, self.pos.y - 8),
+            top_left: Vec2I::new(pos.x - 8, pos.y - 8),
             size: Vec2I::new(16, 16),
         }
     }
+}
+
+fn calc_velocity(angle: i32, speed: i32) -> (i32, i32) {
+    let a: usize = (((angle + 128) / 256) & 255) as usize;
+    let cs = COS_TABLE[a];
+    let sn = SIN_TABLE[a];
+    (cs * speed / 256, sn * speed / 256)
+}
+
+fn calc_display_angle(angle: i32) -> f64 {
+    //let angle: f64 = (self.angle as f64) * (360.0 / (256.0 * 256.0)) + 90.0;
+
+    // Quantize.
+    let div = 16;
+    let angle = (((angle + 256 * 256 / div / 2) / (256 * 256 / div)) & (div - 1)) + div / 4;
+    let angle: f64 = (angle as f64) * (360.0 / (div as f64));
+
+    angle
 }
