@@ -1,6 +1,5 @@
 extern crate sdl2;
 
-use rand::Rng;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
@@ -9,7 +8,8 @@ use super::game_event_queue::GameEventQueue;
 use super::super::util::types::Vec2I;
 use super::super::util::math::{SIN_TABLE, COS_TABLE};
 
-enum EnemyType {
+#[derive(Copy, Clone)]
+pub enum EnemyType {
     Bee,
     Butterfly,
     Owl,
@@ -18,26 +18,18 @@ enum EnemyType {
 pub struct Enemy {
     enemy_type: EnemyType,
     life: u32,
-    pos: Vec2I,
-    angle: i32,
-    speed: i32,
-    vangle: i32,
+    pub pos: Vec2I,
+    pub angle: i32,
+    pub speed: i32,
+    pub vangle: i32,
 }
 
 impl Enemy {
-    pub fn new(pos: Vec2I, angle: i32, speed: i32) -> Enemy {
-        let mut rng = rand::thread_rng();
-        let enemy_type = match rng.gen_range(0, 3) {
-            1 => EnemyType::Butterfly,
-            2 => EnemyType::Owl,
-            _ => EnemyType::Bee,
-        };
+    pub fn new(enemy_type: EnemyType, pos: Vec2I, angle: i32, speed: i32) -> Enemy {
         let life = match enemy_type {
             EnemyType::Owl => 2,
             _ => 1,
         };
-        let mut rng = rand::thread_rng();
-        let vangle = rng.gen_range(-512, 512);
 
         Enemy {
             enemy_type,
@@ -45,7 +37,7 @@ impl Enemy {
             pos: Vec2I::new(pos.x * 256, pos.y * 256),
             angle,
             speed,
-            vangle,
+            vangle: 0,
         }
     }
 

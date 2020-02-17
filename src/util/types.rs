@@ -1,4 +1,4 @@
-#[derive(Debug, Copy, Clone)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Vector2D<T> {
     pub x: T,
     pub y: T,
