@@ -1,9 +1,11 @@
 extern crate sdl2;
 
+use rand::Rng;
 use sdl2::render::WindowCanvas;
 
 use super::collision::{CollisionResult, Collidable};
 use super::draw_util::draw_str;
+use super::effect::{Effect, EarnedPoint, EarnedPointType, SmallBomb};
 use super::enemy_manager::EnemyManager;
 use super::game_event_queue::{GameEventQueue, GameEvent};
 use super::myshot::MyShot;
@@ -14,12 +16,14 @@ use super::super::util::pad::Pad;
 use super::super::util::types::Vec2I;
 
 const MYSHOT_COUNT: usize = 4;
+const MAX_EFFECT_COUNT: usize = 16;
 
 pub struct GameManager {
     star_manager: StarManager,
     player: Player,
     myshots: [Option<MyShot>; MYSHOT_COUNT],
     enemy_manager: EnemyManager,
+    effects: [Option<Effect>; MAX_EFFECT_COUNT],
     event_queue: GameEventQueue,
     score: u32,
     high_score: u32,
@@ -35,6 +39,7 @@ impl GameManager {
             myshots: Default::default(),
             enemy_manager: EnemyManager::new(),
             event_queue: GameEventQueue::new(),
+            effects: Default::default(),
 
             score: 0,
             high_score: 20_000,
@@ -65,6 +70,14 @@ impl GameManager {
         self.check_collision();
 
         self.handle_event_queue();
+
+        for i in 0..MAX_EFFECT_COUNT {
+            if let Some(effect) = &mut self.effects[i] {
+                if !effect.update() {
+                    self.effects[i] = None;
+                }
+            }
+        }
     }
 
     pub fn draw(&mut self, canvas: &mut WindowCanvas, texture_manager: &mut TextureManager) -> Result<(), String> {
@@ -77,6 +90,10 @@ impl GameManager {
 
             for myshot in self.myshots.iter().flat_map(|x| x) {
                 myshot.draw(canvas, texture)?;
+            }
+
+            for effect in self.effects.iter().flat_map(|x| x) {
+                effect.draw(canvas, texture)?;
             }
         }
 
@@ -143,10 +160,24 @@ impl GameManager {
             if let Some(myshot) = &myshot_opt {
                 match self.enemy_manager.check_collision(&myshot.get_collbox(), 1) {
                     CollisionResult::NoHit => { /* no hit */ },
-                    CollisionResult::Hit(_, destroyed) => {
+                    CollisionResult::Hit(pos, destroyed) => {
                         *myshot_opt = None;
                         if destroyed {
                             self.event_queue.add_score(100);
+
+                            let mut rng = rand::thread_rng();
+                            let point_type = match rng.gen_range(0, 16) {
+                                0 => Some(EarnedPointType::Point1600),
+                                1 => Some(EarnedPointType::Point800),
+                                2 => Some(EarnedPointType::Point400),
+                                3 => Some(EarnedPointType::Point150),
+                                _ => None,
+                            };
+                            if let Some(point_type) = point_type {
+                                self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, pos)));
+                            }
+
+                            self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
                         }
                         break;
                     },
@@ -182,6 +213,12 @@ impl GameManager {
                     return;
                 },
             }
+        }
+    }
+
+    fn spawn_effect(&mut self, effect: Effect) {
+        if let Some(slot) = self.effects.iter_mut().find(|x| x.is_none()) {
+            *slot = Some(effect);
         }
     }
 }
