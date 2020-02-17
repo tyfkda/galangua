@@ -30,6 +30,13 @@ impl EnemyManager {
         }
     }
 
+    pub fn restart(&mut self) {
+        for slot in self.enemies.iter_mut() {
+            *slot = None;
+        }
+        self.frame_count = 0;
+    }
+
     pub fn update(&mut self, event_queue: &mut GameEventQueue) {
         self.update_formation();
         self.update_enemies(event_queue);

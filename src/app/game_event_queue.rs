@@ -1,7 +1,7 @@
 use super::super::util::types::Vec2I;
 
 pub struct GameEventQueue {
-    pub queue: Vec<GameEvent>,
+    queue: Vec<GameEvent>,
 }
 
 impl GameEventQueue {
@@ -9,6 +9,18 @@ impl GameEventQueue {
         GameEventQueue {
             queue: Vec::new(),
         }
+    }
+
+    pub fn clear(&mut self) {
+        self.queue.clear();
+    }
+
+    pub fn len(&self) -> usize {
+        self.queue.len()
+    }
+
+    pub fn get(&self, index: usize) -> &GameEvent {
+        &self.queue[index]
     }
 
     pub fn spawn_myshot(&mut self, pos: Vec2I) {

@@ -3,6 +3,7 @@ use sdl2::keyboard::Keycode;
 pub const PAD_L: u8 = 1 << 0;
 pub const PAD_R: u8 = 1 << 1;
 pub const PAD_A: u8 = 1 << 2;
+pub const PAD_START: u8 = 1 << 7;
 
 pub struct Pad {
     pad: u8,
@@ -46,6 +47,7 @@ fn get_key_bit(key: Keycode) -> u8 {
         Keycode::Left => PAD_L,
         Keycode::Right => PAD_R,
         Keycode::Space => PAD_A,
+        Keycode::Return => PAD_START,
         _ => 0,
     }
 }

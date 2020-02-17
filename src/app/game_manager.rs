@@ -12,13 +12,20 @@ use super::myshot::MyShot;
 use super::player::Player;
 use super::star_manager::StarManager;
 use super::super::framework::texture_manager::TextureManager;
-use super::super::util::pad::Pad;
+use super::super::util::pad::{Pad, PAD_START};
 use super::super::util::types::Vec2I;
 
 const MYSHOT_COUNT: usize = 4;
 const MAX_EFFECT_COUNT: usize = 16;
 
+#[derive(PartialEq)]
+enum GameState {
+    Playing,
+    GameOver,
+}
+
 pub struct GameManager {
+    state: GameState,
     star_manager: StarManager,
     player: Player,
     myshots: [Option<MyShot>; MYSHOT_COUNT],
@@ -28,12 +35,12 @@ pub struct GameManager {
     score: u32,
     high_score: u32,
     frame_count: u32,
-    is_over: bool,
 }
 
 impl GameManager {
     pub fn new() -> GameManager {
         GameManager {
+            state: GameState::Playing,
             star_manager: StarManager::new(),
             player: Player::new(),
             myshots: Default::default(),
@@ -42,15 +49,42 @@ impl GameManager {
             effects: Default::default(),
 
             score: 0,
-            high_score: 20_000,
+            high_score: 0,  //20_000,
             frame_count: 0,
-            is_over: false,
         }
     }
 
+    fn restart(&mut self) {
+        self.enemy_manager.restart();
+        self.event_queue.clear();
+        self.player = Player::new();
+
+        for slot in self.myshots.iter_mut() {
+            *slot = None;
+        }
+        for slot in self.effects.iter_mut() {
+            *slot = None;
+        }
+
+        self.state = GameState::Playing;
+        self.score = 0;
+        self.frame_count = 0;
+    }
+
     pub fn update(&mut self, pad: &Pad) {
+        self.update_common(pad);
+
+        if self.state == GameState::GameOver {
+            if pad.is_trigger(PAD_START) {
+                self.restart();
+            }
+        }
+    }
+
+    fn update_common(&mut self, pad: &Pad) {
         self.frame_count += 1;
         self.star_manager.update();
+
         self.player.update(&pad, &mut self.event_queue);
         for i in 0..MYSHOT_COUNT {
             if let Some(myshot) = &mut self.myshots[i] {
@@ -99,7 +133,7 @@ impl GameManager {
 
         if let Some(font_texture) = texture_manager.get_mut("font") {
             font_texture.set_color_mod(255, 0, 0);
-            if (self.frame_count & 31) < 16 {
+            if (self.frame_count & 31) < 16 || self.state != GameState::Playing {
                 draw_str(canvas, &font_texture, 16 * 2, 16 * 0, "1UP")?;
             }
             draw_str(canvas, &font_texture, 16 * 9, 16 * 0, "HIGH SCORE")?;
@@ -107,7 +141,7 @@ impl GameManager {
             draw_str(canvas, &font_texture, 16 * 0, 16 * 1, &format!("{:6}0", self.score / 10))?;
             draw_str(canvas, &font_texture, 16 * 10, 16 * 1, &format!("{:6}0", self.high_score / 10))?;
 
-            if self.is_over {
+            if self.state == GameState::GameOver {
                 draw_str(canvas, &font_texture, (28 - 10) / 2 * 16, 16 * 10, "GAME OVER")?;
             }
         }
@@ -117,8 +151,8 @@ impl GameManager {
 
     fn handle_event_queue(&mut self) {
         let mut i = 0;
-        while i < self.event_queue.queue.len() {
-            let event = &self.event_queue.queue[i];
+        while i < self.event_queue.len() {
+            let event = self.event_queue.get(i);
             match *event {
                 GameEvent::MyShot(pos) => {
                     self.spawn_myshot(pos);
@@ -130,12 +164,12 @@ impl GameManager {
                     }
                 },
                 GameEvent::DeadPlayer => {
-                    self.is_over = true;
+                    self.state = GameState::GameOver;
                 },
             }
             i += 1;
         }
-        self.event_queue.queue.clear();
+        self.event_queue.clear();
     }
 
     fn spawn_myshot(&mut self, pos: Vec2I) {
