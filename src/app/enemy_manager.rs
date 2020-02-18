@@ -84,24 +84,23 @@ impl EnemyManager {
     }
 
     pub fn restart(&mut self) {
-        for slot in self.enemies.iter_mut() {
-            *slot = None;
-        }
         self.frame_count = 0;
         self.moving_pat = MovingPat::Slide;
         self.moving_count = 0;
+
+        for slot in self.enemies.iter_mut() {
+            *slot = None;
+        }
 
         let angle = (256 * 3 / 4) * 256;
         let speed = 0;
         for i in 0..ENEMY_BASE_POS_TABLE.len() {
             let pos = ENEMY_BASE_POS_TABLE[i];
             let enemy_type = ENEMY_TYPE_TABLE[i];
-            if let Some(index) = self.spawn(enemy_type, pos, angle, speed) {
-                if let Some(enemy) = &mut self.enemies[index] {
-                    enemy.state = EnemyState::Formation;
-                    enemy.formation_index = i;
-                }
-            }
+            let mut enemy = Enemy::new(enemy_type, pos, angle, speed);
+            enemy.state = EnemyState::Formation;
+            enemy.formation_index = i;
+            self.enemies[i] = Some(enemy);
         }
     }
 
@@ -147,10 +146,10 @@ impl EnemyManager {
             let x = rng.gen_range(0 + 8, 224 - 8);
             let angle = rng.gen_range(32, 96) * 256;
             let speed = rng.gen_range(2 * 256, 4 * 256);
-            if let Some(index) = self.spawn(enemy_type, Vec2I::new(x * 256, -8 * 256), angle, speed) {
-                if let Some(enemy) = &mut self.enemies[index] {
-                    enemy.vangle = rng.gen_range(-512, 512);
-                }
+            if let Some(index) = self.find_slot() {
+                let mut enemy = Enemy::new(enemy_type, Vec2I::new(x * 256, -8 * 256), angle, speed);
+                enemy.vangle = rng.gen_range(-512, 512);
+                self.enemies[index] = Some(enemy);
             }
         }
     }
@@ -211,20 +210,8 @@ impl EnemyManager {
         }
     }
 
-    fn spawn(&mut self, enemy_type: EnemyType, pos: Vec2I, angle: i32, speed: i32) -> Option<usize> {
-        let enemy = Enemy::new(
-            enemy_type,
-            pos,
-            angle,
-            speed,
-        );
-
-        if let Some(index) = self.enemies.iter().position(|x| x.is_none()) {
-            self.enemies[index] = Some(enemy);
-            Some(index)
-        } else {
-            None
-        }
+    fn find_slot(&self) -> Option<usize> {
+        self.enemies.iter().position(|x| x.is_none())
     }
 }
 
