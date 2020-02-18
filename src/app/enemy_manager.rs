@@ -5,13 +5,19 @@ use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
 use super::collision::{CollisionResult, CollBox, Collidable};
-use super::enemy::{Enemy, EnemyType};
+use super::enemy::{Enemy, EnemyType, EnemyState};
 use super::game_event_queue::GameEventQueue;
 use super::super::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 64;
 
 const ENEMY_COUNT: usize = 40;
+
+#[derive(Copy, Clone, PartialEq)]
+enum MovingPat {
+    Slide,
+    Scale,
+}
 
 lazy_static! {
     static ref ENEMY_BASE_POS_TABLE: [Vec2I; ENEMY_COUNT] = {
@@ -28,7 +34,7 @@ lazy_static! {
             let y = by + (i as i32) * h;
             for j in 0..count {
                 let x = cx - (count - 1) * w / 2 + j * w;
-                buf[index] = MaybeUninit::new(Vec2I::new(x, y));
+                buf[index] = MaybeUninit::new(Vec2I::new(x * 256, y * 256));
                 index += 1;
             }
         }
@@ -55,6 +61,8 @@ lazy_static! {
 pub struct EnemyManager {
     enemies: [Option<Enemy>; MAX_ENEMY_COUNT],
     frame_count: u32,
+    moving_pat: MovingPat,
+    moving_count: u32,
 }
 
 impl EnemyManager {
@@ -68,6 +76,8 @@ impl EnemyManager {
         let mut mgr = EnemyManager {
             enemies: enemies,
             frame_count: 0,
+            moving_pat: MovingPat::Slide,
+            moving_count: 0,
         };
         mgr.restart();
         mgr
@@ -78,17 +88,26 @@ impl EnemyManager {
             *slot = None;
         }
         self.frame_count = 0;
+        self.moving_pat = MovingPat::Slide;
+        self.moving_count = 0;
 
         let angle = (256 * 3 / 4) * 256;
         let speed = 0;
         for i in 0..ENEMY_BASE_POS_TABLE.len() {
             let pos = ENEMY_BASE_POS_TABLE[i];
             let enemy_type = ENEMY_TYPE_TABLE[i];
-            self.spawn(enemy_type, pos, angle, speed, 0);
+            if let Some(index) = self.spawn(enemy_type, pos, angle, speed) {
+                if let Some(enemy) = &mut self.enemies[index] {
+                    enemy.state = EnemyState::Formation;
+                    enemy.formation_index = i;
+                }
+            }
         }
     }
 
     pub fn update(&mut self, event_queue: &mut GameEventQueue) {
+        self.frame_count += 1;
+        self.spawn_with_time();
         self.update_formation();
         self.update_enemies(event_queue);
     }
@@ -117,8 +136,7 @@ impl EnemyManager {
         return CollisionResult::NoHit;
     }
 
-    fn update_formation(&mut self) {
-        self.frame_count += 1;
+    fn spawn_with_time(&mut self) {
         if self.frame_count % 25 == 0 {
             let mut rng = rand::thread_rng();
             let enemy_type = match rng.gen_range(0, 3) {
@@ -129,9 +147,57 @@ impl EnemyManager {
             let x = rng.gen_range(0 + 8, 224 - 8);
             let angle = rng.gen_range(32, 96) * 256;
             let speed = rng.gen_range(2 * 256, 4 * 256);
-            let vangle = rng.gen_range(-512, 512);
-            self.spawn(enemy_type, Vec2I::new(x, -8), angle, speed, vangle);
+            if let Some(index) = self.spawn(enemy_type, Vec2I::new(x * 256, -8 * 256), angle, speed) {
+                if let Some(enemy) = &mut self.enemies[index] {
+                    enemy.vangle = rng.gen_range(-512, 512);
+                }
+            }
         }
+    }
+
+    fn update_formation(&mut self) {
+        match self.moving_pat {
+            MovingPat::Slide => self.update_formation_slide(),
+            MovingPat::Scale => self.update_formation_scale(),
+        }
+    }
+
+    fn update_formation_slide(&mut self) {
+        let t = (self.moving_count as i32 + 64) & 255;
+        let dx = 256 / 2;
+
+        for enemy in self.enemies.iter_mut().flat_map(|x| x).filter(|x| x.state == EnemyState::Formation) {
+            if t < 128 {
+                enemy.pos = Vec2I::new(enemy.pos.x + dx, enemy.pos.y);
+            } else {
+                enemy.pos = Vec2I::new(enemy.pos.x - dx, enemy.pos.y);
+            }
+        }
+
+        self.moving_count += 1;
+        if (self.moving_count & 255) == 0 {
+            self.moving_pat = MovingPat::Scale;
+            self.moving_count = 0;
+        }
+    }
+
+    fn update_formation_scale(&mut self) {
+        let t = (self.moving_count as i32) & 255;
+        let bx = 224 / 2 * 256;
+        let by = (32 + 8) * 256;
+
+        for enemy in self.enemies.iter_mut().flat_map(|x| x).filter(|x| x.state == EnemyState::Formation) {
+            let pos = ENEMY_BASE_POS_TABLE[enemy.formation_index];
+            let dx = (pos.x - bx) * 2 * 16 / (5 * 16 * 128);
+            let dy = (pos.y - by) * 2 * 16 / (5 * 16 * 128);
+            if t < 128 {
+                enemy.pos = Vec2I::new(enemy.pos.x + dx, enemy.pos.y + dy);
+            } else {
+                enemy.pos = Vec2I::new(enemy.pos.x - dx, enemy.pos.y - dy);
+            }
+        }
+
+        self.moving_count += 1;
     }
 
     fn update_enemies(&mut self, event_queue: &mut GameEventQueue) {
@@ -145,17 +211,19 @@ impl EnemyManager {
         }
     }
 
-    fn spawn(&mut self, enemy_type: EnemyType, pos: Vec2I, angle: i32, speed: i32, vangle: i32) {
-        let mut enemy = Enemy::new(
+    fn spawn(&mut self, enemy_type: EnemyType, pos: Vec2I, angle: i32, speed: i32) -> Option<usize> {
+        let enemy = Enemy::new(
             enemy_type,
             pos,
             angle,
             speed,
         );
-        enemy.vangle = vangle;
 
-        if let Some(enemy_opt) = self.enemies.iter_mut().find(|x| x.is_none()) {
-            *enemy_opt = Some(enemy);
+        if let Some(index) = self.enemies.iter().position(|x| x.is_none()) {
+            self.enemies[index] = Some(enemy);
+            Some(index)
+        } else {
+            None
         }
     }
 }

@@ -15,13 +15,21 @@ pub enum EnemyType {
     Owl,
 }
 
+#[derive(Copy, Clone, PartialEq)]
+pub enum EnemyState {
+    Flying,
+    Formation,
+}
+
 pub struct Enemy {
     enemy_type: EnemyType,
+    pub state: EnemyState,
     life: u32,
     pub pos: Vec2I,
     pub angle: i32,
     pub speed: i32,
     pub vangle: i32,
+    pub formation_index: usize,
 }
 
 impl Enemy {
@@ -33,11 +41,13 @@ impl Enemy {
 
         Enemy {
             enemy_type,
+            state: EnemyState::Flying,
             life,
-            pos: Vec2I::new(pos.x * 256, pos.y * 256),
+            pos,
             angle,
             speed,
             vangle: 0,
+            formation_index: 255,  // Dummy
         }
     }
 
@@ -46,11 +56,16 @@ impl Enemy {
     }
 
     pub fn update(&mut self, _event_queue: &mut GameEventQueue) {
-        self.angle += self.vangle;
-        let (vx, vy) = calc_velocity(self.angle, self.speed);
+        match self.state {
+            EnemyState::Flying => {
+                self.angle += self.vangle;
+                let (vx, vy) = calc_velocity(self.angle, self.speed);
 
-        self.pos.x += vx;
-        self.pos.y += vy;
+                self.pos.x += vx;
+                self.pos.y += vy;
+            },
+            _ => {},
+        }
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
@@ -92,7 +107,7 @@ impl Collidable for Enemy {
         let pos = self.pos();
         CollBox {
             top_left: Vec2I::new(pos.x - 8, pos.y - 8),
-            size: Vec2I::new(16, 16),
+            size: Vec2I::new(12, 12),
         }
     }
 }

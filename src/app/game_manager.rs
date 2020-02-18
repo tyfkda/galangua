@@ -49,7 +49,7 @@ impl GameManager {
             effects: Default::default(),
 
             score: 0,
-            high_score: 0,  //20_000,
+            high_score: 1000,  //20_000,
             frame_count: 0,
         }
     }
