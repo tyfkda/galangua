@@ -2,6 +2,8 @@ mod collision;
 mod draw_util;
 mod effect;
 mod enemy;
+mod enemy_command;
+mod enemy_command_table;
 mod enemy_manager;
 mod ene_shot;
 mod event_queue;

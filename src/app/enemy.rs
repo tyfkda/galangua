@@ -4,6 +4,7 @@ use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
 use super::collision::{CollBox, Collidable};
+use super::enemy_command::EnemyCommand;
 use super::event_queue::EventQueue;
 use super::super::util::types::Vec2I;
 use super::super::util::math::{SIN_TABLE, COS_TABLE};
@@ -22,14 +23,17 @@ pub enum EnemyState {
 }
 
 pub struct Enemy {
-    enemy_type: EnemyType,
     pub state: EnemyState,
-    life: u32,
     pub pos: Vec2I,
     pub angle: i32,
     pub speed: i32,
     pub vangle: i32,
     pub formation_index: usize,
+
+    enemy_type: EnemyType,
+    life: u32,
+    command_table: Option<&'static [EnemyCommand]>,
+    command_delay: u32,
 }
 
 impl Enemy {
@@ -48,6 +52,8 @@ impl Enemy {
             speed,
             vangle: 0,
             formation_index: 255,  // Dummy
+            command_table: None,
+            command_delay: 0,
         }
     }
 
@@ -57,6 +63,8 @@ impl Enemy {
 
     pub fn update(&mut self, _event_queue: &mut EventQueue) {
         if self.state == EnemyState::Flying {
+            self.handle_command();
+
             let (vx, vy) = calc_velocity(self.angle + self.vangle / 2, self.speed);
             self.angle += self.vangle;
 
@@ -95,6 +103,49 @@ impl Enemy {
         } else {
             self.life = 0;
             true
+        }
+    }
+
+    pub fn set_command_table(&mut self, command_table: &'static [EnemyCommand]) {
+        self.command_table = Some(command_table);
+    }
+
+    fn handle_command(&mut self) {
+        if let Some(command_table) = self.command_table {
+            if self.command_delay > 0 {
+                self.command_delay -= 1;
+                return;
+            }
+
+            let mut i = 0;
+            while i < command_table.len() {
+                let command = command_table[i];
+                i += 1;
+                match command {
+                    EnemyCommand::Pos(x, y) => {
+                        self.pos = Vec2I::new(x, y);
+                    },
+                    EnemyCommand::Speed(speed) => {
+                        self.speed = speed;
+                    },
+                    EnemyCommand::Angle(angle) => {
+                        self.angle = angle;
+                    },
+                    EnemyCommand::VAngle(vangle) => {
+                        self.vangle = vangle;
+                    },
+                    EnemyCommand::Delay(delay) => {
+                        self.command_delay = delay;
+                        break;
+                    },
+                }
+            }
+
+            if i < command_table.len() {
+                self.command_table = Some(&command_table[i .. command_table.len()]);
+            } else {
+                self.command_table = None;
+            }
         }
     }
 }

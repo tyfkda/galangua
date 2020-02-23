@@ -5,6 +5,7 @@ use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
 use super::collision::{CollisionResult, CollBox, Collidable};
+use super::enemy_command_table::*;
 use super::enemy::{Enemy, EnemyType, EnemyState};
 use super::ene_shot::EneShot;
 use super::event_queue::EventQueue;
@@ -108,6 +109,15 @@ impl EnemyManager {
             enemy.state = EnemyState::Formation;
             enemy.formation_index = i;
             self.enemies[i] = Some(enemy);
+        }
+
+
+        if let Some(index) = self.find_slot() {
+            let pos = Vec2I::new(0, 0);
+            let enemy_type = EnemyType::Bee;
+            let mut enemy = Enemy::new(enemy_type, pos, 0, 0);
+            enemy.set_command_table(&COMMAND_TABLE1);
+            self.enemies[index] = Some(enemy);
         }
     }
 
