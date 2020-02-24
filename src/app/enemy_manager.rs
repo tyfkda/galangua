@@ -6,10 +6,12 @@ use std::mem::MaybeUninit;
 
 use super::collision::{CollisionResult, CollBox, Collidable};
 use super::enemy::{Enemy, EnemyType, EnemyState};
+use super::ene_shot::EneShot;
 use super::event_queue::EventQueue;
 use super::super::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 64;
+const MAX_SHOT_COUNT: usize = 16;
 
 const ENEMY_COUNT: usize = 40;
 
@@ -60,6 +62,7 @@ lazy_static! {
 
 pub struct EnemyManager {
     enemies: [Option<Enemy>; MAX_ENEMY_COUNT],
+    shots: [Option<EneShot>; MAX_SHOT_COUNT],
     frame_count: u32,
     moving_pat: MovingPat,
     moving_count: u32,
@@ -75,6 +78,7 @@ impl EnemyManager {
 
         let mut mgr = EnemyManager {
             enemies: enemies,
+            shots: Default::default(),
             frame_count: 0,
             moving_pat: MovingPat::Slide,
             moving_count: 0,
@@ -91,6 +95,9 @@ impl EnemyManager {
         for slot in self.enemies.iter_mut() {
             *slot = None;
         }
+        for slot in self.shots.iter_mut() {
+            *slot = None;
+        }
 
         let angle = (256 * 3 / 4) * 256;
         let speed = 0;
@@ -104,16 +111,20 @@ impl EnemyManager {
         }
     }
 
-    pub fn update(&mut self, event_queue: &mut EventQueue) {
+    pub fn update(&mut self, player_pos: &[Option<Vec2I>], event_queue: &mut EventQueue) {
         self.frame_count += 1;
-        self.spawn_with_time();
+        self.spawn_with_time(player_pos);
         self.update_formation();
         self.update_enemies(event_queue);
+        self.update_shots(event_queue);
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &mut Texture) -> Result<(), String> {
         for enemy in self.enemies.iter().flat_map(|x| x) {
             enemy.draw(canvas, texture)?;
+        }
+        for shot in self.shots.iter().flat_map(|x| x) {
+            shot.draw(canvas, texture)?;
         }
 
         Ok(())
@@ -131,10 +142,24 @@ impl EnemyManager {
                 return CollisionResult::Hit(pos, destroyed);
             }
         }
+
         return CollisionResult::NoHit;
     }
 
-    fn spawn_with_time(&mut self) {
+    pub fn check_shot_collision(&mut self, target: &CollBox) -> CollisionResult {
+        for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
+            let shot = shot_opt.as_mut().unwrap();
+            if shot.get_collbox().check_collision(target) {
+                let pos = shot.pos();
+                *shot_opt = None;
+                return CollisionResult::Hit(pos, false);
+            }
+        }
+
+        return CollisionResult::NoHit;
+    }
+
+    fn spawn_with_time(&mut self, player_pos: &[Option<Vec2I>]) {
         if self.frame_count % 25 == 0 {
             let mut rng = rand::thread_rng();
             let enemy_type = match rng.gen_range(0, 3) {
@@ -146,9 +171,12 @@ impl EnemyManager {
             let angle = rng.gen_range(32, 96) * 256;
             let speed = rng.gen_range(2 * 256, 4 * 256);
             if let Some(index) = self.find_slot() {
-                let mut enemy = Enemy::new(enemy_type, Vec2I::new(x * 256, -8 * 256), angle, speed);
+                let pos = Vec2I::new(x * 256, -8 * 256);
+                let mut enemy = Enemy::new(enemy_type, pos, angle, speed);
                 enemy.vangle = rng.gen_range(-512, 512);
                 self.enemies[index] = Some(enemy);
+
+                self.spawn_shot(&pos, &player_pos, 3 * 256);
             }
         }
     }
@@ -208,8 +236,37 @@ impl EnemyManager {
         }
     }
 
+    fn update_shots(&mut self, _event_queue: &mut EventQueue) {
+        for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
+            let shot = shot_opt.as_mut().unwrap();
+            shot.update();
+            if out_of_screen(shot.pos()) {
+                *shot_opt = None;
+            }
+        }
+    }
+
     fn find_slot(&self) -> Option<usize> {
         self.enemies.iter().position(|x| x.is_none())
+    }
+
+    fn spawn_shot(&mut self, pos: &Vec2I, target_pos: &[Option<Vec2I>], speed: u32) {
+        if let Some(index) = self.shots.iter().position(|x| x.is_none()) {
+            let mut rng = rand::thread_rng();
+            let count = target_pos.iter().filter(|x| x.is_some()).count();
+            let target_opt: &Option<Vec2I> = target_pos.iter().filter(|x| x.is_some()).nth(rng.gen_range(0, count)).unwrap();
+            let target: Vec2I = target_opt.unwrap();
+            let d = Vec2I::new(target.x * 256 - pos.x, target.y * 256 - pos.y);
+            let distance = ((d.x as f64).powi(2) + (d.y as f64).powi(2)).sqrt();
+            let f = (speed as f64) / distance;
+            let vel = Vec2I::new(
+                ((d.x as f64) * f).round() as i32,
+                ((d.y as f64) * f).round() as i32,
+            );
+            self.shots[index] = Some(EneShot::new(
+                *pos, vel,
+            ));
+        }
     }
 }
 

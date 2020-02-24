@@ -87,6 +87,18 @@ impl Player {
         self.state == State::Dead
     }
 
+    pub fn pos(&self) -> Vec2I {
+        self.pos
+    }
+
+    pub fn dual_pos(&self) -> Option<Vec2I> {
+        if self.dual() {
+            Some(Vec2I::new(self.pos.x + 16, self.pos.y))
+        } else {
+            None
+        }
+    }
+
     pub fn dual_collbox(&self) -> Option<CollBox> {
         if self.dual() {
             Some(CollBox {

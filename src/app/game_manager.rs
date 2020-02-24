@@ -93,7 +93,11 @@ impl GameManager {
             }
         }
 
-        self.enemy_manager.update(&mut self.event_queue);
+        let player_pos = [
+            Some(self.player.pos()),
+            self.player.dual_pos(),
+        ];
+        self.enemy_manager.update(&player_pos, &mut self.event_queue);
 
         // For MyShot.
         self.handle_event_queue();
@@ -217,6 +221,14 @@ impl GameManager {
             if let Some(pos) = handle_collision_enemy(&mut self.enemy_manager, &collbox, 100, false, &mut self.event_queue) {
                 if self.player.crash(&pos) {
                     self.event_queue.dead_player();
+                    continue;
+                }
+            }
+
+            if let CollisionResult::Hit(pos, _) = self.enemy_manager.check_shot_collision(&collbox) {
+                if self.player.crash(&pos) {
+                    self.event_queue.dead_player();
+                    continue;
                 }
             }
         }
