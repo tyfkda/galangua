@@ -1,3 +1,4 @@
+use super::effect::EarnedPointType;
 use super::super::util::types::Vec2I;
 
 pub struct GameEventQueue {
@@ -23,8 +24,8 @@ impl GameEventQueue {
         &self.queue[index]
     }
 
-    pub fn spawn_myshot(&mut self, pos: Vec2I) {
-        self.queue.push(GameEvent::MyShot(pos));
+    pub fn spawn_myshot(&mut self, pos: Vec2I, dual: bool) {
+        self.queue.push(GameEvent::MyShot(pos, dual));
     }
 
     pub fn add_score(&mut self, add: u32) {
@@ -34,10 +35,20 @@ impl GameEventQueue {
     pub fn dead_player(&mut self) {
         self.queue.push(GameEvent::DeadPlayer);
     }
+
+    pub fn spawn_earn_point(&mut self, point_type: EarnedPointType, pos: Vec2I) {
+        self.queue.push(GameEvent::EarnPoint(point_type, pos));
+    }
+
+    pub fn spawn_small_bomb(&mut self, pos: Vec2I) {
+        self.queue.push(GameEvent::SmallBomb(pos));
+    }
 }
 
 pub enum GameEvent {
-    MyShot(Vec2I),
+    MyShot(Vec2I, bool),
     AddScore(u32),
+    EarnPoint(EarnedPointType, Vec2I),
+    SmallBomb(Vec2I),
     DeadPlayer,
 }

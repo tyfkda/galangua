@@ -53,10 +53,7 @@ impl Player {
             }
         }
         if pad.is_trigger(PAD_A) {
-            event_queue.spawn_myshot(Vec2I::new(self.pos.x, self.pos.y - 8));
-            if self.dual() {
-                event_queue.spawn_myshot(Vec2I::new(self.pos.x + 16, self.pos.y - 8));
-            }
+            event_queue.spawn_myshot(Vec2I::new(self.pos.x, self.pos.y - 8), self.dual());
         }
     }
 
@@ -82,7 +79,7 @@ impl Player {
         Ok(())
     }
 
-    pub fn dual(&self) -> bool {
+    fn dual(&self) -> bool {
         self.state == State::Dual
     }
 

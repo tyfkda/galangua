@@ -3,7 +3,7 @@ extern crate sdl2;
 use rand::Rng;
 use sdl2::render::WindowCanvas;
 
-use super::collision::{CollisionResult, Collidable};
+use super::collision::{CollisionResult, CollBox, Collidable};
 use super::draw_util::draw_str;
 use super::effect::{Effect, EarnedPoint, EarnedPointType, SmallBomb};
 use super::enemy_manager::EnemyManager;
@@ -15,7 +15,7 @@ use super::super::framework::texture_manager::TextureManager;
 use super::super::util::pad::{Pad, PAD_START};
 use super::super::util::types::Vec2I;
 
-const MYSHOT_COUNT: usize = 4;
+const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;
 
 #[derive(PartialEq)]
@@ -152,8 +152,8 @@ impl GameManager {
         while i < self.event_queue.len() {
             let event = self.event_queue.get(i);
             match *event {
-                GameEvent::MyShot(pos) => {
-                    self.spawn_myshot(pos);
+                GameEvent::MyShot(pos, dual) => {
+                    self.spawn_myshot(pos, dual);
                 },
                 GameEvent::AddScore(add) => {
                     self.score += add;
@@ -164,21 +164,21 @@ impl GameManager {
                 GameEvent::DeadPlayer => {
                     self.state = GameState::GameOver;
                 },
+                GameEvent::EarnPoint(point_type, pos) => {
+                    self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, pos)));
+                },
+                GameEvent::SmallBomb(pos) => {
+                    self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
+                },
             }
             i += 1;
         }
         self.event_queue.clear();
     }
 
-    fn spawn_myshot(&mut self, pos: Vec2I) {
-        let max = if self.player.dual() { 4 } else { 2 };
-        let count = self.myshots.iter().flat_map(|x| x).count();
-        if count >= max {
-            return;
-        }
-
+    fn spawn_myshot(&mut self, pos: Vec2I, dual: bool) {
         if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
-            *myshot_opt = Some(MyShot::new(pos));
+            *myshot_opt = Some(MyShot::new(pos, dual));
         }
     }
 
@@ -190,29 +190,18 @@ impl GameManager {
     fn check_collision_myshot_enemy(&mut self) {
         for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
             let myshot = myshot_opt.as_ref().unwrap();
-            match self.enemy_manager.check_collision(&myshot.get_collbox(), 1) {
-                CollisionResult::NoHit => { /* no hit */ },
-                CollisionResult::Hit(pos, destroyed) => {
-                    *myshot_opt = None;
-                    if destroyed {
-                        self.event_queue.add_score(100);
-
-                        let mut rng = rand::thread_rng();
-                        let point_type = match rng.gen_range(0, 16) {
-                            0 => Some(EarnedPointType::Point1600),
-                            1 => Some(EarnedPointType::Point800),
-                            2 => Some(EarnedPointType::Point400),
-                            3 => Some(EarnedPointType::Point150),
-                            _ => None,
-                        };
-                        if let Some(point_type) = point_type {
-                            self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, pos)));
-                        }
-
-                        self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
-                    }
-                    break;
-                },
+            let colls: [Option<CollBox>; 2] = [
+                Some(myshot.get_collbox()),
+                myshot.get_collbox_for_dual(),
+            ];
+            for collbox in colls.iter().flat_map(|x| x) {
+                match handle_collision_enemy(&mut self.enemy_manager, &collbox, 1, true, &mut self.event_queue) {
+                    Some(_) => {
+                        *myshot_opt = None;
+                        break;
+                    },
+                    _ => {},
+                }
             }
         }
     }
@@ -228,13 +217,13 @@ impl GameManager {
         ];
 
         for collbox in collbox_opts.iter().flat_map(|x| x) {
-            match self.enemy_manager.check_collision(&collbox, 100) {
-                CollisionResult::NoHit => { /* no hit */ },
-                CollisionResult::Hit(pos, _) => {
+            match handle_collision_enemy(&mut self.enemy_manager, &collbox, 100, false, &mut self.event_queue) {
+                Some(pos) => {
                     if self.player.crash(&pos) {
                         self.event_queue.dead_player();
                     }
                 },
+                _ => {},
             }
         }
     }
@@ -244,4 +233,34 @@ impl GameManager {
             *slot = Some(effect);
         }
     }
+}
+
+fn handle_collision_enemy(
+    enemy_manager: &mut EnemyManager, collbox: &CollBox, power: u32, effect: bool,
+    event_queue: &mut GameEventQueue) -> Option<Vec2I>
+{
+    match enemy_manager.check_collision(&collbox, power) {
+        CollisionResult::NoHit => { /* no hit */ },
+        CollisionResult::Hit(pos, destroyed) => {
+            if destroyed && effect {
+                event_queue.add_score(100);
+
+                let mut rng = rand::thread_rng();
+                let point_type = match rng.gen_range(0, 16) {
+                    0 => Some(EarnedPointType::Point1600),
+                    1 => Some(EarnedPointType::Point800),
+                    2 => Some(EarnedPointType::Point400),
+                    3 => Some(EarnedPointType::Point150),
+                    _ => None,
+                };
+                if let Some(point_type) = point_type {
+                    event_queue.spawn_earn_point(point_type, pos);
+                }
+
+                event_queue.spawn_small_bomb(pos);
+            }
+            return Some(pos);
+        },
+    }
+    None
 }

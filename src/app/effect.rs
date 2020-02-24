@@ -29,6 +29,7 @@ impl Effect {
 
 //
 
+#[derive(Clone, Copy)]
 pub enum EarnedPointType {
     Point1600,
     Point800,
