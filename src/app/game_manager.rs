@@ -86,11 +86,10 @@ impl GameManager {
         self.star_manager.update();
 
         self.player.update(&pad, &mut self.event_queue);
-        for i in 0..MYSHOT_COUNT {
-            if let Some(myshot) = &mut self.myshots[i] {
-                if !myshot.update() {
-                    self.myshots[i] = None;
-                }
+        for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
+            let myshot = myshot_opt.as_mut().unwrap();
+            if !myshot.update() {
+                *myshot_opt = None;
             }
         }
 
@@ -105,11 +104,10 @@ impl GameManager {
 
         self.handle_event_queue();
 
-        for i in 0..MAX_EFFECT_COUNT {
-            if let Some(effect) = &mut self.effects[i] {
-                if !effect.update() {
-                    self.effects[i] = None;
-                }
+        for effect_opt in self.effects.iter_mut().filter(|x| x.is_some()) {
+            let effect = effect_opt.as_mut().unwrap();
+            if !effect.update() {
+                *effect_opt = None;
             }
         }
     }
@@ -190,32 +188,31 @@ impl GameManager {
     }
 
     fn check_collision_myshot_enemy(&mut self) {
-        for myshot_opt in self.myshots.iter_mut() {
-            if let Some(myshot) = &myshot_opt {
-                match self.enemy_manager.check_collision(&myshot.get_collbox(), 1) {
-                    CollisionResult::NoHit => { /* no hit */ },
-                    CollisionResult::Hit(pos, destroyed) => {
-                        *myshot_opt = None;
-                        if destroyed {
-                            self.event_queue.add_score(100);
+        for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
+            let myshot = myshot_opt.as_ref().unwrap();
+            match self.enemy_manager.check_collision(&myshot.get_collbox(), 1) {
+                CollisionResult::NoHit => { /* no hit */ },
+                CollisionResult::Hit(pos, destroyed) => {
+                    *myshot_opt = None;
+                    if destroyed {
+                        self.event_queue.add_score(100);
 
-                            let mut rng = rand::thread_rng();
-                            let point_type = match rng.gen_range(0, 16) {
-                                0 => Some(EarnedPointType::Point1600),
-                                1 => Some(EarnedPointType::Point800),
-                                2 => Some(EarnedPointType::Point400),
-                                3 => Some(EarnedPointType::Point150),
-                                _ => None,
-                            };
-                            if let Some(point_type) = point_type {
-                                self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, pos)));
-                            }
-
-                            self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
+                        let mut rng = rand::thread_rng();
+                        let point_type = match rng.gen_range(0, 16) {
+                            0 => Some(EarnedPointType::Point1600),
+                            1 => Some(EarnedPointType::Point800),
+                            2 => Some(EarnedPointType::Point400),
+                            3 => Some(EarnedPointType::Point150),
+                            _ => None,
+                        };
+                        if let Some(point_type) = point_type {
+                            self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, pos)));
                         }
-                        break;
-                    },
-                }
+
+                        self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
+                    }
+                    break;
+                },
             }
         }
     }

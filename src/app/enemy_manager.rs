@@ -120,16 +120,15 @@ impl EnemyManager {
     }
 
     pub fn check_collision(&mut self, target: &CollBox, power: u32) -> CollisionResult {
-        for mut enemy_opt in self.enemies.iter_mut() {
-            if let Some(enemy) = &mut enemy_opt {
-                if enemy.get_collbox().check_collision(target) {
-                    let pos = enemy.pos();
-                    let destroyed = enemy.set_damage(power);
-                    if destroyed {
-                        *enemy_opt = None;
-                    }
-                    return CollisionResult::Hit(pos, destroyed);
+        for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
+            let enemy = enemy_opt.as_mut().unwrap();
+            if enemy.get_collbox().check_collision(target) {
+                let pos = enemy.pos();
+                let destroyed = enemy.set_damage(power);
+                if destroyed {
+                    *enemy_opt = None;
                 }
+                return CollisionResult::Hit(pos, destroyed);
             }
         }
         return CollisionResult::NoHit;
@@ -200,12 +199,11 @@ impl EnemyManager {
     }
 
     fn update_enemies(&mut self, event_queue: &mut GameEventQueue) {
-        for enemy_opt in self.enemies.iter_mut() {
-            if let Some(enemy) = enemy_opt {
-                enemy.update(event_queue);
-                if out_of_screen(enemy.pos()) {
-                    *enemy_opt = None;
-                }
+        for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
+            let enemy = enemy_opt.as_mut().unwrap();
+            enemy.update(event_queue);
+            if out_of_screen(enemy.pos()) {
+                *enemy_opt = None;
             }
         }
     }
