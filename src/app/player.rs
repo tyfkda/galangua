@@ -4,7 +4,7 @@ use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
 use super::collision::{CollBox, Collidable};
-use super::game_event_queue::GameEventQueue;
+use super::event_queue::EventQueue;
 use super::super::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
 use super::super::util::types::Vec2I;
 
@@ -28,7 +28,7 @@ impl Player {
         }
     }
 
-    pub fn update(&mut self, pad: &Pad, event_queue: &mut GameEventQueue) {
+    pub fn update(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
         match self.state {
             State::Normal | State::Dual => {
                 // Through.

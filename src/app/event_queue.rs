@@ -1,13 +1,13 @@
 use super::effect::EarnedPointType;
 use super::super::util::types::Vec2I;
 
-pub struct GameEventQueue {
-    queue: Vec<GameEvent>,
+pub struct EventQueue {
+    queue: Vec<EventType>,
 }
 
-impl GameEventQueue {
-    pub fn new() -> GameEventQueue {
-        GameEventQueue {
+impl EventQueue {
+    pub fn new() -> EventQueue {
+        EventQueue {
             queue: Vec::new(),
         }
     }
@@ -20,32 +20,32 @@ impl GameEventQueue {
         self.queue.len()
     }
 
-    pub fn get(&self, index: usize) -> &GameEvent {
+    pub fn get(&self, index: usize) -> &EventType {
         &self.queue[index]
     }
 
     pub fn spawn_myshot(&mut self, pos: Vec2I, dual: bool) {
-        self.queue.push(GameEvent::MyShot(pos, dual));
+        self.queue.push(EventType::MyShot(pos, dual));
     }
 
     pub fn add_score(&mut self, add: u32) {
-        self.queue.push(GameEvent::AddScore(add));
+        self.queue.push(EventType::AddScore(add));
     }
 
     pub fn dead_player(&mut self) {
-        self.queue.push(GameEvent::DeadPlayer);
+        self.queue.push(EventType::DeadPlayer);
     }
 
     pub fn spawn_earn_point(&mut self, point_type: EarnedPointType, pos: Vec2I) {
-        self.queue.push(GameEvent::EarnPoint(point_type, pos));
+        self.queue.push(EventType::EarnPoint(point_type, pos));
     }
 
     pub fn spawn_small_bomb(&mut self, pos: Vec2I) {
-        self.queue.push(GameEvent::SmallBomb(pos));
+        self.queue.push(EventType::SmallBomb(pos));
     }
 }
 
-pub enum GameEvent {
+pub enum EventType {
     MyShot(Vec2I, bool),
     AddScore(u32),
     EarnPoint(EarnedPointType, Vec2I),

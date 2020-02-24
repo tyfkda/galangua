@@ -7,7 +7,7 @@ use super::collision::{CollisionResult, CollBox, Collidable};
 use super::draw_util::draw_str;
 use super::effect::{Effect, EarnedPoint, EarnedPointType, SmallBomb};
 use super::enemy_manager::EnemyManager;
-use super::game_event_queue::{GameEventQueue, GameEvent};
+use super::event_queue::{EventQueue, EventType};
 use super::myshot::MyShot;
 use super::player::Player;
 use super::star_manager::StarManager;
@@ -31,7 +31,7 @@ pub struct GameManager {
     myshots: [Option<MyShot>; MYSHOT_COUNT],
     enemy_manager: EnemyManager,
     effects: [Option<Effect>; MAX_EFFECT_COUNT],
-    event_queue: GameEventQueue,
+    event_queue: EventQueue,
     score: u32,
     high_score: u32,
     frame_count: u32,
@@ -45,7 +45,7 @@ impl GameManager {
             player: Player::new(),
             myshots: Default::default(),
             enemy_manager: EnemyManager::new(),
-            event_queue: GameEventQueue::new(),
+            event_queue: EventQueue::new(),
             effects: Default::default(),
 
             score: 0,
@@ -152,22 +152,22 @@ impl GameManager {
         while i < self.event_queue.len() {
             let event = self.event_queue.get(i);
             match *event {
-                GameEvent::MyShot(pos, dual) => {
+                EventType::MyShot(pos, dual) => {
                     self.spawn_myshot(pos, dual);
                 },
-                GameEvent::AddScore(add) => {
+                EventType::AddScore(add) => {
                     self.score += add;
                     if self.score > self.high_score {
                         self.high_score = self.score;
                     }
                 },
-                GameEvent::DeadPlayer => {
+                EventType::DeadPlayer => {
                     self.state = GameState::GameOver;
                 },
-                GameEvent::EarnPoint(point_type, pos) => {
+                EventType::EarnPoint(point_type, pos) => {
                     self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, pos)));
                 },
-                GameEvent::SmallBomb(pos) => {
+                EventType::SmallBomb(pos) => {
                     self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
                 },
             }
@@ -237,7 +237,7 @@ impl GameManager {
 
 fn handle_collision_enemy(
     enemy_manager: &mut EnemyManager, collbox: &CollBox, power: u32, effect: bool,
-    event_queue: &mut GameEventQueue) -> Option<Vec2I>
+    event_queue: &mut EventQueue) -> Option<Vec2I>
 {
     match enemy_manager.check_collision(&collbox, power) {
         CollisionResult::NoHit => { /* no hit */ },

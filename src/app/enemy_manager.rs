@@ -6,7 +6,7 @@ use std::mem::MaybeUninit;
 
 use super::collision::{CollisionResult, CollBox, Collidable};
 use super::enemy::{Enemy, EnemyType, EnemyState};
-use super::game_event_queue::GameEventQueue;
+use super::event_queue::EventQueue;
 use super::super::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 64;
@@ -104,7 +104,7 @@ impl EnemyManager {
         }
     }
 
-    pub fn update(&mut self, event_queue: &mut GameEventQueue) {
+    pub fn update(&mut self, event_queue: &mut EventQueue) {
         self.frame_count += 1;
         self.spawn_with_time();
         self.update_formation();
@@ -198,7 +198,7 @@ impl EnemyManager {
         self.moving_count += 1;
     }
 
-    fn update_enemies(&mut self, event_queue: &mut GameEventQueue) {
+    fn update_enemies(&mut self, event_queue: &mut EventQueue) {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
             enemy.update(event_queue);

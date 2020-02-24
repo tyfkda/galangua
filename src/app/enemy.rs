@@ -4,7 +4,7 @@ use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
 use super::collision::{CollBox, Collidable};
-use super::game_event_queue::GameEventQueue;
+use super::event_queue::EventQueue;
 use super::super::util::types::Vec2I;
 use super::super::util::math::{SIN_TABLE, COS_TABLE};
 
@@ -55,7 +55,7 @@ impl Enemy {
         Vec2I::new((self.pos.x + 128) / 256, (self.pos.y + 128) / 256)
     }
 
-    pub fn update(&mut self, _event_queue: &mut GameEventQueue) {
+    pub fn update(&mut self, _event_queue: &mut EventQueue) {
         match self.state {
             EnemyState::Flying => {
                 self.angle += self.vangle;

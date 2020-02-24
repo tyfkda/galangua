@@ -3,7 +3,7 @@ mod draw_util;
 mod effect;
 mod enemy;
 mod enemy_manager;
-mod game_event_queue;
+mod event_queue;
 mod game_manager;
 mod garaga_app;
 mod myshot;
