@@ -56,15 +56,12 @@ impl Enemy {
     }
 
     pub fn update(&mut self, _event_queue: &mut EventQueue) {
-        match self.state {
-            EnemyState::Flying => {
-                self.angle += self.vangle;
-                let (vx, vy) = calc_velocity(self.angle, self.speed);
+        if self.state == EnemyState::Flying {
+            self.angle += self.vangle;
+            let (vx, vy) = calc_velocity(self.angle, self.speed);
 
-                self.pos.x += vx;
-                self.pos.y += vy;
-            },
-            _ => {},
+            self.pos.x += vx;
+            self.pos.y += vy;
         }
     }
 

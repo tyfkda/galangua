@@ -195,12 +195,9 @@ impl GameManager {
                 myshot.get_collbox_for_dual(),
             ];
             for collbox in colls.iter().flat_map(|x| x) {
-                match handle_collision_enemy(&mut self.enemy_manager, &collbox, 1, true, &mut self.event_queue) {
-                    Some(_) => {
-                        *myshot_opt = None;
-                        break;
-                    },
-                    _ => {},
+                if let Some(_) = handle_collision_enemy(&mut self.enemy_manager, &collbox, 1, true, &mut self.event_queue) {
+                    *myshot_opt = None;
+                    break;
                 }
             }
         }
@@ -217,13 +214,10 @@ impl GameManager {
         ];
 
         for collbox in collbox_opts.iter().flat_map(|x| x) {
-            match handle_collision_enemy(&mut self.enemy_manager, &collbox, 100, false, &mut self.event_queue) {
-                Some(pos) => {
-                    if self.player.crash(&pos) {
-                        self.event_queue.dead_player();
-                    }
-                },
-                _ => {},
+            if let Some(pos) = handle_collision_enemy(&mut self.enemy_manager, &collbox, 100, false, &mut self.event_queue) {
+                if self.player.crash(&pos) {
+                    self.event_queue.dead_player();
+                }
             }
         }
     }
