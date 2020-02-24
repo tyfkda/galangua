@@ -90,10 +90,14 @@ impl Player {
         self.state == State::Dead
     }
 
-    pub fn dual_collbox(&self) -> CollBox {
-        CollBox {
-            top_left: Vec2I::new(self.pos.x + 8, self.pos.y - 8),
-            size: Vec2I::new(16, 16),
+    pub fn dual_collbox(&self) -> Option<CollBox> {
+        if self.dual() {
+            Some(CollBox {
+                top_left: Vec2I::new(self.pos.x + 8, self.pos.y - 8),
+                size: Vec2I::new(16, 16),
+            })
+        } else {
+            None
         }
     }
 

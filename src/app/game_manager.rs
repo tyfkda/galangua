@@ -225,26 +225,18 @@ impl GameManager {
             return;
         }
 
-        let player_collbox = self.player.get_collbox();
-        match self.enemy_manager.check_collision(&player_collbox, 100) {
-            CollisionResult::NoHit => { /* no hit */ },
-            CollisionResult::Hit(pos, _) => {
-                if self.player.crash(&pos) {
-                    self.event_queue.dead_player();
-                }
-                return;
-            },
-        }
+        let collbox_opts = [
+            self.player.dual_collbox(),
+            Some(self.player.get_collbox()),
+        ];
 
-        if self.player.dual() {
-            let dual_collbox = self.player.dual_collbox();
-            match self.enemy_manager.check_collision(&dual_collbox, 100) {
+        for collbox in collbox_opts.iter().flat_map(|x| x) {
+            match self.enemy_manager.check_collision(&collbox, 100) {
                 CollisionResult::NoHit => { /* no hit */ },
                 CollisionResult::Hit(pos, _) => {
                     if self.player.crash(&pos) {
                         self.event_queue.dead_player();
                     }
-                    return;
                 },
             }
         }
