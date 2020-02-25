@@ -1,5 +1,5 @@
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub enum EnemyCommand {
+pub enum TrajCommand {
     Pos(i32, i32),
     Speed(i32),
     Angle(i32),

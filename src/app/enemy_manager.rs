@@ -5,10 +5,11 @@ use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
 use super::collision::{CollisionResult, CollBox, Collidable};
-use super::enemy_command_table::*;
 use super::enemy::{Enemy, EnemyType, EnemyState};
 use super::ene_shot::EneShot;
 use super::event_queue::EventQueue;
+use super::traj::Traj;
+use super::traj_command_table::*;
 use super::super::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 64;
@@ -182,12 +183,26 @@ impl EnemyManager {
         }
 
 
-        if self.frame_count & 255 >= 0 && (self.frame_count & 255) < 16 / 3 * 8 && (self.frame_count & 255) % (16 / 3) == 0 {
+        if (self.frame_count & 255) < 16 / 3 * 4 && (self.frame_count & 255) % (16 / 3) == 0 {
+            let flip_x = (self.frame_count & 256) != 0;
             if let Some(index) = self.find_slot() {
                 let pos = Vec2I::new(0, 0);
                 let enemy_type = EnemyType::Bee;
                 let mut enemy = Enemy::new(enemy_type, pos, 0, 0);
-                enemy.set_command_table(&COMMAND_TABLE1);
+
+                let traj = Traj::new(Some(&COMMAND_TABLE1), Vec2I::new(-8 * 256, 0), flip_x);
+                enemy.set_traj(traj);
+
+                self.enemies[index] = Some(enemy);
+            }
+            if let Some(index) = self.find_slot() {
+                let pos = Vec2I::new(0, 0);
+                let enemy_type = EnemyType::Butterfly;
+                let mut enemy = Enemy::new(enemy_type, pos, 0, 0);
+
+                let traj = Traj::new(Some(&COMMAND_TABLE1), Vec2I::new(8 * 256, 0), flip_x);
+                enemy.set_traj(traj);
+
                 self.enemies[index] = Some(enemy);
             }
         }

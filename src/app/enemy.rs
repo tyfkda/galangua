@@ -4,8 +4,8 @@ use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
 use super::collision::{CollBox, Collidable};
-use super::enemy_command::EnemyCommand;
 use super::event_queue::EventQueue;
+use super::traj::Traj;
 use super::super::util::types::Vec2I;
 use super::super::util::math::{SIN_TABLE, COS_TABLE};
 
@@ -32,8 +32,7 @@ pub struct Enemy {
 
     enemy_type: EnemyType,
     life: u32,
-    command_table: Option<&'static [EnemyCommand]>,
-    command_delay: u32,
+    traj: Option<Traj>,
 }
 
 impl Enemy {
@@ -52,8 +51,7 @@ impl Enemy {
             speed,
             vangle: 0,
             formation_index: 255,  // Dummy
-            command_table: None,
-            command_delay: 0,
+            traj: None,
         }
     }
 
@@ -63,7 +61,7 @@ impl Enemy {
 
     pub fn update(&mut self, _event_queue: &mut EventQueue) {
         if self.state == EnemyState::Flying {
-            self.handle_command();
+            self.update_traj();
 
             let (vx, vy) = calc_velocity(self.angle + self.vangle / 2, self.speed);
             self.angle += self.vangle;
@@ -106,61 +104,18 @@ impl Enemy {
         }
     }
 
-    pub fn set_command_table(&mut self, command_table: &'static [EnemyCommand]) {
-        self.command_table = Some(command_table);
+    pub fn set_traj(&mut self, traj: Traj) {
+        self.traj = Some(traj);
     }
 
-    fn handle_command(&mut self) {
-        if let Some(command_table) = self.command_table {
-            if self.command_delay > 0 {
-                self.command_delay -= 1;
-                return;
-            }
+    fn update_traj(&mut self) {
+        if let Some(traj) = &mut self.traj {
+            traj.update();
 
-            let mut i = 0;
-            while i < command_table.len() {
-                let command = command_table[i];
-                i += 1;
-                match command {
-                    EnemyCommand::Pos(x, y) => {
-                        self.pos = Vec2I::new(x, y);
-                    },
-                    EnemyCommand::Speed(speed) => {
-                        self.speed = speed;
-                    },
-                    EnemyCommand::Angle(angle) => {
-                        self.angle = angle;
-                    },
-                    EnemyCommand::VAngle(vangle) => {
-                        self.vangle = vangle;
-                    },
-                    EnemyCommand::Delay(delay) => {
-                        self.command_delay = delay;
-                        break;
-                    },
-                    EnemyCommand::DestAngle(dest_angle, radius) => {
-                        let distance = 2.0 * std::f64::consts::PI * (radius as f64) / 256.0;  // 半径radiusの円周
-                        let frame = distance * 256.0 / (self.speed as f64);  // 速度speedで動いたときにかかるフレーム数[frame]
-                        let dangle = (2.0 * std::f64::consts::PI) / frame;  // １フレームあたりに変化させるべき角度[rad]
-
-                        let vangle = dangle * (256.0 * 256.0 / (2.0 * std::f64::consts::PI));
-                        if dest_angle > self.angle {
-                            self.vangle = vangle.round() as i32;
-                            self.command_delay = (((dest_angle - self.angle) as f64) / vangle).round() as u32;
-                        } else {
-                            self.vangle = -vangle.round() as i32;
-                            self.command_delay = (((self.angle - dest_angle) as f64) / vangle).round() as u32;
-                        }
-                        break;
-                    },
-                }
-            }
-
-            if i < command_table.len() {
-                self.command_table = Some(&command_table[i .. command_table.len()]);
-            } else {
-                self.command_table = None;
-            }
+            self.pos = traj.pos();
+            self.angle = traj.angle();
+            self.speed = traj.speed;
+            self.vangle = traj.vangle;
         }
     }
 }
