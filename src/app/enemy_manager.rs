@@ -110,23 +110,14 @@ impl EnemyManager {
             enemy.formation_index = i;
             self.enemies[i] = Some(enemy);
         }
-
-
-        if let Some(index) = self.find_slot() {
-            let pos = Vec2I::new(0, 0);
-            let enemy_type = EnemyType::Bee;
-            let mut enemy = Enemy::new(enemy_type, pos, 0, 0);
-            enemy.set_command_table(&COMMAND_TABLE1);
-            self.enemies[index] = Some(enemy);
-        }
     }
 
     pub fn update(&mut self, player_pos: &[Option<Vec2I>], event_queue: &mut EventQueue) {
-        self.frame_count += 1;
         self.spawn_with_time(player_pos);
         self.update_formation();
         self.update_enemies(event_queue);
         self.update_shots(event_queue);
+        self.frame_count += 1;
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &mut Texture) -> Result<(), String> {
@@ -189,6 +180,18 @@ impl EnemyManager {
                 self.spawn_shot(&pos, &player_pos, 3 * 256);
             }
         }
+
+
+        if self.frame_count & 255 >= 0 && (self.frame_count & 255) < 16 / 3 * 8 && (self.frame_count & 255) % (16 / 3) == 0 {
+            if let Some(index) = self.find_slot() {
+                let pos = Vec2I::new(0, 0);
+                let enemy_type = EnemyType::Bee;
+                let mut enemy = Enemy::new(enemy_type, pos, 0, 0);
+                enemy.set_command_table(&COMMAND_TABLE1);
+                self.enemies[index] = Some(enemy);
+            }
+        }
+
     }
 
     fn update_formation(&mut self) {

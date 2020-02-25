@@ -5,4 +5,5 @@ pub enum EnemyCommand {
     Angle(i32),
     VAngle(i32),
     Delay(u32),
+    DestAngle(i32, u32),
 }

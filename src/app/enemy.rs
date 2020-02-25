@@ -138,6 +138,21 @@ impl Enemy {
                         self.command_delay = delay;
                         break;
                     },
+                    EnemyCommand::DestAngle(dest_angle, radius) => {
+                        let distance = 2.0 * std::f64::consts::PI * (radius as f64) / 256.0;  // 半径radiusの円周
+                        let frame = distance * 256.0 / (self.speed as f64);  // 速度speedで動いたときにかかるフレーム数[frame]
+                        let dangle = (2.0 * std::f64::consts::PI) / frame;  // １フレームあたりに変化させるべき角度[rad]
+
+                        let vangle = dangle * (256.0 * 256.0 / (2.0 * std::f64::consts::PI));
+                        if dest_angle > self.angle {
+                            self.vangle = vangle.round() as i32;
+                            self.command_delay = (((dest_angle - self.angle) as f64) / vangle).round() as u32;
+                        } else {
+                            self.vangle = -vangle.round() as i32;
+                            self.command_delay = (((self.angle - dest_angle) as f64) / vangle).round() as u32;
+                        }
+                        break;
+                    },
                 }
             }
 

@@ -10,7 +10,7 @@ pub const COMMAND_TABLE1: [EnemyCommand; 12] = [
     EnemyCommand::Delay(5),
     EnemyCommand::VAngle(0),
     EnemyCommand::Delay(30),
-    EnemyCommand::VAngle(-3 * 256),
-    EnemyCommand::Delay(45),
+    EnemyCommand::DestAngle(0 * 256, 30 * 256),
     EnemyCommand::VAngle(0),
+    EnemyCommand::Angle(0 * 256),
 ];
