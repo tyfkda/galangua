@@ -110,10 +110,10 @@ impl Collidable for Enemy {
 }
 
 fn calc_velocity(angle: i32, speed: i32) -> (i32, i32) {
-    let a: usize = (((angle + 128) / 256) & 255) as usize;
+    let a: usize = (((angle + 128) & (255 * 256)) / 256) as usize;
     let cs = COS_TABLE[a];
     let sn = SIN_TABLE[a];
-    (cs * speed / 256, sn * speed / 256)
+    (sn * speed / 256, -cs * speed / 256)
 }
 
 fn calc_display_angle(angle: i32) -> f64 {
@@ -121,7 +121,7 @@ fn calc_display_angle(angle: i32) -> f64 {
 
     // Quantize.
     let div = 16;
-    let angle = (angle + 256 * 256 / div / 2 + 64 * 256) & (256 * 256 - (256 * 256 / div));
+    let angle = (angle + 256 * 256 / div / 2) & (256 * 256 - (256 * 256 / div));
     let angle: f64 = (angle as f64) * (360.0 / (256.0 * 256.0));
 
     angle

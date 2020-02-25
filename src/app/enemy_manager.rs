@@ -99,7 +99,7 @@ impl EnemyManager {
             *slot = None;
         }
 
-        let angle = (256 * 3 / 4) * 256;
+        let angle = 0 * 256;
         let speed = 0;
         for i in 0..ENEMY_BASE_POS_TABLE.len() {
             let pos = ENEMY_BASE_POS_TABLE[i];
@@ -168,7 +168,7 @@ impl EnemyManager {
                 _ => EnemyType::Bee,
             };
             let x = rng.gen_range(0 + 8, 224 - 8);
-            let angle = rng.gen_range(32, 96) * 256;
+            let angle = rng.gen_range(96, 160) * 256;
             let speed = rng.gen_range(2 * 256, 4 * 256);
             if let Some(index) = self.find_slot() {
                 let pos = Vec2I::new(x * 256, -8 * 256);
