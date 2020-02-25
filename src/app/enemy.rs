@@ -57,8 +57,8 @@ impl Enemy {
 
     pub fn update(&mut self, _event_queue: &mut EventQueue) {
         if self.state == EnemyState::Flying {
+            let (vx, vy) = calc_velocity(self.angle + self.vangle / 2, self.speed);
             self.angle += self.vangle;
-            let (vx, vy) = calc_velocity(self.angle, self.speed);
 
             self.pos.x += vx;
             self.pos.y += vy;
@@ -121,8 +121,8 @@ fn calc_display_angle(angle: i32) -> f64 {
 
     // Quantize.
     let div = 16;
-    let angle = (((angle + 256 * 256 / div / 2) / (256 * 256 / div)) & (div - 1)) + div / 4;
-    let angle: f64 = (angle as f64) * (360.0 / (div as f64));
+    let angle = (angle + 256 * 256 / div / 2 + 64 * 256) & (256 * 256 - (256 * 256 / div));
+    let angle: f64 = (angle as f64) * (360.0 / (256.0 * 256.0));
 
     angle
 }
