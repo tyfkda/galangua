@@ -35,6 +35,8 @@ pub struct GameManager {
     score: u32,
     high_score: u32,
     frame_count: u32,
+
+    paused: bool,
 }
 
 impl GameManager {
@@ -51,6 +53,8 @@ impl GameManager {
             score: 0,
             high_score: 1000,  //20_000,
             frame_count: 0,
+
+            paused: false,
         }
     }
 
@@ -78,10 +82,18 @@ impl GameManager {
             if pad.is_trigger(PAD_START) {
                 self.restart();
             }
+        } else {
+            if pad.is_trigger(PAD_START) {
+                self.paused = !self.paused;
+            }
         }
     }
 
     fn update_common(&mut self, pad: &Pad) {
+        if self.paused {
+            return;
+        }
+
         self.frame_count += 1;
         self.star_manager.update();
 
