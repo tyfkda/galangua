@@ -4,13 +4,13 @@ use rand::Rng;
 use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
-use super::collision::{CollisionResult, CollBox, Collidable};
 use super::enemy::{Enemy, EnemyType, EnemyState};
 use super::ene_shot::EneShot;
-use super::event_queue::EventQueue;
 use super::traj::Traj;
 use super::traj_command_table::*;
-use super::super::util::types::Vec2I;
+use super::super::util::{CollisionResult, CollBox, Collidable};
+use super::super::game::EventQueue;
+use super::super::super::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 64;
 const MAX_SHOT_COUNT: usize = 16;

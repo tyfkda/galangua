@@ -3,8 +3,8 @@ extern crate sdl2;
 use sdl2::keyboard::Keycode;
 use sdl2::render::WindowCanvas;
 
-use super::draw_util::draw_str;
-use super::game_manager::GameManager;
+use super::game::GameManager;
+use super::util::draw_str;
 use super::super::framework::{App, SdlAppFramework};
 use super::super::framework::texture_manager::TextureManager;
 use super::super::util::fps_calc::FpsCalc;

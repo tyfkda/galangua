@@ -5,7 +5,7 @@ use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
-use super::super::util::types::Vec2I;
+use super::super::super::util::types::Vec2I;
 
 const STAR_COUNT: usize = 128;
 

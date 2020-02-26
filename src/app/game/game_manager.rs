@@ -3,17 +3,17 @@ extern crate sdl2;
 use rand::Rng;
 use sdl2::render::WindowCanvas;
 
-use super::collision::{CollisionResult, CollBox, Collidable};
-use super::draw_util::draw_str;
-use super::effect::{Effect, EarnedPoint, EarnedPointType, SmallBomb};
-use super::enemy_manager::EnemyManager;
 use super::event_queue::{EventQueue, EventType};
-use super::myshot::MyShot;
-use super::player::Player;
-use super::star_manager::StarManager;
-use super::super::framework::texture_manager::TextureManager;
-use super::super::util::pad::{Pad, PAD_START};
-use super::super::util::types::Vec2I;
+use super::super::effect::{Effect, EarnedPoint, EarnedPointType, SmallBomb};
+use super::super::effect::StarManager;
+use super::super::enemy::EnemyManager;
+use super::super::player::MyShot;
+use super::super::player::Player;
+use super::super::util::{CollisionResult, CollBox, Collidable};
+use super::super::util::draw_str;
+use super::super::super::framework::texture_manager::TextureManager;
+use super::super::super::util::pad::{Pad, PAD_START};
+use super::super::super::util::types::Vec2I;
 
 const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;

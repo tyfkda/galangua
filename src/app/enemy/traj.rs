@@ -1,6 +1,6 @@
 use super::traj_command::TrajCommand;
-use super::super::util::types::Vec2I;
-use super::super::util::math::{SIN_TABLE, COS_TABLE};
+use super::super::super::util::types::Vec2I;
+use super::super::super::util::math::{SIN_TABLE, COS_TABLE};
 
 // Trajectory
 pub struct Traj {

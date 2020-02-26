@@ -3,10 +3,10 @@ extern crate sdl2;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
-use super::collision::{CollBox, Collidable};
-use super::event_queue::EventQueue;
-use super::super::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
-use super::super::util::types::Vec2I;
+use super::super::game::EventQueue;
+use super::super::util::{CollBox, Collidable};
+use super::super::super::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
+use super::super::super::util::types::Vec2I;
 
 #[derive(PartialEq)]
 enum State {

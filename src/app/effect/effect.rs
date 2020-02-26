@@ -4,7 +4,7 @@ use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 use std::cmp::min;
 
-use super::super::util::types::Vec2I;
+use super::super::super::util::types::Vec2I;
 
 pub enum Effect {
     EarnedPoint(EarnedPoint),
