@@ -10,5 +10,8 @@ mod garaga_app;
 mod myshot;
 mod player;
 mod star_manager;
+mod traj;
+mod traj_command;
+mod traj_command_table;
 
 pub use self::garaga_app::GaragaApp;

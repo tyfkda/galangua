@@ -5,6 +5,7 @@ use sdl2::render::{Texture, WindowCanvas};
 
 use super::collision::{CollBox, Collidable};
 use super::event_queue::EventQueue;
+use super::traj::Traj;
 use super::super::util::types::Vec2I;
 use super::super::util::math::{SIN_TABLE, COS_TABLE};
 
@@ -22,14 +23,16 @@ pub enum EnemyState {
 }
 
 pub struct Enemy {
-    enemy_type: EnemyType,
     pub state: EnemyState,
-    life: u32,
     pub pos: Vec2I,
     pub angle: i32,
     pub speed: i32,
     pub vangle: i32,
     pub formation_index: usize,
+
+    enemy_type: EnemyType,
+    life: u32,
+    traj: Option<Traj>,
 }
 
 impl Enemy {
@@ -48,6 +51,7 @@ impl Enemy {
             speed,
             vangle: 0,
             formation_index: 255,  // Dummy
+            traj: None,
         }
     }
 
@@ -57,6 +61,8 @@ impl Enemy {
 
     pub fn update(&mut self, _event_queue: &mut EventQueue) {
         if self.state == EnemyState::Flying {
+            self.update_traj();
+
             let (vx, vy) = calc_velocity(self.angle + self.vangle / 2, self.speed);
             self.angle += self.vangle;
 
@@ -95,6 +101,21 @@ impl Enemy {
         } else {
             self.life = 0;
             true
+        }
+    }
+
+    pub fn set_traj(&mut self, traj: Traj) {
+        self.traj = Some(traj);
+    }
+
+    fn update_traj(&mut self) {
+        if let Some(traj) = &mut self.traj {
+            traj.update();
+
+            self.pos = traj.pos();
+            self.angle = traj.angle();
+            self.speed = traj.speed;
+            self.vangle = traj.vangle;
         }
     }
 }

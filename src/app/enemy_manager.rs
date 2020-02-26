@@ -8,6 +8,8 @@ use super::collision::{CollisionResult, CollBox, Collidable};
 use super::enemy::{Enemy, EnemyType, EnemyState};
 use super::ene_shot::EneShot;
 use super::event_queue::EventQueue;
+use super::traj::Traj;
+use super::traj_command_table::*;
 use super::super::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 64;
@@ -112,11 +114,11 @@ impl EnemyManager {
     }
 
     pub fn update(&mut self, player_pos: &[Option<Vec2I>], event_queue: &mut EventQueue) {
-        self.frame_count += 1;
         self.spawn_with_time(player_pos);
         self.update_formation();
         self.update_enemies(event_queue);
         self.update_shots(event_queue);
+        self.frame_count += 1;
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &mut Texture) -> Result<(), String> {
@@ -179,6 +181,32 @@ impl EnemyManager {
                 self.spawn_shot(&pos, &player_pos, 3 * 256);
             }
         }
+
+
+        if (self.frame_count & 255) < 16 / 3 * 4 && (self.frame_count & 255) % (16 / 3) == 0 {
+            let flip_x = (self.frame_count & 256) != 0;
+            if let Some(index) = self.find_slot() {
+                let pos = Vec2I::new(0, 0);
+                let enemy_type = EnemyType::Bee;
+                let mut enemy = Enemy::new(enemy_type, pos, 0, 0);
+
+                let traj = Traj::new(Some(&COMMAND_TABLE1), Vec2I::new(-8 * 256, 0), flip_x);
+                enemy.set_traj(traj);
+
+                self.enemies[index] = Some(enemy);
+            }
+            if let Some(index) = self.find_slot() {
+                let pos = Vec2I::new(0, 0);
+                let enemy_type = EnemyType::Butterfly;
+                let mut enemy = Enemy::new(enemy_type, pos, 0, 0);
+
+                let traj = Traj::new(Some(&COMMAND_TABLE1), Vec2I::new(8 * 256, 0), flip_x);
+                enemy.set_traj(traj);
+
+                self.enemies[index] = Some(enemy);
+            }
+        }
+
     }
 
     fn update_formation(&mut self) {
