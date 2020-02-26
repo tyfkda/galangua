@@ -6,6 +6,7 @@ use std::mem::MaybeUninit;
 
 use super::enemy::{Enemy, EnemyType, EnemyState};
 use super::ene_shot::EneShot;
+use super::formation::Formation;
 use super::traj::Traj;
 use super::traj_command_table::*;
 use super::super::util::{CollisionResult, CollBox, Collidable};
@@ -17,57 +18,30 @@ const MAX_SHOT_COUNT: usize = 16;
 
 const ENEMY_COUNT: usize = 40;
 
-#[derive(Copy, Clone, PartialEq)]
-enum MovingPat {
-    Slide,
-    Scale,
-}
-
 lazy_static! {
-    static ref ENEMY_BASE_POS_TABLE: [Vec2I; ENEMY_COUNT] = {
-        let count_table = [4, 8, 8, 10, 10];
-        let cx = 224 / 2;
-        let by = 32 + 8;
-        let w = 16;
-        let h = 16;
-        let mut buf: [MaybeUninit<Vec2I>; ENEMY_COUNT] = unsafe { MaybeUninit::uninit().assume_init() };
-
-        let mut index = 0;
-        for i in 0..count_table.len() {
-            let count = count_table[i];
-            let y = by + (i as i32) * h;
-            for j in 0..count {
-                let x = cx - (count - 1) * w / 2 + j * w;
-                buf[index] = MaybeUninit::new(Vec2I::new(x * 256, y * 256));
-                index += 1;
-            }
-        }
-        unsafe { std::mem::transmute::<_, [Vec2I; ENEMY_COUNT]>(buf) }
-    };
-    static ref ENEMY_TYPE_TABLE: [EnemyType; ENEMY_COUNT] = {
+    static ref ENEMY_TYPE_TABLE: [(EnemyType, usize); ENEMY_COUNT] = {
         let count_table = [4, 8, 8, 10, 10];
         let type_table = [EnemyType::Owl, EnemyType::Butterfly, EnemyType::Butterfly, EnemyType::Bee, EnemyType::Bee];
-        let mut buf: [MaybeUninit<EnemyType>; ENEMY_COUNT] = unsafe { MaybeUninit::uninit().assume_init() };
+        let mut buf: [MaybeUninit<(EnemyType, usize)>; ENEMY_COUNT] = unsafe { MaybeUninit::uninit().assume_init() };
 
         let mut index = 0;
         for i in 0..count_table.len() {
             let enemy_type = type_table[i];
             let count = count_table[i];
-            for _ in 0..count {
-                buf[index] = MaybeUninit::new(enemy_type);
+            for j in 0..count {
+                buf[index] = MaybeUninit::new((enemy_type, i * 16 + (10 - count) / 2 + j));
                 index += 1;
             }
         }
-        unsafe { std::mem::transmute::<_, [EnemyType; ENEMY_COUNT]>(buf) }
+        unsafe { std::mem::transmute::<_, [(EnemyType, usize); ENEMY_COUNT]>(buf) }
     };
 }
 
 pub struct EnemyManager {
     enemies: [Option<Enemy>; MAX_ENEMY_COUNT],
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
+    formation: Formation,
     frame_count: u32,
-    moving_pat: MovingPat,
-    moving_count: u32,
 }
 
 impl EnemyManager {
@@ -81,9 +55,8 @@ impl EnemyManager {
         let mut mgr = EnemyManager {
             enemies: enemies,
             shots: Default::default(),
+            formation: Formation::new(),
             frame_count: 0,
-            moving_pat: MovingPat::Slide,
-            moving_count: 0,
         };
         mgr.restart();
         mgr
@@ -91,8 +64,6 @@ impl EnemyManager {
 
     pub fn restart(&mut self) {
         self.frame_count = 0;
-        self.moving_pat = MovingPat::Slide;
-        self.moving_count = 0;
 
         for slot in self.enemies.iter_mut() {
             *slot = None;
@@ -101,16 +72,20 @@ impl EnemyManager {
             *slot = None;
         }
 
+        self.formation.restart();
+
         let angle = 0 * 256;
         let speed = 0;
-        for i in 0..ENEMY_BASE_POS_TABLE.len() {
-            let pos = ENEMY_BASE_POS_TABLE[i];
-            let enemy_type = ENEMY_TYPE_TABLE[i];
+        for i in 0..ENEMY_TYPE_TABLE.len() {
+            let (enemy_type, index) = ENEMY_TYPE_TABLE[i];
+            let pos = Vec2I::new(0, 0);
             let mut enemy = Enemy::new(enemy_type, pos, angle, speed);
             enemy.state = EnemyState::Formation;
-            enemy.formation_index = i;
+            enemy.formation_index = index;
             self.enemies[i] = Some(enemy);
         }
+
+        self.copy_formation_positions();
     }
 
     pub fn update(&mut self, player_pos: &[Option<Vec2I>], event_queue: &mut EventQueue) {
@@ -206,52 +181,19 @@ impl EnemyManager {
                 self.enemies[index] = Some(enemy);
             }
         }
-
     }
 
     fn update_formation(&mut self) {
-        match self.moving_pat {
-            MovingPat::Slide => self.update_formation_slide(),
-            MovingPat::Scale => self.update_formation_scale(),
-        }
+        self.formation.update();
+        self.copy_formation_positions();
     }
 
-    fn update_formation_slide(&mut self) {
-        let t = (self.moving_count as i32 + 64) & 255;
-        let dx = 256 / 2;
-
+    fn copy_formation_positions(&mut self) {
         for enemy in self.enemies.iter_mut().flat_map(|x| x).filter(|x| x.state == EnemyState::Formation) {
-            if t < 128 {
-                enemy.pos = Vec2I::new(enemy.pos.x + dx, enemy.pos.y);
-            } else {
-                enemy.pos = Vec2I::new(enemy.pos.x - dx, enemy.pos.y);
-            }
+            let index = enemy.formation_index as usize;
+            let pos = self.formation.pos(index & 15, index / 16);
+            enemy.pos = pos;
         }
-
-        self.moving_count += 1;
-        if (self.moving_count & 255) == 0 {
-            self.moving_pat = MovingPat::Scale;
-            self.moving_count = 0;
-        }
-    }
-
-    fn update_formation_scale(&mut self) {
-        let t = (self.moving_count as i32) & 255;
-        let bx = 224 / 2 * 256;
-        let by = (32 + 8) * 256;
-
-        for enemy in self.enemies.iter_mut().flat_map(|x| x).filter(|x| x.state == EnemyState::Formation) {
-            let pos = ENEMY_BASE_POS_TABLE[enemy.formation_index];
-            let dx = (pos.x - bx) * 2 * 16 / (5 * 16 * 128);
-            let dy = (pos.y - by) * 2 * 16 / (5 * 16 * 128);
-            if t < 128 {
-                enemy.pos = Vec2I::new(enemy.pos.x + dx, enemy.pos.y + dy);
-            } else {
-                enemy.pos = Vec2I::new(enemy.pos.x - dx, enemy.pos.y - dy);
-            }
-        }
-
-        self.moving_count += 1;
     }
 
     fn update_enemies(&mut self, event_queue: &mut EventQueue) {
