@@ -6,9 +6,7 @@ const Y_COUNT: usize = 5;
 lazy_static! {
     static ref BASE_X_TABLE: [i32; X_COUNT] = {
         let cx = 224 / 2;
-        //let by = 32 + 8;
         let w = 16;
-        //let h = 16;
 
         let mut table: [i32; X_COUNT] = Default::default();
         for j in 0..X_COUNT {
@@ -18,9 +16,7 @@ lazy_static! {
         table
     };
     static ref BASE_Y_TABLE: [i32; Y_COUNT] = {
-        //let cx = 224 / 2;
         let by = 32 + 8;
-        //let w = 16;
         let h = 16;
 
         let mut table: [i32; Y_COUNT] = Default::default();

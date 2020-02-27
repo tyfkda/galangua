@@ -3,7 +3,7 @@ use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
 use super::AppearanceManager;
-use super::enemy::{Enemy, EnemyType, EnemyState};
+use super::enemy::{Enemy, EnemyState};
 use super::ene_shot::EneShot;
 use super::formation::Formation;
 use super::super::util::{CollisionResult, CollBox, Collidable};
@@ -11,27 +11,6 @@ use super::super::super::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 64;
 const MAX_SHOT_COUNT: usize = 16;
-
-const ENEMY_COUNT: usize = 40;
-
-lazy_static! {
-    static ref ENEMY_TYPE_TABLE: [(EnemyType, usize); ENEMY_COUNT] = {
-        let count_table = [4, 8, 8, 10, 10];
-        let type_table = [EnemyType::Owl, EnemyType::Butterfly, EnemyType::Butterfly, EnemyType::Bee, EnemyType::Bee];
-        let mut buf: [MaybeUninit<(EnemyType, usize)>; ENEMY_COUNT] = unsafe { MaybeUninit::uninit().assume_init() };
-
-        let mut index = 0;
-        for i in 0..count_table.len() {
-            let enemy_type = type_table[i];
-            let count = count_table[i];
-            for j in 0..count {
-                buf[index] = MaybeUninit::new((enemy_type, i * 16 + (10 - count) / 2 + j));
-                index += 1;
-            }
-        }
-        unsafe { std::mem::transmute::<_, [(EnemyType, usize); ENEMY_COUNT]>(buf) }
-    };
-}
 
 pub struct EnemyManager {
     enemies: [Option<Enemy>; MAX_ENEMY_COUNT],
@@ -68,21 +47,6 @@ impl EnemyManager {
 
         self.appearance_manager = AppearanceManager::new();
         self.formation.restart();
-
-        /*
-        let angle = 0 * 256;
-        let speed = 0;
-        for i in 0..ENEMY_TYPE_TABLE.len() {
-            let (enemy_type, index) = ENEMY_TYPE_TABLE[i];
-            let pos = Vec2I::new(0, 0);
-            let mut enemy = Enemy::new(enemy_type, pos, angle, speed);
-            enemy.state = EnemyState::Formation;
-            enemy.formation_index = index;
-            self.enemies[i] = Some(enemy);
-        }
-
-        self.copy_formation_positions();
-         */
     }
 
     pub fn spawn(&mut self, enemy: Enemy) -> bool {
