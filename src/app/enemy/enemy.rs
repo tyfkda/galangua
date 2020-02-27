@@ -3,11 +3,11 @@ extern crate sdl2;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
+use super::formation::Formation;
 use super::traj::Traj;
 use super::super::util::{CollBox, Collidable};
-use super::super::game::EventQueue;
 use super::super::super::util::types::Vec2I;
-use super::super::super::util::math::{SIN_TABLE, COS_TABLE};
+use super::super::super::util::math::{calc_velocity, clamp, diff_angle};
 
 #[derive(Copy, Clone)]
 pub enum EnemyType {
@@ -19,6 +19,8 @@ pub enum EnemyType {
 #[derive(Copy, Clone, PartialEq)]
 pub enum EnemyState {
     Flying,
+    Trajectory,
+    MoveToFormation,
     Formation,
 }
 
@@ -59,16 +61,48 @@ impl Enemy {
         Vec2I::new((self.pos.x + 128) / 256, (self.pos.y + 128) / 256)
     }
 
-    pub fn update(&mut self, _event_queue: &mut EventQueue) {
-        if self.state == EnemyState::Flying {
-            self.update_traj();
-
-            let (vx, vy) = calc_velocity(self.angle + self.vangle / 2, self.speed);
-            self.angle += self.vangle;
-
-            self.pos.x += vx;
-            self.pos.y += vy;
+    pub fn update(&mut self, formation: &Formation) {
+        if self.state == EnemyState::Formation {
+            return;
         }
+
+        match self.state {
+            EnemyState::Flying => {},
+            EnemyState::Trajectory => {
+                let cont = self.update_traj();
+                if !cont {
+                    self.state = EnemyState::MoveToFormation;
+                }
+            },
+            EnemyState::MoveToFormation => {
+                let ix = self.formation_index & 15;
+                let iy = self.formation_index / 16;
+                let target = formation.pos(ix, iy);
+                let dpos = Vec2I::new(target.x - self.pos.x, target.y - self.pos.y);
+
+                let distance = ((dpos.x as f64).powi(2) + (dpos.y as f64).powi(2)).sqrt();
+                if distance > self.speed as f64 {
+                    let dlimit = 3 * 256;
+                    let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
+                    let target_angle = ((target_angle_rad * ((256.0 * 256.0) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (256 * 256 - 1);
+                    let d = diff_angle(target_angle, self.angle);
+                    self.angle += clamp(d, -dlimit, dlimit);
+                    self.vangle = 0;
+                } else {
+                    self.pos = target;
+                    self.speed = 0;
+                    self.angle = 0;
+                    self.state = EnemyState::Formation;
+                }
+            },
+            _ => {},
+        }
+
+        let (vx, vy) = calc_velocity(self.angle + self.vangle / 2, self.speed);
+        self.angle += self.vangle;
+
+        self.pos.x += vx;
+        self.pos.y += vy;
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
@@ -106,16 +140,21 @@ impl Enemy {
 
     pub fn set_traj(&mut self, traj: Traj) {
         self.traj = Some(traj);
+        self.state = EnemyState::Trajectory;
     }
 
-    fn update_traj(&mut self) {
+    fn update_traj(&mut self) -> bool {
         if let Some(traj) = &mut self.traj {
-            traj.update();
+            let cont = traj.update();
 
             self.pos = traj.pos();
             self.angle = traj.angle();
             self.speed = traj.speed;
             self.vangle = traj.vangle;
+
+            cont
+        } else {
+            false
         }
     }
 }
@@ -128,13 +167,6 @@ impl Collidable for Enemy {
             size: Vec2I::new(12, 12),
         }
     }
-}
-
-fn calc_velocity(angle: i32, speed: i32) -> (i32, i32) {
-    let a: usize = (((angle + 128) & (255 * 256)) / 256) as usize;
-    let cs = COS_TABLE[a];
-    let sn = SIN_TABLE[a];
-    (sn * speed / 256, -cs * speed / 256)
 }
 
 fn calc_display_angle(angle: i32) -> f64 {

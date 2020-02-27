@@ -1,6 +1,6 @@
 use super::traj_command::TrajCommand;
 use super::super::super::util::types::Vec2I;
-use super::super::super::util::math::{SIN_TABLE, COS_TABLE};
+use super::super::super::util::math::{SIN_TABLE, COS_TABLE, calc_velocity};
 
 // Trajectory
 pub struct Traj {
@@ -50,7 +50,7 @@ impl Traj {
         }
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self) -> bool {
         self.handle_command();
 
         let (vx, vy) = calc_velocity(self.angle + self.vangle / 2, self.speed);
@@ -58,6 +58,8 @@ impl Traj {
 
         self.pos.x += vx;
         self.pos.y += vy;
+
+        self.command_table.is_some()
     }
 
     fn handle_command(&mut self) {
@@ -113,11 +115,4 @@ impl Traj {
             }
         }
     }
-}
-
-fn calc_velocity(angle: i32, speed: i32) -> (i32, i32) {
-    let a: usize = (((angle + 128) & (255 * 256)) / 256) as usize;
-    let cs = COS_TABLE[a];
-    let sn = SIN_TABLE[a];
-    (sn * speed / 256, -cs * speed / 256)
 }

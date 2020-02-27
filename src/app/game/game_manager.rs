@@ -97,7 +97,7 @@ impl GameManager {
             Some(self.player.pos()),
             self.player.dual_pos(),
         ];
-        self.enemy_manager.update(&player_pos, &mut self.event_queue);
+        self.enemy_manager.update(&player_pos);
 
         // For MyShot.
         self.handle_event_queue();
