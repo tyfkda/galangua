@@ -45,21 +45,16 @@ impl EnemyManager {
             *slot = None;
         }
 
+        self.start_next_stage();
+    }
+
+    pub fn start_next_stage(&mut self) {
         self.appearance_manager = AppearanceManager::new();
         self.formation.restart();
     }
 
-    pub fn spawn(&mut self, enemy: Enemy) -> bool {
-        if let Some(index) = self.find_slot() {
-            self.enemies[index] = Some(enemy);
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn done_appearance(&mut self) {
-        self.formation.done_appearance();
+    pub fn all_destroyed(&self) -> bool {
+        self.appearance_manager.done && self.enemies.iter().all(|x| x.is_none())
     }
 
     pub fn update(&mut self, _player_pos: &[Option<Vec2I>]) {
@@ -117,7 +112,16 @@ impl EnemyManager {
             }
         }
         if !prev_done && self.appearance_manager.done {
-            self.done_appearance();
+            self.formation.done_appearance();
+        }
+    }
+
+    fn spawn(&mut self, enemy: Enemy) -> bool {
+        if let Some(index) = self.find_slot() {
+            self.enemies[index] = Some(enemy);
+            true
+        } else {
+            false
         }
     }
 

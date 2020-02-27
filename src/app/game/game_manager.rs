@@ -111,6 +111,10 @@ impl GameManager {
         ];
         self.enemy_manager.update(&player_pos);
 
+        if self.enemy_manager.all_destroyed() {
+            self.enemy_manager.start_next_stage();
+        }
+
         // For MyShot.
         self.handle_event_queue();
 
