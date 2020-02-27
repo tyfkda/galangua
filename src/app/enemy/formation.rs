@@ -43,6 +43,7 @@ pub struct Formation {
     ytbl: [i32; Y_COUNT],
     moving_pat: MovingPat,
     moving_count: u32,
+    done_appearance: bool,
 }
 
 impl Formation {
@@ -52,6 +53,7 @@ impl Formation {
             ytbl: Default::default(),
             moving_pat: MovingPat::Slide,
             moving_count: 0,
+            done_appearance: false,
         };
         formation.restart();
         formation
@@ -67,6 +69,10 @@ impl Formation {
         for i in 0..Y_COUNT {
             self.ytbl[i] = BASE_Y_TABLE[i];
         }
+    }
+
+    pub fn done_appearance(&mut self) {
+        self.done_appearance = true;
     }
 
     pub fn update(&mut self) {
@@ -89,7 +95,7 @@ impl Formation {
         }
 
         self.moving_count += 1;
-        if (self.moving_count & 255) == 0 {
+        if self.done_appearance && (self.moving_count & 127) == 0 {
             self.moving_pat = MovingPat::Scale;
             self.moving_count = 0;
         }

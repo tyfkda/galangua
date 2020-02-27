@@ -6,6 +6,7 @@ use sdl2::render::WindowCanvas;
 use super::event_queue::{EventQueue, EventType};
 use super::super::effect::{Effect, EarnedPoint, EarnedPointType, SmallBomb};
 use super::super::effect::StarManager;
+use super::super::enemy::AppearanceManager;
 use super::super::enemy::EnemyManager;
 use super::super::player::MyShot;
 use super::super::player::Player;
@@ -29,6 +30,7 @@ pub struct GameManager {
     star_manager: StarManager,
     player: Player,
     myshots: [Option<MyShot>; MYSHOT_COUNT],
+    appearance_manager: AppearanceManager,
     enemy_manager: EnemyManager,
     effects: [Option<Effect>; MAX_EFFECT_COUNT],
     event_queue: EventQueue,
@@ -44,6 +46,7 @@ impl GameManager {
             star_manager: StarManager::new(),
             player: Player::new(),
             myshots: Default::default(),
+            appearance_manager: AppearanceManager::new(),
             enemy_manager: EnemyManager::new(),
             event_queue: EventQueue::new(),
             effects: Default::default(),
@@ -56,6 +59,7 @@ impl GameManager {
 
     fn restart(&mut self) {
         self.enemy_manager.restart();
+        self.appearance_manager = AppearanceManager::new();
         self.event_queue.clear();
         self.player = Player::new();
 
@@ -93,11 +97,15 @@ impl GameManager {
             }
         }
 
+        if self.appearance_manager.update(&mut self.enemy_manager) {
+            self.enemy_manager.done_appearance();
+        }
+
         let player_pos = [
             Some(self.player.pos()),
             self.player.dual_pos(),
         ];
-        self.enemy_manager.update(&player_pos, &mut self.event_queue);
+        self.enemy_manager.update(&player_pos);
 
         // For MyShot.
         self.handle_event_queue();

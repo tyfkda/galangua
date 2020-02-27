@@ -1,5 +1,3 @@
-extern crate sdl2;
-
 use rand::Rng;
 use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
@@ -7,10 +5,7 @@ use std::mem::MaybeUninit;
 use super::enemy::{Enemy, EnemyType, EnemyState};
 use super::ene_shot::EneShot;
 use super::formation::Formation;
-use super::traj::Traj;
-use super::traj_command_table::*;
 use super::super::util::{CollisionResult, CollBox, Collidable};
-use super::super::game::EventQueue;
 use super::super::super::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 64;
@@ -41,7 +36,6 @@ pub struct EnemyManager {
     enemies: [Option<Enemy>; MAX_ENEMY_COUNT],
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
     formation: Formation,
-    frame_count: u32,
 }
 
 impl EnemyManager {
@@ -56,15 +50,12 @@ impl EnemyManager {
             enemies: enemies,
             shots: Default::default(),
             formation: Formation::new(),
-            frame_count: 0,
         };
         mgr.restart();
         mgr
     }
 
     pub fn restart(&mut self) {
-        self.frame_count = 0;
-
         for slot in self.enemies.iter_mut() {
             *slot = None;
         }
@@ -74,6 +65,7 @@ impl EnemyManager {
 
         self.formation.restart();
 
+        /*
         let angle = 0 * 256;
         let speed = 0;
         for i in 0..ENEMY_TYPE_TABLE.len() {
@@ -86,14 +78,26 @@ impl EnemyManager {
         }
 
         self.copy_formation_positions();
+         */
     }
 
-    pub fn update(&mut self, player_pos: &[Option<Vec2I>], event_queue: &mut EventQueue) {
-        self.spawn_with_time(player_pos);
+    pub fn spawn(&mut self, enemy: Enemy) -> bool {
+        if let Some(index) = self.find_slot() {
+            self.enemies[index] = Some(enemy);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn done_appearance(&mut self) {
+        self.formation.done_appearance();
+    }
+
+    pub fn update(&mut self, _player_pos: &[Option<Vec2I>]) {
         self.update_formation();
-        self.update_enemies(event_queue);
-        self.update_shots(event_queue);
-        self.frame_count += 1;
+        self.update_enemies();
+        self.update_shots();
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &mut Texture) -> Result<(), String> {
@@ -136,53 +140,6 @@ impl EnemyManager {
         return CollisionResult::NoHit;
     }
 
-    fn spawn_with_time(&mut self, player_pos: &[Option<Vec2I>]) {
-        if self.frame_count % 25 == 0 {
-            let mut rng = rand::thread_rng();
-            let enemy_type = match rng.gen_range(0, 3) {
-                1 => EnemyType::Butterfly,
-                2 => EnemyType::Owl,
-                _ => EnemyType::Bee,
-            };
-            let x = rng.gen_range(0 + 8, 224 - 8);
-            let angle = rng.gen_range(96, 160) * 256;
-            let speed = rng.gen_range(2 * 256, 4 * 256);
-            if let Some(index) = self.find_slot() {
-                let pos = Vec2I::new(x * 256, -8 * 256);
-                let mut enemy = Enemy::new(enemy_type, pos, angle, speed);
-                enemy.vangle = rng.gen_range(-512, 512);
-                self.enemies[index] = Some(enemy);
-
-                self.spawn_shot(&pos, &player_pos, 3 * 256);
-            }
-        }
-
-
-        if (self.frame_count & 255) < 16 / 3 * 4 && (self.frame_count & 255) % (16 / 3) == 0 {
-            let flip_x = (self.frame_count & 256) != 0;
-            if let Some(index) = self.find_slot() {
-                let pos = Vec2I::new(0, 0);
-                let enemy_type = EnemyType::Bee;
-                let mut enemy = Enemy::new(enemy_type, pos, 0, 0);
-
-                let traj = Traj::new(Some(&COMMAND_TABLE1), Vec2I::new(-8 * 256, 0), flip_x);
-                enemy.set_traj(traj);
-
-                self.enemies[index] = Some(enemy);
-            }
-            if let Some(index) = self.find_slot() {
-                let pos = Vec2I::new(0, 0);
-                let enemy_type = EnemyType::Butterfly;
-                let mut enemy = Enemy::new(enemy_type, pos, 0, 0);
-
-                let traj = Traj::new(Some(&COMMAND_TABLE1), Vec2I::new(8 * 256, 0), flip_x);
-                enemy.set_traj(traj);
-
-                self.enemies[index] = Some(enemy);
-            }
-        }
-    }
-
     fn update_formation(&mut self) {
         self.formation.update();
         self.copy_formation_positions();
@@ -196,17 +153,17 @@ impl EnemyManager {
         }
     }
 
-    fn update_enemies(&mut self, event_queue: &mut EventQueue) {
+    fn update_enemies(&mut self) {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
-            enemy.update(event_queue);
+            enemy.update(&self.formation);
             if out_of_screen(enemy.pos()) {
                 *enemy_opt = None;
             }
         }
     }
 
-    fn update_shots(&mut self, _event_queue: &mut EventQueue) {
+    fn update_shots(&mut self) {
         for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
             let shot = shot_opt.as_mut().unwrap();
             shot.update();
