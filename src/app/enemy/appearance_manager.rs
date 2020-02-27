@@ -1,4 +1,3 @@
-use super::EnemyManager;
 use super::enemy::{Enemy, EnemyType};
 use super::traj::Traj;
 use super::traj_command_table::*;
@@ -25,7 +24,7 @@ pub struct AppearanceManager {
     wait: u32,
     unit: u32,
     count: u32,
-    done: bool,
+    pub done: bool,
 }
 
 impl AppearanceManager {
@@ -38,20 +37,21 @@ impl AppearanceManager {
         }
     }
 
-    pub fn update(&mut self, enemy_manager: &mut EnemyManager) -> bool {
+    pub fn update(&mut self) -> Option<Vec<Enemy>> {
         if self.done {
-            return false;
+            return None;
         }
 
-        self.update_main(enemy_manager)
+        self.update_main()
     }
 
-    fn update_main(&mut self, enemy_manager: &mut EnemyManager) -> bool {
+    fn update_main(&mut self) -> Option<Vec<Enemy>> {
         if self.wait > 0 {
             self.wait -= 1;
-            return false;
+            return None;
         }
 
+        let mut new_borns = Vec::new();
         let zero = Vec2I::new(0, 0);
         match self.unit {
             0 => {
@@ -66,7 +66,7 @@ impl AppearanceManager {
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
-                    enemy_manager.spawn(enemy);
+                    new_borns.push(enemy);
                 }
                 {
                     let i = ORDER[base + self.count as usize + 4];
@@ -77,7 +77,7 @@ impl AppearanceManager {
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
-                    enemy_manager.spawn(enemy);
+                    new_borns.push(enemy);
                 }
 
                 self.wait = 16 / 3;
@@ -100,7 +100,7 @@ impl AppearanceManager {
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
-                    enemy_manager.spawn(enemy);
+                    new_borns.push(enemy);
                 }
 
                 self.wait = 16 / 3;
@@ -123,7 +123,7 @@ impl AppearanceManager {
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
-                    enemy_manager.spawn(enemy);
+                    new_borns.push(enemy);
                 }
 
                 self.wait = 16 / 3;
@@ -145,7 +145,7 @@ impl AppearanceManager {
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
-                    enemy_manager.spawn(enemy);
+                    new_borns.push(enemy);
                 }
 
                 self.wait = 16 / 3;
@@ -167,7 +167,7 @@ impl AppearanceManager {
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
-                    enemy_manager.spawn(enemy);
+                    new_borns.push(enemy);
                 }
 
                 self.wait = 16 / 3;
@@ -180,9 +180,10 @@ impl AppearanceManager {
             },
             _ => {
                 self.done = true;
-                return true
+                return None
             },
         }
-        false
+
+        Some(new_borns)
     }
 }

@@ -2,6 +2,7 @@ use rand::Rng;
 use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
+use super::AppearanceManager;
 use super::enemy::{Enemy, EnemyType, EnemyState};
 use super::ene_shot::EneShot;
 use super::formation::Formation;
@@ -36,6 +37,7 @@ pub struct EnemyManager {
     enemies: [Option<Enemy>; MAX_ENEMY_COUNT],
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
     formation: Formation,
+    appearance_manager: AppearanceManager,
 }
 
 impl EnemyManager {
@@ -50,6 +52,7 @@ impl EnemyManager {
             enemies: enemies,
             shots: Default::default(),
             formation: Formation::new(),
+            appearance_manager: AppearanceManager::new(),
         };
         mgr.restart();
         mgr
@@ -63,6 +66,7 @@ impl EnemyManager {
             *slot = None;
         }
 
+        self.appearance_manager = AppearanceManager::new();
         self.formation.restart();
 
         /*
@@ -95,6 +99,7 @@ impl EnemyManager {
     }
 
     pub fn update(&mut self, _player_pos: &[Option<Vec2I>]) {
+        self.update_appearance();
         self.update_formation();
         self.update_enemies();
         self.update_shots();
@@ -138,6 +143,18 @@ impl EnemyManager {
         }
 
         return CollisionResult::NoHit;
+    }
+
+    fn update_appearance(&mut self) {
+        let prev_done = self.appearance_manager.done;
+        if let Some(new_borns) = self.appearance_manager.update() {
+            for enemy in new_borns {
+                self.spawn(enemy);
+            }
+        }
+        if !prev_done && self.appearance_manager.done {
+            self.done_appearance();
+        }
     }
 
     fn update_formation(&mut self) {
