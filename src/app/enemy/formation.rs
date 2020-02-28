@@ -1,3 +1,4 @@
+use super::super::consts::*;
 use super::super::super::util::types::Vec2I;
 
 const X_COUNT: usize = 10;
@@ -5,13 +6,13 @@ const Y_COUNT: usize = 5;
 
 lazy_static! {
     static ref BASE_X_TABLE: [i32; X_COUNT] = {
-        let cx = 224 / 2;
+        let cx = WIDTH / 2;
         let w = 16;
 
         let mut table: [i32; X_COUNT] = Default::default();
         for j in 0..X_COUNT {
             let x = cx - ((X_COUNT - 1) as i32) * w / 2 + (j as i32) * w;
-            table[j] = x * 256;
+            table[j] = x * ONE;
         }
         table
     };
@@ -22,7 +23,7 @@ lazy_static! {
         let mut table: [i32; Y_COUNT] = Default::default();
         for i in 0..Y_COUNT {
             let y = by + (i as i32) * h;
-            table[i] = y * 256;
+            table[i] = y * ONE;
         }
         table
     };
@@ -81,7 +82,7 @@ impl Formation {
 
     fn update_formation_slide(&mut self) {
         let t = (self.moving_count as i32 + 64) & 255;
-        let dx = 256 / 2;
+        let dx = ONE / 2;
 
         for i in 0..X_COUNT {
             if t < 128 {
@@ -100,12 +101,12 @@ impl Formation {
 
     fn update_formation_scale(&mut self) {
         let t = (self.moving_count as i32) & 255;
-        let bx = 224 / 2 * 256;
-        let by = (32 + 8) * 256;
+        let bx = WIDTH / 2 * ONE;
+        let by = (32 + 8) * ONE;
 
         for i in 0..X_COUNT {
             let pos_x = BASE_X_TABLE[i];
-            let dx = (pos_x - bx) * 2 * 16 / (5 * 16 * 128);
+            let dx = (pos_x - bx) * 2 * 16 / (5 * 16 * ONE / 2);
             if t < 128 {
                 self.xtbl[i] += dx;
             } else {
@@ -115,7 +116,7 @@ impl Formation {
 
         for i in 0..Y_COUNT {
             let pos_y = BASE_Y_TABLE[i];
-            let dy = (pos_y - by) * 2 * 16 / (5 * 16 * 128);
+            let dy = (pos_y - by) * 2 * 16 / (5 * 16 * ONE / 2);
             if t < 128 {
                 self.ytbl[i] += dy;
             } else {

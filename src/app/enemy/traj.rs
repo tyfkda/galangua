@@ -1,4 +1,5 @@
 use super::traj_command::TrajCommand;
+use super::super::consts::*;
 use super::super::super::util::types::Vec2I;
 use super::super::super::util::math::{SIN_TABLE, COS_TABLE, calc_velocity};
 
@@ -31,20 +32,20 @@ impl Traj {
     }
 
     pub fn pos(&self) -> Vec2I {
-        let a: usize = (((self.angle + 128) & (255 * 256)) / 256) as usize;
+        let a: usize = (((self.angle + ONE / 2) & ((ANGLE - 1) * ONE)) / ONE) as usize;
         let cs = COS_TABLE[a];
         let sn = SIN_TABLE[a];
-        let mut x = self.pos.x + (cs * self.offset.x + sn * self.offset.y) / 256;
-        let y = self.pos.y + (sn * self.offset.x - cs * self.offset.y) / 256;
+        let mut x = self.pos.x + (cs * self.offset.x + sn * self.offset.y) / ONE;
+        let y = self.pos.y + (sn * self.offset.x - cs * self.offset.y) / ONE;
         if self.flip_x {
-            x = 224 * 256 - x;
+            x = WIDTH * ONE - x;
         }
         Vec2I::new(x, y)
     }
 
     pub fn angle(&self) -> i32 {
         if self.flip_x {
-            -self.angle & (256 * 256 - 1)
+            -self.angle & (ANGLE * ONE - 1)
         } else {
             self.angle
         }
@@ -91,11 +92,11 @@ impl Traj {
                         break;
                     },
                     TrajCommand::DestAngle(dest_angle, radius) => {
-                        let distance = 2.0 * std::f64::consts::PI * (radius as f64) / 256.0;  // 半径radiusの円周
-                        let frame = distance * 256.0 / (self.speed as f64);  // 速度speedで動いたときにかかるフレーム数[frame]
+                        let distance = 2.0 * std::f64::consts::PI * (radius as f64) / (ONE as f64);  // 半径radiusの円周
+                        let frame = distance * (ONE as f64) / (self.speed as f64);  // 速度speedで動いたときにかかるフレーム数[frame]
                         let dangle = (2.0 * std::f64::consts::PI) / frame;  // １フレームあたりに変化させるべき角度[rad]
 
-                        let vangle = dangle * (256.0 * 256.0 / (2.0 * std::f64::consts::PI));
+                        let vangle = dangle * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI));
                         if dest_angle > self.angle {
                             self.vangle = vangle.round() as i32;
                             self.command_delay = (((dest_angle - self.angle) as f64) / vangle).round() as u32;

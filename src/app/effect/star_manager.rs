@@ -5,6 +5,7 @@ use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
+use super::super::consts;
 use super::super::super::util::types::Vec2I;
 
 const STAR_COUNT: usize = 128;
@@ -20,7 +21,7 @@ impl StarManager {
         let mut stars: [MaybeUninit<Star>; STAR_COUNT] = unsafe { MaybeUninit::uninit().assume_init() };
         for (_i, element) in stars.iter_mut().enumerate() {
             let star = Star {
-                pos: Vec2I::new(rng.gen_range(0, 224), rng.gen_range(-16, 288)),
+                pos: Vec2I::new(rng.gen_range(0, consts::WIDTH), rng.gen_range(-16, consts::HEIGHT)),
                 t: rng.gen_range(0, 64),
                 c: rng.gen_range(1, 8),
             };
@@ -40,9 +41,9 @@ impl StarManager {
         let mut rng = rand::thread_rng();
         for star in self.stars.iter_mut() {
             let mut y = star.pos.y + 1;
-            if y >= 288 {
+            if y >= consts::HEIGHT {
                 y = rng.gen_range(-16, -1);
-                star.pos.x = rng.gen_range(0, 224);
+                star.pos.x = rng.gen_range(0, consts::WIDTH);
                 star.c = rng.gen_range(1, 8);
                 star.t = rng.gen_range(0, 64);
             }

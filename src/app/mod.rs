@@ -1,3 +1,4 @@
+mod consts;
 mod effect;
 mod enemy;
 mod game;

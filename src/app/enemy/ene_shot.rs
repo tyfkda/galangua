@@ -1,6 +1,7 @@
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
+use super::super::consts::*;
 use super::super::util::{CollBox, Collidable};
 use super::super::super::util::types::Vec2I;
 
@@ -18,7 +19,7 @@ impl EneShot {
     }
 
     pub fn pos(&self) -> Vec2I {
-        Vec2I::new((self.pos.x + 128) / 256, (self.pos.y + 128) / 256)
+        Vec2I::new((self.pos.x + ONE / 2) / ONE, (self.pos.y + ONE / 2) / ONE)
     }
 
     pub fn update(&mut self) {

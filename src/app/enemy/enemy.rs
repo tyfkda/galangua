@@ -5,6 +5,7 @@ use sdl2::render::{Texture, WindowCanvas};
 
 use super::formation::Formation;
 use super::traj::Traj;
+use super::super::consts::*;
 use super::super::util::{CollBox, Collidable};
 use super::super::super::util::types::Vec2I;
 use super::super::super::util::math::{calc_velocity, clamp, diff_angle};
@@ -58,7 +59,7 @@ impl Enemy {
     }
 
     pub fn pos(&self) -> Vec2I {
-        Vec2I::new((self.pos.x + 128) / 256, (self.pos.y + 128) / 256)
+        Vec2I::new((self.pos.x + ONE / 2) / ONE, (self.pos.y + ONE / 2) / ONE)
     }
 
     pub fn update(&mut self, formation: &Formation) {
@@ -82,9 +83,9 @@ impl Enemy {
 
                 let distance = ((dpos.x as f64).powi(2) + (dpos.y as f64).powi(2)).sqrt();
                 if distance > self.speed as f64 {
-                    let dlimit = 3 * 256;
+                    let dlimit = 3 * ONE;
                     let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
-                    let target_angle = ((target_angle_rad * ((256.0 * 256.0) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (256 * 256 - 1);
+                    let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
                     let d = diff_angle(target_angle, self.angle);
                     self.angle += clamp(d, -dlimit, dlimit);
                     self.vangle = 0;
@@ -170,12 +171,10 @@ impl Collidable for Enemy {
 }
 
 fn calc_display_angle(angle: i32) -> f64 {
-    //let angle: f64 = (self.angle as f64) * (360.0 / (256.0 * 256.0)) + 90.0;
-
     // Quantize.
     let div = 16;
-    let angle = (angle + 256 * 256 / div / 2) & (256 * 256 - (256 * 256 / div));
-    let angle: f64 = (angle as f64) * (360.0 / (256.0 * 256.0));
+    let angle = (angle + ANGLE * ONE / div / 2) & (ANGLE * ONE - (ANGLE * ONE / div));
+    let angle: f64 = (angle as f64) * (360.0 / ((ANGLE * ONE) as f64));
 
     angle
 }

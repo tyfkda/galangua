@@ -6,6 +6,7 @@ use super::AppearanceManager;
 use super::enemy::{Enemy, EnemyState};
 use super::ene_shot::EneShot;
 use super::formation::Formation;
+use super::super::consts::*;
 use super::super::util::{CollisionResult, CollBox, Collidable};
 use super::super::super::util::types::Vec2I;
 
@@ -168,7 +169,7 @@ impl EnemyManager {
             let count = target_pos.iter().filter(|x| x.is_some()).count();
             let target_opt: &Option<Vec2I> = target_pos.iter().filter(|x| x.is_some()).nth(rng.gen_range(0, count)).unwrap();
             let target: Vec2I = target_opt.unwrap();
-            let d = Vec2I::new(target.x * 256 - pos.x, target.y * 256 - pos.y);
+            let d = Vec2I::new(target.x * ONE - pos.x, target.y * ONE - pos.y);
             let distance = ((d.x as f64).powi(2) + (d.y as f64).powi(2)).sqrt();
             let f = (speed as f64) / distance;
             let vel = Vec2I::new(
@@ -183,6 +184,6 @@ impl EnemyManager {
 }
 
 fn out_of_screen(pos: Vec2I) -> bool {
-    pos.x < -16 || pos.x > 224 + 16
-        || pos.y < -16 || pos.y > 288 + 16
+    pos.x < -16 || pos.x > WIDTH + 16
+        || pos.y < -16 || pos.y > HEIGHT + 16
 }

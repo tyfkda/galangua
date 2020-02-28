@@ -3,6 +3,7 @@ extern crate sdl2;
 use sdl2::keyboard::Keycode;
 use sdl2::render::WindowCanvas;
 
+use super::consts;
 use super::game::GameManager;
 use super::util::draw_str;
 use super::super::framework::{App, SdlAppFramework};
@@ -29,7 +30,11 @@ impl GaragaApp {
 
     pub fn generate_and_run() -> Result<(), String> {
         let app = GaragaApp::new();
-        let mut framework = SdlAppFramework::new("Garaga", 224 * 2, 288 * 2, Box::new(app))?;
+        let mut framework = SdlAppFramework::new(
+            "Garaga",
+            (consts::WIDTH as u32) * 2,
+            (consts::HEIGHT as u32) * 2,
+            Box::new(app))?;
         framework.run()
     }
 }

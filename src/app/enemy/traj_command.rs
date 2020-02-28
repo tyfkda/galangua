@@ -5,5 +5,5 @@ pub enum TrajCommand {
     Angle(i32),
     VAngle(i32),
     Delay(u32),
-    DestAngle(i32, u32),
+    DestAngle(i32, i32),
 }
