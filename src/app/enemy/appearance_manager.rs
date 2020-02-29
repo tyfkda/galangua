@@ -1,6 +1,8 @@
 use super::enemy::{Enemy, EnemyType};
 use super::traj::Traj;
+use super::traj_command::TrajCommand;
 use super::traj_command_table::*;
+use super::super::consts::*;
 use super::super::super::util::types::Vec2I;
 
 const ORDER: [u32; 40] = [
@@ -20,7 +22,46 @@ const ORDER: [u32; 40] = [
     3 * 16 + 0,    3 * 16 + 1,    4 * 16 + 0,    4 * 16 + 1,
 ];
 
+const ENEMY_TYPE_TABLE: [EnemyType; 2 * 5] = [
+    EnemyType::Butterfly, EnemyType::Bee,
+    EnemyType::Owl, EnemyType::Butterfly,
+    EnemyType::Butterfly, EnemyType::Butterfly,
+    EnemyType::Bee, EnemyType::Bee,
+    EnemyType::Bee, EnemyType::Bee,
+];
+
+struct UnitTableEntry<'a> {
+    pat: usize,
+    table: &'a [TrajCommand],
+    flip_x: bool,
+}
+
+const UNIT_TABLE: [[UnitTableEntry; 5]; 3] = [
+    [
+        UnitTableEntry {pat: 0, table: &COMMAND_TABLE1, flip_x: false},
+        UnitTableEntry {pat: 1, table: &COMMAND_TABLE2, flip_x: false},
+        UnitTableEntry {pat: 1, table: &COMMAND_TABLE2, flip_x: true},
+        UnitTableEntry {pat: 2, table: &COMMAND_TABLE1, flip_x: false},
+        UnitTableEntry {pat: 2, table: &COMMAND_TABLE1, flip_x: false},
+    ],
+    [
+        UnitTableEntry {pat: 0, table: &COMMAND_TABLE1, flip_x: false},
+        UnitTableEntry {pat: 3, table: &COMMAND_TABLE2, flip_x: false},
+        UnitTableEntry {pat: 3, table: &COMMAND_TABLE2, flip_x: true},
+        UnitTableEntry {pat: 3, table: &COMMAND_TABLE1, flip_x: false},
+        UnitTableEntry {pat: 3, table: &COMMAND_TABLE1, flip_x: true},
+    ],
+    [
+        UnitTableEntry {pat: 0, table: &COMMAND_TABLE1, flip_x: false},
+        UnitTableEntry {pat: 0, table: &COMMAND_TABLE2, flip_x: true},
+        UnitTableEntry {pat: 0, table: &COMMAND_TABLE2, flip_x: true},
+        UnitTableEntry {pat: 0, table: &COMMAND_TABLE1, flip_x: false},
+        UnitTableEntry {pat: 0, table: &COMMAND_TABLE1, flip_x: true},
+    ],
+];
+
 pub struct AppearanceManager {
+    stage: u32,
     wait: u32,
     unit: u32,
     count: u32,
@@ -28,8 +69,9 @@ pub struct AppearanceManager {
 }
 
 impl AppearanceManager {
-    pub fn new() -> AppearanceManager {
+    pub fn new(stage: u32) -> AppearanceManager {
         AppearanceManager {
+            stage,
             wait: 0,
             unit: 0,
             count: 0,
@@ -50,19 +92,24 @@ impl AppearanceManager {
             self.wait -= 1;
             return None;
         }
+        if self.unit >= 5 {
+            self.done = true;
+            return None
+        }
 
         let mut new_borns = Vec::new();
         let zero = Vec2I::new(0, 0);
-        match self.unit {
+        let base = (self.unit * 8) as usize;
+        let entry = &UNIT_TABLE[(self.stage as usize) % UNIT_TABLE.len()][self.unit as usize];
+        match entry.pat {
             0 => {
-                let base = (self.unit * 8) as usize;
                 {
                     let i = ORDER[base + self.count as usize];
 
-                    let enemy_type = EnemyType::Butterfly;
+                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2) as usize];
                     let mut enemy = Enemy::new(enemy_type, zero, 0, 0);
 
-                    let traj = Traj::new(Some(&COMMAND_TABLE1), zero, true);
+                    let traj = Traj::new(Some(entry.table), zero, true ^ entry.flip_x);
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
@@ -70,10 +117,10 @@ impl AppearanceManager {
                 }
                 {
                     let i = ORDER[base + self.count as usize + 4];
-                    let enemy_type = EnemyType::Bee;
+                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + 1) as usize];
                     let mut enemy = Enemy::new(enemy_type, zero, 0, 0);
 
-                    let traj = Traj::new(Some(&COMMAND_TABLE1), zero, false);
+                    let traj = Traj::new(Some(entry.table), zero, false ^ entry.flip_x);
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
@@ -89,14 +136,13 @@ impl AppearanceManager {
                 }
             },
             1 => {
-                let base = (self.unit * 8) as usize;
                 {
                     let i = ORDER[base + (self.count / 2 + (self.count & 1) * 4) as usize];
 
-                    let enemy_type = if (self.count & 1) == 0 { EnemyType::Owl } else { EnemyType::Butterfly };
+                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + (self.count & 1)) as usize];
                     let mut enemy = Enemy::new(enemy_type, zero, 0, 0);
 
-                    let traj = Traj::new(Some(&COMMAND_TABLE2), zero, false);
+                    let traj = Traj::new(Some(entry.table), zero, entry.flip_x);
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
@@ -112,14 +158,12 @@ impl AppearanceManager {
                 }
             },
             2 => {
-                let base = (self.unit * 8) as usize;
                 {
                     let i = ORDER[base + self.count as usize];
-
-                    let enemy_type = EnemyType::Butterfly;
+                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + (self.count & 1)) as usize];
                     let mut enemy = Enemy::new(enemy_type, zero, 0, 0);
 
-                    let traj = Traj::new(Some(&COMMAND_TABLE2), zero, true);
+                    let traj = Traj::new(Some(entry.table), zero, entry.flip_x);
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
@@ -135,13 +179,24 @@ impl AppearanceManager {
                 }
             },
             3 => {
-                let base = (self.unit * 8) as usize;
                 {
                     let i = ORDER[base + self.count as usize];
-                    let enemy_type = EnemyType::Bee;
+
+                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2) as usize];
                     let mut enemy = Enemy::new(enemy_type, zero, 0, 0);
 
-                    let traj = Traj::new(Some(&COMMAND_TABLE1), zero, false);
+                    let traj = Traj::new(Some(entry.table), Vec2I::new(8 * ONE, 0), entry.flip_x);
+                    enemy.set_traj(traj);
+                    enemy.formation_index = i as usize;
+
+                    new_borns.push(enemy);
+                }
+                {
+                    let i = ORDER[base + self.count as usize + 4];
+                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + 1) as usize];
+                    let mut enemy = Enemy::new(enemy_type, zero, 0, 0);
+
+                    let traj = Traj::new(Some(entry.table), Vec2I::new(-8 * ONE, 0), entry.flip_x);
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
@@ -150,34 +205,13 @@ impl AppearanceManager {
 
                 self.wait = 16 / 3;
                 self.count += 1;
-                if self.count >= 8 {
+                if self.count >= 4 {
                     self.unit += 1;
                     self.wait = 200;
                     self.count = 0;
                 }
             },
-            4 => {
-                let base = (self.unit * 8) as usize;
-                {
-                    let i = ORDER[base + self.count as usize];
-                    let enemy_type = EnemyType::Bee;
-                    let mut enemy = Enemy::new(enemy_type, zero, 0, 0);
 
-                    let traj = Traj::new(Some(&COMMAND_TABLE1), zero, true);
-                    enemy.set_traj(traj);
-                    enemy.formation_index = i as usize;
-
-                    new_borns.push(enemy);
-                }
-
-                self.wait = 16 / 3;
-                self.count += 1;
-                if self.count >= 8 {
-                    self.unit += 1;
-                    self.wait = 150;
-                    self.count = 0;
-                }
-            },
             _ => {
                 self.done = true;
                 return None

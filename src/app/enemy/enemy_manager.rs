@@ -32,7 +32,7 @@ impl EnemyManager {
             enemies: enemies,
             shots: Default::default(),
             formation: Formation::new(),
-            appearance_manager: AppearanceManager::new(),
+            appearance_manager: AppearanceManager::new(0),
         };
         mgr.restart();
         mgr
@@ -46,11 +46,11 @@ impl EnemyManager {
             *slot = None;
         }
 
-        self.start_next_stage();
+        self.start_next_stage(0);
     }
 
-    pub fn start_next_stage(&mut self) {
-        self.appearance_manager = AppearanceManager::new();
+    pub fn start_next_stage(&mut self, stage: u32) {
+        self.appearance_manager = AppearanceManager::new(stage);
         self.formation.restart();
     }
 

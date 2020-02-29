@@ -32,6 +32,7 @@ pub struct GameManager {
     enemy_manager: EnemyManager,
     effects: [Option<Effect>; MAX_EFFECT_COUNT],
     event_queue: EventQueue,
+    stage: u32,
     score: u32,
     high_score: u32,
     frame_count: u32,
@@ -50,6 +51,7 @@ impl GameManager {
             event_queue: EventQueue::new(),
             effects: Default::default(),
 
+            stage: 0,
             score: 0,
             high_score: 1000,  //20_000,
             frame_count: 0,
@@ -112,7 +114,8 @@ impl GameManager {
         self.enemy_manager.update(&player_pos);
 
         if self.enemy_manager.all_destroyed() {
-            self.enemy_manager.start_next_stage();
+            self.stage += 1;
+            self.enemy_manager.start_next_stage(self.stage);
         }
 
         // For MyShot.
