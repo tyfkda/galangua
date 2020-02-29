@@ -92,11 +92,10 @@ impl Traj {
                         break;
                     },
                     TrajCommand::DestAngle(dest_angle, radius) => {
-                        let distance = 2.0 * std::f64::consts::PI * (radius as f64) / (ONE as f64);  // 半径radiusの円周
-                        let frame = distance * (ONE as f64) / (self.speed as f64);  // 速度speedで動いたときにかかるフレーム数[frame]
-                        let dangle = (2.0 * std::f64::consts::PI) / frame;  // １フレームあたりに変化させるべき角度[rad]
-
-                        let vangle = dangle * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI));
+                        let distance = 2.0 * std::f64::consts::PI * (radius as f64) / (ONE as f64);  // Circumference of radius [dot].
+                        let frame = distance * (ONE as f64) / (self.speed as f64);  // Frame count according to speed [frame].
+                        let dangle = (2.0 * std::f64::consts::PI) / frame;  // Angle which should be modified in one frame [rad].
+                        let vangle = dangle * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI));  // [ANGLE * ONE]
                         if dest_angle > self.angle {
                             self.vangle = vangle.round() as i32;
                             self.command_delay = (((dest_angle - self.angle) as f64) / vangle).round() as u32;
