@@ -18,6 +18,13 @@ pub fn diff_angle(target: i32, base: i32) -> i32 {
     ((target - base + circumference / 2) & (circumference - 1)) - circumference / 2
 }
 
+#[test]
+fn test_diff_angle() {
+    assert_eq!(100 * 256, diff_angle(90 * 256, -10 * 256));
+    assert_eq!(-90 * 256, diff_angle(10 * 256, 100 * 256));
+    assert_eq!((256 - 30 - 100) * 256, diff_angle(-30 * 256, 100 * 256));
+}
+
 pub fn clamp<T>(value: T, min: T, max: T) -> T
     where T: Copy + PartialOrd
 {
@@ -28,6 +35,15 @@ pub fn clamp<T>(value: T, min: T, max: T) -> T
     } else {
         value
     }
+}
+
+#[test]
+fn test_clamp() {
+    assert_eq!(1, clamp(-5, 1, 10));
+    assert_eq!(5, clamp(5, 1, 10));
+    assert_eq!(10, clamp(15, 1, 10));
+
+    assert_eq!(5.0, clamp(5.0, 1.0, 10.0));
 }
 
 pub fn calc_velocity(angle: i32, speed: i32) -> (i32, i32) {
