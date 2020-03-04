@@ -19,12 +19,11 @@ impl EneShot {
     }
 
     pub fn pos(&self) -> Vec2I {
-        Vec2I::new((self.pos.x + ONE / 2) / ONE, (self.pos.y + ONE / 2) / ONE)
+        (self.pos + Vec2I::new(ONE, ONE) / 2) / ONE
     }
 
     pub fn update(&mut self) {
-        self.pos.x += self.vel.x;
-        self.pos.y += self.vel.y;
+        self.pos += self.vel;
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
@@ -41,7 +40,7 @@ impl Collidable for EneShot {
     fn get_collbox(&self) -> CollBox {
         let pos = self.pos();
         CollBox {
-            top_left: Vec2I::new(pos.x - 1, pos.y - 4),
+            top_left: pos - Vec2I::new(1, 4),
             size: Vec2I::new(1, 8),
         }
     }

@@ -59,7 +59,7 @@ impl Enemy {
     }
 
     pub fn pos(&self) -> Vec2I {
-        Vec2I::new((self.pos.x + ONE / 2) / ONE, (self.pos.y + ONE / 2) / ONE)
+        (self.pos + Vec2I::new(ONE, ONE) / 2) / ONE
     }
 
     pub fn update(&mut self, formation: &Formation) {
@@ -99,11 +99,8 @@ impl Enemy {
             _ => {},
         }
 
-        let (vx, vy) = calc_velocity(self.angle + self.vangle / 2, self.speed);
+        self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
-
-        self.pos.x += vx;
-        self.pos.y += vy;
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
@@ -162,9 +159,8 @@ impl Enemy {
 
 impl Collidable for Enemy {
     fn get_collbox(&self) -> CollBox {
-        let pos = self.pos();
         CollBox {
-            top_left: Vec2I::new(pos.x - 8, pos.y - 8),
+            top_left: self.pos() - Vec2I::new(8, 8),
             size: Vec2I::new(12, 12),
         }
     }

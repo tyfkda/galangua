@@ -14,13 +14,11 @@ pub struct CollBox {
 
 impl CollBox {
     pub fn check_collision(&self, target: &CollBox) -> bool {
-        let r1 = self.top_left.x + self.size.x;
-        let b1 = self.top_left.y + self.size.y;
-        let r2 = target.top_left.x + target.size.x;
-        let b2 = target.top_left.y + target.size.y;
+        let br1 = self.top_left + self.size;
+        let br2 = target.top_left + target.size;
 
-        self.top_left.x < r2 && self.top_left.y < b2 &&
-            target.top_left.x < r1 && target.top_left.y < b1
+        self.top_left.x < br2.x && self.top_left.y < br2.y &&
+            target.top_left.x < br1.x && target.top_left.y < br1.y
     }
 }
 

@@ -1,3 +1,5 @@
+use super::types::Vec2I;
+
 lazy_static! {
     // Integer sin and cos table, table size:256 = 360 degree, 1.0 = 256
     pub static ref SIN_TABLE: [i32; 256] = gen_sin_256(0);
@@ -46,9 +48,9 @@ fn test_clamp() {
     assert_eq!(5.0, clamp(5.0, 1.0, 10.0));
 }
 
-pub fn calc_velocity(angle: i32, speed: i32) -> (i32, i32) {
+pub fn calc_velocity(angle: i32, speed: i32) -> Vec2I {
     let a: usize = (((angle + 128) & (255 * 256)) / 256) as usize;
     let cs = COS_TABLE[a];
     let sn = SIN_TABLE[a];
-    (sn * speed / 256, -cs * speed / 256)
+    Vec2I::new(sn * speed / 256, -cs * speed / 256)
 }

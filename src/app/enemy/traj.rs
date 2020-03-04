@@ -54,11 +54,8 @@ impl Traj {
     pub fn update(&mut self) -> bool {
         self.handle_command();
 
-        let (vx, vy) = calc_velocity(self.angle + self.vangle / 2, self.speed);
+        self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
-
-        self.pos.x += vx;
-        self.pos.y += vy;
 
         self.command_table.is_some()
     }

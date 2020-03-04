@@ -24,7 +24,7 @@ pub struct Player {
 impl Player {
     pub fn new() -> Player {
         Player {
-            pos: Vec2I::new((WIDTH / 2) * ONE, (HEIGHT - 16 - 8) * ONE),
+            pos: Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE,
             state: State::Dual,  // State::Normal,
         }
     }
@@ -90,13 +90,12 @@ impl Player {
     }
 
     pub fn pos(&self) -> Vec2I {
-        Vec2I::new((self.pos.x + ONE / 2) / ONE, (self.pos.y + ONE / 2) / ONE)
+        (self.pos + Vec2I::new(ONE, ONE) / 2) / ONE
     }
 
     pub fn dual_pos(&self) -> Option<Vec2I> {
         if self.dual() {
-            let pos = self.pos();
-            Some(Vec2I::new(pos.x + 16, pos.y))
+            Some(self.pos() + Vec2I::new(16, 0))
         } else {
             None
         }
@@ -104,9 +103,8 @@ impl Player {
 
     pub fn dual_collbox(&self) -> Option<CollBox> {
         if self.dual() {
-            let pos = self.pos();
             Some(CollBox {
-                top_left: Vec2I::new(pos.x + 8, pos.y - 8),
+                top_left: self.pos() + Vec2I::new(8, -8),
                 size: Vec2I::new(16, 16),
             })
         } else {
@@ -131,9 +129,8 @@ impl Player {
 
 impl Collidable for Player {
     fn get_collbox(&self) -> CollBox {
-        let pos = self.pos();
         CollBox {
-            top_left: Vec2I::new(pos.x - 8, pos.y - 8),
+            top_left: self.pos() - Vec2I::new(8, 8),
             size: Vec2I::new(16, 16),
         }
     }

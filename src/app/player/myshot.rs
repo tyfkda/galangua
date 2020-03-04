@@ -42,9 +42,8 @@ impl MyShot {
 
     pub fn get_collbox_for_dual(&self) -> Option<CollBox> {
         if self.dual {
-            let pos = self.pos();
             Some(CollBox {
-                top_left: Vec2I::new(pos.x - 1 + 16, pos.y - 4),
+                top_left: self.pos() + Vec2I::new(-1 + 16, -4),
                 size: Vec2I::new(1, 8),
             })
         } else {
@@ -53,15 +52,14 @@ impl MyShot {
     }
 
     fn pos(&self) -> Vec2I {
-        Vec2I::new((self.pos.x + ONE / 2) / ONE, (self.pos.y + ONE / 2) / ONE)
+        (self.pos + Vec2I::new(ONE, ONE) / 2) / ONE
     }
 }
 
 impl Collidable for MyShot {
     fn get_collbox(&self) -> CollBox {
-        let pos = self.pos();
         CollBox {
-            top_left: Vec2I::new(pos.x - 1, pos.y - 4),
+            top_left: self.pos() - Vec2I::new(1, 4),
             size: Vec2I::new(1, 8),
         }
     }
