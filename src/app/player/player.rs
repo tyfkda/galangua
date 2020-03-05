@@ -7,6 +7,7 @@ use super::super::consts::*;
 use super::super::game::EventQueue;
 use super::super::util::{CollBox, Collidable};
 use super::super::super::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
+use super::super::super::util::math::ONE;
 use super::super::super::util::types::Vec2I;
 
 #[derive(PartialEq)]

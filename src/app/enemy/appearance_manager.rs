@@ -2,7 +2,7 @@ use super::enemy::{Enemy, EnemyType};
 use super::traj::Traj;
 use super::traj_command::TrajCommand;
 use super::traj_command_table::*;
-use super::super::consts::*;
+use super::super::super::util::math::ONE;
 use super::super::super::util::types::Vec2I;
 
 const ORDER: [u32; 40] = [

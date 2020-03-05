@@ -1,5 +1,6 @@
 use super::traj_command::TrajCommand;
 use super::super::consts::*;
+use super::super::super::util::math::{ANGLE, ONE};
 
 pub const COMMAND_TABLE1: [TrajCommand; 11] = [
     TrajCommand::Pos((WIDTH / 2 + 16) * ONE, -8 * ONE),

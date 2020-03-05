@@ -5,10 +5,9 @@ use sdl2::render::{Texture, WindowCanvas};
 
 use super::formation::Formation;
 use super::traj::Traj;
-use super::super::consts::*;
 use super::super::util::{CollBox, Collidable};
+use super::super::super::util::math::{calc_velocity, clamp, diff_angle, ANGLE, ONE};
 use super::super::super::util::types::Vec2I;
-use super::super::super::util::math::{calc_velocity, clamp, diff_angle};
 
 #[derive(Copy, Clone)]
 pub enum EnemyType {

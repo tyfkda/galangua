@@ -3,8 +3,8 @@ extern crate sdl2;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
-use super::super::consts::*;
 use super::super::util::{CollBox, Collidable};
+use super::super::super::util::math::ONE;
 use super::super::super::util::types::Vec2I;
 
 pub struct MyShot {
