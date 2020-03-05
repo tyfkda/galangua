@@ -113,9 +113,9 @@ impl Player {
 
     pub fn crash(&mut self, pos: &Vec2I) -> bool {
         if self.dual() {
-            if pos.x < self.pos.x + 16 / 2 {
+            if pos.x < self.pos().x + 16 / 2 {
                 // Abandan left ship.
-                self.pos.x += 16;
+                self.pos.x += 16 * ONE;
             }
             self.state = State::Normal;
             false
