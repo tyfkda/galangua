@@ -1,6 +1,7 @@
 use super::types::Vec2I;
 
-pub const ONE: i32 = 256;
+pub const ONE_BIT: i32 = 8;
+pub const ONE: i32 = 1 << ONE_BIT;
 pub const ANGLE: i32 = 256;
 
 const ANGLE_SIZE: usize = ANGLE as usize;
@@ -51,6 +52,20 @@ fn test_clamp() {
     assert_eq!(10, clamp(15, 1, 10));
 
     assert_eq!(5.0, clamp(5.0, 1.0, 10.0));
+}
+
+pub fn round_up_i32(v: i32) -> i32 {
+    (v + ONE / 2) >> ONE_BIT
+}
+
+pub fn round_up(v: &Vec2I) -> Vec2I {
+    Vec2I::new(round_up_i32(v.x), round_up_i32(v.y))
+}
+
+#[test]
+fn test_round_up() {
+    assert_eq!(Vec2I::new(6, 6), round_up(&Vec2I::new(5 * 256 + 128, 6 * 256 + 127)));
+    assert_eq!(Vec2I::new(-10, -10), round_up(&Vec2I::new(-11 * 256 + 128, -10 * 256 + 127)));
 }
 
 pub fn calc_velocity(angle: i32, speed: i32) -> Vec2I {

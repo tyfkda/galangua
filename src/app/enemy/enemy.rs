@@ -6,7 +6,7 @@ use sdl2::render::{Texture, WindowCanvas};
 use super::formation::Formation;
 use super::traj::Traj;
 use super::super::util::{CollBox, Collidable};
-use super::super::super::util::math::{calc_velocity, clamp, diff_angle, ANGLE, ONE};
+use super::super::super::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
 use super::super::super::util::types::Vec2I;
 
 #[derive(Copy, Clone)]
@@ -58,7 +58,7 @@ impl Enemy {
     }
 
     pub fn pos(&self) -> Vec2I {
-        (self.pos + Vec2I::new(ONE, ONE) / 2) / ONE
+        round_up(&self.pos)
     }
 
     pub fn update(&mut self, formation: &Formation) {

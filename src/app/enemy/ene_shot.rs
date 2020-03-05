@@ -2,7 +2,7 @@ use sdl2::rect::Rect;
 use sdl2::render::{Texture, WindowCanvas};
 
 use super::super::util::{CollBox, Collidable};
-use super::super::super::util::math::ONE;
+use super::super::super::util::math::round_up;
 use super::super::super::util::types::Vec2I;
 
 pub struct EneShot {
@@ -19,7 +19,7 @@ impl EneShot {
     }
 
     pub fn pos(&self) -> Vec2I {
-        (self.pos + Vec2I::new(ONE, ONE) / 2) / ONE
+        round_up(&self.pos)
     }
 
     pub fn update(&mut self) {
