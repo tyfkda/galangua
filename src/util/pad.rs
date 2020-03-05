@@ -43,7 +43,7 @@ impl Pad {
 }
 
 fn get_key_bit(key: Keycode) -> u8 {
-    return match key {
+    match key {
         Keycode::Left => PAD_L,
         Keycode::Right => PAD_R,
         Keycode::Space => PAD_A,

@@ -1,4 +1,4 @@
-use sdl2::image::{LoadTexture};
+use sdl2::image::LoadTexture;
 use sdl2::render::{Texture, WindowCanvas};
 
 use super::super::util::resource_manager::ResourceManager;

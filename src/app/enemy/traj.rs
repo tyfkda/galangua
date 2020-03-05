@@ -74,20 +74,20 @@ impl Traj {
                 match command {
                     TrajCommand::Pos(x, y) => {
                         self.pos = Vec2I::new(x, y);
-                    },
+                    }
                     TrajCommand::Speed(speed) => {
                         self.speed = speed;
-                    },
+                    }
                     TrajCommand::Angle(angle) => {
                         self.angle = angle;
-                    },
+                    }
                     TrajCommand::VAngle(vangle) => {
                         self.vangle = vangle;
-                    },
+                    }
                     TrajCommand::Delay(delay) => {
                         self.command_delay = delay;
                         break;
-                    },
+                    }
                     TrajCommand::DestAngle(dest_angle, radius) => {
                         let distance = 2.0 * std::f64::consts::PI * (radius as f64) / (ONE as f64);  // Circumference of radius [dot].
                         let frame = distance * (ONE as f64) / (self.speed as f64);  // Frame count according to speed [frame].
@@ -101,7 +101,7 @@ impl Traj {
                             self.command_delay = (((self.angle - dest_angle) as f64) / vangle).round() as u32;
                         }
                         break;
-                    },
+                    }
                 }
             }
 

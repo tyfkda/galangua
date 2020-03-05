@@ -8,7 +8,7 @@ pub struct Vector2D<T> {
 
 impl<T> Vector2D<T> {
     pub fn new(x: T, y: T) -> Vector2D<T> {
-        Vector2D {x, y}
+        Vector2D { x, y }
     }
 }
 

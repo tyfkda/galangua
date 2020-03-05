@@ -94,7 +94,7 @@ impl AppearanceManager {
         }
         if self.unit >= 5 {
             self.done = true;
-            return None
+            return None;
         }
 
         let mut new_borns = Vec::new();
@@ -134,7 +134,7 @@ impl AppearanceManager {
                     self.wait = 200;
                     self.count = 0;
                 }
-            },
+            }
             1 => {
                 {
                     let i = ORDER[base + (self.count / 2 + (self.count & 1) * 4) as usize];
@@ -156,7 +156,7 @@ impl AppearanceManager {
                     self.wait = 200;
                     self.count = 0;
                 }
-            },
+            }
             2 => {
                 {
                     let i = ORDER[base + self.count as usize];
@@ -177,7 +177,7 @@ impl AppearanceManager {
                     self.wait = 200;
                     self.count = 0;
                 }
-            },
+            }
             3 => {
                 {
                     let i = ORDER[base + self.count as usize];
@@ -210,12 +210,12 @@ impl AppearanceManager {
                     self.wait = 200;
                     self.count = 0;
                 }
-            },
+            }
 
             _ => {
                 self.done = true;
-                return None
-            },
+                return None;
+            }
         }
 
         Some(new_borns)

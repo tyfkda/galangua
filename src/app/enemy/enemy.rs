@@ -67,13 +67,13 @@ impl Enemy {
         }
 
         match self.state {
-            EnemyState::Flying => {},
+            EnemyState::Flying => {}
             EnemyState::Trajectory => {
                 let cont = self.update_traj();
                 if !cont {
                     self.state = EnemyState::MoveToFormation;
                 }
-            },
+            }
             EnemyState::MoveToFormation => {
                 let ix = self.formation_index & 15;
                 let iy = self.formation_index / 16;
@@ -94,8 +94,8 @@ impl Enemy {
                     self.angle = 0;
                     self.state = EnemyState::Formation;
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
 
         self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);

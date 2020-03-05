@@ -1,4 +1,4 @@
-use std::time::{SystemTime, Duration};
+use std::time::{Duration, SystemTime};
 
 pub struct FpsCalc {
     fps: i32,

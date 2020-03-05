@@ -73,8 +73,8 @@ impl SdlAppFramework {
                 },
                 | Event::KeyUp { keycode: Some(key), .. } => {
                     self.app.on_key_up(key);
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
         Ok(true)

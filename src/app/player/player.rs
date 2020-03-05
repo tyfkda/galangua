@@ -34,10 +34,10 @@ impl Player {
         match self.state {
             State::Normal | State::Dual => {
                 // Through.
-            },
+            }
             State::Dead => {
                 return;
-            },
+            }
         }
 
         if pad.is_pressed(PAD_L) {
@@ -63,10 +63,10 @@ impl Player {
         match self.state {
             State::Normal | State::Dual => {
                 // Through.
-            },
+            }
             State::Dead => {
                 return Ok(());
-            },
+            }
         }
 
         let pos = self.pos();

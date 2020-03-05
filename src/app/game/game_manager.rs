@@ -177,22 +177,22 @@ impl GameManager {
             match *event {
                 EventType::MyShot(pos, dual) => {
                     self.spawn_myshot(pos, dual);
-                },
+                }
                 EventType::AddScore(add) => {
                     self.score += add;
                     if self.score > self.high_score {
                         self.high_score = self.score;
                     }
-                },
+                }
                 EventType::DeadPlayer => {
                     self.state = GameState::GameOver;
-                },
+                }
                 EventType::EarnPoint(point_type, pos) => {
                     self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, pos)));
-                },
+                }
                 EventType::SmallBomb(pos) => {
                     self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
-                },
+                }
             }
             i += 1;
         }
@@ -265,7 +265,7 @@ fn handle_collision_enemy(
     event_queue: &mut EventQueue) -> Option<Vec2I>
 {
     match enemy_manager.check_collision(&collbox, power) {
-        CollisionResult::NoHit => { /* no hit */ },
+        CollisionResult::NoHit => { /* no hit */ }
         CollisionResult::Hit(pos, destroyed) => {
             if destroyed && effect {
                 event_queue.add_score(100);
@@ -285,7 +285,7 @@ fn handle_collision_enemy(
                 event_queue.spawn_small_bomb(pos);
             }
             return Some(pos);
-        },
+        }
     }
     None
 }
