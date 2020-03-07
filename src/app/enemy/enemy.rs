@@ -5,7 +5,7 @@ use crate::framework::RendererTrait;
 use crate::framework::types::Vec2I;
 use crate::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum EnemyType {
     Bee,
     Butterfly,
@@ -18,6 +18,7 @@ pub enum EnemyState {
     Trajectory,
     MoveToFormation,
     Formation,
+    Attack,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -32,6 +33,8 @@ pub struct Enemy {
     enemy_type: EnemyType,
     life: u32,
     traj: Option<Traj>,
+    attack_step: i32,
+    count: i32,
 }
 
 impl Enemy {
@@ -51,6 +54,8 @@ impl Enemy {
             vangle: 0,
             formation_index: 255,  // Dummy
             traj: None,
+            attack_step: 0,
+            count: 0,
         }
     }
 
@@ -79,7 +84,7 @@ impl Enemy {
 
                 let distance = ((dpos.x as f64).powi(2) + (dpos.y as f64).powi(2)).sqrt();
                 if distance > self.speed as f64 {
-                    let dlimit = 3 * ONE;
+                    let dlimit = 4 * ONE;
                     let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
                     let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
                     let d = diff_angle(target_angle, self.angle);
@@ -91,6 +96,9 @@ impl Enemy {
                     self.angle = 0;
                     self.state = EnemyState::Formation;
                 }
+            }
+            EnemyState::Attack => {
+                self.update_attack();
             }
             _ => {}
         }
@@ -146,6 +154,70 @@ impl Enemy {
         } else {
             false
         }
+    }
+
+    pub fn set_attack(&mut self) {
+        self.state = EnemyState::Attack;
+        self.count = 0;
+    }
+
+    fn update_attack(&mut self) {
+        match self.enemy_type {
+            EnemyType::Bee => { self.update_attack_bee(); }
+            EnemyType::Butterfly => { self.update_attack_butterfly(); }
+            EnemyType::Owl => { self.update_attack_owl(); }
+        }
+    }
+
+    fn update_attack_bee(&mut self) {
+        match self.attack_step {
+            0 => {
+                self.speed = 1 * 256;
+                self.angle = 0;
+                if (self.formation_index & 15) < 5 {
+                    self.vangle = -4 * 256;
+                } else {
+                    self.vangle = 4 * 256;
+                }
+                self.attack_step += 1;
+                self.count = 0;
+            }
+            1 => {
+                if (self.vangle < 0 && self.angle <= -160 * 256) || (self.vangle > 0 && self.angle >= 160 * 256) {
+                    self.vangle = 0;
+                    self.attack_step += 1;
+                    self.count = 0;
+                }
+            }
+            2 => {
+                self.count += 1;
+                if self.count >= 10 {
+                    if (self.formation_index & 15) < 5 {
+                        self.vangle = 1 * 256 / 4;
+                    } else {
+                        self.vangle = -1 * 256 / 4;
+                    }
+                    self.attack_step += 1;
+                    self.count = 0;
+                }
+            }
+            3 => {
+                if (self.vangle > 0 && self.angle >= -128 * 256) || (self.vangle < 0 && self.angle <= 128 * 256) {
+                    self.vangle = 0;
+                    self.attack_step += 1;
+                    self.count = 0;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn update_attack_butterfly(&mut self) {
+        self.update_attack_bee();
+    }
+
+    fn update_attack_owl(&mut self) {
+        self.update_attack_bee();
     }
 }
 

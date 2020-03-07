@@ -1,7 +1,8 @@
 use rand::Rng;
 
 use crate::app::consts::*;
-use crate::app::enemy::AppearanceManager;
+use crate::app::enemy::appearance_manager::AppearanceManager;
+use crate::app::enemy::attack_manager::AttackManager;
 use crate::app::enemy::enemy::{Enemy, EnemyState};
 use crate::app::enemy::ene_shot::EneShot;
 use crate::app::enemy::formation::Formation;
@@ -18,6 +19,7 @@ pub struct EnemyManager {
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
     formation: Formation,
     appearance_manager: AppearanceManager,
+    attack_manager: AttackManager,
 }
 
 impl EnemyManager {
@@ -27,6 +29,7 @@ impl EnemyManager {
             shots: Default::default(),
             formation: Formation::new(),
             appearance_manager: AppearanceManager::new(0),
+            attack_manager: AttackManager::new(),
         };
         mgr.restart();
         mgr
@@ -46,6 +49,7 @@ impl EnemyManager {
     pub fn start_next_stage(&mut self, stage: u32) {
         self.appearance_manager = AppearanceManager::new(stage);
         self.formation.restart();
+        self.attack_manager.restart();
     }
 
     pub fn all_destroyed(&self) -> bool {
@@ -55,6 +59,7 @@ impl EnemyManager {
     pub fn update(&mut self, _player_pos: &[Option<Vec2I>]) {
         self.update_appearance();
         self.update_formation();
+        self.update_attackers();
         self.update_enemies();
         self.update_shots();
     }
@@ -123,8 +128,17 @@ impl EnemyManager {
     }
 
     fn update_formation(&mut self) {
+        let is_settle = self.formation.is_settle();
         self.formation.update();
         self.copy_formation_positions();
+
+        if !is_settle && self.formation.is_settle() {
+            self.attack_manager.set_enable(true);
+        }
+    }
+
+    fn update_attackers(&mut self) {
+        self.attack_manager.update(&mut self.enemies);
     }
 
     fn copy_formation_positions(&mut self) {
@@ -139,9 +153,6 @@ impl EnemyManager {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
             enemy.update(&self.formation);
-            if out_of_screen(enemy.pos()) {
-                *enemy_opt = None;
-            }
         }
     }
 
