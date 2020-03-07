@@ -1,4 +1,4 @@
-use sdl2::rect::Rect;
+use sdl2::rect::Point;
 
 use super::super::consts::*;
 use super::super::game::EventQueue;
@@ -67,14 +67,10 @@ impl Player {
             }
         }
 
-        let pos = self.pos();
-        renderer.draw_texture("chr",
-                              Some(Rect::new(0, 0, 16, 16)),
-                              Some(Rect::new((pos.x - 8) * 2, (pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
+        let pos = self.pos() + Vec2I::new(-8, -8);
+        renderer.draw_sprite("fighter", Point::new(pos.x, pos.y))?;
         if self.dual() {
-            renderer.draw_texture("chr",
-                                  Some(Rect::new(0, 0, 16, 16)),
-                                  Some(Rect::new((pos.x + 8) * 2, (pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
+            renderer.draw_sprite("fighter", Point::new(pos.x + 16, pos.y))?;
         }
 
         Ok(())

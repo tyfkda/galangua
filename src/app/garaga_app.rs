@@ -3,6 +3,7 @@ use sdl2::pixels::Color;
 
 use super::consts;
 use super::game::GameManager;
+use super::sprite_sheet::load_sprite_sheet;
 use super::super::framework::{App, Renderer, SdlAppFramework};
 use super::super::util::fps_calc::FpsCalc;
 use super::super::util::pad::Pad;
@@ -44,6 +45,9 @@ impl App for GaragaApp {
 
     fn init(&mut self, renderer: &mut dyn Renderer) -> Result<(), String> {
         renderer.load_textures("assets", &vec!["chr.png", "font.png"])?;
+
+        let sprite_sheet = load_sprite_sheet("assets/chr.json").expect("sprite sheet");
+        renderer.set_sprite_sheet(sprite_sheet);
 
         Ok(())
     }

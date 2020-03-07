@@ -1,4 +1,4 @@
-use sdl2::rect::Rect;
+use sdl2::rect::Point;
 
 use super::formation::Formation;
 use super::traj::Traj;
@@ -101,24 +101,18 @@ impl Enemy {
     }
 
     pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
-        let src_u = match self.enemy_type {
-            EnemyType::Owl => if self.life <= 1 { 32 } else { 0 },
-            _ => 0,
+        let sprite = match self.enemy_type {
+            EnemyType::Bee => { "bee" }
+            EnemyType::Butterfly => { "butterfly" }
+            EnemyType::Owl => {
+                if self.life <= 1 { "owl2" } else { "owl1" }
+            }
         };
-        let src_v = match self.enemy_type {
-            EnemyType::Bee => 16,
-            EnemyType::Butterfly => 32,
-            EnemyType::Owl => 48,
-        };
+
 
         let angle = calc_display_angle(self.angle);
         let pos = self.pos();
-        renderer.draw_texture_ex("chr",
-                                 Some(Rect::new(src_u, src_v, 16, 16)),
-                                 Some(Rect::new((pos.x - 8) * 2, (pos.y - 8) * 2, 16 * 2, 16 * 2)),
-                                 angle,
-                                 None,
-                                 false, false)?;
+        renderer.draw_sprite_rot(sprite, Point::new(pos.x - 8, pos.y - 8), angle, None)?;
 
         Ok(())
     }

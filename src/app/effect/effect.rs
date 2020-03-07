@@ -1,4 +1,4 @@
-use sdl2::rect::Rect;
+use sdl2::rect::Point;
 use std::cmp::min;
 
 use super::super::super::framework::Renderer;
@@ -57,17 +57,15 @@ impl EarnedPoint {
     }
 
     pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
-        let rect: Rect;
+        let sprite: &str;
         match self.point_type {
-            EarnedPointType::Point1600 => { rect = Rect::new(32, 0, 16, 8); },
-            EarnedPointType::Point800  => { rect = Rect::new(48, 0, 16, 8); },
-            EarnedPointType::Point400  => { rect = Rect::new(32, 8, 16, 8); },
-            EarnedPointType::Point150  => { rect = Rect::new(48, 8, 16, 8); },
+            EarnedPointType::Point1600 => { sprite = "pts1600"; },
+            EarnedPointType::Point800  => { sprite = "pts800"; },
+            EarnedPointType::Point400  => { sprite = "pts400"; },
+            EarnedPointType::Point150  => { sprite = "pts150"; },
         }
 
-        renderer.draw_texture("chr",
-                              Some(rect),
-                              Some(Rect::new((self.pos.x - 8) * 2, (self.pos.y - 4) * 2, 16 * 2, 8 * 2)))?;
+        renderer.draw_sprite(sprite, Point::new(self.pos.x - 8, self.pos.y - 4))?;
 
         Ok(())
     }
@@ -95,11 +93,10 @@ impl SmallBomb {
     }
 
     pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
-        let pat = min(self.frame_count / 4, 2) as i32;
+        let pat = min(self.frame_count / 4, 2) as usize;
+        let table = ["small_bomb1", "small_bomb2", "small_bomb3"];
 
-        renderer.draw_texture("chr",
-                              Some(Rect::new(pat * 16, 64, 16, 16)),
-                              Some(Rect::new((self.pos.x - 8) * 2, (self.pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
+        renderer.draw_sprite(table[pat], Point::new(self.pos.x - 8, self.pos.y - 8))?;
 
         Ok(())
     }
