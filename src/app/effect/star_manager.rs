@@ -1,7 +1,6 @@
 use rand::Rng;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::WindowCanvas;
 use std::mem::MaybeUninit;
 
 use super::super::consts;
@@ -51,15 +50,15 @@ impl StarManager {
         }
     }
 
-    pub fn draw(&self, canvas: &mut WindowCanvas, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
         for star in self.stars.iter() {
             if (self.frame_count + star.t) & 31 < 16 {
                 continue;
             }
 
             let col = COLOR_TABLE[star.c as usize];
-            renderer.set_draw_color(canvas, Color::RGB(col[0], col[1], col[2]));
-            renderer.fill_rect(canvas, Some(Rect::new(star.pos.x * 2, star.pos.y * 2, 1 * 2, 1 * 2)))?;
+            renderer.set_draw_color(Color::RGB(col[0], col[1], col[2]));
+            renderer.fill_rect(Some(Rect::new(star.pos.x * 2, star.pos.y * 2, 1 * 2, 1 * 2)))?;
         }
 
         Ok(())

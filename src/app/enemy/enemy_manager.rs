@@ -1,5 +1,4 @@
 use rand::Rng;
-use sdl2::render::WindowCanvas;
 use std::mem::MaybeUninit;
 
 use super::AppearanceManager;
@@ -67,12 +66,12 @@ impl EnemyManager {
         self.update_shots();
     }
 
-    pub fn draw(&self, canvas: &mut WindowCanvas, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
         for enemy in self.enemies.iter().flat_map(|x| x) {
-            enemy.draw(canvas, renderer)?;
+            enemy.draw(renderer)?;
         }
         for shot in self.shots.iter().flat_map(|x| x) {
-            shot.draw(canvas, renderer)?;
+            shot.draw(renderer)?;
         }
 
         Ok(())
