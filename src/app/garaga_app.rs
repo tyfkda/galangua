@@ -5,15 +5,14 @@ use sdl2::render::WindowCanvas;
 use super::consts;
 use super::game::GameManager;
 use super::util::draw_str;
-use super::super::framework::{App, SdlAppFramework};
-use super::super::framework::texture_manager::TextureManager;
+use super::super::framework::{App, Renderer, SdlAppFramework};
 use super::super::util::fps_calc::FpsCalc;
 use super::super::util::pad::Pad;
 
 pub struct GaragaApp {
     pad: Pad,
     fps_calc: FpsCalc,
-    texture_manager: TextureManager,
+    renderer: Renderer,
     game_manager: GameManager,
 }
 
@@ -22,7 +21,7 @@ impl GaragaApp {
         GaragaApp {
             pad: Pad::new(),
             fps_calc: FpsCalc::new(),
-            texture_manager: TextureManager::new(),
+            renderer: Renderer::new(),
             game_manager: GameManager::new(),
         }
     }
@@ -48,7 +47,7 @@ impl App for GaragaApp {
     }
 
     fn init(&mut self, canvas: &mut WindowCanvas) -> Result<(), String> {
-        self.texture_manager.load(canvas, "assets", &vec!["chr.png", "font.png"])?;
+        self.renderer.get_mut_texture_manager().load(canvas, "assets", &vec!["chr.png", "font.png"])?;
 
         Ok(())
     }
@@ -62,9 +61,9 @@ impl App for GaragaApp {
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
 
-        self.game_manager.draw(canvas, &mut self.texture_manager)?;
+        self.game_manager.draw(canvas, &mut self.renderer)?;
 
-        if let Some(font_texture) = self.texture_manager.get_mut("font") {
+        if let Some(font_texture) = self.renderer.get_mut_texture_manager().get_mut("font") {
             font_texture.set_color_mod(128, 128, 128);
             draw_str(canvas, &font_texture, 16 * 23, 0, &format!("FPS{:2}", self.fps_calc.fps()))?;
             font_texture.set_color_mod(255, 255, 255);

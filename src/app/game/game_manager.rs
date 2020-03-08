@@ -9,7 +9,7 @@ use super::super::player::MyShot;
 use super::super::player::Player;
 use super::super::util::{CollisionResult, CollBox, Collidable};
 use super::super::util::draw_str;
-use super::super::super::framework::texture_manager::TextureManager;
+use super::super::super::framework::Renderer;
 use super::super::super::util::pad::{Pad, PAD_START};
 use super::super::super::util::types::Vec2I;
 
@@ -133,24 +133,19 @@ impl GameManager {
         }
     }
 
-    pub fn draw(&mut self, canvas: &mut WindowCanvas, texture_manager: &mut TextureManager) -> Result<(), String> {
-        if let Some(texture) = texture_manager.get_mut("chr") {
-            self.star_manager.draw(canvas, texture)?;
-
-            self.enemy_manager.draw(canvas, texture)?;
-
-            self.player.draw(canvas, texture)?;
-
-            for myshot in self.myshots.iter().flat_map(|x| x) {
-                myshot.draw(canvas, texture)?;
-            }
-
-            for effect in self.effects.iter().flat_map(|x| x) {
-                effect.draw(canvas, texture)?;
-            }
+    pub fn draw(&mut self, canvas: &mut WindowCanvas, renderer: &mut Renderer) -> Result<(), String> {
+        self.star_manager.draw(canvas, renderer)?;
+        self.enemy_manager.draw(canvas, renderer)?;
+        self.player.draw(canvas, renderer)?;
+        for myshot in self.myshots.iter().flat_map(|x| x) {
+            myshot.draw(canvas, renderer)?;
         }
 
-        if let Some(font_texture) = texture_manager.get_mut("font") {
+        for effect in self.effects.iter().flat_map(|x| x) {
+            effect.draw(canvas, renderer)?;
+        }
+
+        if let Some(font_texture) = renderer.get_mut_texture_manager().get_mut("font") {
             font_texture.set_color_mod(255, 0, 0);
             if (self.frame_count & 31) < 16 || self.state != GameState::Playing {
                 draw_str(canvas, &font_texture, 16 * 2, 16 * 0, "1UP")?;

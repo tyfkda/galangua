@@ -1,7 +1,8 @@
 use sdl2::rect::Rect;
-use sdl2::render::{Texture, WindowCanvas};
+use sdl2::render::WindowCanvas;
 
 use super::super::util::{CollBox, Collidable};
+use super::super::super::framework::Renderer;
 use super::super::super::util::math::round_up;
 use super::super::super::util::types::Vec2I;
 
@@ -26,11 +27,11 @@ impl EneShot {
         self.pos += self.vel;
     }
 
-    pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
+    pub fn draw(&self, canvas: &mut WindowCanvas, renderer: &Renderer) -> Result<(), String> {
         let pos = self.pos();
-        canvas.copy(&texture,
-                    Some(Rect::new(16, 8, 8, 8)),
-                    Some(Rect::new((pos.x - 4) * 2, (pos.y - 4) * 2, 8 * 2, 8 * 2)))?;
+        renderer.draw_texture(canvas, "chr",
+                              Some(Rect::new(16, 8, 8, 8)),
+                              Some(Rect::new((pos.x - 4) * 2, (pos.y - 4) * 2, 8 * 2, 8 * 2)))?;
 
         Ok(())
     }
