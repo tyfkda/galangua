@@ -42,7 +42,7 @@ impl App for GaragaApp {
         self.pad.on_key_up(keycode);
     }
 
-    fn init(&mut self, renderer: &mut Renderer) -> Result<(), String> {
+    fn init(&mut self, renderer: &mut dyn Renderer) -> Result<(), String> {
         renderer.load_textures("assets", &vec!["chr.png", "font.png"])?;
 
         Ok(())
@@ -53,7 +53,7 @@ impl App for GaragaApp {
         self.game_manager.update(&self.pad);
     }
 
-    fn draw(&mut self, renderer: &mut Renderer) -> Result<(), String> {
+    fn draw(&mut self, renderer: &mut dyn Renderer) -> Result<(), String> {
         renderer.set_draw_color(Color::RGB(0, 0, 0));
         renderer.clear();
 

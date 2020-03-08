@@ -24,7 +24,7 @@ impl MyShot {
         self.pos.y >= 0
     }
 
-    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         let pos = self.pos();
         renderer.draw_texture("chr",
                               Some(Rect::new(16, 0, 8, 8)),

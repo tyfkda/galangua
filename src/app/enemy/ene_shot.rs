@@ -26,7 +26,7 @@ impl EneShot {
         self.pos += self.vel;
     }
 
-    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         let pos = self.pos();
         renderer.draw_texture("chr",
                               Some(Rect::new(16, 8, 8, 8)),

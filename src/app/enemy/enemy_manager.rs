@@ -66,7 +66,7 @@ impl EnemyManager {
         self.update_shots();
     }
 
-    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         for enemy in self.enemies.iter().flat_map(|x| x) {
             enemy.draw(renderer)?;
         }

@@ -100,7 +100,7 @@ impl Enemy {
         self.angle += self.vangle;
     }
 
-    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         let src_u = match self.enemy_type {
             EnemyType::Owl => if self.life <= 1 { 32 } else { 0 },
             _ => 0,

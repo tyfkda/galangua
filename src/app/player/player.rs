@@ -57,7 +57,7 @@ impl Player {
         }
     }
 
-    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         match self.state {
             State::Normal | State::Dual => {
                 // Through.

@@ -17,7 +17,7 @@ impl Effect {
         }
     }
 
-    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         match self {
             Effect::EarnedPoint(x) => x.draw(renderer),
             Effect::SmallBomb(x) => x.draw(renderer),
@@ -56,7 +56,7 @@ impl EarnedPoint {
         self.frame_count < 30
     }
 
-    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         let rect: Rect;
         match self.point_type {
             EarnedPointType::Point1600 => { rect = Rect::new(32, 0, 16, 8); },
@@ -94,7 +94,7 @@ impl SmallBomb {
         self.frame_count < 15
     }
 
-    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         let pat = min(self.frame_count / 4, 2) as i32;
 
         renderer.draw_texture("chr",

@@ -50,7 +50,7 @@ impl StarManager {
         }
     }
 
-    pub fn draw(&self, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         for star in self.stars.iter() {
             if (self.frame_count + star.t) & 31 < 16 {
                 continue;

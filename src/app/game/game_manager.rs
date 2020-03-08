@@ -131,7 +131,7 @@ impl GameManager {
         }
     }
 
-    pub fn draw(&mut self, renderer: &mut Renderer) -> Result<(), String> {
+    pub fn draw(&mut self, renderer: &mut dyn Renderer) -> Result<(), String> {
         self.star_manager.draw(renderer)?;
         self.enemy_manager.draw(renderer)?;
         self.player.draw(renderer)?;

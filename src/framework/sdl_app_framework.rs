@@ -6,7 +6,7 @@ use std::thread;
 use std::time::{Duration, SystemTime};
 
 use super::App;
-use super::Renderer;
+use super::sdl_renderer::SdlRenderer;
 
 pub struct SdlAppFramework {
     sdl_context: Sdl,
@@ -41,7 +41,7 @@ impl SdlAppFramework {
             .present_vsync()
             .build()
             .map_err(|e| e.to_string())?;
-        let mut renderer = Renderer::new(canvas);
+        let mut renderer = SdlRenderer::new(canvas);
 
         self.app.init(&mut renderer)?;
 
