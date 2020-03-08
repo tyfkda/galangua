@@ -12,7 +12,7 @@ impl<T> ResourceManager<T> {
         }
     }
 
-    pub fn load<F>(&mut self, base_path: &str, filenames: &Vec<&str>, loader: F) -> Result<(), String>
+    pub fn load<F>(&mut self, base_path: &str, filenames: &[&str], loader: F) -> Result<(), String>
         where F : Fn(&str) -> Result<T, String>
     {
         for filename in filenames {
