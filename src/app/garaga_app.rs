@@ -1,4 +1,5 @@
 use sdl2::keyboard::Keycode;
+use sdl2::pixels::Color;
 use sdl2::render::WindowCanvas;
 
 use super::consts;
@@ -58,6 +59,7 @@ impl App for GaragaApp {
     }
 
     fn draw(&mut self, canvas: &mut WindowCanvas) -> Result<(), String> {
+        canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
 
         self.game_manager.draw(canvas, &mut self.texture_manager)?;
