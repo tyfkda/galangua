@@ -24,6 +24,10 @@ impl<T> ResourceManager<T> {
         Ok(())
     }
 
+    pub fn get(&self, key: &str) -> Option<&T> {
+        self.resource_map.get(key)
+    }
+
     pub fn get_mut(&mut self, key: &str) -> Option<&mut T> {
         self.resource_map.get_mut(key)
     }

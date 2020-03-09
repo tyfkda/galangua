@@ -2,24 +2,32 @@ use sdl2::Sdl;
 use sdl2::event::Event;
 use sdl2::image::InitFlag;
 use sdl2::keyboard::Keycode;
-use sdl2::render::WindowCanvas;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
 use super::App;
+use super::sdl_renderer::SdlRenderer;
 
 pub struct SdlAppFramework {
-    pub sdl_context: Sdl,
-    pub canvas: WindowCanvas,
-    pub last_update_time: SystemTime,
+    sdl_context: Sdl,
+    last_update_time: SystemTime,
 
-    pub app: Box<dyn App>,
+    app: Box<dyn App>,
 }
 
 impl SdlAppFramework {
-    pub fn new(title: &str, width: u32, height: u32, app: Box<dyn App>) -> Result<SdlAppFramework, String> {
+    pub fn new(app: Box<dyn App>) -> Result<SdlAppFramework, String> {
         let sdl_context = sdl2::init()?;
-        let video_subsystem = sdl_context.video()?;
+
+        Ok(SdlAppFramework {
+            sdl_context,
+            last_update_time: SystemTime::now(),
+            app,
+        })
+    }
+
+    pub fn run(&mut self, title: &str, width: u32, height: u32) -> Result<(), String> {
+        let video_subsystem = self.sdl_context.video()?;
         let _image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?;
 
         let window = video_subsystem
@@ -33,17 +41,9 @@ impl SdlAppFramework {
             .present_vsync()
             .build()
             .map_err(|e| e.to_string())?;
+        let mut renderer = SdlRenderer::new(canvas);
 
-        Ok(SdlAppFramework {
-            sdl_context,
-            canvas,
-            last_update_time: SystemTime::now(),
-            app,
-        })
-    }
-
-    pub fn run(&mut self) -> Result<(), String> {
-        self.app.init(&mut self.canvas)?;
+        self.app.init(&mut renderer)?;
 
         'running: loop {
             if !self.pump_events()? {
@@ -51,7 +51,7 @@ impl SdlAppFramework {
             }
 
             self.app.update();
-            self.app.draw(&mut self.canvas)?;
+            self.app.draw(&mut renderer)?;
 
             self.wait_frame(Duration::from_micros(1_000_000 / 60));
         }

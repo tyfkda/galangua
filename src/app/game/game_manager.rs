@@ -1,5 +1,4 @@
 use rand::Rng;
-use sdl2::render::WindowCanvas;
 
 use super::event_queue::{EventQueue, EventType};
 use super::super::effect::{Effect, EarnedPoint, EarnedPointType, SmallBomb};
@@ -8,8 +7,7 @@ use super::super::enemy::EnemyManager;
 use super::super::player::MyShot;
 use super::super::player::Player;
 use super::super::util::{CollisionResult, CollBox, Collidable};
-use super::super::util::draw_str;
-use super::super::super::framework::texture_manager::TextureManager;
+use super::super::super::framework::Renderer;
 use super::super::super::util::pad::{Pad, PAD_START};
 use super::super::super::util::types::Vec2I;
 
@@ -133,36 +131,29 @@ impl GameManager {
         }
     }
 
-    pub fn draw(&mut self, canvas: &mut WindowCanvas, texture_manager: &mut TextureManager) -> Result<(), String> {
-        if let Some(texture) = texture_manager.get_mut("chr") {
-            self.star_manager.draw(canvas, texture)?;
-
-            self.enemy_manager.draw(canvas, texture)?;
-
-            self.player.draw(canvas, texture)?;
-
-            for myshot in self.myshots.iter().flat_map(|x| x) {
-                myshot.draw(canvas, texture)?;
-            }
-
-            for effect in self.effects.iter().flat_map(|x| x) {
-                effect.draw(canvas, texture)?;
-            }
+    pub fn draw(&mut self, renderer: &mut dyn Renderer) -> Result<(), String> {
+        self.star_manager.draw(renderer)?;
+        self.enemy_manager.draw(renderer)?;
+        self.player.draw(renderer)?;
+        for myshot in self.myshots.iter().flat_map(|x| x) {
+            myshot.draw(renderer)?;
         }
 
-        if let Some(font_texture) = texture_manager.get_mut("font") {
-            font_texture.set_color_mod(255, 0, 0);
-            if (self.frame_count & 31) < 16 || self.state != GameState::Playing {
-                draw_str(canvas, &font_texture, 16 * 2, 16 * 0, "1UP")?;
-            }
-            draw_str(canvas, &font_texture, 16 * 9, 16 * 0, "HIGH SCORE")?;
-            font_texture.set_color_mod(255, 255, 255);
-            draw_str(canvas, &font_texture, 16 * 0, 16 * 1, &format!("{:6}0", self.score / 10))?;
-            draw_str(canvas, &font_texture, 16 * 10, 16 * 1, &format!("{:6}0", self.high_score / 10))?;
+        for effect in self.effects.iter().flat_map(|x| x) {
+            effect.draw(renderer)?;
+        }
 
-            if self.state == GameState::GameOver {
-                draw_str(canvas, &font_texture, (28 - 10) / 2 * 16, 16 * 10, "GAME OVER")?;
-            }
+        renderer.set_texture_color_mod("font", 255, 0, 0);
+        if (self.frame_count & 31) < 16 || self.state != GameState::Playing {
+            renderer.draw_str("font", 16 * 2, 16 * 0, "1UP")?;
+        }
+        renderer.draw_str("font", 16 * 9, 16 * 0, "HIGH SCORE")?;
+        renderer.set_texture_color_mod("font", 255, 255, 255);
+        renderer.draw_str("font", 16 * 0, 16 * 1, &format!("{:6}0", self.score / 10))?;
+        renderer.draw_str("font", 16 * 10, 16 * 1, &format!("{:6}0", self.high_score / 10))?;
+
+        if self.state == GameState::GameOver {
+            renderer.draw_str("font", (28 - 10) / 2 * 16, 16 * 10, "GAME OVER")?;
         }
 
         Ok(())

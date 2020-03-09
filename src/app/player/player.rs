@@ -1,9 +1,9 @@
 use sdl2::rect::Rect;
-use sdl2::render::{Texture, WindowCanvas};
 
 use super::super::consts::*;
 use super::super::game::EventQueue;
 use super::super::util::{CollBox, Collidable};
+use super::super::super::framework::Renderer;
 use super::super::super::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
 use super::super::super::util::math::{ONE, round_up};
 use super::super::super::util::types::Vec2I;
@@ -57,7 +57,7 @@ impl Player {
         }
     }
 
-    pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         match self.state {
             State::Normal | State::Dual => {
                 // Through.
@@ -68,13 +68,13 @@ impl Player {
         }
 
         let pos = self.pos();
-        canvas.copy(&texture,
-                    Some(Rect::new(0, 0, 16, 16)),
-                    Some(Rect::new((pos.x - 8) * 2, (pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
+        renderer.draw_texture("chr",
+                              Some(Rect::new(0, 0, 16, 16)),
+                              Some(Rect::new((pos.x - 8) * 2, (pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
         if self.dual() {
-            canvas.copy(&texture,
-                        Some(Rect::new(0, 0, 16, 16)),
-                        Some(Rect::new((pos.x + 8) * 2, (pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
+            renderer.draw_texture("chr",
+                                  Some(Rect::new(0, 0, 16, 16)),
+                                  Some(Rect::new((pos.x + 8) * 2, (pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
         }
 
         Ok(())

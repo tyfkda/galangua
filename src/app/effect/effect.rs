@@ -1,7 +1,7 @@
 use sdl2::rect::Rect;
-use sdl2::render::{Texture, WindowCanvas};
 use std::cmp::min;
 
+use super::super::super::framework::Renderer;
 use super::super::super::util::types::Vec2I;
 
 pub enum Effect {
@@ -17,10 +17,10 @@ impl Effect {
         }
     }
 
-    pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         match self {
-            Effect::EarnedPoint(x) => x.draw(canvas, texture),
-            Effect::SmallBomb(x) => x.draw(canvas, texture),
+            Effect::EarnedPoint(x) => x.draw(renderer),
+            Effect::SmallBomb(x) => x.draw(renderer),
         }
     }
 }
@@ -56,7 +56,7 @@ impl EarnedPoint {
         self.frame_count < 30
     }
 
-    pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         let rect: Rect;
         match self.point_type {
             EarnedPointType::Point1600 => { rect = Rect::new(32, 0, 16, 8); },
@@ -65,9 +65,9 @@ impl EarnedPoint {
             EarnedPointType::Point150  => { rect = Rect::new(48, 8, 16, 8); },
         }
 
-        canvas.copy(&texture,
-                    Some(rect),
-                    Some(Rect::new((self.pos.x - 8) * 2, (self.pos.y - 4) * 2, 16 * 2, 8 * 2)))?;
+        renderer.draw_texture("chr",
+                              Some(rect),
+                              Some(Rect::new((self.pos.x - 8) * 2, (self.pos.y - 4) * 2, 16 * 2, 8 * 2)))?;
 
         Ok(())
     }
@@ -94,12 +94,12 @@ impl SmallBomb {
         self.frame_count < 15
     }
 
-    pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         let pat = min(self.frame_count / 4, 2) as i32;
 
-        canvas.copy(&texture,
-                    Some(Rect::new(pat * 16, 64, 16, 16)),
-                    Some(Rect::new((self.pos.x - 8) * 2, (self.pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
+        renderer.draw_texture("chr",
+                              Some(Rect::new(pat * 16, 64, 16, 16)),
+                              Some(Rect::new((self.pos.x - 8) * 2, (self.pos.y - 8) * 2, 16 * 2, 16 * 2)))?;
 
         Ok(())
     }

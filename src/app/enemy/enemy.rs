@@ -1,9 +1,9 @@
 use sdl2::rect::Rect;
-use sdl2::render::{Texture, WindowCanvas};
 
 use super::formation::Formation;
 use super::traj::Traj;
 use super::super::util::{CollBox, Collidable};
+use super::super::super::framework::Renderer;
 use super::super::super::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
 use super::super::super::util::types::Vec2I;
 
@@ -100,7 +100,7 @@ impl Enemy {
         self.angle += self.vangle;
     }
 
-    pub fn draw(&self, canvas: &mut WindowCanvas, texture: &Texture) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         let src_u = match self.enemy_type {
             EnemyType::Owl => if self.life <= 1 { 32 } else { 0 },
             _ => 0,
@@ -113,12 +113,12 @@ impl Enemy {
 
         let angle = calc_display_angle(self.angle);
         let pos = self.pos();
-        canvas.copy_ex(&texture,
-                       Some(Rect::new(src_u, src_v, 16, 16)),
-                       Some(Rect::new((pos.x - 8) * 2, (pos.y - 8) * 2, 16 * 2, 16 * 2)),
-                       angle,
-                       None,
-                       false, false)?;
+        renderer.draw_texture_ex("chr",
+                                 Some(Rect::new(src_u, src_v, 16, 16)),
+                                 Some(Rect::new((pos.x - 8) * 2, (pos.y - 8) * 2, 16 * 2, 16 * 2)),
+                                 angle,
+                                 None,
+                                 false, false)?;
 
         Ok(())
     }

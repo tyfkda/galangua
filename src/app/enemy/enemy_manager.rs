@@ -1,5 +1,4 @@
 use rand::Rng;
-use sdl2::render::{Texture, WindowCanvas};
 use std::mem::MaybeUninit;
 
 use super::AppearanceManager;
@@ -8,6 +7,7 @@ use super::ene_shot::EneShot;
 use super::formation::Formation;
 use super::super::consts::*;
 use super::super::util::{CollisionResult, CollBox, Collidable};
+use super::super::super::framework::Renderer;
 use super::super::super::util::math::ONE;
 use super::super::super::util::types::Vec2I;
 
@@ -66,12 +66,12 @@ impl EnemyManager {
         self.update_shots();
     }
 
-    pub fn draw(&self, canvas: &mut WindowCanvas, texture: &mut Texture) -> Result<(), String> {
+    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         for enemy in self.enemies.iter().flat_map(|x| x) {
-            enemy.draw(canvas, texture)?;
+            enemy.draw(renderer)?;
         }
         for shot in self.shots.iter().flat_map(|x| x) {
-            shot.draw(canvas, texture)?;
+            shot.draw(renderer)?;
         }
 
         Ok(())
