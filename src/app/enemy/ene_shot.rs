@@ -1,4 +1,4 @@
-use sdl2::rect::Rect;
+use sdl2::rect::Point;
 
 use super::super::util::{CollBox, Collidable};
 use super::super::super::framework::Renderer;
@@ -28,9 +28,7 @@ impl EneShot {
 
     pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         let pos = self.pos();
-        renderer.draw_texture("chr",
-                              Some(Rect::new(16, 8, 8, 8)),
-                              Some(Rect::new((pos.x - 4) * 2, (pos.y - 4) * 2, 8 * 2, 8 * 2)))?;
+        renderer.draw_sprite("ene_shot", Point::new(pos.x - 2, pos.y - 4))?;
 
         Ok(())
     }

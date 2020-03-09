@@ -1,0 +1,10 @@
+{
+  "name": "tmp",
+  "scripts": {
+    "start": "npm run pack",
+    "pack": "npx spritesheet-js -n chr --trim ../src/img/chr/*.png"
+  },
+  "devDependencies": {
+    "spritesheet-js": "1.2.6"
+  }
+}

@@ -1,13 +1,16 @@
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::WindowCanvas;
+use std::collections::HashMap;
 
 use super::Renderer;
+use super::sprite_sheet::SpriteSheet;
 use super::texture_manager::TextureManager;
 
 pub struct SdlRenderer {
     canvas: WindowCanvas,
     texture_manager: TextureManager,
+    sprite_sheet: HashMap<String, SpriteSheet>,
 }
 
 impl SdlRenderer {
@@ -15,6 +18,7 @@ impl SdlRenderer {
         SdlRenderer {
             canvas,
             texture_manager: TextureManager::new(),
+            sprite_sheet: HashMap::new(),
         }
     }
 }
@@ -22,6 +26,10 @@ impl SdlRenderer {
 impl Renderer for SdlRenderer {
     fn load_textures(&mut self, base_path: &str, filenames: &Vec<&str>) -> Result<(), String> {
         self.texture_manager.load(&mut self.canvas, base_path, filenames)
+    }
+
+    fn set_sprite_sheet(&mut self, sprite_sheet: HashMap<String, SpriteSheet>) {
+        self.sprite_sheet = sprite_sheet;
     }
 
     fn get_mut_texture_manager(&mut self) -> &mut TextureManager {
@@ -62,24 +70,33 @@ impl Renderer for SdlRenderer {
         }
     }
 
-    fn draw_texture(&mut self, tex_name: &str, src: Option<Rect>, dst: Option<Rect>) -> Result<(), String> {
-        if let Some(texture) = self.texture_manager.get(tex_name) {
-            self.canvas.copy(&texture,
-                             src, dst)?;
-            return Ok(());
+    fn draw_sprite(&mut self, sprite_name: &str, mut pos: Point) -> Result<(), String> {
+        let sheet = self.sprite_sheet.get(sprite_name).expect(&format!("No sprite: {}", sprite_name));
+        if let Some(trimmed) = &sheet.trimmed {
+            pos.x += trimmed.sprite_source_size.x;
+            pos.y += trimmed.sprite_source_size.y;
         }
-        return Err(format!("No texture: {}", tex_name));
+
+        let texture = self.texture_manager.get(&sheet.texture).expect(&format!("No texture: {}", sheet.texture));
+        self.canvas.copy(&texture,
+                         Some(Rect::new(sheet.frame.x, sheet.frame.y, sheet.frame.w, sheet.frame.h)),
+                         Some(Rect::new(pos.x * 2, pos.y * 2, sheet.frame.w * 2, sheet.frame.h * 2)))?;
+        Ok(())
     }
 
-    fn draw_texture_ex(&mut self, tex_name: &str, src: Option<Rect>, dst: Option<Rect>,
-                       angle: f64, center: Option<Point>, flip_horizontal: bool, flip_vertical: bool) -> Result<(), String>
-    {
-        if let Some(texture) = self.texture_manager.get(tex_name) {
-            self.canvas.copy_ex(&texture,
-                                src, dst, angle, center, flip_horizontal, flip_vertical)?;
-            return Ok(());
+    fn draw_sprite_rot(&mut self, sprite_name: &str, mut pos: Point, angle: f64, center: Option<Point>) -> Result<(), String> {
+        let sheet = self.sprite_sheet.get(sprite_name).expect(&format!("No sprite: {}", sprite_name));
+        if let Some(trimmed) = &sheet.trimmed {
+            pos.x += trimmed.sprite_source_size.x;
+            pos.y += trimmed.sprite_source_size.y;
         }
-        return Err(format!("No texture: {}", tex_name));
+
+        let texture = self.texture_manager.get(&sheet.texture).expect(&format!("No texture: {}", sheet.texture));
+        self.canvas.copy_ex(&texture,
+                            Some(Rect::new(sheet.frame.x, sheet.frame.y, sheet.frame.w, sheet.frame.h)),
+                            Some(Rect::new(pos.x * 2, pos.y * 2, sheet.frame.w * 2, sheet.frame.h * 2)),
+                            angle, center, false, false)?;
+        Ok(())
     }
 
     fn set_draw_color(&mut self, color: Color) {
@@ -87,7 +104,11 @@ impl Renderer for SdlRenderer {
     }
 
     fn fill_rect(&mut self, dst: Option<Rect>) -> Result<(), String> {
-        self.canvas.fill_rect(dst)?;
+        if let Some(rect) = dst {
+            self.canvas.fill_rect(Some(Rect::new(rect.x * 2, rect.y * 2, (rect.w * 2) as u32, (rect.h * 2) as u32)))?;
+        } else {
+            self.canvas.fill_rect(None)?;
+        }
         Ok(())
     }
 }

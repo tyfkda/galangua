@@ -1,4 +1,4 @@
-use sdl2::rect::Rect;
+use sdl2::rect::Point;
 
 use super::super::util::{CollBox, Collidable};
 use super::super::super::framework::Renderer;
@@ -26,13 +26,9 @@ impl MyShot {
 
     pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
         let pos = self.pos();
-        renderer.draw_texture("chr",
-                              Some(Rect::new(16, 0, 8, 8)),
-                              Some(Rect::new((pos.x - 4) * 2, (pos.y - 4) * 2, 8 * 2, 8 * 2)))?;
+        renderer.draw_sprite("myshot", Point::new(pos.x - 2, pos.y - 8))?;
         if self.dual {
-            renderer.draw_texture("chr",
-                                  Some(Rect::new(16, 0, 8, 8)),
-                                  Some(Rect::new((pos.x - 4 + 16) * 2, (pos.y - 4) * 2, 8 * 2, 8 * 2)))?;
+            renderer.draw_sprite("myshot", Point::new(pos.x + (-2 + 16), pos.y - 8))?;
         }
 
         Ok(())
