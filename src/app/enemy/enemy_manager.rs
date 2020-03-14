@@ -6,6 +6,7 @@ use crate::app::enemy::attack_manager::AttackManager;
 use crate::app::enemy::enemy::{Enemy, EnemyState};
 use crate::app::enemy::ene_shot::EneShot;
 use crate::app::enemy::formation::Formation;
+use crate::app::game::EventQueue;
 use crate::app::util::{CollisionResult, CollBox, Collidable};
 use crate::framework::RendererTrait;
 use crate::framework::types::Vec2I;
@@ -56,11 +57,11 @@ impl EnemyManager {
         self.appearance_manager.done && self.enemies.iter().all(|x| x.is_none())
     }
 
-    pub fn update(&mut self, _player_pos: &[Option<Vec2I>]) {
+    pub fn update(&mut self, event_queue: &mut EventQueue) {
         self.update_appearance();
         self.update_formation();
         self.update_attackers();
-        self.update_enemies();
+        self.update_enemies(event_queue);
         self.update_shots();
     }
 
@@ -149,10 +150,10 @@ impl EnemyManager {
         }
     }
 
-    fn update_enemies(&mut self) {
+    fn update_enemies(&mut self, event_queue: &mut EventQueue) {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
-            enemy.update(&self.formation);
+            enemy.update(&self.formation, event_queue);
         }
     }
 
@@ -170,13 +171,13 @@ impl EnemyManager {
         self.enemies.iter().position(|x| x.is_none())
     }
 
-    fn spawn_shot(&mut self, pos: &Vec2I, target_pos: &[Option<Vec2I>], speed: u32) {
+    pub fn spawn_shot(&mut self, pos: Vec2I, target_pos: &[Option<Vec2I>], speed: i32) {
         if let Some(index) = self.shots.iter().position(|x| x.is_none()) {
             let mut rng = rand::thread_rng();
             let count = target_pos.iter().filter(|x| x.is_some()).count();
             let target_opt: &Option<Vec2I> = target_pos.iter().filter(|x| x.is_some()).nth(rng.gen_range(0, count)).unwrap();
             let target: Vec2I = target_opt.unwrap();
-            let d = target * ONE - *pos;
+            let d = target * ONE - pos;
             let distance = ((d.x as f64).powi(2) + (d.y as f64).powi(2)).sqrt();
             let f = (speed as f64) / distance;
             let vel = Vec2I::new(
@@ -184,7 +185,7 @@ impl EnemyManager {
                 ((d.y as f64) * f).round() as i32,
             );
             self.shots[index] = Some(EneShot::new(
-                *pos, vel,
+                pos, vel,
             ));
         }
     }

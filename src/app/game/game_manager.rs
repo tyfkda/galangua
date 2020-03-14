@@ -103,11 +103,7 @@ impl GameManager {
             }
         }
 
-        let player_pos = [
-            Some(self.player.pos()),
-            self.player.dual_pos(),
-        ];
-        self.enemy_manager.update(&player_pos);
+        self.enemy_manager.update(&mut self.event_queue);
 
         if self.enemy_manager.all_destroyed() {
             self.stage += 1;
@@ -169,6 +165,9 @@ impl GameManager {
                 EventType::MyShot(pos, dual) => {
                     self.spawn_myshot(pos, dual);
                 }
+                EventType::EneShot(pos, speed) => {
+                    self.spawn_ene_shot(pos, speed);
+                }
                 EventType::AddScore(add) => {
                     self.score += add;
                     if self.score > self.high_score {
@@ -194,6 +193,14 @@ impl GameManager {
         if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
             *myshot_opt = Some(MyShot::new(pos, dual));
         }
+    }
+
+    fn spawn_ene_shot(&mut self, pos: Vec2I, speed: i32) {
+        let player_pos = [
+            Some(self.player.pos()),
+            self.player.dual_pos(),
+        ];
+        self.enemy_manager.spawn_shot(pos, &player_pos, speed);
     }
 
     fn check_collision(&mut self) {

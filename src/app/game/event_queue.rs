@@ -28,6 +28,10 @@ impl EventQueue {
         self.queue.push(EventType::MyShot(pos, dual));
     }
 
+    pub fn spawn_ene_shot(&mut self, pos: Vec2I, speed: i32) {
+        self.queue.push(EventType::EneShot(pos, speed));
+    }
+
     pub fn add_score(&mut self, add: u32) {
         self.queue.push(EventType::AddScore(add));
     }
@@ -48,6 +52,7 @@ impl EventQueue {
 pub enum EventType {
     MyShot(Vec2I, bool),
     AddScore(u32),
+    EneShot(Vec2I, i32),
     EarnPoint(EarnedPointType, Vec2I),
     SmallBomb(Vec2I),
     DeadPlayer,

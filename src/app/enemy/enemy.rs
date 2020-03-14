@@ -1,5 +1,6 @@
 use crate::app::enemy::formation::Formation;
 use crate::app::enemy::traj::Traj;
+use crate::app::game::EventQueue;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::RendererTrait;
 use crate::framework::types::Vec2I;
@@ -63,7 +64,7 @@ impl Enemy {
         round_up(&self.pos)
     }
 
-    pub fn update(&mut self, formation: &Formation) {
+    pub fn update(&mut self, formation: &Formation, event_queue: &mut EventQueue) {
         if self.state == EnemyState::Formation {
             return;
         }
@@ -98,7 +99,7 @@ impl Enemy {
                 }
             }
             EnemyState::Attack => {
-                self.update_attack();
+                self.update_attack(event_queue);
             }
             _ => {}
         }
@@ -161,15 +162,16 @@ impl Enemy {
         self.count = 0;
     }
 
-    fn update_attack(&mut self) {
+    fn update_attack(&mut self, event_queue: &mut EventQueue) {
         match self.enemy_type {
-            EnemyType::Bee => { self.update_attack_bee(); }
-            EnemyType::Butterfly => { self.update_attack_butterfly(); }
-            EnemyType::Owl => { self.update_attack_owl(); }
+            EnemyType::Bee => { self.update_attack_bee(event_queue); }
+            EnemyType::Butterfly => { self.update_attack_butterfly(event_queue); }
+            EnemyType::Owl => { self.update_attack_owl(event_queue); }
         }
     }
 
-    fn update_attack_bee(&mut self) {
+    fn update_attack_bee(&mut self, event_queue: &mut EventQueue) {
+//println!("bee: step={}, count={}", self.attack_step, self.count);
         match self.attack_step {
             0 => {
                 self.speed = 1 * 256;
@@ -181,6 +183,8 @@ impl Enemy {
                 }
                 self.attack_step += 1;
                 self.count = 0;
+
+                event_queue.spawn_ene_shot(self.pos, 2 * ONE);
             }
             1 => {
                 if (self.vangle < 0 && self.angle <= -160 * 256) || (self.vangle > 0 && self.angle >= 160 * 256) {
@@ -212,12 +216,12 @@ impl Enemy {
         }
     }
 
-    fn update_attack_butterfly(&mut self) {
-        self.update_attack_bee();
+    fn update_attack_butterfly(&mut self, event_queue: &mut EventQueue) {
+        self.update_attack_bee(event_queue);
     }
 
-    fn update_attack_owl(&mut self) {
-        self.update_attack_bee();
+    fn update_attack_owl(&mut self, event_queue: &mut EventQueue) {
+        self.update_attack_bee(event_queue);
     }
 }
 
