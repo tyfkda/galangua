@@ -1,5 +1,5 @@
+use array_macro::*;
 use rand::Rng;
-use std::mem::MaybeUninit;
 
 use super::AppearanceManager;
 use super::enemy::{Enemy, EnemyState};
@@ -23,14 +23,8 @@ pub struct EnemyManager {
 
 impl EnemyManager {
     pub fn new() -> EnemyManager {
-        let mut enemies: [MaybeUninit<Option<Enemy>>; MAX_ENEMY_COUNT] = unsafe { MaybeUninit::uninit().assume_init() };
-        for (_i, element) in enemies.iter_mut().enumerate() {
-            *element = MaybeUninit::new(None);
-        }
-        let enemies = unsafe { std::mem::transmute::<_, [Option<Enemy>; MAX_ENEMY_COUNT]>(enemies) };
-
         let mut mgr = EnemyManager {
-            enemies: enemies,
+            enemies: array![None; MAX_ENEMY_COUNT],
             shots: Default::default(),
             formation: Formation::new(),
             appearance_manager: AppearanceManager::new(0),

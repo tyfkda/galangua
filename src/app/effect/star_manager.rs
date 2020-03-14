@@ -1,7 +1,7 @@
+use array_macro::*;
 use rand::Rng;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use std::mem::MaybeUninit;
 
 use super::super::consts;
 use super::super::super::framework::Renderer;
@@ -17,16 +17,13 @@ pub struct StarManager {
 impl StarManager {
     pub fn new() -> StarManager {
         let mut rng = rand::thread_rng();
-        let mut stars: [MaybeUninit<Star>; STAR_COUNT] = unsafe { MaybeUninit::uninit().assume_init() };
-        for (_i, element) in stars.iter_mut().enumerate() {
-            let star = Star {
+        let stars = array![|_i|
+            Star {
                 pos: Vec2I::new(rng.gen_range(0, consts::WIDTH), rng.gen_range(-16, consts::HEIGHT)),
                 t: rng.gen_range(0, 64),
                 c: rng.gen_range(1, 8),
-            };
-            *element = MaybeUninit::new(star);
-        }
-        let stars = unsafe { std::mem::transmute::<_, [Star; STAR_COUNT]>(stars) };
+            }
+        ; STAR_COUNT];
 
         StarManager {
             stars: stars,
