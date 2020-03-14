@@ -1,3 +1,5 @@
+use lazy_static::lazy_static;
+
 use super::types::Vec2I;
 
 pub const ONE_BIT: i32 = 8;

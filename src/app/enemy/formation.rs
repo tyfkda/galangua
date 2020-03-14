@@ -1,3 +1,5 @@
+use lazy_static::lazy_static;
+
 use super::super::consts::*;
 use super::super::super::util::math::ONE;
 use super::super::super::util::types::Vec2I;
