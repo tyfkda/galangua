@@ -3,7 +3,7 @@ use sdl2::rect::Point;
 use super::formation::Formation;
 use super::traj::Traj;
 use super::super::util::{CollBox, Collidable};
-use super::super::super::framework::Renderer;
+use super::super::super::framework::RendererTrait;
 use super::super::super::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
 use super::super::super::util::types::Vec2I;
 
@@ -100,7 +100,9 @@ impl Enemy {
         self.angle += self.vangle;
     }
 
-    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         let sprite = match self.enemy_type {
             EnemyType::Bee => { "bee" }
             EnemyType::Butterfly => { "butterfly" }

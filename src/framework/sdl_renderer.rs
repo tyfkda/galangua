@@ -3,7 +3,7 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::WindowCanvas;
 use std::collections::HashMap;
 
-use super::Renderer;
+use super::RendererTrait;
 use super::sprite_sheet::SpriteSheet;
 use super::texture_manager::TextureManager;
 
@@ -23,7 +23,7 @@ impl SdlRenderer {
     }
 }
 
-impl Renderer for SdlRenderer {
+impl RendererTrait for SdlRenderer {
     fn load_textures(&mut self, base_path: &str, filenames: &Vec<&str>) -> Result<(), String> {
         self.texture_manager.load(&mut self.canvas, base_path, filenames)
     }

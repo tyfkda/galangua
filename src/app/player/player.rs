@@ -3,7 +3,7 @@ use sdl2::rect::Point;
 use super::super::consts::*;
 use super::super::game::EventQueue;
 use super::super::util::{CollBox, Collidable};
-use super::super::super::framework::Renderer;
+use super::super::super::framework::RendererTrait;
 use super::super::super::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
 use super::super::super::util::math::{ONE, round_up};
 use super::super::super::util::types::Vec2I;
@@ -57,7 +57,9 @@ impl Player {
         }
     }
 
-    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         match self.state {
             State::Normal | State::Dual => {
                 // Through.

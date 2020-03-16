@@ -1,7 +1,7 @@
 use sdl2::rect::Point;
 use std::cmp::min;
 
-use super::super::super::framework::Renderer;
+use super::super::super::framework::RendererTrait;
 use super::super::super::util::types::Vec2I;
 
 pub enum Effect {
@@ -17,7 +17,9 @@ impl Effect {
         }
     }
 
-    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         match self {
             Effect::EarnedPoint(x) => x.draw(renderer),
             Effect::SmallBomb(x) => x.draw(renderer),
@@ -56,7 +58,9 @@ impl EarnedPoint {
         self.frame_count < 30
     }
 
-    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         let sprite: &str;
         match self.point_type {
             EarnedPointType::Point1600 => { sprite = "pts1600"; },
@@ -92,7 +96,9 @@ impl SmallBomb {
         self.frame_count < 15
     }
 
-    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         let pat = min(self.frame_count / 4, 2) as usize;
         let table = ["small_bomb1", "small_bomb2", "small_bomb3"];
 

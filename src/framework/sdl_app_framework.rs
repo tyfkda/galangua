@@ -12,11 +12,11 @@ pub struct SdlAppFramework {
     sdl_context: Sdl,
     last_update_time: SystemTime,
 
-    app: Box<dyn App>,
+    app: Box<dyn App<SdlRenderer>>,
 }
 
 impl SdlAppFramework {
-    pub fn new(app: Box<dyn App>) -> Result<SdlAppFramework, String> {
+    pub fn new(app: Box<dyn App<SdlRenderer>>) -> Result<SdlAppFramework, String> {
         let sdl_context = sdl2::init()?;
 
         Ok(SdlAppFramework {

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use super::sprite_sheet::SpriteSheet;
 use super::texture_manager::TextureManager;
 
-pub trait Renderer {
+pub trait RendererTrait {
     fn load_textures(&mut self, base_path: &str, filenames: &Vec<&str>) -> Result<(), String>;
     fn set_sprite_sheet(&mut self, sprite_sheet: HashMap<String, SpriteSheet>);
     fn get_mut_texture_manager(&mut self) -> &mut TextureManager;
