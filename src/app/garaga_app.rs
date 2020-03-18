@@ -3,7 +3,7 @@ use sdl2::pixels::Color;
 
 use super::game::GameManager;
 use super::sprite_sheet::load_sprite_sheet;
-use super::super::framework::{App, RendererTrait};
+use super::super::framework::{AppTrait, RendererTrait};
 use super::super::util::fps_calc::FpsCalc;
 use super::super::util::pad::Pad;
 
@@ -23,7 +23,7 @@ impl GaragaApp {
     }
 }
 
-impl<Renderer: RendererTrait> App<Renderer> for GaragaApp {
+impl<Renderer: RendererTrait> AppTrait<Renderer> for GaragaApp {
     fn on_key_down(&mut self, keycode: Keycode) {
         self.pad.on_key_down(keycode);
     }
