@@ -43,7 +43,7 @@ fn test_collbox_check_collision() {
 pub trait Collidable {
     fn get_collbox(&self) -> CollBox;
 
-    fn collide_with(&self, target: &Box<&dyn Collidable>) -> bool {
+    fn collide_with<T: Collidable>(&self, target: &Box<&T>) -> bool {
         let collbox1 = self.get_collbox();
         let collbox2 = target.get_collbox();
         collbox1.check_collision(&collbox2)
