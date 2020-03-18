@@ -1,7 +1,7 @@
 use sdl2::rect::Point;
 
 use super::super::util::{CollBox, Collidable};
-use super::super::super::framework::Renderer;
+use super::super::super::framework::RendererTrait;
 use super::super::super::util::math::round_up;
 use super::super::super::util::types::Vec2I;
 
@@ -26,7 +26,9 @@ impl EneShot {
         self.pos += self.vel;
     }
 
-    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         let pos = self.pos();
         renderer.draw_sprite("ene_shot", Point::new(pos.x - 2, pos.y - 4))?;
 

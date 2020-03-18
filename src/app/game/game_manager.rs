@@ -7,7 +7,7 @@ use super::super::enemy::EnemyManager;
 use super::super::player::MyShot;
 use super::super::player::Player;
 use super::super::util::{CollisionResult, CollBox, Collidable};
-use super::super::super::framework::Renderer;
+use super::super::super::framework::RendererTrait;
 use super::super::super::util::pad::{Pad, PAD_START};
 use super::super::super::util::types::Vec2I;
 
@@ -131,7 +131,9 @@ impl GameManager {
         }
     }
 
-    pub fn draw(&mut self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    pub fn draw<Renderer>(&mut self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         self.star_manager.draw(renderer)?;
         self.enemy_manager.draw(renderer)?;
         self.player.draw(renderer)?;

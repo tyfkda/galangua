@@ -1,10 +1,9 @@
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 
-use super::consts;
 use super::game::GameManager;
 use super::sprite_sheet::load_sprite_sheet;
-use super::super::framework::{App, Renderer, SdlAppFramework};
+use super::super::framework::{AppTrait, RendererTrait};
 use super::super::util::fps_calc::FpsCalc;
 use super::super::util::pad::Pad;
 
@@ -22,19 +21,9 @@ impl GaragaApp {
             game_manager: GameManager::new(),
         }
     }
-
-    pub fn generate_and_run() -> Result<(), String> {
-        let app = GaragaApp::new();
-        let mut framework = SdlAppFramework::new(
-            Box::new(app))?;
-        framework.run("Garaga",
-                      (consts::WIDTH as u32) * 2,
-                      (consts::HEIGHT as u32) * 2,
-        )
-    }
 }
 
-impl App for GaragaApp {
+impl<Renderer: RendererTrait> AppTrait<Renderer> for GaragaApp {
     fn on_key_down(&mut self, keycode: Keycode) {
         self.pad.on_key_down(keycode);
     }
@@ -43,7 +32,9 @@ impl App for GaragaApp {
         self.pad.on_key_up(keycode);
     }
 
-    fn init(&mut self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    fn init(&mut self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         renderer.load_textures("assets", &vec!["chr.png", "font.png"])?;
 
         let sprite_sheet = load_sprite_sheet("assets/chr.json").expect("sprite sheet");
@@ -57,7 +48,9 @@ impl App for GaragaApp {
         self.game_manager.update(&self.pad);
     }
 
-    fn draw(&mut self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    fn draw(&mut self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         renderer.set_draw_color(Color::RGB(0, 0, 0));
         renderer.clear();
 

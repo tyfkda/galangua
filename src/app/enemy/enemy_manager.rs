@@ -7,7 +7,7 @@ use super::ene_shot::EneShot;
 use super::formation::Formation;
 use super::super::consts::*;
 use super::super::util::{CollisionResult, CollBox, Collidable};
-use super::super::super::framework::Renderer;
+use super::super::super::framework::RendererTrait;
 use super::super::super::util::math::ONE;
 use super::super::super::util::types::Vec2I;
 
@@ -60,7 +60,9 @@ impl EnemyManager {
         self.update_shots();
     }
 
-    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         for enemy in self.enemies.iter().flat_map(|x| x) {
             enemy.draw(renderer)?;
         }

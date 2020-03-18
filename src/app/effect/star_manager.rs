@@ -4,7 +4,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 
 use super::super::consts;
-use super::super::super::framework::Renderer;
+use super::super::super::framework::RendererTrait;
 use super::super::super::util::types::Vec2I;
 
 const STAR_COUNT: usize = 128;
@@ -47,7 +47,9 @@ impl StarManager {
         }
     }
 
-    pub fn draw(&self, renderer: &mut dyn Renderer) -> Result<(), String> {
+    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
+        where Renderer: RendererTrait
+    {
         for star in self.stars.iter() {
             if (self.frame_count + star.t) & 31 < 16 {
                 continue;

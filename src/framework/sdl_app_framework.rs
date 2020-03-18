@@ -5,18 +5,18 @@ use sdl2::keyboard::Keycode;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
-use super::App;
+use super::AppTrait;
 use super::sdl_renderer::SdlRenderer;
 
-pub struct SdlAppFramework {
+pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
     sdl_context: Sdl,
     last_update_time: SystemTime,
 
-    app: Box<dyn App>,
+    app: Box<App>,
 }
 
-impl SdlAppFramework {
-    pub fn new(app: Box<dyn App>) -> Result<SdlAppFramework, String> {
+impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
+    pub fn new(app: Box<App>) -> Result<SdlAppFramework<App>, String> {
         let sdl_context = sdl2::init()?;
 
         Ok(SdlAppFramework {
