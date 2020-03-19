@@ -1,7 +1,7 @@
-use crate::app::enemy::traj_command::TrajCommand;
 use crate::app::consts::*;
+use crate::app::enemy::traj_command::TrajCommand;
 use crate::framework::types::Vec2I;
-use crate::util::math::{SIN_TABLE, COS_TABLE, ANGLE, ONE, calc_velocity};
+use crate::util::math::{calc_velocity, ANGLE, COS_TABLE, ONE, SIN_TABLE};
 
 // Trajectory
 #[derive(Clone, Copy, Debug)]
@@ -107,7 +107,7 @@ impl Traj {
             }
 
             if i < command_table.len() {
-                self.command_table = Some(&command_table[i .. command_table.len()]);
+                self.command_table = Some(&command_table[i..command_table.len()]);
             } else {
                 self.command_table = None;
             }

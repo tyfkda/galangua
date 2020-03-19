@@ -1,7 +1,7 @@
 use crate::app::util::{CollBox, Collidable};
-use crate::framework::RendererTrait;
 use crate::framework::types::Vec2I;
-use crate::util::math::{ONE, round_up};
+use crate::framework::RendererTrait;
+use crate::util::math::{round_up, ONE};
 
 pub struct MyShot {
     pos: Vec2I,

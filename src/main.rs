@@ -3,8 +3,8 @@ mod framework;
 mod sdl;
 mod util;
 
-use crate::app::GaragaApp;
 use crate::app::consts;
+use crate::app::GaragaApp;
 use crate::sdl::SdlAppFramework;
 
 pub fn main() -> Result<(), String> {

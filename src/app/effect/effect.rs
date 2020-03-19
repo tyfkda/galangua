@@ -1,7 +1,7 @@
 use std::cmp::min;
 
-use crate::framework::RendererTrait;
 use crate::framework::types::Vec2I;
+use crate::framework::RendererTrait;
 
 pub enum Effect {
     EarnedPoint(EarnedPoint),

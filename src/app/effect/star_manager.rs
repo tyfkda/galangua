@@ -2,8 +2,8 @@ use array_macro::*;
 use rand::Rng;
 
 use crate::app::consts;
-use crate::framework::RendererTrait;
 use crate::framework::types::Vec2I;
+use crate::framework::RendererTrait;
 
 const STAR_COUNT: usize = 128;
 
@@ -24,7 +24,7 @@ impl StarManager {
         ; STAR_COUNT];
 
         StarManager {
-            stars: stars,
+            stars,
             frame_count: 0,
         }
     }

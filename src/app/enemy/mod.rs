@@ -1,8 +1,8 @@
 mod appearance_manager;
 mod attack_manager;
+mod ene_shot;
 mod enemy;
 mod enemy_manager;
-mod ene_shot;
 mod formation;
 mod traj;
 mod traj_command;

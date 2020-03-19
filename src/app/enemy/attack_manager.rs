@@ -1,5 +1,6 @@
 use rand::Rng;
-use super::enemy::{Enemy, EnemyState};
+
+use crate::app::enemy::enemy::{Enemy, EnemyState};
 
 const MAX_ATTACKER_COUNT: usize = 1;
 
@@ -46,7 +47,7 @@ impl AttackManager {
         }
 
         if let Some(slot) = self.attackers.iter_mut().find(|x| x.is_none()) {
-            let alive_indices = (0 .. enemies.len()).filter(|&i| enemies[i].is_some()).collect::<Vec<usize>>();
+            let alive_indices = (0..enemies.len()).filter(|&i| enemies[i].is_some()).collect::<Vec<usize>>();
             let count = alive_indices.len();
 
             let mut rng = rand::thread_rng();

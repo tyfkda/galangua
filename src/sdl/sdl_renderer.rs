@@ -3,10 +3,10 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::WindowCanvas;
 use std::collections::HashMap;
 
-use crate::framework::RendererTrait;
 use crate::framework::sprite_sheet::SpriteSheet;
 use crate::framework::texture_manager::TextureManager;
 use crate::framework::types::Vec2I;
+use crate::framework::RendererTrait;
 
 pub struct SdlRenderer {
     canvas: WindowCanvas,

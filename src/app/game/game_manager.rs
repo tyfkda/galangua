@@ -1,14 +1,14 @@
 use rand::Rng;
 
-use crate::app::game::event_queue::{EventQueue, EventType};
-use crate::app::effect::{Effect, EarnedPoint, EarnedPointType, SmallBomb};
 use crate::app::effect::StarManager;
+use crate::app::effect::{EarnedPoint, EarnedPointType, Effect, SmallBomb};
 use crate::app::enemy::EnemyManager;
+use crate::app::game::event_queue::{EventQueue, EventType};
 use crate::app::player::MyShot;
 use crate::app::player::Player;
-use crate::app::util::{CollisionResult, CollBox, Collidable};
-use crate::framework::RendererTrait;
+use crate::app::util::{CollBox, Collidable, CollisionResult};
 use crate::framework::types::Vec2I;
+use crate::framework::RendererTrait;
 use crate::util::pad::{Pad, PAD_START};
 
 const MYSHOT_COUNT: usize = 2;

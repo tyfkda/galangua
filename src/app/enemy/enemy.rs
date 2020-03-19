@@ -2,8 +2,8 @@ use crate::app::enemy::formation::Formation;
 use crate::app::enemy::traj::Traj;
 use crate::app::game::EventQueue;
 use crate::app::util::{CollBox, Collidable};
-use crate::framework::RendererTrait;
 use crate::framework::types::Vec2I;
+use crate::framework::RendererTrait;
 use crate::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
 
 #[derive(Copy, Clone, Debug)]
@@ -112,13 +112,12 @@ impl Enemy {
         where R: RendererTrait
     {
         let sprite = match self.enemy_type {
-            EnemyType::Bee => { "bee" }
-            EnemyType::Butterfly => { "butterfly" }
+            EnemyType::Bee => "bee",
+            EnemyType::Butterfly => "butterfly",
             EnemyType::Owl => {
                 if self.life <= 1 { "owl2" } else { "owl1" }
             }
         };
-
 
         let angle = calc_display_angle(self.angle);
         let pos = self.pos();

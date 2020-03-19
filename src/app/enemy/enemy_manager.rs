@@ -3,13 +3,13 @@ use rand::Rng;
 use crate::app::consts::*;
 use crate::app::enemy::appearance_manager::AppearanceManager;
 use crate::app::enemy::attack_manager::AttackManager;
-use crate::app::enemy::enemy::{Enemy, EnemyState};
 use crate::app::enemy::ene_shot::EneShot;
+use crate::app::enemy::enemy::{Enemy, EnemyState};
 use crate::app::enemy::formation::Formation;
 use crate::app::game::EventQueue;
-use crate::app::util::{CollisionResult, CollBox, Collidable};
-use crate::framework::RendererTrait;
+use crate::app::util::{CollBox, Collidable, CollisionResult};
 use crate::framework::types::Vec2I;
+use crate::framework::RendererTrait;
 use crate::util::math::ONE;
 
 const MAX_ENEMY_COUNT: usize = 64;
@@ -184,9 +184,7 @@ impl EnemyManager {
                 ((d.x as f64) * f).round() as i32,
                 ((d.y as f64) * f).round() as i32,
             );
-            self.shots[index] = Some(EneShot::new(
-                pos, vel,
-            ));
+            self.shots[index] = Some(EneShot::new(pos, vel));
         }
     }
 }

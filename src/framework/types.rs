@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Sub, Mul, Div};
+use std::ops::{Add, AddAssign, Div, Mul, Sub};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Vector2D<T> {

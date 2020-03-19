@@ -24,17 +24,17 @@ impl CollBox {
 
 #[test]
 fn test_collbox_check_collision() {
-    let collbox1 = CollBox {top_left: Vec2I::new(10, 5), size: Vec2I::new(4, 6)};
+    let collbox1 = CollBox { top_left: Vec2I::new(10, 5), size: Vec2I::new(4, 6) };
 
-    let edge = CollBox {top_left: Vec2I::new(14, 7), size: Vec2I::new(3, 2)};
+    let edge = CollBox { top_left: Vec2I::new(14, 7), size: Vec2I::new(3, 2) };
     assert_eq!(false, collbox1.check_collision(&edge));
     assert_eq!(false, edge.check_collision(&collbox1));
 
-    let corner = CollBox {top_left: Vec2I::new(5, 11), size: Vec2I::new(5, 7)};
+    let corner = CollBox { top_left: Vec2I::new(5, 11), size: Vec2I::new(5, 7) };
     assert_eq!(false, collbox1.check_collision(&corner));
     assert_eq!(false, corner.check_collision(&collbox1));
 
-    let inside = CollBox {top_left: Vec2I::new(11, 6), size: Vec2I::new(2, 3)};
+    let inside = CollBox { top_left: Vec2I::new(11, 6), size: Vec2I::new(2, 3) };
     assert_eq!(true, collbox1.check_collision(&inside));
     assert_eq!(true, inside.check_collision(&collbox1));
 }

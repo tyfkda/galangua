@@ -1,7 +1,7 @@
-use sdl2::Sdl;
 use sdl2::event::Event;
 use sdl2::image::InitFlag;
 use sdl2::keyboard::Keycode;
+use sdl2::Sdl;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
@@ -65,10 +65,10 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                 Event::Quit {..}
                 | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     return Ok(false);
-                },
+                }
                 | Event::KeyDown { keycode: Some(key), .. } => {
                     self.app.on_key_down(key);
-                },
+                }
                 | Event::KeyUp { keycode: Some(key), .. } => {
                     self.app.on_key_up(key);
                 }
