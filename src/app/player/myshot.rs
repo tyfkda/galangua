@@ -1,5 +1,3 @@
-use sdl2::rect::Point;
-
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::RendererTrait;
 use crate::framework::types::Vec2I;
@@ -28,9 +26,9 @@ impl MyShot {
         where Renderer: RendererTrait
     {
         let pos = self.pos();
-        renderer.draw_sprite("myshot", Point::new(pos.x - 2, pos.y - 8))?;
+        renderer.draw_sprite("myshot", pos + Vec2I::new(-2, -8))?;
         if self.dual {
-            renderer.draw_sprite("myshot", Point::new(pos.x + (-2 + 16), pos.y - 8))?;
+            renderer.draw_sprite("myshot", pos + Vec2I::new(-2 + 16, -8))?;
         }
 
         Ok(())

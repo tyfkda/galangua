@@ -1,5 +1,3 @@
-use sdl2::rect::Point;
-
 use crate::app::consts::*;
 use crate::app::game::EventQueue;
 use crate::app::util::{CollBox, Collidable};
@@ -69,10 +67,10 @@ impl Player {
             }
         }
 
-        let pos = self.pos() + Vec2I::new(-8, -8);
-        renderer.draw_sprite("fighter", Point::new(pos.x, pos.y))?;
+        let pos = self.pos();
+        renderer.draw_sprite("fighter", pos + Vec2I::new(-8, -8))?;
         if self.dual() {
-            renderer.draw_sprite("fighter", Point::new(pos.x + 16, pos.y))?;
+            renderer.draw_sprite("fighter", pos + Vec2I::new(-8 + 16, -8))?;
         }
 
         Ok(())

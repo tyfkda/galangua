@@ -1,5 +1,3 @@
-use sdl2::rect::Point;
-
 use crate::app::enemy::formation::Formation;
 use crate::app::enemy::traj::Traj;
 use crate::app::util::{CollBox, Collidable};
@@ -115,7 +113,7 @@ impl Enemy {
 
         let angle = calc_display_angle(self.angle);
         let pos = self.pos();
-        renderer.draw_sprite_rot(sprite, Point::new(pos.x - 8, pos.y - 8), angle, None)?;
+        renderer.draw_sprite_rot(sprite, pos + Vec2I::new(-8, -8), angle, None)?;
 
         Ok(())
     }

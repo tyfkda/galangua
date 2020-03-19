@@ -1,5 +1,3 @@
-use sdl2::rect::Point;
-
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::RendererTrait;
 use crate::framework::types::Vec2I;
@@ -30,7 +28,7 @@ impl EneShot {
         where Renderer: RendererTrait
     {
         let pos = self.pos();
-        renderer.draw_sprite("ene_shot", Point::new(pos.x - 2, pos.y - 4))?;
+        renderer.draw_sprite("ene_shot", pos + Vec2I::new(-2, -4))?;
 
         Ok(())
     }
