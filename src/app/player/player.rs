@@ -4,9 +4,9 @@ use crate::app::consts::*;
 use crate::app::game::EventQueue;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::RendererTrait;
+use crate::framework::types::Vec2I;
 use crate::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
 use crate::util::math::{ONE, round_up};
-use crate::util::types::Vec2I;
 
 #[derive(PartialEq)]
 enum State {

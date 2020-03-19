@@ -2,8 +2,8 @@ use sdl2::rect::Point;
 
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::RendererTrait;
+use crate::framework::types::Vec2I;
 use crate::util::math::round_up;
-use crate::util::types::Vec2I;
 
 pub struct EneShot {
     pub pos: Vec2I,

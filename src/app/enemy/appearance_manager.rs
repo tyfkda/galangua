@@ -2,8 +2,8 @@ use crate::app::enemy::enemy::{Enemy, EnemyType};
 use crate::app::enemy::traj::Traj;
 use crate::app::enemy::traj_command::TrajCommand;
 use crate::app::enemy::traj_command_table::*;
+use crate::framework::types::Vec2I;
 use crate::util::math::ONE;
-use crate::util::types::Vec2I;
 
 const ORDER: [u32; 40] = [
     1 * 16 + 4,    1 * 16 + 5,    2 * 16 + 4,    2 * 16 + 5,

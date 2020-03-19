@@ -4,7 +4,7 @@ use sdl2::rect::Rect;
 
 use crate::app::consts;
 use crate::framework::RendererTrait;
-use crate::util::types::Vec2I;
+use crate::framework::types::Vec2I;
 
 const STAR_COUNT: usize = 128;
 

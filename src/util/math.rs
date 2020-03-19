@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 
-use crate::util::types::Vec2I;
+use crate::framework::types::Vec2I;
 
 pub const ONE_BIT: i32 = 8;
 pub const ONE: i32 = 1 << ONE_BIT;

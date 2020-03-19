@@ -2,7 +2,7 @@ use sdl2::rect::Point;
 use std::cmp::min;
 
 use crate::framework::RendererTrait;
-use crate::util::types::Vec2I;
+use crate::framework::types::Vec2I;
 
 pub enum Effect {
     EarnedPoint(EarnedPoint),

@@ -1,7 +1,7 @@
 use crate::app::enemy::traj_command::TrajCommand;
 use crate::app::consts::*;
+use crate::framework::types::Vec2I;
 use crate::util::math::{SIN_TABLE, COS_TABLE, ANGLE, ONE, calc_velocity};
-use crate::util::types::Vec2I;
 
 // Trajectory
 #[derive(Clone, Copy, Debug)]

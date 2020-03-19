@@ -4,8 +4,8 @@ use crate::app::enemy::formation::Formation;
 use crate::app::enemy::traj::Traj;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::RendererTrait;
+use crate::framework::types::Vec2I;
 use crate::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
-use crate::util::types::Vec2I;
 
 #[derive(Clone, Copy, Debug)]
 pub enum EnemyType {
