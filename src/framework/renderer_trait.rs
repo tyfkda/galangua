@@ -1,4 +1,3 @@
-use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use std::collections::HashMap;
 
@@ -15,6 +14,6 @@ pub trait RendererTrait {
     fn draw_str(&mut self, tex_name: &str, x: i32, y: i32, text: &str) -> Result<(), String>;
     fn draw_sprite(&mut self, sprite_name: &str, pos: Point) -> Result<(), String>;
     fn draw_sprite_rot(&mut self, sprite_name: &str, pos: Point, angle: f64, center: Option<Point>) -> Result<(), String>;
-    fn set_draw_color(&mut self, color: Color);
+    fn set_draw_color(&mut self, r: u8, g: u8, b: u8);
     fn fill_rect(&mut self, dst: Option<Rect>) -> Result<(), String>;
 }

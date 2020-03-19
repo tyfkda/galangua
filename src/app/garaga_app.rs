@@ -1,5 +1,4 @@
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::Color;
 
 use crate::app::game::GameManager;
 use crate::app::sprite_sheet::load_sprite_sheet;
@@ -51,7 +50,7 @@ impl<Renderer: RendererTrait> AppTrait<Renderer> for GaragaApp {
     fn draw(&mut self, renderer: &mut Renderer) -> Result<(), String>
         where Renderer: RendererTrait
     {
-        renderer.set_draw_color(Color::RGB(0, 0, 0));
+        renderer.set_draw_color(0, 0, 0);
         renderer.clear();
 
         self.game_manager.draw(renderer)?;
