@@ -7,14 +7,14 @@ use crate::framework::RendererTrait;
 use crate::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
 use crate::util::types::Vec2I;
 
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy, Debug)]
 pub enum EnemyType {
     Bee,
     Butterfly,
     Owl,
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EnemyState {
     Flying,
     Trajectory,
@@ -22,6 +22,7 @@ pub enum EnemyState {
     Formation,
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct Enemy {
     pub state: EnemyState,
     pub pos: Vec2I,

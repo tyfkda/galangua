@@ -4,6 +4,7 @@ use crate::util::math::{SIN_TABLE, COS_TABLE, ANGLE, ONE, calc_velocity};
 use crate::util::types::Vec2I;
 
 // Trajectory
+#[derive(Clone, Copy, Debug)]
 pub struct Traj {
     pos: Vec2I,
     angle: i32,
