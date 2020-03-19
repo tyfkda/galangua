@@ -105,9 +105,9 @@ impl RendererTrait for SdlRenderer {
         self.canvas.set_draw_color(Color::RGB(r, g, b));
     }
 
-    fn fill_rect(&mut self, dst: Option<Rect>) -> Result<(), String> {
+    fn fill_rect(&mut self, dst: Option<[Vec2I; 2]>) -> Result<(), String> {
         if let Some(rect) = dst {
-            self.canvas.fill_rect(Some(Rect::new(rect.x * 2, rect.y * 2, (rect.w * 2) as u32, (rect.h * 2) as u32)))?;
+            self.canvas.fill_rect(Some(Rect::new(rect[0].x * 2, rect[0].y * 2, (rect[1].x * 2) as u32, (rect[1].y * 2) as u32)))?;
         } else {
             self.canvas.fill_rect(None)?;
         }

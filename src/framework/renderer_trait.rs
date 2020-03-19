@@ -1,4 +1,3 @@
-use sdl2::rect::{Rect};
 use std::collections::HashMap;
 
 use crate::framework::sprite_sheet::SpriteSheet;
@@ -16,5 +15,5 @@ pub trait RendererTrait {
     fn draw_sprite(&mut self, sprite_name: &str, pos: Vec2I) -> Result<(), String>;
     fn draw_sprite_rot(&mut self, sprite_name: &str, pos: Vec2I, angle: f64, center: Option<Vec2I>) -> Result<(), String>;
     fn set_draw_color(&mut self, r: u8, g: u8, b: u8);
-    fn fill_rect(&mut self, dst: Option<Rect>) -> Result<(), String>;
+    fn fill_rect(&mut self, dst: Option<[Vec2I; 2]>) -> Result<(), String>;
 }

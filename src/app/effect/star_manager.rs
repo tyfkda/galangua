@@ -1,6 +1,5 @@
 use array_macro::*;
 use rand::Rng;
-use sdl2::rect::Rect;
 
 use crate::app::consts;
 use crate::framework::RendererTrait;
@@ -56,7 +55,7 @@ impl StarManager {
 
             let col = COLOR_TABLE[star.c as usize];
             renderer.set_draw_color(col[0], col[1], col[2]);
-            renderer.fill_rect(Some(Rect::new(star.pos.x, star.pos.y, 1, 1)))?;
+            renderer.fill_rect(Some([star.pos, Vec2I::new(1, 1)]))?;
         }
 
         Ok(())
