@@ -131,8 +131,8 @@ impl GameManager {
         }
     }
 
-    pub fn draw<Renderer>(&mut self, renderer: &mut Renderer) -> Result<(), String>
-        where Renderer: RendererTrait
+    pub fn draw<R>(&mut self, renderer: &mut R) -> Result<(), String>
+        where R: RendererTrait
     {
         self.star_manager.draw(renderer)?;
         self.enemy_manager.draw(renderer)?;

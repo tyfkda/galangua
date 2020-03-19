@@ -22,8 +22,8 @@ impl MyShot {
         self.pos.y >= 0
     }
 
-    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
-        where Renderer: RendererTrait
+    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+        where R: RendererTrait
     {
         let pos = self.pos();
         renderer.draw_sprite("myshot", pos + Vec2I::new(-2, -8))?;

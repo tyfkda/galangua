@@ -16,8 +16,8 @@ impl Effect {
         }
     }
 
-    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
-        where Renderer: RendererTrait
+    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+        where R: RendererTrait
     {
         match self {
             Effect::EarnedPoint(x) => x.draw(renderer),
@@ -57,8 +57,8 @@ impl EarnedPoint {
         self.frame_count < 30
     }
 
-    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
-        where Renderer: RendererTrait
+    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+        where R: RendererTrait
     {
         let sprite: &str;
         match self.point_type {
@@ -95,8 +95,8 @@ impl SmallBomb {
         self.frame_count < 15
     }
 
-    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
-        where Renderer: RendererTrait
+    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+        where R: RendererTrait
     {
         let pat = min(self.frame_count / 4, 2) as usize;
         let table = ["small_bomb1", "small_bomb2", "small_bomb3"];

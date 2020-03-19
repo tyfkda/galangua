@@ -55,8 +55,8 @@ impl Player {
         }
     }
 
-    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
-        where Renderer: RendererTrait
+    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+        where R: RendererTrait
     {
         match self.state {
             State::Normal | State::Dual => {

@@ -99,8 +99,8 @@ impl Enemy {
         self.angle += self.vangle;
     }
 
-    pub fn draw<Renderer>(&self, renderer: &mut Renderer) -> Result<(), String>
-        where Renderer: RendererTrait
+    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+        where R: RendererTrait
     {
         let sprite = match self.enemy_type {
             EnemyType::Bee => { "bee" }

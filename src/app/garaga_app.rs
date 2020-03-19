@@ -22,7 +22,7 @@ impl GaragaApp {
     }
 }
 
-impl<Renderer: RendererTrait> AppTrait<Renderer> for GaragaApp {
+impl<R: RendererTrait> AppTrait<R> for GaragaApp {
     fn on_key_down(&mut self, keycode: Keycode) {
         self.pad.on_key_down(keycode);
     }
@@ -31,8 +31,8 @@ impl<Renderer: RendererTrait> AppTrait<Renderer> for GaragaApp {
         self.pad.on_key_up(keycode);
     }
 
-    fn init(&mut self, renderer: &mut Renderer) -> Result<(), String>
-        where Renderer: RendererTrait
+    fn init(&mut self, renderer: &mut R) -> Result<(), String>
+        where R: RendererTrait
     {
         renderer.load_textures("assets", &vec!["chr.png", "font.png"])?;
 
@@ -47,8 +47,8 @@ impl<Renderer: RendererTrait> AppTrait<Renderer> for GaragaApp {
         self.game_manager.update(&self.pad);
     }
 
-    fn draw(&mut self, renderer: &mut Renderer) -> Result<(), String>
-        where Renderer: RendererTrait
+    fn draw(&mut self, renderer: &mut R) -> Result<(), String>
+        where R: RendererTrait
     {
         renderer.set_draw_color(0, 0, 0);
         renderer.clear();
