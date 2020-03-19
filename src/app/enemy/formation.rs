@@ -133,4 +133,8 @@ impl Formation {
     pub fn pos(&self, x: usize, y: usize) -> Vec2I {
         Vec2I::new(self.xtbl[x], self.ytbl[y])
     }
+
+    pub fn is_settle(&self) -> bool {
+        self.done_appearance && self.moving_pat == MovingPat::Scale
+    }
 }
