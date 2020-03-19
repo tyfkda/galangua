@@ -7,8 +7,8 @@ use crate::app::enemy::ene_shot::EneShot;
 use crate::app::enemy::formation::Formation;
 use crate::app::util::{CollisionResult, CollBox, Collidable};
 use crate::framework::RendererTrait;
+use crate::framework::types::Vec2I;
 use crate::util::math::ONE;
-use crate::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 64;
 const MAX_SHOT_COUNT: usize = 16;

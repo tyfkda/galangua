@@ -1,5 +1,5 @@
 use crate::app::effect::EarnedPointType;
-use crate::util::types::Vec2I;
+use crate::framework::types::Vec2I;
 
 pub struct EventQueue {
     queue: Vec<EventType>,

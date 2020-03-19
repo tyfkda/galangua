@@ -1,12 +1,10 @@
-use sdl2::rect::Point;
-
 use crate::app::consts::*;
 use crate::app::game::EventQueue;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::RendererTrait;
+use crate::framework::types::Vec2I;
 use crate::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
 use crate::util::math::{ONE, round_up};
-use crate::util::types::Vec2I;
 
 #[derive(PartialEq)]
 enum State {
@@ -69,10 +67,10 @@ impl Player {
             }
         }
 
-        let pos = self.pos() + Vec2I::new(-8, -8);
-        renderer.draw_sprite("fighter", Point::new(pos.x, pos.y))?;
+        let pos = self.pos();
+        renderer.draw_sprite("fighter", pos + Vec2I::new(-8, -8))?;
         if self.dual() {
-            renderer.draw_sprite("fighter", Point::new(pos.x + 16, pos.y))?;
+            renderer.draw_sprite("fighter", pos + Vec2I::new(-8 + 16, -8))?;
         }
 
         Ok(())

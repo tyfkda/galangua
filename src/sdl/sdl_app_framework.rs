@@ -6,7 +6,7 @@ use std::thread;
 use std::time::{Duration, SystemTime};
 
 use crate::framework::AppTrait;
-use crate::framework::sdl_renderer::SdlRenderer;
+use crate::sdl::sdl_renderer::SdlRenderer;
 
 pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
     sdl_context: Sdl,

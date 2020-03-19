@@ -1,11 +1,9 @@
-use sdl2::rect::Point;
-
 use crate::app::enemy::formation::Formation;
 use crate::app::enemy::traj::Traj;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::RendererTrait;
+use crate::framework::types::Vec2I;
 use crate::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
-use crate::util::types::Vec2I;
 
 #[derive(Clone, Copy, Debug)]
 pub enum EnemyType {
@@ -115,7 +113,7 @@ impl Enemy {
 
         let angle = calc_display_angle(self.angle);
         let pos = self.pos();
-        renderer.draw_sprite_rot(sprite, Point::new(pos.x - 8, pos.y - 8), angle, None)?;
+        renderer.draw_sprite_rot(sprite, pos + Vec2I::new(-8, -8), angle, None)?;
 
         Ok(())
     }

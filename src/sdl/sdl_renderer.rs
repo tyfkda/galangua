@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use crate::framework::RendererTrait;
 use crate::framework::sprite_sheet::SpriteSheet;
 use crate::framework::texture_manager::TextureManager;
+use crate::framework::types::Vec2I;
 
 pub struct SdlRenderer {
     canvas: WindowCanvas,
@@ -70,7 +71,7 @@ impl RendererTrait for SdlRenderer {
         }
     }
 
-    fn draw_sprite(&mut self, sprite_name: &str, mut pos: Point) -> Result<(), String> {
+    fn draw_sprite(&mut self, sprite_name: &str, mut pos: Vec2I) -> Result<(), String> {
         let sheet = self.sprite_sheet.get(sprite_name).expect(&format!("No sprite: {}", sprite_name));
         if let Some(trimmed) = &sheet.trimmed {
             pos.x += trimmed.sprite_source_size.x;
@@ -84,7 +85,7 @@ impl RendererTrait for SdlRenderer {
         Ok(())
     }
 
-    fn draw_sprite_rot(&mut self, sprite_name: &str, mut pos: Point, angle: f64, center: Option<Point>) -> Result<(), String> {
+    fn draw_sprite_rot(&mut self, sprite_name: &str, mut pos: Vec2I, angle: f64, center: Option<Vec2I>) -> Result<(), String> {
         let sheet = self.sprite_sheet.get(sprite_name).expect(&format!("No sprite: {}", sprite_name));
         if let Some(trimmed) = &sheet.trimmed {
             pos.x += trimmed.sprite_source_size.x;
@@ -92,6 +93,7 @@ impl RendererTrait for SdlRenderer {
         }
 
         let texture = self.texture_manager.get(&sheet.texture).expect(&format!("No texture: {}", sheet.texture));
+        let center = center.map(|v| Point::new(v.x, v.y));
         self.canvas.copy_ex(&texture,
                             Some(Rect::new(sheet.frame.x, sheet.frame.y, sheet.frame.w, sheet.frame.h)),
                             Some(Rect::new(pos.x * 2, pos.y * 2, sheet.frame.w * 2, sheet.frame.h * 2)),
@@ -103,9 +105,9 @@ impl RendererTrait for SdlRenderer {
         self.canvas.set_draw_color(Color::RGB(r, g, b));
     }
 
-    fn fill_rect(&mut self, dst: Option<Rect>) -> Result<(), String> {
+    fn fill_rect(&mut self, dst: Option<[Vec2I; 2]>) -> Result<(), String> {
         if let Some(rect) = dst {
-            self.canvas.fill_rect(Some(Rect::new(rect.x * 2, rect.y * 2, (rect.w * 2) as u32, (rect.h * 2) as u32)))?;
+            self.canvas.fill_rect(Some(Rect::new(rect[0].x * 2, rect[0].y * 2, (rect[1].x * 2) as u32, (rect[1].y * 2) as u32)))?;
         } else {
             self.canvas.fill_rect(None)?;
         }

@@ -1,10 +1,11 @@
 mod app;
 mod framework;
+mod sdl;
 mod util;
 
 use crate::app::GaragaApp;
 use crate::app::consts;
-use crate::framework::SdlAppFramework;
+use crate::sdl::SdlAppFramework;
 
 pub fn main() -> Result<(), String> {
     let app = GaragaApp::new();
