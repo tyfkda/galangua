@@ -1,15 +1,15 @@
 use array_macro::*;
 use rand::Rng;
 
-use super::AppearanceManager;
-use super::enemy::{Enemy, EnemyState};
-use super::ene_shot::EneShot;
-use super::formation::Formation;
-use super::super::consts::*;
-use super::super::util::{CollisionResult, CollBox, Collidable};
-use super::super::super::framework::RendererTrait;
-use super::super::super::util::math::ONE;
-use super::super::super::util::types::Vec2I;
+use crate::app::consts::*;
+use crate::app::enemy::AppearanceManager;
+use crate::app::enemy::enemy::{Enemy, EnemyState};
+use crate::app::enemy::ene_shot::EneShot;
+use crate::app::enemy::formation::Formation;
+use crate::app::util::{CollisionResult, CollBox, Collidable};
+use crate::framework::RendererTrait;
+use crate::util::math::ONE;
+use crate::util::types::Vec2I;
 
 const MAX_ENEMY_COUNT: usize = 64;
 const MAX_SHOT_COUNT: usize = 16;

@@ -1,12 +1,12 @@
 use sdl2::rect::Point;
 
-use super::super::consts::*;
-use super::super::game::EventQueue;
-use super::super::util::{CollBox, Collidable};
-use super::super::super::framework::RendererTrait;
-use super::super::super::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
-use super::super::super::util::math::{ONE, round_up};
-use super::super::super::util::types::Vec2I;
+use crate::app::consts::*;
+use crate::app::game::EventQueue;
+use crate::app::util::{CollBox, Collidable};
+use crate::framework::RendererTrait;
+use crate::util::pad::{Pad, PAD_L, PAD_R, PAD_A};
+use crate::util::math::{ONE, round_up};
+use crate::util::types::Vec2I;
 
 #[derive(PartialEq)]
 enum State {

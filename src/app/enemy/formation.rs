@@ -1,8 +1,8 @@
 use lazy_static::lazy_static;
 
-use super::super::consts::*;
-use super::super::super::util::math::ONE;
-use super::super::super::util::types::Vec2I;
+use crate::app::consts::*;
+use crate::util::math::ONE;
+use crate::util::types::Vec2I;
 
 const X_COUNT: usize = 10;
 const Y_COUNT: usize = 5;

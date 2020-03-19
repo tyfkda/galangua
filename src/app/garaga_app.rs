@@ -1,11 +1,11 @@
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 
-use super::game::GameManager;
-use super::sprite_sheet::load_sprite_sheet;
-use super::super::framework::{AppTrait, RendererTrait};
-use super::super::util::fps_calc::FpsCalc;
-use super::super::util::pad::Pad;
+use crate::app::game::GameManager;
+use crate::app::sprite_sheet::load_sprite_sheet;
+use crate::framework::{AppTrait, RendererTrait};
+use crate::util::fps_calc::FpsCalc;
+use crate::util::pad::Pad;
 
 pub struct GaragaApp {
     pad: Pad,

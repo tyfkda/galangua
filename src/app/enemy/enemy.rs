@@ -1,11 +1,11 @@
 use sdl2::rect::Point;
 
-use super::formation::Formation;
-use super::traj::Traj;
-use super::super::util::{CollBox, Collidable};
-use super::super::super::framework::RendererTrait;
-use super::super::super::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
-use super::super::super::util::types::Vec2I;
+use crate::app::enemy::formation::Formation;
+use crate::app::enemy::traj::Traj;
+use crate::app::util::{CollBox, Collidable};
+use crate::framework::RendererTrait;
+use crate::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
+use crate::util::types::Vec2I;
 
 #[derive(Copy, Clone)]
 pub enum EnemyType {

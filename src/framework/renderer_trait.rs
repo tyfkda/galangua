@@ -2,8 +2,8 @@ use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use std::collections::HashMap;
 
-use super::sprite_sheet::SpriteSheet;
-use super::texture_manager::TextureManager;
+use crate::framework::sprite_sheet::SpriteSheet;
+use crate::framework::texture_manager::TextureManager;
 
 pub trait RendererTrait {
     fn load_textures(&mut self, base_path: &str, filenames: &Vec<&str>) -> Result<(), String>;

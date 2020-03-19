@@ -1,15 +1,15 @@
 use rand::Rng;
 
-use super::event_queue::{EventQueue, EventType};
-use super::super::effect::{Effect, EarnedPoint, EarnedPointType, SmallBomb};
-use super::super::effect::StarManager;
-use super::super::enemy::EnemyManager;
-use super::super::player::MyShot;
-use super::super::player::Player;
-use super::super::util::{CollisionResult, CollBox, Collidable};
-use super::super::super::framework::RendererTrait;
-use super::super::super::util::pad::{Pad, PAD_START};
-use super::super::super::util::types::Vec2I;
+use crate::app::game::event_queue::{EventQueue, EventType};
+use crate::app::effect::{Effect, EarnedPoint, EarnedPointType, SmallBomb};
+use crate::app::effect::StarManager;
+use crate::app::enemy::EnemyManager;
+use crate::app::player::MyShot;
+use crate::app::player::Player;
+use crate::app::util::{CollisionResult, CollBox, Collidable};
+use crate::framework::RendererTrait;
+use crate::util::pad::{Pad, PAD_START};
+use crate::util::types::Vec2I;
 
 const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;

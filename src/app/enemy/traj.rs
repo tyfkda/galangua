@@ -1,7 +1,7 @@
-use super::traj_command::TrajCommand;
-use super::super::consts::*;
-use super::super::super::util::math::{SIN_TABLE, COS_TABLE, ANGLE, ONE, calc_velocity};
-use super::super::super::util::types::Vec2I;
+use crate::app::enemy::traj_command::TrajCommand;
+use crate::app::consts::*;
+use crate::util::math::{SIN_TABLE, COS_TABLE, ANGLE, ONE, calc_velocity};
+use crate::util::types::Vec2I;
 
 // Trajectory
 pub struct Traj {

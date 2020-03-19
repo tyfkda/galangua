@@ -5,8 +5,8 @@ use sdl2::keyboard::Keycode;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
-use super::AppTrait;
-use super::sdl_renderer::SdlRenderer;
+use crate::framework::AppTrait;
+use crate::framework::sdl_renderer::SdlRenderer;
 
 pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
     sdl_context: Sdl,

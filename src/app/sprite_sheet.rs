@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
-use super::super::framework::sprite_sheet::{SpriteSheet, Size, Rect, Trimmed};
+use crate::framework::sprite_sheet::{SpriteSheet, Size, Rect, Trimmed};
 
 pub fn load_sprite_sheet(filename: &str) -> Result<HashMap<String, SpriteSheet>, String> {
     let file = File::open(filename).expect(&format!("file not found: {}", filename));

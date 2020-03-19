@@ -3,9 +3,9 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::WindowCanvas;
 use std::collections::HashMap;
 
-use super::RendererTrait;
-use super::sprite_sheet::SpriteSheet;
-use super::texture_manager::TextureManager;
+use crate::framework::RendererTrait;
+use crate::framework::sprite_sheet::SpriteSheet;
+use crate::framework::texture_manager::TextureManager;
 
 pub struct SdlRenderer {
     canvas: WindowCanvas,

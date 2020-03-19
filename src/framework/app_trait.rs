@@ -1,6 +1,6 @@
 use sdl2::keyboard::Keycode;
 
-use super::RendererTrait;
+use crate::framework::RendererTrait;
 
 pub trait AppTrait<Renderer: RendererTrait> {
     fn init(&mut self, renderer: &mut Renderer) -> Result<(), String>;

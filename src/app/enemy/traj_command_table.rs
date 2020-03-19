@@ -1,8 +1,8 @@
 use counted_array::counted_array;
 
-use super::traj_command::TrajCommand;
-use super::super::consts::*;
-use super::super::super::util::math::{ANGLE, ONE};
+use crate::app::enemy::traj_command::TrajCommand;
+use crate::app::consts::*;
+use crate::util::math::{ANGLE, ONE};
 
 counted_array!(pub const COMMAND_TABLE1: [TrajCommand; _] = [
     TrajCommand::Pos((WIDTH / 2 + 16) * ONE, -8 * ONE),

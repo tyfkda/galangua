@@ -1,4 +1,4 @@
-use super::super::super::util::types::Vec2I;
+use crate::util::types::Vec2I;
 
 // Collision Result
 pub enum CollisionResult {
