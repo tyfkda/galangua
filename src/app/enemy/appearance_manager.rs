@@ -1,4 +1,4 @@
-use crate::app::enemy::enemy::{Enemy, EnemyType};
+use crate::app::enemy::enemy::{Enemy, EnemyState, EnemyType};
 use crate::app::enemy::traj::Traj;
 use crate::app::enemy::traj_command::TrajCommand;
 use crate::app::enemy::traj_command_table::*;
@@ -62,6 +62,7 @@ const UNIT_TABLE: [[UnitTableEntry; 5]; 3] = [
 
 pub struct AppearanceManager {
     stage: u32,
+    wait_stationary: bool,
     wait: u32,
     unit: u32,
     count: u32,
@@ -72,6 +73,7 @@ impl AppearanceManager {
     pub fn new(stage: u32) -> AppearanceManager {
         AppearanceManager {
             stage,
+            wait_stationary: false,
             wait: 0,
             unit: 0,
             count: 0,
@@ -79,15 +81,21 @@ impl AppearanceManager {
         }
     }
 
-    pub fn update(&mut self) -> Option<Vec<Enemy>> {
+    pub fn update(&mut self, enemies: &[Option<Enemy>]) -> Option<Vec<Enemy>> {
         if self.done {
             return None;
         }
 
-        self.update_main()
+        self.update_main(enemies)
     }
 
-    fn update_main(&mut self) -> Option<Vec<Enemy>> {
+    fn update_main(&mut self, enemies: &[Option<Enemy>]) -> Option<Vec<Enemy>> {
+        if self.wait_stationary {
+            if !self.is_stationary(enemies) {
+                return None;
+            }
+            self.wait_stationary = false;
+        }
         if self.wait > 0 {
             self.wait -= 1;
             return None;
@@ -131,7 +139,8 @@ impl AppearanceManager {
                 self.count += 1;
                 if self.count >= 4 {
                     self.unit += 1;
-                    self.wait = 200;
+                    self.wait_stationary = true;
+                    self.wait = 10;
                     self.count = 0;
                 }
             }
@@ -153,7 +162,8 @@ impl AppearanceManager {
                 self.count += 1;
                 if self.count >= 8 {
                     self.unit += 1;
-                    self.wait = 200;
+                    self.wait_stationary = true;
+                    self.wait = 10;
                     self.count = 0;
                 }
             }
@@ -174,7 +184,8 @@ impl AppearanceManager {
                 self.count += 1;
                 if self.count >= 8 {
                     self.unit += 1;
-                    self.wait = 200;
+                    self.wait_stationary = true;
+                    self.wait = 10;
                     self.count = 0;
                 }
             }
@@ -207,7 +218,8 @@ impl AppearanceManager {
                 self.count += 1;
                 if self.count >= 4 {
                     self.unit += 1;
-                    self.wait = 200;
+                    self.wait_stationary = true;
+                    self.wait = 10;
                     self.count = 0;
                 }
             }
@@ -219,5 +231,9 @@ impl AppearanceManager {
         }
 
         Some(new_borns)
+    }
+
+    fn is_stationary(&self, enemies: &[Option<Enemy>]) -> bool {
+        enemies.iter().flat_map(|x| x).all(|x| x.state == EnemyState::Formation)
     }
 }

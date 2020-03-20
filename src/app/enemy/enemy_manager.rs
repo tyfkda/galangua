@@ -109,7 +109,7 @@ impl EnemyManager {
 
     fn update_appearance(&mut self) {
         let prev_done = self.appearance_manager.done;
-        if let Some(new_borns) = self.appearance_manager.update() {
+        if let Some(new_borns) = self.appearance_manager.update(&self.enemies) {
             for enemy in new_borns {
                 self.spawn(enemy);
             }
