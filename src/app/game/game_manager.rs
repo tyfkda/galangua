@@ -131,8 +131,8 @@ impl GameManager {
         where R: RendererTrait
     {
         self.star_manager.draw(renderer)?;
-        self.enemy_manager.draw(renderer)?;
         self.player.draw(renderer)?;
+        self.enemy_manager.draw(renderer)?;
         for myshot in self.myshots.iter().flat_map(|x| x) {
             myshot.draw(renderer)?;
         }

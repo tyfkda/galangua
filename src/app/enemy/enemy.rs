@@ -1,5 +1,6 @@
 use crate::app::consts::*;
 use crate::app::enemy::formation::Formation;
+use crate::app::enemy::tractor_beam::TractorBeam;
 use crate::app::enemy::traj::Traj;
 use crate::app::game::EventQueue;
 use crate::app::util::{CollBox, Collidable};
@@ -38,6 +39,7 @@ pub struct Enemy {
     attack_step: i32,
     count: i32,
     target_pos: Vec2I,
+    tractor_beam: Option<TractorBeam>,
 }
 
 impl Enemy {
@@ -60,6 +62,7 @@ impl Enemy {
             attack_step: 0,
             count: 0,
             target_pos: Vec2I::new(0, 0),
+            tractor_beam: None,
         }
     }
 
@@ -113,6 +116,10 @@ impl Enemy {
 
         self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
+
+        if let Some(tractor_beam) = &mut self.tractor_beam {
+            tractor_beam.update();
+        }
     }
 
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
@@ -129,6 +136,10 @@ impl Enemy {
         let angle = calc_display_angle(self.angle);
         let pos = self.pos();
         renderer.draw_sprite_rot(sprite, pos + Vec2I::new(-8, -8), angle, None)?;
+
+        if let Some(tractor_beam) = &self.tractor_beam {
+            tractor_beam.draw(renderer)?;
+        }
 
         Ok(())
     }
@@ -273,8 +284,29 @@ impl Enemy {
                     self.angle = ANGLE / 2 * ONE;
                     self.vangle = 0;
 
+                    self.tractor_beam = Some(TractorBeam::new(self.pos + Vec2I::new(0, 8 * ONE)));
+
                     self.attack_step += 1;
                     self.count = 0;
+                }
+            }
+            2 => {
+                if let Some(tractor_beam) = &self.tractor_beam {
+                    if tractor_beam.closed() {
+                        self.tractor_beam = None;
+                        self.speed = 3 * ONE / 2;
+                        self.attack_step += 1;
+                        self.count = 0;
+                    }
+                }
+            }
+            3 => {
+                if self.pos.y >= (HEIGHT + 16) * ONE {
+                    // TODO: Warp to the top of the screen.
+                    self.state = EnemyState::Formation;
+                    self.speed = 0;
+                    self.angle = 0;
+                    self.vangle = 0;
                 }
             }
             _ => {}

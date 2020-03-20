@@ -4,6 +4,7 @@ mod ene_shot;
 mod enemy;
 mod enemy_manager;
 mod formation;
+mod tractor_beam;
 mod traj;
 mod traj_command;
 mod traj_command_table;
