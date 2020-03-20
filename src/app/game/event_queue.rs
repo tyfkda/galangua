@@ -51,6 +51,10 @@ impl EventQueue {
     pub fn capture_player(&mut self, capture_pos: Vec2I) {
         self.queue.push(EventType::CapturePlayer(capture_pos));
     }
+
+    pub fn capture_player_completed(&mut self) {
+        self.queue.push(EventType::CapturePlayerCompleted);
+    }
 }
 
 pub enum EventType {
@@ -61,4 +65,5 @@ pub enum EventType {
     SmallBomb(Vec2I),
     DeadPlayer,
     CapturePlayer(Vec2I),
+    CapturePlayerCompleted,
 }

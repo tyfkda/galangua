@@ -186,6 +186,9 @@ impl GameManager {
                 EventType::CapturePlayer(capture_pos) => {
                     self.player.start_capture(capture_pos);
                 }
+                EventType::CapturePlayerCompleted => {
+                    self.player.complete_capture();
+                }
             }
             i += 1;
         }

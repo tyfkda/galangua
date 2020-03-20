@@ -13,6 +13,7 @@ enum State {
     Dead,
     Capturing,
     Captured,
+    CaptureCompleted,
 }
 
 pub struct Player {
@@ -42,8 +43,7 @@ impl Player {
             State::Capturing => {
                 self.update_capture();
             }
-            State::Captured => {
-            }
+            State::Captured | State::CaptureCompleted => {}
         }
     }
 
@@ -100,8 +100,7 @@ impl Player {
                 let pos = self.pos();
                 renderer.draw_sprite("captured", pos + Vec2I::new(-8, -8))?;
             }
-            State::Dead => {
-            }
+            State::CaptureCompleted | State::Dead => {}
         }
 
         Ok(())
@@ -160,6 +159,10 @@ impl Player {
         self.state = State::Capturing;
         self.capture_pos = capture_pos;
         self.angle = 0;
+    }
+
+    pub fn complete_capture(&mut self) {
+        self.state = State::CaptureCompleted;
     }
 }
 

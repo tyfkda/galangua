@@ -40,6 +40,7 @@ pub struct Enemy {
     count: i32,
     target_pos: Vec2I,
     tractor_beam: Option<TractorBeam>,
+    capturing_player: bool,
 }
 
 impl Enemy {
@@ -63,6 +64,7 @@ impl Enemy {
             count: 0,
             target_pos: Vec2I::new(0, 0),
             tractor_beam: None,
+            capturing_player: false,
         }
     }
 
@@ -139,6 +141,9 @@ impl Enemy {
 
         if let Some(tractor_beam) = &self.tractor_beam {
             tractor_beam.draw(renderer)?;
+        }
+        if self.capturing_player {
+            renderer.draw_sprite("captured", pos + Vec2I::new(-8, -8 - 16))?;
         }
 
         Ok(())
@@ -328,6 +333,9 @@ impl Enemy {
                     if tractor_beam.closed() {
                         // TODO: Turn and back to the formation.
                         self.tractor_beam = None;
+                        self.capturing_player = true;
+                        event_queue.capture_player_completed();
+
                         self.speed = 3 * ONE / 2;
                         self.attack_step = 3;
                         self.count = 0;
