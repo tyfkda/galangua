@@ -7,7 +7,7 @@ use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum EnemyType {
     Bee,
     Butterfly,
@@ -37,6 +37,7 @@ pub struct Enemy {
     traj: Option<Traj>,
     attack_step: i32,
     count: i32,
+    target_pos: Vec2I,
 }
 
 impl Enemy {
@@ -58,6 +59,7 @@ impl Enemy {
             traj: None,
             attack_step: 0,
             count: 0,
+            target_pos: Vec2I::new(0, 0),
         }
     }
 
@@ -69,7 +71,7 @@ impl Enemy {
         &self.pos
     }
 
-    pub fn update(&mut self, formation: &Formation, event_queue: &mut EventQueue) {
+    pub fn update(&mut self, formation: &Formation, player_pos: &Vec2I, event_queue: &mut EventQueue) {
         if self.state == EnemyState::Formation {
             return;
         }
@@ -90,11 +92,11 @@ impl Enemy {
 
                 let distance = ((dpos.x as f64).powi(2) + (dpos.y as f64).powi(2)).sqrt();
                 if distance > self.speed as f64 {
-                    let dlimit = 4 * ONE;
+                    const DLIMIT: i32 = 4 * ONE;
                     let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
                     let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
                     let d = diff_angle(target_angle, self.angle);
-                    self.angle += clamp(d, -dlimit, dlimit);
+                    self.angle += clamp(d, -DLIMIT, DLIMIT);
                     self.vangle = 0;
                 } else {
                     self.pos = target;
@@ -104,7 +106,7 @@ impl Enemy {
                 }
             }
             EnemyState::Attack => {
-                self.update_attack(event_queue);
+                self.update_attack(player_pos, event_queue);
             }
             _ => {}
         }
@@ -163,19 +165,19 @@ impl Enemy {
 
     pub fn set_attack(&mut self) {
         self.state = EnemyState::Attack;
+        self.attack_step = 0;
         self.count = 0;
     }
 
-    fn update_attack(&mut self, event_queue: &mut EventQueue) {
+    fn update_attack(&mut self, player_pos: &Vec2I, event_queue: &mut EventQueue) {
         match self.enemy_type {
             EnemyType::Bee => { self.update_attack_bee(event_queue); }
             EnemyType::Butterfly => { self.update_attack_butterfly(event_queue); }
-            EnemyType::Owl => { self.update_attack_owl(event_queue); }
+            EnemyType::Owl => { self.update_attack_owl(player_pos, event_queue); }
         }
     }
 
     fn update_attack_bee(&mut self, event_queue: &mut EventQueue) {
-//println!("bee: step={}, count={}", self.attack_step, self.count);
         match self.attack_step {
             0 => {
                 self.speed = 1 * ONE;
@@ -233,8 +235,50 @@ impl Enemy {
         self.update_attack_bee(event_queue);
     }
 
-    fn update_attack_owl(&mut self, event_queue: &mut EventQueue) {
-        self.update_attack_bee(event_queue);
+    fn update_attack_owl(&mut self, player_pos: &Vec2I, event_queue: &mut EventQueue) {
+        const DLIMIT: i32 = 4 * ONE;
+        match self.attack_step {
+            0 => {
+                self.speed = 3 * ONE / 2;
+                self.angle = 0;
+                if (self.formation_index & 15) < 5 {
+                    self.vangle = -DLIMIT;
+                } else {
+                    self.vangle = DLIMIT;
+                }
+
+                self.target_pos = Vec2I::new(player_pos.x, (HEIGHT - 16 - 8 - 88) * ONE);
+
+                self.attack_step += 1;
+                self.count = 0;
+            }
+            1 => {
+                let dpos = self.target_pos - self.pos;
+                let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
+                let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
+                let mut d = diff_angle(target_angle, self.angle);
+                if self.vangle > 0 && d < 0 {
+                    d += ANGLE * ONE;
+                } else if self.vangle < 0 && d > 0 {
+                    d -= ANGLE * ONE;
+                }
+                if d >= -DLIMIT && d < DLIMIT {
+                    self.angle = target_angle;
+                    self.vangle = 0;
+                }
+
+                if self.pos.y >= self.target_pos.y {
+                    self.pos.y = self.target_pos.y;
+                    self.speed = 0;
+                    self.angle = ANGLE / 2 * ONE;
+                    self.vangle = 0;
+
+                    self.attack_step += 1;
+                    self.count = 0;
+                }
+            }
+            _ => {}
+        }
     }
 }
 

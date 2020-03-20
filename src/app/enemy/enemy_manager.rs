@@ -58,11 +58,11 @@ impl EnemyManager {
         self.appearance_manager.done && self.enemies.iter().all(|x| x.is_none())
     }
 
-    pub fn update(&mut self, event_queue: &mut EventQueue) {
+    pub fn update(&mut self, player_pos: &Vec2I, event_queue: &mut EventQueue) {
         self.update_appearance();
         self.update_formation();
         self.update_attackers();
-        self.update_enemies(event_queue);
+        self.update_enemies(player_pos, event_queue);
         self.update_shots();
     }
 
@@ -151,10 +151,10 @@ impl EnemyManager {
         }
     }
 
-    fn update_enemies(&mut self, event_queue: &mut EventQueue) {
+    fn update_enemies(&mut self, player_pos: &Vec2I, event_queue: &mut EventQueue) {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
-            enemy.update(&self.formation, event_queue);
+            enemy.update(&self.formation, player_pos, event_queue);
         }
     }
 

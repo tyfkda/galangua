@@ -103,7 +103,7 @@ impl GameManager {
             }
         }
 
-        self.enemy_manager.update(&mut self.event_queue);
+        self.enemy_manager.update(&self.player.get_raw_pos(), &mut self.event_queue);
 
         if self.enemy_manager.all_destroyed() {
             self.stage += 1;

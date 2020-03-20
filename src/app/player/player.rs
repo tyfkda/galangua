@@ -88,6 +88,10 @@ impl Player {
         round_up(&self.pos)
     }
 
+    pub fn get_raw_pos(&self) -> &Vec2I {
+        &self.pos
+    }
+
     pub fn dual_pos(&self) -> Option<Vec2I> {
         if self.dual() {
             Some(self.pos() + Vec2I::new(16, 0))
