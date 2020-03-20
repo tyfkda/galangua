@@ -174,12 +174,12 @@ impl Enemy {
 //println!("bee: step={}, count={}", self.attack_step, self.count);
         match self.attack_step {
             0 => {
-                self.speed = 1 * 256;
+                self.speed = 1 * ONE;
                 self.angle = 0;
                 if (self.formation_index & 15) < 5 {
-                    self.vangle = -4 * 256;
+                    self.vangle = -4 * ONE;
                 } else {
-                    self.vangle = 4 * 256;
+                    self.vangle = 4 * ONE;
                 }
                 self.attack_step += 1;
                 self.count = 0;
@@ -187,7 +187,7 @@ impl Enemy {
                 event_queue.spawn_ene_shot(self.pos, 2 * ONE);
             }
             1 => {
-                if (self.vangle < 0 && self.angle <= -160 * 256) || (self.vangle > 0 && self.angle >= 160 * 256) {
+                if (self.vangle < 0 && self.angle <= -160 * ONE) || (self.vangle > 0 && self.angle >= 160 * ONE) {
                     self.vangle = 0;
                     self.attack_step += 1;
                     self.count = 0;
@@ -197,16 +197,16 @@ impl Enemy {
                 self.count += 1;
                 if self.count >= 10 {
                     if (self.formation_index & 15) < 5 {
-                        self.vangle = 1 * 256 / 4;
+                        self.vangle = 1 * ONE / 4;
                     } else {
-                        self.vangle = -1 * 256 / 4;
+                        self.vangle = -1 * ONE / 4;
                     }
                     self.attack_step += 1;
                     self.count = 0;
                 }
             }
             3 => {
-                if (self.vangle > 0 && self.angle >= -128 * 256) || (self.vangle < 0 && self.angle <= 128 * 256) {
+                if (self.vangle > 0 && self.angle >= -ANGLE / 2 * ONE) || (self.vangle < 0 && self.angle <= ANGLE / 2 * ONE) {
                     self.vangle = 0;
                     self.attack_step += 1;
                     self.count = 0;
