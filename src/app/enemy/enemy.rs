@@ -23,7 +23,7 @@ pub enum EnemyState {
     Attack,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug)]
 pub struct Enemy {
     pub state: EnemyState,
     pub pos: Vec2I,

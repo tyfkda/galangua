@@ -70,9 +70,9 @@ impl Traj {
 
             let mut i = 0;
             while i < command_table.len() {
-                let command = command_table[i];
+                let command = &command_table[i];
                 i += 1;
-                match command {
+                match *command {
                     TrajCommand::Pos(x, y) => {
                         self.pos = Vec2I::new(x, y);
                     }

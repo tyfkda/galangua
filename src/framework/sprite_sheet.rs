@@ -18,7 +18,7 @@ pub struct Trimmed {
     pub source_size: Size,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct SpriteSheet {
     pub texture: String,
     pub frame: Rect,

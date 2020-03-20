@@ -1,3 +1,4 @@
+use array_macro::*;
 use rand::Rng;
 
 use crate::app::consts::*;
@@ -26,7 +27,7 @@ pub struct EnemyManager {
 impl EnemyManager {
     pub fn new() -> EnemyManager {
         let mut mgr = EnemyManager {
-            enemies: [None; MAX_ENEMY_COUNT],
+            enemies: array![None; MAX_ENEMY_COUNT],
             shots: Default::default(),
             formation: Formation::new(),
             appearance_manager: AppearanceManager::new(0),
