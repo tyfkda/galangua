@@ -1,3 +1,4 @@
+use crate::app::consts::*;
 use crate::app::enemy::formation::Formation;
 use crate::app::enemy::traj::Traj;
 use crate::app::game::EventQueue;
@@ -209,6 +210,15 @@ impl Enemy {
                     self.vangle = 0;
                     self.attack_step += 1;
                     self.count = 0;
+                }
+            }
+            4 => {
+                if self.pos.y >= (HEIGHT + 16) * ONE {
+                    // TODO: Warp to the top of the screen.
+                    self.state = EnemyState::Formation;
+                    self.speed = 0;
+                    self.angle = 0;
+                    self.vangle = 0;
                 }
             }
             _ => {}
