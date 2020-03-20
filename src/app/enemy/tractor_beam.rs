@@ -24,6 +24,7 @@ enum State {
     Full,
     Closing,
     Closed,
+    Capturing,
 }
 
 #[derive(Debug)]
@@ -74,6 +75,7 @@ impl TractorBeam {
                 }
             }
             State::Closed => {}
+            State::Capturing => {}
         }
     }
 
@@ -102,6 +104,23 @@ impl TractorBeam {
 
     pub fn closed(&self) -> bool {
         self.state == State::Closed
+    }
+
+    pub fn can_capture(&self, pos: &Vec2I) -> bool {
+        const RANGE: i32 = 16 * ONE;
+        if self.state == State::Full {
+            let dx = pos.x - self.pos.x;
+            return dx >= -RANGE && dx <= RANGE;
+        }
+        false
+    }
+
+    pub fn start_capture(&mut self) {
+        self.state = State::Capturing;
+    }
+
+    pub fn close_capture(&mut self) {
+        self.state = State::Closing;
     }
 }
 

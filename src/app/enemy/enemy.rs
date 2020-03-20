@@ -291,11 +291,16 @@ impl Enemy {
                 }
             }
             2 => {
-                if let Some(tractor_beam) = &self.tractor_beam {
+                if let Some(tractor_beam) = &mut self.tractor_beam {
                     if tractor_beam.closed() {
                         self.tractor_beam = None;
                         self.speed = 3 * ONE / 2;
                         self.attack_step += 1;
+                        self.count = 0;
+                    } else if tractor_beam.can_capture(player_pos) {
+                        event_queue.capture_player(self.pos + Vec2I::new(0, 16 * ONE));
+                        tractor_beam.start_capture();
+                        self.attack_step = 100;
                         self.count = 0;
                     }
                 }
@@ -307,6 +312,26 @@ impl Enemy {
                     self.speed = 0;
                     self.angle = 0;
                     self.vangle = 0;
+                }
+            }
+            // Capture sequence
+            100 => {
+                self.count += 1;
+                if self.count >= 80 {  // TODO: Synchronize with player capturing duration.
+                    self.tractor_beam.as_mut().unwrap().close_capture();
+                    self.attack_step += 1;
+                    self.count = 0;
+                }
+            }
+            101 => {
+                if let Some(tractor_beam) = &self.tractor_beam {
+                    if tractor_beam.closed() {
+                        // TODO: Turn and back to the formation.
+                        self.tractor_beam = None;
+                        self.speed = 3 * ONE / 2;
+                        self.attack_step = 3;
+                        self.count = 0;
+                    }
                 }
             }
             _ => {}

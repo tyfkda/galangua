@@ -174,14 +174,17 @@ impl GameManager {
                         self.high_score = self.score;
                     }
                 }
-                EventType::DeadPlayer => {
-                    self.state = GameState::GameOver;
-                }
                 EventType::EarnPoint(point_type, pos) => {
                     self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, pos)));
                 }
                 EventType::SmallBomb(pos) => {
                     self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
+                }
+                EventType::DeadPlayer => {
+                    self.state = GameState::GameOver;
+                }
+                EventType::CapturePlayer(capture_pos) => {
+                    self.player.start_capture(capture_pos);
                 }
             }
             i += 1;
@@ -225,7 +228,7 @@ impl GameManager {
     }
 
     fn check_collision_player_enemy(&mut self) {
-        if self.player.dead() {
+        if !self.player.active() {
             return;
         }
 

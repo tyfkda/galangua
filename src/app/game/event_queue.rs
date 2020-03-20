@@ -36,16 +36,20 @@ impl EventQueue {
         self.queue.push(EventType::AddScore(add));
     }
 
-    pub fn dead_player(&mut self) {
-        self.queue.push(EventType::DeadPlayer);
-    }
-
     pub fn spawn_earn_point(&mut self, point_type: EarnedPointType, pos: Vec2I) {
         self.queue.push(EventType::EarnPoint(point_type, pos));
     }
 
     pub fn spawn_small_bomb(&mut self, pos: Vec2I) {
         self.queue.push(EventType::SmallBomb(pos));
+    }
+
+    pub fn dead_player(&mut self) {
+        self.queue.push(EventType::DeadPlayer);
+    }
+
+    pub fn capture_player(&mut self, capture_pos: Vec2I) {
+        self.queue.push(EventType::CapturePlayer(capture_pos));
     }
 }
 
@@ -56,4 +60,5 @@ pub enum EventType {
     EarnPoint(EarnedPointType, Vec2I),
     SmallBomb(Vec2I),
     DeadPlayer,
+    CapturePlayer(Vec2I),
 }

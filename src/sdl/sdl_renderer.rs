@@ -93,7 +93,7 @@ impl RendererTrait for SdlRenderer {
         }
 
         let texture = self.texture_manager.get(&sheet.texture).expect(&format!("No texture: {}", sheet.texture));
-        let center = center.map(|v| Point::new(v.x, v.y));
+        let center = center.map(|v| Point::new(v.x * 2, v.y * 2));
         self.canvas.copy_ex(&texture,
                             Some(Rect::new(sheet.frame.x, sheet.frame.y, sheet.frame.w, sheet.frame.h)),
                             Some(Rect::new(pos.x * 2, pos.y * 2, sheet.frame.w * 2, sheet.frame.h * 2)),
