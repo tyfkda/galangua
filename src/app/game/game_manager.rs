@@ -190,6 +190,9 @@ impl GameManager {
                     self.player.complete_capture();
                     self.enemy_manager.set_capture_state(true);
                 }
+                EventType::CaptureSequenceEnded => {
+                    self.player.restart();
+                }
             }
             i += 1;
         }

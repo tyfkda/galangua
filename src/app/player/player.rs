@@ -33,6 +33,11 @@ impl Player {
         }
     }
 
+    pub fn restart(&mut self) {
+        self.state = State::Normal;
+        self.pos = Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE;
+    }
+
     pub fn update(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
         match self.state {
             State::Normal | State::Dual => {

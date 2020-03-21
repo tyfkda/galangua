@@ -345,9 +345,19 @@ impl Enemy {
                         event_queue.capture_player_completed();
 
                         self.speed = 3 * ONE / 2;
-                        self.attack_step = 3;
+                        self.attack_step += 1;
                         self.count = 0;
                     }
+                }
+            }
+            102 => {
+                if self.pos.y >= (HEIGHT + 16) * ONE {
+                    event_queue.capture_sequence_ended();
+                    // TODO: Warp to the top of the screen.
+                    self.state = EnemyState::Formation;
+                    self.speed = 0;
+                    self.angle = 0;
+                    self.vangle = 0;
                 }
             }
             _ => {}
