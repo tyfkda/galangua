@@ -188,6 +188,7 @@ impl GameManager {
                 }
                 EventType::CapturePlayerCompleted => {
                     self.player.complete_capture();
+                    self.enemy_manager.set_capture_state(true);
                 }
             }
             i += 1;

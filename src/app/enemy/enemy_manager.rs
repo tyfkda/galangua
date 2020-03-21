@@ -188,6 +188,10 @@ impl EnemyManager {
             self.shots[index] = Some(EneShot::new(pos, vel));
         }
     }
+
+    pub fn set_capture_state(&mut self, value: bool) {
+        self.attack_manager.set_capture_state(value);
+    }
 }
 
 fn out_of_screen(pos: Vec2I) -> bool {

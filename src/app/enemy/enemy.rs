@@ -33,9 +33,10 @@ pub struct Enemy {
     pub vangle: i32,
     pub formation_index: usize,
 
-    enemy_type: EnemyType,
+    pub(super) enemy_type: EnemyType,
     life: u32,
     traj: Option<Traj>,
+    attack_type: i32,
     attack_step: i32,
     count: i32,
     target_pos: Vec2I,
@@ -60,6 +61,7 @@ impl Enemy {
             vangle: 0,
             formation_index: 255,  // Dummy
             traj: None,
+            attack_type: 0,
             attack_step: 0,
             count: 0,
             target_pos: Vec2I::new(0, 0),
@@ -179,8 +181,9 @@ impl Enemy {
         }
     }
 
-    pub fn set_attack(&mut self) {
+    pub fn set_attack(&mut self, capture_attack: bool) {
         self.state = EnemyState::Attack;
+        self.attack_type = if capture_attack { 1 } else { 0 };
         self.attack_step = 0;
         self.count = 0;
     }
@@ -252,6 +255,11 @@ impl Enemy {
     }
 
     fn update_attack_owl(&mut self, player_pos: &Vec2I, event_queue: &mut EventQueue) {
+        if self.attack_type == 0 {
+            self.update_attack_bee(event_queue);
+            return;
+        }
+
         const DLIMIT: i32 = 4 * ONE;
         match self.attack_step {
             0 => {
