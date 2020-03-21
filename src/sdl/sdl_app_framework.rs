@@ -13,6 +13,7 @@ pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
     last_update_time: SystemTime,
 
     app: Box<App>,
+    fast_forward: bool,
 }
 
 impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
@@ -23,6 +24,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
             sdl_context,
             last_update_time: SystemTime::now(),
             app,
+            fast_forward: false,
         })
     }
 
@@ -50,7 +52,13 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                 break 'running;
             }
 
-            self.app.update();
+            if !self.fast_forward {
+                self.app.update();
+            } else {
+                for _ in 0..10 {
+                    self.app.update();
+                }
+            }
             self.app.draw(&mut renderer)?;
 
             self.wait_frame(Duration::from_micros(1_000_000 / 60));
@@ -66,9 +74,15 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                     return Ok(false);
                 }
                 Event::KeyDown { keycode: Some(key), .. } => {
+                    if key == Keycode::LShift {
+                        self.fast_forward = true;
+                    }
                     self.app.on_key_down(key);
                 }
                 Event::KeyUp { keycode: Some(key), .. } => {
+                    if key == Keycode::LShift {
+                        self.fast_forward = false;
+                    }
                     self.app.on_key_up(key);
                 }
                 _ => {}
