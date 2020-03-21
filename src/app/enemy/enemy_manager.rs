@@ -83,7 +83,7 @@ impl EnemyManager {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
             if enemy.get_collbox().check_collision(target) {
-                let pos = enemy.pos();
+                let pos = *enemy.raw_pos();
                 let destroyed = enemy.set_damage(power);
                 if destroyed {
                     *enemy_opt = None;
@@ -99,7 +99,7 @@ impl EnemyManager {
         for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
             let shot = shot_opt.as_mut().unwrap();
             if shot.get_collbox().check_collision(target) {
-                let pos = shot.pos();
+                let pos = *shot.raw_pos();
                 *shot_opt = None;
                 return CollisionResult::Hit(pos, false);
             }

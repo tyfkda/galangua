@@ -2,6 +2,7 @@ use std::cmp::min;
 
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
+use crate::util::math::round_up;
 
 pub enum Effect {
     EarnedPoint(EarnedPoint),
@@ -46,7 +47,7 @@ impl EarnedPoint {
     pub fn new(point_type: EarnedPointType, pos: Vec2I) -> EarnedPoint {
         EarnedPoint {
             point_type,
-            pos,
+            pos: round_up(&pos),
             frame_count: 0,
         }
     }
@@ -84,7 +85,7 @@ pub struct SmallBomb {
 impl SmallBomb {
     pub fn new(pos: Vec2I) -> SmallBomb {
         SmallBomb {
-            pos,
+            pos: round_up(&pos),
             frame_count: 0,
         }
     }

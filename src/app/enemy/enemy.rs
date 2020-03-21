@@ -65,6 +65,10 @@ impl Enemy {
         round_up(&self.pos)
     }
 
+    pub fn raw_pos(&self) -> &Vec2I {
+        &self.pos
+    }
+
     pub fn update(&mut self, formation: &Formation, event_queue: &mut EventQueue) {
         if self.state == EnemyState::Formation {
             return;

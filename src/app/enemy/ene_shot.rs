@@ -20,6 +20,10 @@ impl EneShot {
         round_up(&self.pos)
     }
 
+    pub fn raw_pos(&self) -> &Vec2I {
+        &self.pos
+    }
+
     pub fn update(&mut self) {
         self.pos += self.vel;
     }
