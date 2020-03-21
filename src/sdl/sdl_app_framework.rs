@@ -62,14 +62,13 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
         let mut event_pump = self.sdl_context.event_pump()?;
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit {..}
-                | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     return Ok(false);
                 }
-                | Event::KeyDown { keycode: Some(key), .. } => {
+                Event::KeyDown { keycode: Some(key), .. } => {
                     self.app.on_key_down(key);
                 }
-                | Event::KeyUp { keycode: Some(key), .. } => {
+                Event::KeyUp { keycode: Some(key), .. } => {
                     self.app.on_key_up(key);
                 }
                 _ => {}
