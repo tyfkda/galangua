@@ -169,6 +169,12 @@ impl Player {
     pub fn complete_capture(&mut self) {
         self.state = State::CaptureCompleted;
     }
+
+    pub fn set_dual(&mut self) {
+        if self.state == State::Normal {
+            self.state = State::Dual;
+        }
+    }
 }
 
 impl Collidable for Player {

@@ -1,11 +1,5 @@
 use crate::framework::types::Vec2I;
 
-// Collision Result
-pub enum CollisionResult {
-    NoHit,
-    Hit(Vec2I, bool),
-}
-
 // Collision Box
 pub struct CollBox {
     pub top_left: Vec2I,

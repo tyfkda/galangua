@@ -2,11 +2,11 @@ use rand::Rng;
 
 use crate::app::effect::StarManager;
 use crate::app::effect::{EarnedPoint, EarnedPointType, Effect, SmallBomb};
-use crate::app::enemy::EnemyManager;
+use crate::app::enemy::{EnemyCollisionResult, EnemyManager};
 use crate::app::game::event_queue::{EventQueue, EventType};
 use crate::app::player::MyShot;
 use crate::app::player::Player;
-use crate::app::util::{CollBox, Collidable, CollisionResult};
+use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::pad::{Pad, PAD_START};
@@ -193,6 +193,9 @@ impl GameManager {
                 EventType::CaptureSequenceEnded => {
                     self.player.restart();
                 }
+                EventType::AcquireCapturedPlayer(pos) => {
+                    self.player.set_dual();
+                }
             }
             i += 1;
         }
@@ -252,7 +255,7 @@ impl GameManager {
                 }
             }
 
-            if let CollisionResult::Hit(pos, _) = self.enemy_manager.check_shot_collision(&collbox) {
+            if let EnemyCollisionResult::Hit{pos, ..} = self.enemy_manager.check_shot_collision(&collbox) {
                 if self.player.crash(&pos) {
                     self.event_queue.dead_player();
                     continue;
@@ -273,24 +276,30 @@ fn handle_collision_enemy(
     event_queue: &mut EventQueue) -> Option<Vec2I>
 {
     match enemy_manager.check_collision(&collbox, power) {
-        CollisionResult::NoHit => { /* no hit */ }
-        CollisionResult::Hit(pos, destroyed) => {
-            if destroyed && effect {
-                event_queue.add_score(100);
+        EnemyCollisionResult::NoHit => { /* no hit */ }
+        EnemyCollisionResult::Hit { pos, destroyed, capturing_player } => {
+            if destroyed {
+                if effect {
+                    event_queue.add_score(100);
 
-                let mut rng = rand::thread_rng();
-                let point_type = match rng.gen_range(0, 16) {
-                    0 => Some(EarnedPointType::Point1600),
-                    1 => Some(EarnedPointType::Point800),
-                    2 => Some(EarnedPointType::Point400),
-                    3 => Some(EarnedPointType::Point150),
-                    _ => None,
-                };
-                if let Some(point_type) = point_type {
-                    event_queue.spawn_earn_point(point_type, pos);
+                    let mut rng = rand::thread_rng();
+                    let point_type = match rng.gen_range(0, 16) {
+                        0 => Some(EarnedPointType::Point1600),
+                        1 => Some(EarnedPointType::Point800),
+                        2 => Some(EarnedPointType::Point400),
+                        3 => Some(EarnedPointType::Point150),
+                        _ => None,
+                    };
+                    if let Some(point_type) = point_type {
+                        event_queue.spawn_earn_point(point_type, pos);
+                    }
+
+                    event_queue.spawn_small_bomb(pos);
                 }
 
-                event_queue.spawn_small_bomb(pos);
+                if capturing_player {
+                    event_queue.acquire_captured_player(pos);
+                }
             }
             return Some(pos);
         }

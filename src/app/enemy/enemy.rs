@@ -41,7 +41,7 @@ pub struct Enemy {
     count: i32,
     target_pos: Vec2I,
     tractor_beam: Option<TractorBeam>,
-    capturing_player: bool,
+    pub(super) capturing_player: bool,
 }
 
 impl Enemy {

@@ -6,9 +6,10 @@ use crate::app::enemy::appearance_manager::AppearanceManager;
 use crate::app::enemy::attack_manager::AttackManager;
 use crate::app::enemy::ene_shot::EneShot;
 use crate::app::enemy::enemy::{Enemy, EnemyState};
+use crate::app::enemy::enemy_collision::EnemyCollisionResult;
 use crate::app::enemy::formation::Formation;
 use crate::app::game::EventQueue;
-use crate::app::util::{CollBox, Collidable, CollisionResult};
+use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::ONE;
@@ -79,33 +80,34 @@ impl EnemyManager {
         Ok(())
     }
 
-    pub fn check_collision(&mut self, target: &CollBox, power: u32) -> CollisionResult {
+    pub fn check_collision(&mut self, target: &CollBox, power: u32) -> EnemyCollisionResult {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
             if enemy.get_collbox().check_collision(target) {
                 let pos = *enemy.raw_pos();
                 let destroyed = enemy.set_damage(power);
+                let capturing_player = enemy.capturing_player;
                 if destroyed {
                     *enemy_opt = None;
                 }
-                return CollisionResult::Hit(pos, destroyed);
+                return EnemyCollisionResult::Hit { pos, destroyed, capturing_player };
             }
         }
 
-        return CollisionResult::NoHit;
+        return EnemyCollisionResult::NoHit;
     }
 
-    pub fn check_shot_collision(&mut self, target: &CollBox) -> CollisionResult {
+    pub fn check_shot_collision(&mut self, target: &CollBox) -> EnemyCollisionResult {
         for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
             let shot = shot_opt.as_mut().unwrap();
             if shot.get_collbox().check_collision(target) {
                 let pos = *shot.raw_pos();
                 *shot_opt = None;
-                return CollisionResult::Hit(pos, false);
+                return EnemyCollisionResult::Hit { pos, destroyed: false, capturing_player: false };
             }
         }
 
-        return CollisionResult::NoHit;
+        return EnemyCollisionResult::NoHit;
     }
 
     fn update_appearance(&mut self) {

@@ -59,6 +59,10 @@ impl EventQueue {
     pub fn capture_sequence_ended(&mut self) {
         self.queue.push(EventType::CaptureSequenceEnded);
     }
+
+    pub fn acquire_captured_player(&mut self, pos: Vec2I) {
+        self.queue.push(EventType::AcquireCapturedPlayer(pos));
+    }
 }
 
 pub enum EventType {
@@ -71,4 +75,5 @@ pub enum EventType {
     CapturePlayer(Vec2I),
     CapturePlayerCompleted,
     CaptureSequenceEnded,
+    AcquireCapturedPlayer(Vec2I),
 }
