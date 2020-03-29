@@ -44,5 +44,7 @@ pub enum EventType {
     CapturePlayer(Vec2I),
     CapturePlayerCompleted,
     CaptureSequenceEnded,
-    AcquireCapturedPlayer(Vec2I),
+    RecapturePlayer(Vec2I),
+    MovePlayerHomePos,
+    RecaptureEnded,
 }

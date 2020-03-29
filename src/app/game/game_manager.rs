@@ -194,8 +194,15 @@ impl GameManager {
                 EventType::CaptureSequenceEnded => {
                     self.player.restart();
                 }
-                EventType::AcquireCapturedPlayer(pos) => {
-                    self.player.set_dual();
+                EventType::RecapturePlayer(pos) => {
+                    self.player.start_recapture_effect(pos);
+                    self.enemy_manager.enable_attack(false);
+                }
+                EventType::MovePlayerHomePos => {
+                    self.player.start_move_home_pos();
+                }
+                EventType::RecaptureEnded => {
+                    self.enemy_manager.enable_attack(true);
                 }
             }
             i += 1;
@@ -305,8 +312,8 @@ fn handle_collision_enemy(
                     event_queue.push(EventType::SmallBomb(pos));
                 }
 
-                if capturing_player {
-                    event_queue.push(EventType::AcquireCapturedPlayer(pos));
+                if let Some(capturing_player) = capturing_player {
+                    event_queue.push(EventType::RecapturePlayer(capturing_player.pos));
                 }
             }
             return Some(pos);

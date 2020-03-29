@@ -6,7 +6,7 @@ use crate::app::enemy::appearance_manager::AppearanceManager;
 use crate::app::enemy::attack_manager::AttackManager;
 use crate::app::enemy::ene_shot::EneShot;
 use crate::app::enemy::enemy::{Enemy, EnemyState};
-use crate::app::enemy::enemy_collision::EnemyCollisionResult;
+use crate::app::enemy::enemy_collision::{CapturingPlayer, EnemyCollisionResult};
 use crate::app::enemy::Accessor;
 use crate::app::enemy::formation::Formation;
 use crate::app::game::EventQueue;
@@ -53,7 +53,7 @@ impl EnemyManager {
     pub fn start_next_stage(&mut self, stage: u32) {
         self.appearance_manager = AppearanceManager::new(stage);
         self.formation.restart();
-        self.attack_manager.restart();
+        self.attack_manager.restart(stage > 0);
     }
 
     pub fn all_destroyed(&self) -> bool {
@@ -87,7 +87,11 @@ impl EnemyManager {
             if enemy.get_collbox().check_collision(target) {
                 let pos = *enemy.raw_pos();
                 let (destroyed, point) = enemy.set_damage(power);
-                let capturing_player = enemy.capturing_player;
+                let capturing_player = if !enemy.capturing_player { None } else {
+                    Some(CapturingPlayer {
+                        pos: pos - Vec2I::new(0, 16 * ONE),
+                    })
+                };
                 if destroyed {
                     *enemy_opt = None;
                 }
@@ -104,7 +108,7 @@ impl EnemyManager {
             if shot.get_collbox().check_collision(target) {
                 let pos = *shot.raw_pos();
                 *shot_opt = None;
-                return EnemyCollisionResult::Hit { pos, destroyed: false, point: 0, capturing_player: false };
+                return EnemyCollisionResult::Hit { pos, destroyed: false, point: 0, capturing_player: None };
             }
         }
 
@@ -194,6 +198,10 @@ impl EnemyManager {
 
     pub fn set_capture_state(&mut self, value: bool) {
         self.attack_manager.set_capture_state(value);
+    }
+
+    pub fn enable_attack(&mut self, value: bool) {
+        self.attack_manager.set_enable(value);
     }
 }
 

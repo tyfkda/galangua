@@ -7,6 +7,10 @@ pub enum EnemyCollisionResult {
         pos: Vec2I,
         destroyed: bool,
         point: u32,
-        capturing_player: bool,
+        capturing_player: Option<CapturingPlayer>,
     },
+}
+
+pub struct CapturingPlayer {
+    pub pos: Vec2I,
 }

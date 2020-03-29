@@ -1,4 +1,5 @@
 use crate::app::consts::*;
+use crate::app::effect::RecapturedFighter;
 use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
@@ -13,6 +14,7 @@ enum State {
     Capturing,
     Captured,
     CaptureCompleted,
+    MoveHomePos,
 }
 
 pub struct Player {
@@ -21,6 +23,7 @@ pub struct Player {
     dual: bool,
     angle: i32,
     capture_pos: Vec2I,
+    recaptured_fighter: Option<RecapturedFighter>,
 }
 
 impl Player {
@@ -31,6 +34,7 @@ impl Player {
             dual: false,
             angle: 0,
             capture_pos: Vec2I::new(0, 0),
+            recaptured_fighter: None,
         }
     }
 
@@ -50,6 +54,23 @@ impl Player {
                 self.update_capture();
             }
             State::Captured | State::CaptureCompleted => {}
+            State::MoveHomePos => {
+                let x = (WIDTH / 2 - 8) * ONE;
+                let speed = 1 * ONE;
+                self.pos.x += clamp(x - self.pos.x, -speed, speed);
+                if self.pos.x == x {
+                    if self.recaptured_fighter.as_ref().unwrap().done() {
+                        self.dual = true;
+                        self.state = State::Normal;
+                        self.recaptured_fighter = None;
+                        event_queue.push(EventType::RecaptureEnded);
+                    }
+                }
+            }
+        }
+
+        if let Some(recaptured_fighter) = &mut self.recaptured_fighter {
+            recaptured_fighter.update(event_queue);
         }
     }
 
@@ -90,7 +111,7 @@ impl Player {
         where R: RendererTrait
     {
         match self.state {
-            State::Normal => {
+            State::Normal | State::MoveHomePos => {
                 let pos = self.pos();
                 renderer.draw_sprite("fighter", pos + Vec2I::new(-8, -8))?;
                 if self.dual {
@@ -107,6 +128,10 @@ impl Player {
                 renderer.draw_sprite("captured", pos + Vec2I::new(-8, -8))?;
             }
             State::CaptureCompleted | State::Dead => {}
+        }
+
+        if let Some(recaptured_fighter) = &self.recaptured_fighter {
+            recaptured_fighter.draw(renderer)?;
         }
 
         Ok(())
@@ -167,8 +192,12 @@ impl Player {
         self.state = State::CaptureCompleted;
     }
 
-    pub fn set_dual(&mut self) {
-        self.dual = true;
+    pub fn start_recapture_effect(&mut self, pos: Vec2I) {
+        self.recaptured_fighter = Some(RecapturedFighter::new(pos));
+    }
+
+    pub fn start_move_home_pos(&mut self) {
+        self.state = State::MoveHomePos;
     }
 }
 

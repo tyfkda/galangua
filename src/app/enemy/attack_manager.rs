@@ -21,19 +21,17 @@ impl AttackManager {
         }
     }
 
-    pub fn restart(&mut self) {
+    pub fn restart(&mut self, cont: bool) {
         self.enable = false;
         self.wait = 0;
         self.attackers = Default::default();
+        if !cont {
+            self.player_captured = false;
+        }
     }
 
     pub fn set_enable(&mut self, value: bool) {
-        if self.enable != value {
-            self.enable = value;
-            if self.enable {
-                self.wait = 30;
-            }
-        }
+        self.enable = value;
     }
 
     pub fn set_capture_state(&mut self, value: bool) {
@@ -57,7 +55,15 @@ impl AttackManager {
             let count = alive_indices.len();
             if count > 0 {
                 let mut rng = rand::thread_rng();
-                let index = rng.gen_range(0, count);
+//                let index = rng.gen_range(0, count);
+let mut index = 0;
+for _i in 0..100 {
+    index = rng.gen_range(0, count);
+    if enemies[alive_indices[index]].as_ref().unwrap().enemy_type == EnemyType::Owl {
+        break;
+    }
+}
+
                 let no = alive_indices[index];
                 *slot = Some(no);
 
