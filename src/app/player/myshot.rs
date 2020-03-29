@@ -9,8 +9,8 @@ pub struct MyShot {
 }
 
 impl MyShot {
-    pub fn new(pos: Vec2I, dual: bool) -> MyShot {
-        MyShot {
+    pub fn new(pos: Vec2I, dual: bool) -> Self {
+        Self {
             pos,
             dual,
         }

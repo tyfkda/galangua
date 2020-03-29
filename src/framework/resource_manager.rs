@@ -6,8 +6,8 @@ pub struct ResourceManager<T> {
 }
 
 impl<T> ResourceManager<T> {
-    pub fn new() -> ResourceManager<T> {
-        ResourceManager {
+    pub fn new() -> Self {
+        Self {
             resource_map: HashMap::new(),
         }
     }

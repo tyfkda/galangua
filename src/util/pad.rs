@@ -12,8 +12,8 @@ pub struct Pad {
 }
 
 impl Pad {
-    pub fn new() -> Pad {
-        Pad {
+    pub fn new() -> Self {
+        Self {
             pad: 0,
             trg: 0,
             last_pad: 0,

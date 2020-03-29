@@ -15,8 +15,8 @@ pub struct SdlRenderer {
 }
 
 impl SdlRenderer {
-    pub fn new(canvas: WindowCanvas) -> SdlRenderer {
-        SdlRenderer {
+    pub fn new(canvas: WindowCanvas) -> Self {
+        Self {
             canvas,
             texture_manager: TextureManager::new(),
             sprite_sheet: HashMap::new(),

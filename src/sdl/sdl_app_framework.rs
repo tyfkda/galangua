@@ -17,10 +17,10 @@ pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
 }
 
 impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
-    pub fn new(app: Box<App>) -> Result<SdlAppFramework<App>, String> {
+    pub fn new(app: Box<App>) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
 
-        Ok(SdlAppFramework {
+        Ok(Self {
             sdl_context,
             last_update_time: SystemTime::now(),
             app,

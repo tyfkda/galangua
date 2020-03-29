@@ -13,7 +13,7 @@ pub struct StarManager {
 }
 
 impl StarManager {
-    pub fn new() -> StarManager {
+    pub fn new() -> Self {
         let mut rng = rand::thread_rng();
         let stars = array![|_i|
             Star {
@@ -23,7 +23,7 @@ impl StarManager {
             }
         ; STAR_COUNT];
 
-        StarManager {
+        Self {
             stars,
             frame_count: 0,
         }

@@ -7,8 +7,8 @@ pub struct FpsCalc {
 }
 
 impl FpsCalc {
-    pub fn new() -> FpsCalc {
-        FpsCalc {
+    pub fn new() -> Self {
+        Self {
             fps: 0,
             last_fps_time: SystemTime::now(),
             ndraw: 0,

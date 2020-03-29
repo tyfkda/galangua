@@ -13,8 +13,8 @@ pub struct GaragaApp {
 }
 
 impl GaragaApp {
-    pub fn new() -> GaragaApp {
-        GaragaApp {
+    pub fn new() -> Self {
+        Self {
             pad: Pad::new(),
             fps_calc: FpsCalc::new(),
             game_manager: GameManager::new(),

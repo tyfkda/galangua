@@ -12,8 +12,8 @@ pub struct AttackManager {
 }
 
 impl AttackManager {
-    pub fn new() -> AttackManager {
-        AttackManager {
+    pub fn new() -> Self {
+        Self {
             enable: false,
             wait: 0,
             attackers: Default::default(),

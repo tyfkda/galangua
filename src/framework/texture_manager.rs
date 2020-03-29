@@ -8,8 +8,8 @@ pub struct TextureManager {
 }
 
 impl TextureManager {
-    pub fn new() -> TextureManager {
-        TextureManager {
+    pub fn new() -> Self {
+        Self {
             resource_manager: ResourceManager::new(),
         }
     }

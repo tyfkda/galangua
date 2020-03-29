@@ -26,8 +26,8 @@ pub struct EnemyManager {
 }
 
 impl EnemyManager {
-    pub fn new() -> EnemyManager {
-        let mut mgr = EnemyManager {
+    pub fn new() -> Self {
+        let mut mgr = Self {
             enemies: array![None; MAX_ENEMY_COUNT],
             shots: Default::default(),
             formation: Formation::new(),

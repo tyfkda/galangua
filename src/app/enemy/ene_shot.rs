@@ -9,8 +9,8 @@ pub struct EneShot {
 }
 
 impl EneShot {
-    pub fn new(pos: Vec2I, vel: Vec2I) -> EneShot {
-        EneShot {
+    pub fn new(pos: Vec2I, vel: Vec2I) -> Self {
+        Self {
             pos,
             vel,
         }

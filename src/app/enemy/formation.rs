@@ -47,8 +47,8 @@ pub struct Formation {
 }
 
 impl Formation {
-    pub fn new() -> Formation {
-        let mut formation = Formation {
+    pub fn new() -> Self {
+        let mut formation = Self {
             xtbl: Default::default(),
             ytbl: Default::default(),
             moving_pat: MovingPat::Slide,

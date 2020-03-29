@@ -44,8 +44,8 @@ pub struct EarnedPoint {
 }
 
 impl EarnedPoint {
-    pub fn new(point_type: EarnedPointType, pos: Vec2I) -> EarnedPoint {
-        EarnedPoint {
+    pub fn new(point_type: EarnedPointType, pos: Vec2I) -> Self {
+        Self {
             point_type,
             pos: round_up(&pos),
             frame_count: 0,
@@ -83,8 +83,8 @@ pub struct SmallBomb {
 }
 
 impl SmallBomb {
-    pub fn new(pos: Vec2I) -> SmallBomb {
-        SmallBomb {
+    pub fn new(pos: Vec2I) -> Self {
+        Self {
             pos: round_up(&pos),
             frame_count: 0,
         }

@@ -6,8 +6,8 @@ pub struct EventQueue {
 }
 
 impl EventQueue {
-    pub fn new() -> EventQueue {
-        EventQueue {
+    pub fn new() -> Self {
+        Self {
             queue: Vec::new(),
         }
     }

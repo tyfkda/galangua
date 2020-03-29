@@ -37,8 +37,8 @@ pub struct GameManager {
 }
 
 impl GameManager {
-    pub fn new() -> GameManager {
-        GameManager {
+    pub fn new() -> Self {
+        Self {
             state: GameState::Playing,
             star_manager: StarManager::new(),
             player: Player::new(),

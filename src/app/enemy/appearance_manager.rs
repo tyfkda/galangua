@@ -70,8 +70,8 @@ pub struct AppearanceManager {
 }
 
 impl AppearanceManager {
-    pub fn new(stage: u32) -> AppearanceManager {
-        AppearanceManager {
+    pub fn new(stage: u32) -> Self {
+        Self {
             stage,
             wait_stationary: false,
             wait: 0,

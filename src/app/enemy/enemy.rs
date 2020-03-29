@@ -45,13 +45,13 @@ pub struct Enemy {
 }
 
 impl Enemy {
-    pub fn new(enemy_type: EnemyType, pos: Vec2I, angle: i32, speed: i32) -> Enemy {
+    pub fn new(enemy_type: EnemyType, pos: Vec2I, angle: i32, speed: i32) -> Self {
         let life = match enemy_type {
             EnemyType::Owl => 2,
             _ => 1,
         };
 
-        Enemy {
+        Self {
             enemy_type,
             state: EnemyState::Flying,
             life,

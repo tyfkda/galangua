@@ -37,8 +37,8 @@ pub struct TractorBeam {
 }
 
 impl TractorBeam {
-    pub fn new(pos: Vec2I) -> TractorBeam {
-        TractorBeam {
+    pub fn new(pos: Vec2I) -> Self {
+        Self {
             pos,
             state: State::Opening,
             count: 0,

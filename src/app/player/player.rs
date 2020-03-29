@@ -24,8 +24,8 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new() -> Player {
-        Player {
+    pub fn new() -> Self {
+        Self {
             pos: Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE,
             state: State::Normal,
             angle: 0,
