@@ -9,7 +9,6 @@ use crate::util::pad::{Pad, PAD_A, PAD_L, PAD_R};
 #[derive(PartialEq)]
 enum State {
     Normal,
-    Dual,
     Dead,
     Capturing,
     Captured,
@@ -19,6 +18,7 @@ enum State {
 pub struct Player {
     pos: Vec2I,
     state: State,
+    dual: bool,
     angle: i32,
     capture_pos: Vec2I,
 }
@@ -28,6 +28,7 @@ impl Player {
         Self {
             pos: Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE,
             state: State::Normal,
+            dual: false,
             angle: 0,
             capture_pos: Vec2I::new(0, 0),
         }
@@ -40,7 +41,7 @@ impl Player {
 
     pub fn update(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
         match self.state {
-            State::Normal | State::Dual => {
+            State::Normal => {
                 self.update_normal(pad, event_queue);
             }
             State::Dead => {
@@ -62,13 +63,13 @@ impl Player {
         if pad.is_pressed(PAD_R) {
             self.pos.x += 2 * ONE;
 
-            let right = if self.dual() { (WIDTH - 8 - 16) * ONE } else { (WIDTH - 8) * ONE };
+            let right = if self.dual { (WIDTH - 8 - 16) * ONE } else { (WIDTH - 8) * ONE };
             if self.pos.x > right {
                 self.pos.x = right;
             }
         }
         if pad.is_trigger(PAD_A) {
-            event_queue.spawn_myshot(Vec2I::new(self.pos.x, self.pos.y - 8 * ONE), self.dual());
+            event_queue.spawn_myshot(Vec2I::new(self.pos.x, self.pos.y - 8 * ONE), self.dual);
         }
     }
 
@@ -89,10 +90,10 @@ impl Player {
         where R: RendererTrait
     {
         match self.state {
-            State::Normal | State::Dual => {
+            State::Normal => {
                 let pos = self.pos();
                 renderer.draw_sprite("fighter", pos + Vec2I::new(-8, -8))?;
-                if self.dual() {
+                if self.dual {
                     renderer.draw_sprite("fighter", pos + Vec2I::new(-8 + 16, -8))?;
                 }
             }
@@ -112,11 +113,11 @@ impl Player {
     }
 
     fn dual(&self) -> bool {
-        self.state == State::Dual
+        self.dual
     }
 
     pub fn active(&self) -> bool {
-        self.state == State::Normal || self.state == State::Dual
+        self.state == State::Normal
     }
 
     pub fn pos(&self) -> Vec2I {
@@ -128,7 +129,7 @@ impl Player {
     }
 
     pub fn dual_pos(&self) -> Option<Vec2I> {
-        if self.dual() {
+        if self.dual {
             Some(self.pos() + Vec2I::new(16, 0))
         } else {
             None
@@ -136,7 +137,7 @@ impl Player {
     }
 
     pub fn dual_collbox(&self) -> Option<CollBox> {
-        if self.dual() {
+        if self.dual {
             Some(CollBox {
                 top_left: self.pos() + Vec2I::new(8, -8),
                 size: Vec2I::new(16, 16),
@@ -147,12 +148,12 @@ impl Player {
     }
 
     pub fn crash(&mut self, pos: &Vec2I) -> bool {
-        if self.dual() {
-            if pos.x < self.pos().x + 16 / 2 {
+        if self.dual {
+            if pos.x < self.pos.x + (16 / 2 * ONE) {
                 // Abandan left ship.
                 self.pos.x += 16 * ONE;
             }
-            self.state = State::Normal;
+            self.dual = false;
             false
         } else {
             self.state = State::Dead;
@@ -171,9 +172,7 @@ impl Player {
     }
 
     pub fn set_dual(&mut self) {
-        if self.state == State::Normal {
-            self.state = State::Dual;
-        }
+        self.dual = true;
     }
 }
 
