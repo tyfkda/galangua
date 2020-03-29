@@ -2,6 +2,7 @@ use crate::app::consts::*;
 use crate::app::enemy::formation::Formation;
 use crate::app::enemy::tractor_beam::TractorBeam;
 use crate::app::enemy::traj::Traj;
+use crate::app::enemy::Accessor;
 use crate::app::game::EventQueue;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
@@ -78,7 +79,7 @@ impl Enemy {
         &self.pos
     }
 
-    pub fn update(&mut self, formation: &Formation, player_pos: &Vec2I, event_queue: &mut EventQueue) {
+    pub fn update<T: Accessor>(&mut self, formation: &Formation, accessor: &T, event_queue: &mut EventQueue) {
         if self.state == EnemyState::Formation {
             return;
         }
@@ -113,7 +114,7 @@ impl Enemy {
                 }
             }
             EnemyState::Attack => {
-                self.update_attack(player_pos, event_queue);
+                self.update_attack(accessor, event_queue);
             }
             _ => {}
         }
@@ -188,11 +189,11 @@ impl Enemy {
         self.count = 0;
     }
 
-    fn update_attack(&mut self, player_pos: &Vec2I, event_queue: &mut EventQueue) {
+    fn update_attack<T: Accessor>(&mut self, accessor: &T, event_queue: &mut EventQueue) {
         match self.enemy_type {
             EnemyType::Bee => { self.update_attack_bee(event_queue); }
             EnemyType::Butterfly => { self.update_attack_butterfly(event_queue); }
-            EnemyType::Owl => { self.update_attack_owl(player_pos, event_queue); }
+            EnemyType::Owl => { self.update_attack_owl(accessor, event_queue); }
         }
     }
 
@@ -254,7 +255,7 @@ impl Enemy {
         self.update_attack_bee(event_queue);
     }
 
-    fn update_attack_owl(&mut self, player_pos: &Vec2I, event_queue: &mut EventQueue) {
+    fn update_attack_owl<T: Accessor>(&mut self, accessor: &T, event_queue: &mut EventQueue) {
         if self.attack_type == 0 {
             self.update_attack_bee(event_queue);
             return;
@@ -271,6 +272,7 @@ impl Enemy {
                     self.vangle = DLIMIT;
                 }
 
+                let player_pos = accessor.get_raw_player_pos();
                 self.target_pos = Vec2I::new(player_pos.x, (HEIGHT - 16 - 8 - 88) * ONE);
 
                 self.attack_step += 1;
@@ -310,7 +312,7 @@ impl Enemy {
                         self.speed = 3 * ONE / 2;
                         self.attack_step += 1;
                         self.count = 0;
-                    } else if tractor_beam.can_capture(player_pos) {
+                    } else if tractor_beam.can_capture(accessor.get_raw_player_pos()) {
                         event_queue.capture_player(self.pos + Vec2I::new(0, 16 * ONE));
                         tractor_beam.start_capture();
                         self.attack_step = 100;

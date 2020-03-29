@@ -2,11 +2,13 @@ use rand::Rng;
 
 use crate::app::effect::StarManager;
 use crate::app::effect::{EarnedPoint, EarnedPointType, Effect, SmallBomb};
+use crate::app::enemy::Accessor as AccessorForEnemy;
 use crate::app::enemy::{EnemyCollisionResult, EnemyManager};
 use crate::app::game::event_queue::{EventQueue, EventType};
 use crate::app::player::MyShot;
 use crate::app::player::Player;
 use crate::app::util::{CollBox, Collidable};
+use crate::app::util::unsafe_util::peep;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::pad::{Pad, PAD_START};
@@ -103,7 +105,8 @@ impl GameManager {
             }
         }
 
-        self.enemy_manager.update(&self.player.get_raw_pos(), &mut self.event_queue);
+        let accessor = unsafe { peep(self) };
+        self.enemy_manager.update(accessor, &mut self.event_queue);
 
         if self.enemy_manager.all_destroyed() {
             self.stage += 1;
@@ -268,6 +271,12 @@ impl GameManager {
         if let Some(slot) = self.effects.iter_mut().find(|x| x.is_none()) {
             *slot = Some(effect);
         }
+    }
+}
+
+impl AccessorForEnemy for GameManager {
+    fn get_raw_player_pos(&self) -> &Vec2I {
+        self.player.get_raw_pos()
     }
 }
 
