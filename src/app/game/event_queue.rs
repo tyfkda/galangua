@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use crate::app::effect::EarnedPointType;
 use crate::framework::types::Vec2I;
 
@@ -18,10 +20,6 @@ impl EventQueue {
 
     pub fn len(&self) -> usize {
         self.queue.len()
-    }
-
-    pub fn get(&self, index: usize) -> &EventType {
-        &self.queue[index]
     }
 
     pub fn spawn_myshot(&mut self, pos: Vec2I, dual: bool) {
@@ -62,6 +60,13 @@ impl EventQueue {
 
     pub fn acquire_captured_player(&mut self, pos: Vec2I) {
         self.queue.push(EventType::AcquireCapturedPlayer(pos));
+    }
+}
+
+impl Index<usize> for EventQueue {
+    type Output = EventType;
+    fn index(&self, i: usize) -> &Self::Output {
+        &self.queue[i]
     }
 }
 

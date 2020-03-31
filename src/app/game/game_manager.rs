@@ -160,7 +160,7 @@ impl GameManager {
     fn handle_event_queue(&mut self) {
         let mut i = 0;
         while i < self.event_queue.len() {
-            let event = self.event_queue.get(i);
+            let event = &self.event_queue[i];
             match *event {
                 EventType::MyShot(pos, dual) => {
                     self.spawn_myshot(pos, dual);
