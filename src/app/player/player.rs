@@ -1,5 +1,5 @@
 use crate::app::consts::*;
-use crate::app::game::EventQueue;
+use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
@@ -69,7 +69,7 @@ impl Player {
             }
         }
         if pad.is_trigger(PAD_A) {
-            event_queue.spawn_myshot(Vec2I::new(self.pos.x, self.pos.y - 8 * ONE), self.dual);
+            event_queue.push(EventType::MyShot(Vec2I::new(self.pos.x, self.pos.y - 8 * ONE), self.dual));
         }
     }
 

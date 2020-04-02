@@ -253,14 +253,14 @@ impl GameManager {
         for collbox in collbox_opts.iter().flat_map(|x| x) {
             if let Some(pos) = handle_collision_enemy(&mut self.enemy_manager, &collbox, 100, false, &mut self.event_queue) {
                 if self.player.crash(&pos) {
-                    self.event_queue.dead_player();
+                    self.event_queue.push(EventType::DeadPlayer);
                     continue;
                 }
             }
 
             if let EnemyCollisionResult::Hit{pos, ..} = self.enemy_manager.check_shot_collision(&collbox) {
                 if self.player.crash(&pos) {
-                    self.event_queue.dead_player();
+                    self.event_queue.push(EventType::DeadPlayer);
                     continue;
                 }
             }
@@ -289,7 +289,7 @@ fn handle_collision_enemy(
         EnemyCollisionResult::Hit { pos, destroyed, capturing_player } => {
             if destroyed {
                 if effect {
-                    event_queue.add_score(100);
+                    event_queue.push(EventType::AddScore(100));
 
                     let mut rng = rand::thread_rng();
                     let point_type = match rng.gen_range(0, 16) {
@@ -300,14 +300,14 @@ fn handle_collision_enemy(
                         _ => None,
                     };
                     if let Some(point_type) = point_type {
-                        event_queue.spawn_earn_point(point_type, pos);
+                        event_queue.push(EventType::EarnPoint(point_type, pos));
                     }
 
-                    event_queue.spawn_small_bomb(pos);
+                    event_queue.push(EventType::SmallBomb(pos));
                 }
 
                 if capturing_player {
-                    event_queue.acquire_captured_player(pos);
+                    event_queue.push(EventType::AcquireCapturedPlayer(pos));
                 }
             }
             return Some(pos);

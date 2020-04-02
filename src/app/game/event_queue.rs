@@ -22,44 +22,8 @@ impl EventQueue {
         self.queue.len()
     }
 
-    pub fn spawn_myshot(&mut self, pos: Vec2I, dual: bool) {
-        self.queue.push(EventType::MyShot(pos, dual));
-    }
-
-    pub fn spawn_ene_shot(&mut self, pos: Vec2I, speed: i32) {
-        self.queue.push(EventType::EneShot(pos, speed));
-    }
-
-    pub fn add_score(&mut self, add: u32) {
-        self.queue.push(EventType::AddScore(add));
-    }
-
-    pub fn spawn_earn_point(&mut self, point_type: EarnedPointType, pos: Vec2I) {
-        self.queue.push(EventType::EarnPoint(point_type, pos));
-    }
-
-    pub fn spawn_small_bomb(&mut self, pos: Vec2I) {
-        self.queue.push(EventType::SmallBomb(pos));
-    }
-
-    pub fn dead_player(&mut self) {
-        self.queue.push(EventType::DeadPlayer);
-    }
-
-    pub fn capture_player(&mut self, capture_pos: Vec2I) {
-        self.queue.push(EventType::CapturePlayer(capture_pos));
-    }
-
-    pub fn capture_player_completed(&mut self) {
-        self.queue.push(EventType::CapturePlayerCompleted);
-    }
-
-    pub fn capture_sequence_ended(&mut self) {
-        self.queue.push(EventType::CaptureSequenceEnded);
-    }
-
-    pub fn acquire_captured_player(&mut self, pos: Vec2I) {
-        self.queue.push(EventType::AcquireCapturedPlayer(pos));
+    pub fn push(&mut self, event: EventType) {
+        self.queue.push(event);
     }
 }
 

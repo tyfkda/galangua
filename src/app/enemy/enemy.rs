@@ -3,7 +3,7 @@ use crate::app::enemy::formation::Formation;
 use crate::app::enemy::tractor_beam::TractorBeam;
 use crate::app::enemy::traj::Traj;
 use crate::app::enemy::Accessor;
-use crate::app::game::EventQueue;
+use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
@@ -210,7 +210,7 @@ impl Enemy {
                 self.attack_step += 1;
                 self.count = 0;
 
-                event_queue.spawn_ene_shot(self.pos, 2 * ONE);
+                event_queue.push(EventType::EneShot(self.pos, 2 * ONE));
             }
             1 => {
                 if (self.vangle < 0 && self.angle <= -160 * ONE) || (self.vangle > 0 && self.angle >= 160 * ONE) {
@@ -313,7 +313,7 @@ impl Enemy {
                         self.attack_step += 1;
                         self.count = 0;
                     } else if tractor_beam.can_capture(accessor.get_raw_player_pos()) {
-                        event_queue.capture_player(self.pos + Vec2I::new(0, 16 * ONE));
+                        event_queue.push(EventType::CapturePlayer(self.pos + Vec2I::new(0, 16 * ONE)));
                         tractor_beam.start_capture();
                         self.attack_step = 100;
                         self.count = 0;
@@ -344,7 +344,7 @@ impl Enemy {
                         // TODO: Turn and back to the formation.
                         self.tractor_beam = None;
                         self.capturing_player = true;
-                        event_queue.capture_player_completed();
+                        event_queue.push(EventType::CapturePlayerCompleted);
 
                         self.speed = 3 * ONE / 2;
                         self.attack_step += 1;
@@ -354,7 +354,7 @@ impl Enemy {
             }
             102 => {
                 if self.pos.y >= (HEIGHT + 16) * ONE {
-                    event_queue.capture_sequence_ended();
+                    event_queue.push(EventType::CaptureSequenceEnded);
                     // TODO: Warp to the top of the screen.
                     self.state = EnemyState::Formation;
                     self.speed = 0;
