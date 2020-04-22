@@ -6,6 +6,7 @@ pub enum EnemyCollisionResult {
     Hit {
         pos: Vec2I,
         destroyed: bool,
+        point: u32,
         capturing_player: bool,
     },
 }

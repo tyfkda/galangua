@@ -1,5 +1,3 @@
-use rand::Rng;
-
 use crate::app::effect::StarManager;
 use crate::app::effect::{EarnedPoint, EarnedPointType, Effect, SmallBomb};
 use crate::app::enemy::Accessor as AccessorForEnemy;
@@ -286,17 +284,18 @@ fn handle_collision_enemy(
 {
     match enemy_manager.check_collision(&collbox, power) {
         EnemyCollisionResult::NoHit => { /* no hit */ }
-        EnemyCollisionResult::Hit { pos, destroyed, capturing_player } => {
+        EnemyCollisionResult::Hit { pos, destroyed, point, capturing_player } => {
             if destroyed {
                 if effect {
-                    event_queue.push(EventType::AddScore(100));
+                    if point > 0 {
+                        event_queue.push(EventType::AddScore(point));
+                    }
 
-                    let mut rng = rand::thread_rng();
-                    let point_type = match rng.gen_range(0, 16) {
-                        0 => Some(EarnedPointType::Point1600),
-                        1 => Some(EarnedPointType::Point800),
-                        2 => Some(EarnedPointType::Point400),
-                        3 => Some(EarnedPointType::Point150),
+                    let point_type = match point {
+                        1600 => Some(EarnedPointType::Point1600),
+                        800 => Some(EarnedPointType::Point800),
+                        400 => Some(EarnedPointType::Point400),
+                        150 => Some(EarnedPointType::Point150),
                         _ => None,
                     };
                     if let Some(point_type) = point_type {

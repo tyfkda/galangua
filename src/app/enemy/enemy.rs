@@ -152,13 +152,29 @@ impl Enemy {
         Ok(())
     }
 
-    pub fn set_damage(&mut self, power: u32) -> bool {
+    pub fn set_damage(&mut self, power: u32) -> (bool, u32) {
         if self.life > power {
             self.life -= power;
-            false
+            (false, 0)
         } else {
             self.life = 0;
-            true
+            let point = match self.enemy_type {
+                EnemyType::Bee => {
+                    if self.state == EnemyState::Formation { 50 } else { 100 }
+                }
+                EnemyType::Butterfly => {
+                    if self.state == EnemyState::Formation { 80 } else { 160 }
+                }
+                EnemyType::Owl => {
+                    if self.state == EnemyState::Formation {
+                        150
+                    } else {
+                        // TODO: According to supporters.
+                        400
+                    }
+                }
+            };
+            (true, point)
         }
     }
 

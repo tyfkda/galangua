@@ -86,12 +86,12 @@ impl EnemyManager {
             let enemy = enemy_opt.as_mut().unwrap();
             if enemy.get_collbox().check_collision(target) {
                 let pos = *enemy.raw_pos();
-                let destroyed = enemy.set_damage(power);
+                let (destroyed, point) = enemy.set_damage(power);
                 let capturing_player = enemy.capturing_player;
                 if destroyed {
                     *enemy_opt = None;
                 }
-                return EnemyCollisionResult::Hit { pos, destroyed, capturing_player };
+                return EnemyCollisionResult::Hit { pos, destroyed, point, capturing_player };
             }
         }
 
@@ -104,7 +104,7 @@ impl EnemyManager {
             if shot.get_collbox().check_collision(target) {
                 let pos = *shot.raw_pos();
                 *shot_opt = None;
-                return EnemyCollisionResult::Hit { pos, destroyed: false, capturing_player: false };
+                return EnemyCollisionResult::Hit { pos, destroyed: false, point: 0, capturing_player: false };
             }
         }
 
