@@ -112,10 +112,6 @@ impl Player {
         Ok(())
     }
 
-    fn dual(&self) -> bool {
-        self.dual
-    }
-
     pub fn active(&self) -> bool {
         self.state == State::Normal
     }
