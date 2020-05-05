@@ -18,6 +18,7 @@ const MAX_EFFECT_COUNT: usize = 16;
 enum GameState {
     Playing,
     PlayerDead,
+    StageClear,
     GameOver,
 }
 
@@ -86,12 +87,25 @@ impl GameManager {
         }
 
         match self.state {
-            GameState::Playing => {}
+            GameState::Playing => {
+                if self.enemy_manager.all_destroyed() {
+                    self.state = GameState::StageClear;
+                    self.count = 0;
+                }
+            }
             GameState::PlayerDead => {
                 // TODO: Wait all enemies back to formation.
                 self.count += 1;
                 if self.count >= 60 {
                     self.next_player();
+                }
+            }
+            GameState::StageClear => {
+                self.count += 1;
+                if self.count >= 60 {
+                    self.stage += 1;
+                    self.enemy_manager.start_next_stage(self.stage);
+                    self.state = GameState::Playing;
                 }
             }
             GameState::GameOver => {
@@ -130,11 +144,6 @@ impl GameManager {
 
         let accessor = unsafe { peep(self) };
         self.enemy_manager.update(accessor, &mut self.event_queue);
-
-        if self.enemy_manager.all_destroyed() {
-            self.stage += 1;
-            self.enemy_manager.start_next_stage(self.stage);
-        }
 
         // For MyShot.
         self.handle_event_queue();
