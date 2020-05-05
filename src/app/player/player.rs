@@ -7,6 +7,8 @@ use crate::framework::RendererTrait;
 use crate::util::math::{clamp, round_up, ANGLE, ONE};
 use crate::util::pad::{Pad, PAD_A, PAD_L, PAD_R};
 
+const DEFAULT_LEFT_SHIP: u32 = 3;
+
 #[derive(PartialEq)]
 enum State {
     Normal,
@@ -24,6 +26,7 @@ pub struct Player {
     angle: i32,
     capture_pos: Vec2I,
     recaptured_fighter: Option<RecapturedFighter>,
+    left_ship: u32,
 }
 
 impl Player {
@@ -35,6 +38,7 @@ impl Player {
             angle: 0,
             capture_pos: Vec2I::new(0, 0),
             recaptured_fighter: None,
+            left_ship: DEFAULT_LEFT_SHIP,
         }
     }
 
@@ -134,6 +138,12 @@ impl Player {
             recaptured_fighter.draw(renderer)?;
         }
 
+        if self.left_ship > 0 {
+            for i in 0..self.left_ship - 1 {
+                renderer.draw_sprite("fighter", Vec2I::new(i as i32 * 16, HEIGHT - 16))?;
+            }
+        }
+
         Ok(())
     }
 
@@ -178,6 +188,16 @@ impl Player {
             false
         } else {
             self.state = State::Dead;
+            true
+        }
+    }
+
+    pub fn decrement_and_restart(&mut self) -> bool {
+        self.left_ship -= 1;
+        if self.left_ship == 0 {
+            false
+        } else {
+            self.restart();
             true
         }
     }

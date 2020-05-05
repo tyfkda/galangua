@@ -17,11 +17,13 @@ const MAX_EFFECT_COUNT: usize = 16;
 #[derive(PartialEq)]
 enum GameState {
     Playing,
+    PlayerDead,
     GameOver,
 }
 
 pub struct GameManager {
     state: GameState,
+    count: u32,
     star_manager: StarManager,
     player: Player,
     myshots: [Option<MyShot>; MYSHOT_COUNT],
@@ -40,6 +42,7 @@ impl GameManager {
     pub fn new() -> Self {
         Self {
             state: GameState::Playing,
+            count: 0,
             star_manager: StarManager::new(),
             player: Player::new(),
             myshots: Default::default(),
@@ -76,14 +79,36 @@ impl GameManager {
     pub fn update(&mut self, pad: &Pad) {
         self.update_common(pad);
 
-        if self.state == GameState::GameOver {
-            if pad.is_trigger(PAD_START) {
-                self.restart();
-            }
-        } else {
+        if self.state != GameState::GameOver {
             if pad.is_trigger(PAD_START) {
                 self.paused = !self.paused;
             }
+        }
+
+        match self.state {
+            GameState::Playing => {}
+            GameState::PlayerDead => {
+                // TODO: Wait all enemies back to formation.
+                self.count += 1;
+                if self.count >= 60 {
+                    self.next_player();
+                }
+            }
+            GameState::GameOver => {
+                if pad.is_trigger(PAD_START) {
+                    self.restart();
+                }
+            }
+        }
+    }
+
+    fn next_player(&mut self) {
+        if self.player.decrement_and_restart() {
+            self.enemy_manager.enable_attack(true);
+            self.state = GameState::Playing;
+        } else {
+            self.enemy_manager.enable_attack(false);
+            self.state = GameState::GameOver;
         }
     }
 
@@ -182,7 +207,9 @@ impl GameManager {
                     self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
                 }
                 EventType::DeadPlayer => {
-                    self.state = GameState::GameOver;
+                    self.enemy_manager.enable_attack(false);
+                    self.state = GameState::PlayerDead;
+                    self.count = 0;
                 }
                 EventType::CapturePlayer(capture_pos) => {
                     self.player.start_capture(capture_pos);
@@ -192,7 +219,7 @@ impl GameManager {
                     self.enemy_manager.set_capture_state(true);
                 }
                 EventType::CaptureSequenceEnded => {
-                    self.player.restart();
+                    self.next_player();
                 }
                 EventType::RecapturePlayer(pos) => {
                     self.player.start_recapture_effect(pos);
