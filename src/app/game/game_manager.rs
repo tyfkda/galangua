@@ -18,6 +18,8 @@ const MAX_EFFECT_COUNT: usize = 16;
 enum GameState {
     Playing,
     PlayerDead,
+    Capturing,
+    Recapturing,
     StageClear,
     GameOver,
 }
@@ -92,6 +94,8 @@ impl GameManager {
                     self.state = GameState::StageClear;
                     self.count = 0;
                 }
+            }
+            GameState::Capturing | GameState::Recapturing => {
             }
             GameState::PlayerDead => {
                 // TODO: Wait all enemies back to formation.
@@ -222,6 +226,7 @@ impl GameManager {
                 }
                 EventType::CapturePlayer(capture_pos) => {
                     self.player.start_capture(capture_pos);
+                    self.state = GameState::Capturing;
                 }
                 EventType::CapturePlayerCompleted => {
                     self.player.complete_capture();
@@ -229,10 +234,12 @@ impl GameManager {
                 }
                 EventType::CaptureSequenceEnded => {
                     self.next_player();
+                    self.state = GameState::Playing;
                 }
                 EventType::RecapturePlayer(pos) => {
                     self.player.start_recapture_effect(pos);
                     self.enemy_manager.enable_attack(false);
+                    self.state = GameState::Recapturing;
                 }
                 EventType::MovePlayerHomePos => {
                     self.player.start_move_home_pos();
@@ -240,6 +247,7 @@ impl GameManager {
                 EventType::RecaptureEnded => {
                     self.enemy_manager.enable_attack(true);
                     self.enemy_manager.set_capture_state(false);
+                    self.state = GameState::Playing;
                 }
             }
             i += 1;
