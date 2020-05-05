@@ -32,7 +32,7 @@ pub struct Player {
 impl Player {
     pub fn new() -> Self {
         Self {
-            pos: Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE,
+            pos: &Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE,
             state: State::Normal,
             dual: false,
             angle: 0,
@@ -44,7 +44,7 @@ impl Player {
 
     pub fn restart(&mut self) {
         self.state = State::Normal;
-        self.pos = Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE;
+        self.pos = &Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE;
     }
 
     pub fn update(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
@@ -100,7 +100,7 @@ impl Player {
 
     pub fn update_capture(&mut self) {
         const D: i32 = 1 * ONE;
-        let d = self.capture_pos - self.pos;
+        let d = &self.capture_pos - &self.pos;
         self.pos.x += clamp(d.x, -D, D);
         self.pos.y += clamp(d.y, -D, D);
         self.angle += ANGLE * ONE / 32;
@@ -117,19 +117,19 @@ impl Player {
         match self.state {
             State::Normal | State::MoveHomePos => {
                 let pos = self.pos();
-                renderer.draw_sprite("fighter", pos + Vec2I::new(-8, -8))?;
+                renderer.draw_sprite("fighter", &pos + &Vec2I::new(-8, -8))?;
                 if self.dual {
-                    renderer.draw_sprite("fighter", pos + Vec2I::new(-8 + 16, -8))?;
+                    renderer.draw_sprite("fighter", &pos + &Vec2I::new(-8 + 16, -8))?;
                 }
             }
             State::Capturing => {
                 let pos = self.pos();
                 let angle = calc_display_angle(self.angle);
-                renderer.draw_sprite_rot("fighter", pos + Vec2I::new(-8, -8), angle, Some(Vec2I::new(7, 10)))?;
+                renderer.draw_sprite_rot("fighter", &pos + &Vec2I::new(-8, -8), angle, Some(Vec2I::new(7, 10)))?;
             }
             State::Captured => {
                 let pos = self.pos();
-                renderer.draw_sprite("captured", pos + Vec2I::new(-8, -8))?;
+                renderer.draw_sprite("captured", &pos + &Vec2I::new(-8, -8))?;
             }
             State::CaptureCompleted | State::Dead => {}
         }
@@ -161,7 +161,7 @@ impl Player {
 
     pub fn dual_pos(&self) -> Option<Vec2I> {
         if self.dual {
-            Some(self.pos() + Vec2I::new(16, 0))
+            Some(&self.pos() + &Vec2I::new(16, 0))
         } else {
             None
         }
@@ -170,7 +170,7 @@ impl Player {
     pub fn dual_collbox(&self) -> Option<CollBox> {
         if self.dual {
             Some(CollBox {
-                top_left: self.pos() + Vec2I::new(8, -8),
+                top_left: &self.pos() + &Vec2I::new(8, -8),
                 size: Vec2I::new(16, 16),
             })
         } else {
@@ -224,7 +224,7 @@ impl Player {
 impl Collidable for Player {
     fn get_collbox(&self) -> CollBox {
         CollBox {
-            top_left: self.pos() - Vec2I::new(8, 8),
+            top_left: &self.pos() - &Vec2I::new(8, 8),
             size: Vec2I::new(16, 16),
         }
     }

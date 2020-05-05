@@ -26,9 +26,9 @@ impl MyShot {
         where R: RendererTrait
     {
         let pos = self.pos();
-        renderer.draw_sprite("myshot", pos + Vec2I::new(-2, -8))?;
+        renderer.draw_sprite("myshot", &pos + &Vec2I::new(-2, -8))?;
         if self.dual {
-            renderer.draw_sprite("myshot", pos + Vec2I::new(-2 + 16, -8))?;
+            renderer.draw_sprite("myshot", &pos + &Vec2I::new(-2 + 16, -8))?;
         }
 
         Ok(())
@@ -37,7 +37,7 @@ impl MyShot {
     pub fn get_collbox_for_dual(&self) -> Option<CollBox> {
         if self.dual {
             Some(CollBox {
-                top_left: self.pos() + Vec2I::new(-1 + 16, -4),
+                top_left: &self.pos() + &Vec2I::new(-1 + 16, -4),
                 size: Vec2I::new(1, 8),
             })
         } else {
@@ -53,7 +53,7 @@ impl MyShot {
 impl Collidable for MyShot {
     fn get_collbox(&self) -> CollBox {
         CollBox {
-            top_left: self.pos() - Vec2I::new(1, 4),
+            top_left: &self.pos() - &Vec2I::new(1, 4),
             size: Vec2I::new(1, 8),
         }
     }

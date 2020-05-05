@@ -69,7 +69,7 @@ impl EarnedPoint {
             EarnedPointType::Point150  => { sprite = "pts150"; },
         }
 
-        renderer.draw_sprite(sprite, self.pos + Vec2I::new(-8, -4))?;
+        renderer.draw_sprite(sprite, &self.pos + &Vec2I::new(-8, -4))?;
 
         Ok(())
     }
@@ -102,7 +102,7 @@ impl SmallBomb {
         let pat = min(self.frame_count / 4, 2) as usize;
         let table = ["small_bomb1", "small_bomb2", "small_bomb3"];
 
-        renderer.draw_sprite(table[pat], self.pos + Vec2I::new(-8, -8))?;
+        renderer.draw_sprite(table[pat], &self.pos + &Vec2I::new(-8, -8))?;
 
         Ok(())
     }

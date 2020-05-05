@@ -32,7 +32,7 @@ impl EneShot {
         where R: RendererTrait
     {
         let pos = self.pos();
-        renderer.draw_sprite("ene_shot", pos + Vec2I::new(-2, -4))?;
+        renderer.draw_sprite("ene_shot", &pos + &Vec2I::new(-2, -4))?;
 
         Ok(())
     }
@@ -42,7 +42,7 @@ impl Collidable for EneShot {
     fn get_collbox(&self) -> CollBox {
         let pos = self.pos();
         CollBox {
-            top_left: pos - Vec2I::new(1, 4),
+            top_left: &pos - &Vec2I::new(1, 4),
             size: Vec2I::new(1, 8),
         }
     }

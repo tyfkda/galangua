@@ -140,13 +140,13 @@ impl Enemy {
 
         let angle = calc_display_angle(self.angle);
         let pos = self.pos();
-        renderer.draw_sprite_rot(sprite, pos + Vec2I::new(-8, -8), angle, None)?;
+        renderer.draw_sprite_rot(sprite, &pos + &Vec2I::new(-8, -8), angle, None)?;
 
         if let Some(tractor_beam) = &self.tractor_beam {
             tractor_beam.draw(renderer)?;
         }
         if self.capturing_player {
-            renderer.draw_sprite("captured", pos + Vec2I::new(-8, -8 - 16))?;
+            renderer.draw_sprite("captured", &pos + &Vec2I::new(-8, -8 - 16))?;
         }
 
         Ok(())
@@ -295,7 +295,7 @@ impl Enemy {
                 self.count = 0;
             }
             1 => {
-                let dpos = self.target_pos - self.pos;
+                let dpos = &self.target_pos - &self.pos;
                 let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
                 let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
                 let mut d = diff_angle(target_angle, self.angle);
@@ -315,7 +315,7 @@ impl Enemy {
                     self.angle = ANGLE / 2 * ONE;
                     self.vangle = 0;
 
-                    self.tractor_beam = Some(TractorBeam::new(self.pos + Vec2I::new(0, 8 * ONE)));
+                    self.tractor_beam = Some(TractorBeam::new(&self.pos + &Vec2I::new(0, 8 * ONE)));
 
                     self.attack_step += 1;
                     self.count = 0;
@@ -329,7 +329,7 @@ impl Enemy {
                         self.attack_step += 1;
                         self.count = 0;
                     } else if tractor_beam.can_capture(accessor.get_raw_player_pos()) {
-                        event_queue.push(EventType::CapturePlayer(self.pos + Vec2I::new(0, 16 * ONE)));
+                        event_queue.push(EventType::CapturePlayer(&self.pos + &Vec2I::new(0, 16 * ONE)));
                         tractor_beam.start_capture();
                         self.attack_step = 100;
                         self.count = 0;
@@ -386,7 +386,7 @@ impl Enemy {
 impl Collidable for Enemy {
     fn get_collbox(&self) -> CollBox {
         CollBox {
-            top_left: self.pos() - Vec2I::new(8, 8),
+            top_left: &self.pos() - &Vec2I::new(8, 8),
             size: Vec2I::new(12, 12),
         }
     }

@@ -88,10 +88,10 @@ impl TractorBeam {
         let n = (self.size_count / ONE) as usize;
         let tex_name = "chr";
         let hue = self.color_count * 64;
-        let pos = pos + Vec2I::new(-24, 0);
+        let pos = &pos + &Vec2I::new(-24, 0);
         for i in 0..n {
             set_hsv_color(renderer, tex_name, hue + i as u32 * 160, 255, 255);
-            renderer.draw_sprite(SPRITE_NAMES[i], pos + Vec2I::new(0, Y_OFFSET_TABLE[i]))?;
+            renderer.draw_sprite(SPRITE_NAMES[i], &pos + &Vec2I::new(0, Y_OFFSET_TABLE[i]))?;
         }
         renderer.set_texture_color_mod(tex_name, 255, 255, 255);
 

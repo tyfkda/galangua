@@ -89,7 +89,7 @@ impl EnemyManager {
                 let (destroyed, point) = enemy.set_damage(power);
                 let capturing_player = if !enemy.capturing_player { None } else {
                     Some(CapturingPlayer {
-                        pos: pos - Vec2I::new(0, 16 * ONE),
+                        pos: &pos - &Vec2I::new(0, 16 * ONE),
                     })
                 };
                 if destroyed {
@@ -185,7 +185,7 @@ impl EnemyManager {
             let count = target_pos.iter().filter(|x| x.is_some()).count();
             let target_opt: &Option<Vec2I> = target_pos.iter().filter(|x| x.is_some()).nth(rng.gen_range(0, count)).unwrap();
             let target: Vec2I = target_opt.unwrap();
-            let d = target * ONE - pos;
+            let d = &(&target * ONE) - &pos;
             let distance = ((d.x as f64).powi(2) + (d.y as f64).powi(2)).sqrt();
             let f = (speed as f64) / distance;
             let vel = Vec2I::new(
