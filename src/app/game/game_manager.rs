@@ -230,6 +230,7 @@ impl GameManager {
                 }
                 EventType::RecaptureEnded => {
                     self.enemy_manager.enable_attack(true);
+                    self.enemy_manager.set_capture_state(false);
                 }
             }
             i += 1;
@@ -309,6 +310,10 @@ impl GameManager {
 impl AccessorForEnemy for GameManager {
     fn get_raw_player_pos(&self) -> &Vec2I {
         self.player.get_raw_pos()
+    }
+
+    fn is_player_dual(&self) -> bool {
+        self.player.dual_pos().is_some()
     }
 }
 

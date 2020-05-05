@@ -1,6 +1,7 @@
 use rand::Rng;
 
 use crate::app::enemy::enemy::{Enemy, EnemyState, EnemyType};
+use crate::app::enemy::Accessor;
 
 const MAX_ATTACKER_COUNT: usize = 1;
 
@@ -38,7 +39,7 @@ impl AttackManager {
         self.player_captured = value;
     }
 
-    pub fn update(&mut self, enemies: &mut [Option<Enemy>]) {
+    pub fn update<T: Accessor>(&mut self, enemies: &mut [Option<Enemy>], accessor: &T) {
         if !self.enable {
             return;
         }
@@ -69,7 +70,7 @@ for _i in 0..100 {
 
                 let mut enemies = enemies.iter_mut().flat_map(|x| x).filter(|x| x.state == EnemyState::Formation);
                 let enemy = &mut enemies.nth(index).unwrap();
-                enemy.set_attack(enemy.enemy_type == EnemyType::Owl && !self.player_captured);
+                enemy.set_attack(enemy.enemy_type == EnemyType::Owl && !self.player_captured && !accessor.is_player_dual());
 
                 self.wait = 60 * 2;
             }

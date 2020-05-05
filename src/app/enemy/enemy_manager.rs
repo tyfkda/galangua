@@ -63,7 +63,7 @@ impl EnemyManager {
     pub fn update<T: Accessor>(&mut self, accessor: &T, event_queue: &mut EventQueue) {
         self.update_appearance();
         self.update_formation();
-        self.update_attackers();
+        self.update_attackers(accessor);
         self.update_enemies(accessor, event_queue);
         self.update_shots();
     }
@@ -146,8 +146,8 @@ impl EnemyManager {
         }
     }
 
-    fn update_attackers(&mut self) {
-        self.attack_manager.update(&mut self.enemies);
+    fn update_attackers<T: Accessor>(&mut self, accessor: &T) {
+        self.attack_manager.update(&mut self.enemies, accessor);
     }
 
     fn copy_formation_positions(&mut self) {
