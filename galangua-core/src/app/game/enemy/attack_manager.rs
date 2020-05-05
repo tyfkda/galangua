@@ -60,7 +60,7 @@ impl AttackManager {
         }
 
         if let Some(slot_index) = self.attackers.iter().position(|x| x.is_none()) {
-            if let Some((formation_index, capture_attack)) = self.pick_attacker(accessor) {
+            if let Some((formation_index, capture_attack)) = self.pick_attacker(accessor, event_queue) {
                 self.attackers[slot_index] = Some(formation_index);
                 if capture_attack {
                     event_queue.push(EventType::StartCaptureAttack(formation_index));
@@ -84,7 +84,7 @@ impl AttackManager {
         }
     }
 
-    fn pick_attacker<A: Accessor>(&mut self, accessor: &mut A) -> Option<(FormationIndex, bool)> {
+    fn pick_attacker<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) -> Option<(FormationIndex, bool)> {
         let candidates = self.enum_sides(accessor);
         let fi = match self.cycle % 3 {
             2 => {
@@ -105,7 +105,7 @@ impl AttackManager {
                 (self.cycle / 3) & 1 != 0 &&
                 accessor.capture_state() == CaptureState::NoCapture &&
                 !accessor.is_player_dual();
-            enemy.set_attack(capture_attack, accessor);
+            enemy.set_attack(capture_attack, accessor, event_queue);
 
             Some((fi, capture_attack))
         } else {

@@ -58,4 +58,5 @@ pub enum EventType {
     EscapeCapturing,
     EscapeEnded,
     CapturedFighterDestroyed,
+    PlaySe(u32, &'static str),
 }

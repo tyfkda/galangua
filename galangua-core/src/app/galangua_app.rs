@@ -124,7 +124,7 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
                     score_holder: &mut self.score_holder,
                 };
                 let game_manager = self.game_manager.as_mut().unwrap();
-                game_manager.update(&mut params);
+                game_manager.update(&mut params, &mut self.system);
                 if game_manager.is_finished() {
                     self.back_to_title();
                 }
@@ -142,7 +142,7 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
                     pad: &self.pad,
                     score_holder: &mut self.score_holder,
                 };
-                game_manager.update(&mut params);
+                game_manager.update(&mut params, &mut self.system);
                 if game_manager.is_finished() {
                     self.back_to_title();
                 }

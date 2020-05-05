@@ -1,6 +1,21 @@
-import { WasmAppFramework, WasmRenderer } from 'galangua-wasm'
+import {WasmAppFramework, WasmRenderer} from 'galangua-wasm'
+import {audioManager} from './audio_manager'
+
+const CHANNEL_COUNT = 3
+
+const AUDIO_ASSETS = [
+  'assets/audio/se_get_1',
+  'assets/audio/se_pyuun',
+  'assets/audio/se_zugyan',
+  'assets/audio/jingle_1up',
+]
+const ENALBE_AUDIO = 'assets/audio/se_get_1'
 
 const CANVAS_ID = 'mycanvas'
+
+window.play_se = function play_se(channel, filename) {
+  audioManager.playSe(channel, filename)
+}
 
 function fitCanvas() {
   const canvas = document.getElementById(CANVAS_ID)
@@ -20,7 +35,7 @@ function disableBounce() {
 function setupTouchButtons() {
   const setTouchHandler = function(id, callback) {
     const elem = document.getElementById(id)
-    elem.addEventListener('touchstart', (e) => { /*e.preventDefault();*/ e.stopPropagation(); callback(true); return false; })
+    elem.addEventListener('touchstart', (e) => { /*e.preventDefault();*/ e.stopPropagation(); callback(true); return false; }, {passive: true})
     elem.addEventListener('touchend', (_) => callback(false))
     elem.addEventListener('touchleave', (_) => callback(false))
   }
@@ -47,9 +62,22 @@ function setupResizeListener() {
   })
 }
 
+function createCoverScreen(title) {
+  const cover = document.createElement('div')
+  cover.className = 'centering'
+  cover.style.position = 'absolute'
+  cover.style.left = cover.style.top = cover.style.right = cover.style.bottom = '0'
+  cover.style.backgroundColor = 'rgba(0,0,0,0.5)'
+  cover.style.color = 'white'
+  cover.style.textAlign = 'center'
+  cover.innerText = title
+
+  document.body.appendChild(cover)
+  return cover
+}
+
 fitCanvas()
 disableBounce()
-setupTouchButtons()
 setupResizeListener()
 
 const renderer = WasmRenderer.new(CANVAS_ID)
@@ -72,14 +100,31 @@ document.addEventListener('keyup', (event) => {
   framework.on_key(event.code, false)
 })
 
-const loop = () => {
+function loop() {
   framework.update()
   framework.draw()
   requestAnimationFrame(loop)
 }
-requestAnimationFrame(loop)
 
+const cover = createCoverScreen('Loading...')
+audioManager.createContext(CHANNEL_COUNT)
+audioManager.loadAllAudios(AUDIO_ASSETS)
+  .then(() => {
+    cover.innerText = 'Galangua\n\nTouch to start'      
 
+    const onClick = () => {
+      audioManager.playSe(0, ENALBE_AUDIO)
+      cover.removeEventListener('click', onClick)
+      cover.removeEventListener('touchstart', onClick)
+      document.body.removeChild(cover)
+
+      setupTouchButtons()
+
+      requestAnimationFrame(loop)
+    }
+    cover.addEventListener('click', onClick)
+    cover.addEventListener('touchstart', onClick, {passive: true})
+  })
 
 document.documentElement.addEventListener('touchend', (event) => {
   event.preventDefault();

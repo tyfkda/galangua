@@ -3,18 +3,22 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 
+use super::sdl::SdlAudio;
+
 use galangua_core::framework::SystemTrait;
 
 const SAVE_FILE_NAME: &str = ".savedata.json";
 
 pub struct StdSystem {
     map: HashMap<String, Value>,
+    audio: SdlAudio,
 }
 
 impl StdSystem {
-    pub fn new() -> Self {
+    pub fn new(audio: SdlAudio) -> Self {
         StdSystem {
             map: load_map(SAVE_FILE_NAME),
+            audio,
         }
     }
 }
@@ -30,6 +34,10 @@ impl SystemTrait for StdSystem {
     fn set_u32(&mut self, key: &str, value: u32) {
         self.map.insert(String::from(key), Value::Number(serde_json::Number::from(value)));
         save_map(SAVE_FILE_NAME, &self.map);
+    }
+
+    fn play_se(&mut self, channel: u32, filename: &str) {
+        self.audio.play_se(channel, filename);
     }
 }
 

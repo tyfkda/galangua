@@ -2,6 +2,11 @@ use wasm_bindgen::prelude::*;
 
 use galangua_core::framework::SystemTrait;
 
+#[wasm_bindgen]
+extern "C" {
+    fn play_se(channel: u32, filename: &str);
+}
+
 pub struct WasmSystem<F, G>
 where
     F: Fn(&str) -> Option<JsValue>,
@@ -40,5 +45,9 @@ where
 
     fn set_u32(&mut self, key: &str, value: u32) {
         (self.set_item)(key, JsValue::from(value));
+    }
+
+    fn play_se(&mut self, channel: u32, filename: &str) {
+        play_se(channel, filename);
     }
 }
