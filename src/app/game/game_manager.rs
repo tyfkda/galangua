@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::app::effect::StarManager;
 use crate::app::effect::{EarnedPoint, EarnedPointType, Effect, SmallBomb};
 use crate::app::enemy::Accessor as AccessorForEnemy;
@@ -9,7 +12,7 @@ use crate::app::util::{CollBox, Collidable};
 use crate::app::util::unsafe_util::peep;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::pad::{Pad, PAD_START};
+use crate::util::pad::Pad;
 
 const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;
@@ -22,12 +25,13 @@ enum GameState {
     Recapturing,
     StageClear,
     GameOver,
+    Finished,
 }
 
 pub struct GameManager {
     state: GameState,
     count: u32,
-    star_manager: StarManager,
+    star_manager: Rc<RefCell<StarManager>>,
     player: Player,
     myshots: [Option<MyShot>; MYSHOT_COUNT],
     enemy_manager: EnemyManager,
@@ -36,17 +40,14 @@ pub struct GameManager {
     stage: u32,
     score: u32,
     high_score: u32,
-    frame_count: u32,
-
-    paused: bool,
 }
 
 impl GameManager {
-    pub fn new() -> Self {
+    pub fn new(star_manager: Rc<RefCell<StarManager>>) -> Self {
         Self {
             state: GameState::Playing,
             count: 0,
-            star_manager: StarManager::new(),
+            star_manager,
             player: Player::new(),
             myshots: Default::default(),
             enemy_manager: EnemyManager::new(),
@@ -56,13 +57,10 @@ impl GameManager {
             stage: 0,
             score: 0,
             high_score: 1000,  //20_000,
-            frame_count: 0,
-
-            paused: false,
         }
     }
 
-    fn restart(&mut self) {
+    pub fn restart(&mut self) {
         self.enemy_manager.restart();
         self.event_queue.clear();
         self.player = Player::new();
@@ -76,17 +74,22 @@ impl GameManager {
 
         self.state = GameState::Playing;
         self.score = 0;
-        self.frame_count = 0;
+    }
+
+    pub fn is_finished(&mut self) -> bool {
+        self.state == GameState::Finished
+    }
+
+    pub fn score(&self) -> u32 {
+        self.score
+    }
+
+    pub fn high_score(&self) -> u32 {
+        self.high_score
     }
 
     pub fn update(&mut self, pad: &Pad) {
         self.update_common(pad);
-
-        if self.state != GameState::GameOver {
-            if pad.is_trigger(PAD_START) {
-                self.paused = !self.paused;
-            }
-        }
 
         match self.state {
             GameState::Playing => {
@@ -113,10 +116,12 @@ impl GameManager {
                 }
             }
             GameState::GameOver => {
-                if pad.is_trigger(PAD_START) {
-                    self.restart();
+                self.count += 1;
+                if self.count >= 2 * 60 {
+                    self.state = GameState::Finished;
                 }
             }
+            GameState::Finished => {}
         }
     }
 
@@ -127,17 +132,11 @@ impl GameManager {
         } else {
             self.enemy_manager.enable_attack(false);
             self.state = GameState::GameOver;
+            self.count = 0;
         }
     }
 
     fn update_common(&mut self, pad: &Pad) {
-        if self.paused {
-            return;
-        }
-
-        self.frame_count += 1;
-        self.star_manager.update();
-
         self.player.update(&pad, &mut self.event_queue);
         for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
             let myshot = myshot_opt.as_mut().unwrap();
@@ -169,7 +168,6 @@ impl GameManager {
     pub fn draw<R>(&mut self, renderer: &mut R) -> Result<(), String>
         where R: RendererTrait
     {
-        self.star_manager.draw(renderer)?;
         self.player.draw(renderer)?;
         self.enemy_manager.draw(renderer)?;
         for myshot in self.myshots.iter().flat_map(|x| x) {
@@ -180,16 +178,8 @@ impl GameManager {
             effect.draw(renderer)?;
         }
 
-        renderer.set_texture_color_mod("font", 255, 0, 0);
-        if (self.frame_count & 31) < 16 || self.state != GameState::Playing {
-            renderer.draw_str("font", 16 * 2, 16 * 0, "1UP")?;
-        }
-        renderer.draw_str("font", 16 * 9, 16 * 0, "HIGH SCORE")?;
-        renderer.set_texture_color_mod("font", 255, 255, 255);
-        renderer.draw_str("font", 16 * 0, 16 * 1, &format!("{:6}0", self.score / 10))?;
-        renderer.draw_str("font", 16 * 10, 16 * 1, &format!("{:6}0", self.high_score / 10))?;
-
         if self.state == GameState::GameOver {
+            renderer.set_texture_color_mod("font", 255, 255, 255);
             renderer.draw_str("font", (28 - 10) / 2 * 16, 16 * 10, "GAME OVER")?;
         }
 
@@ -225,12 +215,12 @@ impl GameManager {
                     self.count = 0;
                 }
                 EventType::CapturePlayer(capture_pos) => {
-                    self.star_manager.set_capturing(true);
+                    self.star_manager.borrow_mut().set_capturing(true);
                     self.player.start_capture(capture_pos);
                     self.state = GameState::Capturing;
                 }
                 EventType::CapturePlayerCompleted => {
-                    self.star_manager.set_capturing(false);
+                    self.star_manager.borrow_mut().set_capturing(false);
                     self.player.complete_capture();
                     self.enemy_manager.set_capture_state(true);
                 }
