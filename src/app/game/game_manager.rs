@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::app::effect::StageIndicator;
 use crate::app::effect::StarManager;
 use crate::app::effect::{EarnedPoint, EarnedPointType, Effect, SmallBomb};
 use crate::app::enemy::Accessor as AccessorForEnemy;
@@ -24,6 +25,7 @@ enum GameState {
     Capturing,
     Recapturing,
     StageClear,
+    NextStage,
     GameOver,
     Finished,
 }
@@ -32,6 +34,7 @@ pub struct GameManager {
     state: GameState,
     count: u32,
     star_manager: Rc<RefCell<StarManager>>,
+    stage_indicator: StageIndicator,
     player: Player,
     myshots: [Option<MyShot>; MYSHOT_COUNT],
     enemy_manager: EnemyManager,
@@ -48,6 +51,7 @@ impl GameManager {
             state: GameState::Playing,
             count: 0,
             star_manager,
+            stage_indicator: StageIndicator::new(),
             player: Player::new(),
             myshots: Default::default(),
             enemy_manager: EnemyManager::new(),
@@ -71,6 +75,9 @@ impl GameManager {
         for slot in self.effects.iter_mut() {
             *slot = None;
         }
+
+        self.stage = 0;
+        self.stage_indicator.set_stage(1);
 
         self.state = GameState::Playing;
         self.score = 0;
@@ -112,6 +119,16 @@ impl GameManager {
                 self.count += 1;
                 if self.count >= 60 {
                     self.stage += 1;
+                    self.stage_indicator.set_stage(self.stage + 1);
+
+                    self.state = GameState::NextStage;
+                    self.count = 0;
+                }
+            }
+            GameState::NextStage => {
+                self.stage_indicator.update();
+                self.count += 1;
+                if self.count >= 90 {
                     self.enemy_manager.start_next_stage(self.stage);
                     self.state = GameState::Playing;
                 }
@@ -178,6 +195,12 @@ impl GameManager {
 
         for effect in self.effects.iter().flat_map(|x| x) {
             effect.draw(renderer)?;
+        }
+        self.stage_indicator.draw(renderer)?;
+
+        if self.state == GameState::NextStage {
+            renderer.set_texture_color_mod("font", 0, 255, 255);
+            renderer.draw_str("font", 16 * 10, 16 * 17, &format!("STAGE {}", self.stage + 1))?;
         }
 
         if self.state == GameState::GameOver {
