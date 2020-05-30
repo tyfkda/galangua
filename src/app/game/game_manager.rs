@@ -74,6 +74,7 @@ impl GameManager {
 
         self.state = GameState::Playing;
         self.score = 0;
+        self.star_manager.borrow_mut().set_stop(false);
     }
 
     pub fn is_finished(&mut self) -> bool {
@@ -128,6 +129,7 @@ impl GameManager {
     fn next_player(&mut self) {
         if self.player.decrement_and_restart() {
             self.enemy_manager.enable_attack(true);
+            self.star_manager.borrow_mut().set_stop(false);
             self.state = GameState::Playing;
         } else {
             self.enemy_manager.enable_attack(false);
@@ -211,6 +213,7 @@ impl GameManager {
                 }
                 EventType::DeadPlayer => {
                     self.enemy_manager.enable_attack(false);
+                    self.star_manager.borrow_mut().set_stop(true);
                     self.state = GameState::PlayerDead;
                     self.count = 0;
                 }

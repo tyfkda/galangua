@@ -92,6 +92,7 @@ impl<R: RendererTrait> AppTrait<R> for GaragaApp {
                 self.frame_count += 1;
                 self.game_manager.update(&self.pad);
                 if self.game_manager.is_finished() {
+                    self.star_manager.borrow_mut().set_stop(false);
                     self.state = AppState::Title;
                     self.count = 0;
                 }
