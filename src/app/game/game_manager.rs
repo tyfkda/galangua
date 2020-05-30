@@ -225,8 +225,8 @@ impl GameManager {
                     self.enemy_manager.set_capture_state(true);
                 }
                 EventType::CaptureSequenceEnded => {
-                    self.next_player();
                     self.state = GameState::Playing;
+                    self.next_player();
                 }
                 EventType::RecapturePlayer(pos) => {
                     self.player.start_recapture_effect(pos);
