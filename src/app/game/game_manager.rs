@@ -225,10 +225,12 @@ impl GameManager {
                     self.count = 0;
                 }
                 EventType::CapturePlayer(capture_pos) => {
+                    self.star_manager.set_capturing(true);
                     self.player.start_capture(capture_pos);
                     self.state = GameState::Capturing;
                 }
                 EventType::CapturePlayerCompleted => {
+                    self.star_manager.set_capturing(false);
                     self.player.complete_capture();
                     self.enemy_manager.set_capture_state(true);
                 }

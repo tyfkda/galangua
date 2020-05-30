@@ -10,6 +10,7 @@ const STAR_COUNT: usize = 128;
 pub struct StarManager {
     stars: [Star; STAR_COUNT],
     frame_count: i32,
+    capturing: bool,
 }
 
 impl StarManager {
@@ -26,6 +27,7 @@ impl StarManager {
         Self {
             stars,
             frame_count: 0,
+            capturing: false,
         }
     }
 
@@ -33,10 +35,16 @@ impl StarManager {
         self.frame_count = (self.frame_count + 1) & 63;
 
         let mut rng = rand::thread_rng();
+        let vy = if self.capturing { -2 } else { 1 };
         for star in self.stars.iter_mut() {
-            let mut y = star.pos.y + 1;
-            if y >= consts::HEIGHT {
+            let mut y = star.pos.y + vy;
+            if !self.capturing && y >= consts::HEIGHT {
                 y = rng.gen_range(-16, -1);
+                star.pos.x = rng.gen_range(0, consts::WIDTH);
+                star.c = rng.gen_range(1, 8);
+                star.t = rng.gen_range(0, 64);
+            } else if self.capturing && y < 0 {
+                y = consts::HEIGHT + rng.gen_range(1, 16);
                 star.pos.x = rng.gen_range(0, consts::WIDTH);
                 star.c = rng.gen_range(1, 8);
                 star.t = rng.gen_range(0, 64);
@@ -53,12 +61,16 @@ impl StarManager {
                 continue;
             }
 
-            let col = COLOR_TABLE[star.c as usize];
+            let col = &COLOR_TABLE[star.c as usize];
             renderer.set_draw_color(col[0], col[1], col[2]);
             renderer.fill_rect(Some([star.pos, Vec2I::new(1, 1)]))?;
         }
 
         Ok(())
+    }
+
+    pub fn set_capturing(&mut self, value: bool) {
+        self.capturing = value;
     }
 }
 
