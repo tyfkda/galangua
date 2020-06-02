@@ -39,11 +39,11 @@ impl EneShot {
 }
 
 impl Collidable for EneShot {
-    fn get_collbox(&self) -> CollBox {
+    fn get_collbox(&self) -> Option<CollBox> {
         let pos = self.pos();
-        CollBox {
+        Some(CollBox {
             top_left: &pos - &Vec2I::new(1, 4),
             size: Vec2I::new(1, 8),
-        }
+        })
     }
 }

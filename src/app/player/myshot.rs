@@ -51,10 +51,10 @@ impl MyShot {
 }
 
 impl Collidable for MyShot {
-    fn get_collbox(&self) -> CollBox {
-        CollBox {
+    fn get_collbox(&self) -> Option<CollBox> {
+        Some(CollBox {
             top_left: &self.pos() - &Vec2I::new(1, 4),
             size: Vec2I::new(1, 8),
-        }
+        })
     }
 }

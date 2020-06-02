@@ -296,7 +296,7 @@ impl GameManager {
         for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
             let myshot = myshot_opt.as_ref().unwrap();
             let colls: [Option<CollBox>; 2] = [
-                Some(myshot.get_collbox()),
+                myshot.get_collbox(),
                 myshot.get_collbox_for_dual(),
             ];
             for collbox in colls.iter().flat_map(|x| x) {
@@ -315,7 +315,7 @@ impl GameManager {
 
         let collbox_opts = [
             self.player.dual_collbox(),
-            Some(self.player.get_collbox()),
+            self.player.get_collbox(),
         ];
 
         for collbox in collbox_opts.iter().flat_map(|x| x) {

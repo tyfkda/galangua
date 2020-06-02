@@ -84,18 +84,20 @@ impl EnemyManager {
     pub fn check_collision(&mut self, target: &CollBox, power: u32) -> EnemyCollisionResult {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
-            if enemy.get_collbox().check_collision(target) {
-                let pos = *enemy.raw_pos();
-                let (destroyed, point) = enemy.set_damage(power);
-                let capturing_player = if !enemy.capturing_player { None } else {
-                    Some(CapturingPlayer {
-                        pos: &pos - &Vec2I::new(0, 16 * ONE),
-                    })
-                };
-                if destroyed {
-                    *enemy_opt = None;
+            if let Some(colbox) = enemy.get_collbox() {
+                if colbox.check_collision(target) {
+                    let pos = *enemy.raw_pos();
+                    let (destroyed, point) = enemy.set_damage(power);
+                    let capturing_player = if !enemy.capturing_player { None } else {
+                        Some(CapturingPlayer {
+                            pos: &pos - &Vec2I::new(0, 16 * ONE),
+                        })
+                    };
+                    if destroyed {
+                        *enemy_opt = None;
+                    }
+                    return EnemyCollisionResult::Hit { pos, destroyed, point, capturing_player };
                 }
-                return EnemyCollisionResult::Hit { pos, destroyed, point, capturing_player };
             }
         }
 
@@ -105,10 +107,12 @@ impl EnemyManager {
     pub fn check_shot_collision(&mut self, target: &CollBox) -> EnemyCollisionResult {
         for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
             let shot = shot_opt.as_mut().unwrap();
-            if shot.get_collbox().check_collision(target) {
-                let pos = *shot.raw_pos();
-                *shot_opt = None;
-                return EnemyCollisionResult::Hit { pos, destroyed: false, point: 0, capturing_player: None };
+            if let Some(colbox) = shot.get_collbox() {
+                if colbox.check_collision(target) {
+                    let pos = *shot.raw_pos();
+                    *shot_opt = None;
+                    return EnemyCollisionResult::Hit { pos, destroyed: false, point: 0, capturing_player: None };
+                }
             }
         }
 

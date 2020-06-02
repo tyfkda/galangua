@@ -35,11 +35,5 @@ fn test_collbox_check_collision() {
 
 // Collidable
 pub trait Collidable {
-    fn get_collbox(&self) -> CollBox;
-
-    fn collide_with<T: Collidable>(&self, target: &Box<&T>) -> bool {
-        let collbox1 = self.get_collbox();
-        let collbox2 = target.get_collbox();
-        collbox1.check_collision(&collbox2)
-    }
+    fn get_collbox(&self) -> Option<CollBox>;
 }

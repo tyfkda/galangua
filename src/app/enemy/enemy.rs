@@ -384,11 +384,11 @@ impl Enemy {
 }
 
 impl Collidable for Enemy {
-    fn get_collbox(&self) -> CollBox {
-        CollBox {
+    fn get_collbox(&self) -> Option<CollBox> {
+        Some(CollBox {
             top_left: &self.pos() - &Vec2I::new(8, 8),
             size: Vec2I::new(12, 12),
-        }
+        })
     }
 }
 
