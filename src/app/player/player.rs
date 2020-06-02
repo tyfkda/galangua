@@ -74,7 +74,13 @@ impl Player {
         }
 
         if let Some(recaptured_fighter) = &mut self.recaptured_fighter {
-            recaptured_fighter.update(event_queue);
+            recaptured_fighter.update(self.state != State::Dead, event_queue);
+            if self.state == State::Dead && recaptured_fighter.done() {
+                self.pos.x = WIDTH / 2 * ONE;
+                self.state = State::Normal;
+                self.recaptured_fighter = None;
+                event_queue.push(EventType::RecaptureEnded);
+            }
         }
     }
 
@@ -217,7 +223,9 @@ impl Player {
     }
 
     pub fn start_move_home_pos(&mut self) {
-        self.state = State::MoveHomePos;
+        if self.state != State::Dead {
+            self.state = State::MoveHomePos;
+        }
     }
 }
 

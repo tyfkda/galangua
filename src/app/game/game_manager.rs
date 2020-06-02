@@ -235,10 +235,12 @@ impl GameManager {
                     self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
                 }
                 EventType::DeadPlayer => {
-                    self.enemy_manager.enable_attack(false);
                     self.star_manager.borrow_mut().set_stop(true);
-                    self.state = GameState::PlayerDead;
-                    self.count = 0;
+                    if self.state != GameState::Recapturing {
+                        self.enemy_manager.enable_attack(false);
+                        self.state = GameState::PlayerDead;
+                        self.count = 0;
+                    }
                 }
                 EventType::CapturePlayer(capture_pos) => {
                     self.star_manager.borrow_mut().set_capturing(true);
@@ -265,6 +267,7 @@ impl GameManager {
                 EventType::RecaptureEnded => {
                     self.enemy_manager.enable_attack(true);
                     self.enemy_manager.set_capture_state(false);
+                    self.star_manager.borrow_mut().set_stop(false);
                     self.state = GameState::Playing;
                 }
             }

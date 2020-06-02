@@ -88,9 +88,13 @@ impl StarManager {
         self.state = if value { State::Capturing } else { State::Normal };
     }
 
-    pub fn set_stop(&mut self, value: bool) {
-        self.state = if value { State::Stop } else { State::Normal };
-        self.scroll_vel = 0;
+    pub fn set_stop(&mut self, stop: bool) {
+        if stop {
+            self.state = State::Stop;
+            self.scroll_vel = 0;
+        } else {
+            self.state = State::Normal;
+        };
     }
 }
 

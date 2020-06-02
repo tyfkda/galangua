@@ -27,7 +27,7 @@ impl RecapturedFighter {
         }
     }
 
-    pub fn update(&mut self, event_queue: &mut EventQueue) {
+    pub fn update(&mut self, player_living: bool, event_queue: &mut EventQueue) {
         match self.state {
             State::Rotate => {
                 self.angle += ANGLE * ONE / 32;
@@ -37,7 +37,7 @@ impl RecapturedFighter {
                 }
             }
             State::SlideHorz => {
-                let x = (WIDTH / 2 + 8) * ONE;
+                let x = if player_living { (WIDTH / 2 + 8) * ONE } else { WIDTH / 2 * ONE };
                 let speed = 1 * ONE;
                 self.pos.x += clamp(x - self.pos.x, -speed, speed);
                 if self.pos.x == x {
