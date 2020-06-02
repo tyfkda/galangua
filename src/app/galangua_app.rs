@@ -15,7 +15,7 @@ enum AppState {
     Game,
 }
 
-pub struct GaragaApp {
+pub struct GalanguaApp {
     state: AppState,
     count: u32,
     pad: Pad,
@@ -27,7 +27,7 @@ pub struct GaragaApp {
     paused: bool,
 }
 
-impl GaragaApp {
+impl GalanguaApp {
     pub fn new() -> Self {
         let star_manager = Rc::new(RefCell::new(StarManager::new()));
         Self {
@@ -44,7 +44,7 @@ impl GaragaApp {
     }
 }
 
-impl<R: RendererTrait> AppTrait<R> for GaragaApp {
+impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
     fn on_key_down(&mut self, keycode: Keycode) {
         self.pad.on_key_down(keycode);
     }
@@ -110,7 +110,7 @@ impl<R: RendererTrait> AppTrait<R> for GaragaApp {
         match self.state {
             AppState::Title => {
                 renderer.set_texture_color_mod("font", 255, 255, 255);
-                renderer.draw_str("font", 11 * 16, 8 * 16, "GARAGA")?;
+                renderer.draw_str("font", 10 * 16, 8 * 16, "GALANGUA")?;
 
                 if self.count & 32 == 0 {
                     renderer.draw_str("font", 2 * 16, 25 * 16, "PRESS SPACE KEY TO START")?;
