@@ -216,8 +216,8 @@ impl GameManager {
         while i < self.event_queue.len() {
             let event = &self.event_queue[i];
             match *event {
-                EventType::MyShot(pos, dual) => {
-                    self.spawn_myshot(pos, dual);
+                EventType::MyShot(pos, dual, angle) => {
+                    self.spawn_myshot(pos, dual, angle);
                 }
                 EventType::EneShot(pos, speed) => {
                     self.spawn_ene_shot(pos, speed);
@@ -276,9 +276,9 @@ impl GameManager {
         self.event_queue.clear();
     }
 
-    fn spawn_myshot(&mut self, pos: Vec2I, dual: bool) {
+    fn spawn_myshot(&mut self, pos: Vec2I, dual: bool, angle: i32) {
         if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
-            *myshot_opt = Some(MyShot::new(pos, dual));
+            *myshot_opt = Some(MyShot::new(pos, dual, angle));
         }
     }
 

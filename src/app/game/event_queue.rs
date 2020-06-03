@@ -35,7 +35,7 @@ impl Index<usize> for EventQueue {
 }
 
 pub enum EventType {
-    MyShot(Vec2I, bool),
+    MyShot(Vec2I, bool, i32),
     AddScore(u32),
     EneShot(Vec2I, i32),
     EarnPoint(EarnedPointType, Vec2I),

@@ -55,7 +55,7 @@ impl Player {
             State::Dead => {
             }
             State::Capturing => {
-                self.update_capture();
+                self.update_capture(pad, event_queue);
             }
             State::Captured | State::CaptureCompleted => {}
             State::MoveHomePos => {
@@ -99,21 +99,28 @@ impl Player {
                 self.pos.x = right;
             }
         }
-        if pad.is_trigger(PAD_A) {
-            event_queue.push(EventType::MyShot(Vec2I::new(self.pos.x, self.pos.y - 8 * ONE), self.dual));
-        }
+        self.fire_bullet(pad, event_queue);
     }
 
-    pub fn update_capture(&mut self) {
+    pub fn update_capture(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
         const D: i32 = 1 * ONE;
         let d = &self.capture_pos - &self.pos;
         self.pos.x += clamp(d.x, -D, D);
         self.pos.y += clamp(d.y, -D, D);
         self.angle += ANGLE * ONE / 32;
 
+        self.fire_bullet(pad, event_queue);
+
         if d.x == 0 && d.y == 0 {
             self.state = State::Captured;
             self.angle = 0;
+        }
+    }
+
+    fn fire_bullet(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
+        if pad.is_trigger(PAD_A) {
+            let pos = &self.pos + &Vec2I::new(0, 2 * ONE);
+            event_queue.push(EventType::MyShot(pos, self.dual, self.angle));
         }
     }
 
