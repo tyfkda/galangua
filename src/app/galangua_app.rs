@@ -110,10 +110,10 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
         match self.state {
             AppState::Title => {
                 renderer.set_texture_color_mod("font", 255, 255, 255);
-                renderer.draw_str("font", 10 * 16, 8 * 16, "GALANGUA")?;
+                renderer.draw_str("font", 10 * 8, 8 * 8, "GALANGUA")?;
 
                 if self.count & 32 == 0 {
-                    renderer.draw_str("font", 2 * 16, 25 * 16, "PRESS SPACE KEY TO START")?;
+                    renderer.draw_str("font", 2 * 8, 25 * 8, "PRESS SPACE KEY TO START")?;
                 }
             }
             AppState::Game => {
@@ -123,15 +123,15 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
 
         renderer.set_texture_color_mod("font", 255, 0, 0);
         if (self.frame_count & 31) < 16 || self.state != AppState::Game {
-            renderer.draw_str("font", 16 * 2, 16 * 0, "1UP")?;
+            renderer.draw_str("font", 8 * 2, 8 * 0, "1UP")?;
         }
-        renderer.draw_str("font", 16 * 9, 16 * 0, "HIGH SCORE")?;
+        renderer.draw_str("font", 8 * 9, 8 * 0, "HIGH SCORE")?;
         renderer.set_texture_color_mod("font", 255, 255, 255);
-        renderer.draw_str("font", 16 * 0, 16 * 1, &format!("{:6}0", self.game_manager.score() / 10))?;
-        renderer.draw_str("font", 16 * 10, 16 * 1, &format!("{:6}0", self.game_manager.high_score() / 10))?;
+        renderer.draw_str("font", 8 * 0, 8 * 1, &format!("{:6}0", self.game_manager.score() / 10))?;
+        renderer.draw_str("font", 8 * 10, 8 * 1, &format!("{:6}0", self.game_manager.high_score() / 10))?;
 
         renderer.set_texture_color_mod("font", 128, 128, 128);
-        renderer.draw_str("font", 16 * 23, 0, &format!("FPS{:2}", self.fps_calc.fps()))?;
+        renderer.draw_str("font", 8 * 23, 8 * 0, &format!("FPS{:2}", self.fps_calc.fps()))?;
 
         renderer.present();
 

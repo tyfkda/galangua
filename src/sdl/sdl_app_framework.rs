@@ -28,12 +28,12 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
         })
     }
 
-    pub fn run(&mut self, title: &str, width: u32, height: u32) -> Result<(), String> {
+    pub fn run(&mut self, title: &str, width: u32, height: u32, scale: u32) -> Result<(), String> {
         let video_subsystem = self.sdl_context.video()?;
         let _image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?;
 
         let window = video_subsystem
-            .window(title, width, height)
+            .window(title, width * scale, height * scale)
             .position_centered()
             .opengl()
             .build()
@@ -43,7 +43,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
             .present_vsync()
             .build()
             .map_err(|e| e.to_string())?;
-        let mut renderer = SdlRenderer::new(canvas);
+        let mut renderer = SdlRenderer::new(canvas, scale);
 
         self.app.init(&mut renderer)?;
 

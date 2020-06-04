@@ -200,12 +200,12 @@ impl GameManager {
 
         if self.state == GameState::NextStage {
             renderer.set_texture_color_mod("font", 0, 255, 255);
-            renderer.draw_str("font", 16 * 10, 16 * 17, &format!("STAGE {}", self.stage + 1))?;
+            renderer.draw_str("font", 8 * 10, 8 * 17, &format!("STAGE {}", self.stage + 1))?;
         }
 
         if self.state == GameState::GameOver {
             renderer.set_texture_color_mod("font", 255, 255, 255);
-            renderer.draw_str("font", (28 - 10) / 2 * 16, 16 * 10, "GAME OVER")?;
+            renderer.draw_str("font", (28 - 10) / 2 * 8, 8 * 10, "GAME OVER")?;
         }
 
         Ok(())
