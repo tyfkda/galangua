@@ -131,10 +131,10 @@ impl Enemy {
         where R: RendererTrait
     {
         let sprite = match self.enemy_type {
-            EnemyType::Bee => "bee",
-            EnemyType::Butterfly => "butterfly",
+            EnemyType::Bee => "gopher",
+            EnemyType::Butterfly => "dman",
             EnemyType::Owl => {
-                if self.life <= 1 { "owl2" } else { "owl1" }
+                if self.life <= 1 { "cpp2" } else { "cpp1" }
             }
         };
 
@@ -146,7 +146,7 @@ impl Enemy {
             tractor_beam.draw(renderer)?;
         }
         if self.capturing_player {
-            renderer.draw_sprite("captured", &pos + &Vec2I::new(-8, -8 - 16))?;
+            renderer.draw_sprite("rustacean_captured", &pos + &Vec2I::new(-8, -8 - 16))?;
         }
 
         Ok(())

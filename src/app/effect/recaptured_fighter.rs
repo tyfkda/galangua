@@ -63,10 +63,11 @@ impl RecapturedFighter {
         match self.state {
             State::Rotate => {
                 let angle = ((self.angle / (ANGLE * ONE / 16)) * 360 / (ANGLE / 16)) as f64;
-                renderer.draw_sprite_rot("fighter", &pos + &Vec2I::new(-8, -8), angle, Some(Vec2I::new(7, 10)))?;
+                //renderer.draw_sprite_rot("rustacean", &pos + &Vec2I::new(-8, -8), angle, Some(Vec2I::new(7, 10)))?;
+                renderer.draw_sprite_rot("rustacean", &pos + &Vec2I::new(-8, -8), angle, None)?;
             }
             _ => {
-                renderer.draw_sprite("fighter", &pos + &Vec2I::new(-8, -8))?;
+                renderer.draw_sprite("rustacean", &pos + &Vec2I::new(-8, -8))?;
             }
         }
 
