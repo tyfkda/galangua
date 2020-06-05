@@ -12,7 +12,7 @@ pub struct Size {
     pub h: u32,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Trimmed {
     pub sprite_source_size: Rect,
     pub source_size: Size,
