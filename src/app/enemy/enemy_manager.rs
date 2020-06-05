@@ -23,23 +23,23 @@ pub struct EnemyManager {
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
     formation: Formation,
     appearance_manager: AppearanceManager,
+    wait_settle: bool,
     attack_manager: AttackManager,
 }
 
 impl EnemyManager {
     pub fn new() -> Self {
-        let mut mgr = Self {
+        Self {
             enemies: array![None; MAX_ENEMY_COUNT],
             shots: Default::default(),
             formation: Formation::new(),
             appearance_manager: AppearanceManager::new(0),
+            wait_settle: true,
             attack_manager: AttackManager::new(),
-        };
-        mgr.restart();
-        mgr
+        }
     }
 
-    pub fn restart(&mut self) {
+    pub fn restart(&mut self, stage: u32) {
         for slot in self.enemies.iter_mut() {
             *slot = None;
         }
@@ -47,13 +47,14 @@ impl EnemyManager {
             *slot = None;
         }
 
-        self.start_next_stage(0);
+        self.start_next_stage(stage);
     }
 
     pub fn start_next_stage(&mut self, stage: u32) {
         self.appearance_manager = AppearanceManager::new(stage);
         self.formation.restart();
         self.attack_manager.restart(stage > 0);
+        self.wait_settle = true;
     }
 
     pub fn all_destroyed(&self) -> bool {
@@ -137,11 +138,11 @@ impl EnemyManager {
     }
 
     fn update_formation(&mut self) {
-        let is_settle = self.formation.is_settle();
         self.formation.update();
         self.copy_formation_positions();
 
-        if !is_settle && self.formation.is_settle() {
+        if self.wait_settle && self.formation.is_settle() {
+            self.wait_settle = false;
             self.attack_manager.set_enable(true);
         }
     }

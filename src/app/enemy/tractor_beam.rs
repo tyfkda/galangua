@@ -107,7 +107,7 @@ impl TractorBeam {
     }
 
     pub fn can_capture(&self, pos: &Vec2I) -> bool {
-        const RANGE: i32 = 16 * ONE;
+        const RANGE: i32 = 24 * ONE;
         if self.state == State::Full {
             let dx = pos.x - self.pos.x;
             return dx >= -RANGE && dx <= RANGE;

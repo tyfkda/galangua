@@ -66,7 +66,10 @@ impl GameManager {
     }
 
     pub fn restart(&mut self) {
-        self.enemy_manager.restart();
+        self.stage = 0;
+        self.stage_indicator.set_stage(self.stage + 1);
+
+        self.enemy_manager.restart(self.stage);
         self.event_queue.clear();
         self.player = Player::new();
 
@@ -76,9 +79,6 @@ impl GameManager {
         for slot in self.effects.iter_mut() {
             *slot = None;
         }
-
-        self.stage = 0;
-        self.stage_indicator.set_stage(1);
 
         self.state = GameState::Playing;
         self.score = 0;

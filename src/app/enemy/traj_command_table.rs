@@ -5,11 +5,11 @@ use crate::app::enemy::traj_command::TrajCommand;
 use crate::util::math::{ANGLE, ONE};
 
 counted_array!(pub const COMMAND_TABLE1: [TrajCommand; _] = [
-    TrajCommand::Pos((WIDTH / 2 + 16) * ONE, -8 * ONE),
+    TrajCommand::Pos((WIDTH / 2 + 24) * ONE, -8 * ONE),
     TrajCommand::Speed(3 * ONE),
     TrajCommand::Angle((ANGLE / 2) * ONE),
     TrajCommand::VAngle(0),
-    TrajCommand::Delay(10),
+    TrajCommand::Delay(5),
     TrajCommand::VAngle(2 * ONE),
     TrajCommand::Delay(17),
     TrajCommand::VAngle(0),
@@ -19,12 +19,12 @@ counted_array!(pub const COMMAND_TABLE1: [TrajCommand; _] = [
 ]);
 
 counted_array!(pub const COMMAND_TABLE2: [TrajCommand; _] = [
-    TrajCommand::Pos(-8 * ONE, 208 * ONE),
+    TrajCommand::Pos(-8 * ONE, 244 * ONE),
     TrajCommand::Speed(3 * ONE),
     TrajCommand::Angle((ANGLE / 4) * ONE),
+    TrajCommand::VAngle(-2 * ONE),
+    TrajCommand::Delay(16),
     TrajCommand::VAngle(0),
-    TrajCommand::Delay(5),
-    TrajCommand::VAngle(-1 * ONE),
     TrajCommand::Delay(10),
     TrajCommand::VAngle(-2 * ONE),
     TrajCommand::Delay(17),

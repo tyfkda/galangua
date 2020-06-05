@@ -1,12 +1,13 @@
 use array_macro::*;
 use rand::Rng;
+use rand::rngs::ThreadRng;
 
 use crate::app::consts;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{round_up, ONE};
 
-const STAR_COUNT: usize = 128;
+const STAR_COUNT: usize = 256;
 
 #[derive(PartialEq)]
 enum State {
@@ -29,7 +30,7 @@ impl StarManager {
             Star {
                 pos: Vec2I::new(rng.gen_range(0, consts::WIDTH) * ONE, rng.gen_range(-16, consts::HEIGHT) * ONE),
                 t: rng.gen_range(0, 64),
-                c: rng.gen_range(1, 8),
+                c: choose_random_color(&mut rng),
             }
         ; STAR_COUNT];
 
@@ -49,21 +50,23 @@ impl StarManager {
 
         let capturing = self.state == State::Capturing;
         let mut rng = rand::thread_rng();
-        let vy = if capturing { -2 * ONE } else { self.scroll_vel };
+        let vy = if capturing { -3 * ONE } else { self.scroll_vel };
         for star in self.stars.iter_mut() {
             let mut y = star.pos.y + vy;
+            let mut warp = false;
             if !capturing && y >= consts::HEIGHT * ONE {
                 y = rng.gen_range(-16, -1) * ONE;
-                star.pos.x = rng.gen_range(0, consts::WIDTH) * ONE;
-                star.c = rng.gen_range(1, 8);
-                star.t = rng.gen_range(0, 64);
+                warp = true;
             } else if capturing && y < 0 {
                 y = (consts::HEIGHT + rng.gen_range(1, 16)) * ONE;
-                star.pos.x = rng.gen_range(0, consts::WIDTH) * ONE;
-                star.c = rng.gen_range(1, 8);
-                star.t = rng.gen_range(0, 64);
+                warp = true;
             }
             star.pos.y = y;
+            if warp {
+                star.pos.x = rng.gen_range(0, consts::WIDTH) * ONE;
+                star.c = choose_random_color(&mut rng);
+                star.t = rng.gen_range(0, 64);
+            }
         }
     }
 
@@ -75,8 +78,10 @@ impl StarManager {
                 continue;
             }
 
-            let col = &COLOR_TABLE[star.c as usize];
-            renderer.set_draw_color(col[0], col[1], col[2]);
+            let r =  star.c >> 16;
+            let g = (star.c >> 8) & 0xff;
+            let b =  star.c       & 0xff;
+            renderer.set_draw_color(r as u8, g as u8, b as u8);
             let pos = round_up(&star.pos);
             renderer.fill_rect(Some([&pos, &Vec2I::new(1, 1)]))?;
         }
@@ -101,16 +106,15 @@ impl StarManager {
 struct Star {
     pos: Vec2I,
     t: i32,
-    c: u8,
+    c: u32,
 }
 
-const COLOR_TABLE: [[u8; 3]; 8] = [
-    [  0,   0,   0],
-    [  0,   0, 255],
-    [255,   0,   0],
-    [255,   0, 255],
-    [  0, 255,   0],
-    [  0, 255, 255],
-    [255, 255,   0],
-    [255, 255, 255],
-];
+const COLOR_TABLE: [u32; 4] = [0, 71, 151, 222];
+
+fn choose_random_color(rng: &mut ThreadRng) -> u32 {
+    let c = rng.gen_range(1, 4 * 4 * 4);
+    let r = c % 4;
+    let g = (c / 4) % 4;
+    let b = c / 16;
+    return (COLOR_TABLE[r] << 16) | (COLOR_TABLE[g] << 8) | COLOR_TABLE[b];
+}

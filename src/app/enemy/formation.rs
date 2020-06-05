@@ -135,6 +135,6 @@ impl Formation {
     }
 
     pub fn is_settle(&self) -> bool {
-        self.done_appearance && self.moving_pat == MovingPat::Scale
+        self.done_appearance
     }
 }

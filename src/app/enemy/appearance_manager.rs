@@ -1,3 +1,5 @@
+use counted_array::counted_array;
+
 use crate::app::enemy::enemy::{Enemy, EnemyState, EnemyType};
 use crate::app::enemy::traj::Traj;
 use crate::app::enemy::traj_command::TrajCommand;
@@ -36,7 +38,7 @@ struct UnitTableEntry<'a> {
     flip_x: bool,
 }
 
-const UNIT_TABLE: [[UnitTableEntry; 5]; 3] = [
+counted_array!(const UNIT_TABLE: [[UnitTableEntry; 5]; _] = [
     [
         UnitTableEntry { pat: 0, table: &COMMAND_TABLE1, flip_x: false },
         UnitTableEntry { pat: 1, table: &COMMAND_TABLE2, flip_x: false },
@@ -54,11 +56,18 @@ const UNIT_TABLE: [[UnitTableEntry; 5]; 3] = [
     [
         UnitTableEntry { pat: 0, table: &COMMAND_TABLE1, flip_x: false },
         UnitTableEntry { pat: 0, table: &COMMAND_TABLE2, flip_x: true },
-        UnitTableEntry { pat: 0, table: &COMMAND_TABLE2, flip_x: true },
+        UnitTableEntry { pat: 0, table: &COMMAND_TABLE2, flip_x: false },
         UnitTableEntry { pat: 0, table: &COMMAND_TABLE1, flip_x: false },
-        UnitTableEntry { pat: 0, table: &COMMAND_TABLE1, flip_x: true },
+        UnitTableEntry { pat: 0, table: &COMMAND_TABLE1, flip_x: false },
     ],
-];
+    [
+        UnitTableEntry { pat: 0, table: &COMMAND_TABLE1, flip_x: false },
+        UnitTableEntry { pat: 3, table: &COMMAND_TABLE2, flip_x: false },
+        UnitTableEntry { pat: 3, table: &COMMAND_TABLE2, flip_x: true },
+        UnitTableEntry { pat: 3, table: &COMMAND_TABLE1, flip_x: false },
+        UnitTableEntry { pat: 3, table: &COMMAND_TABLE1, flip_x: true },
+    ],
+]);
 
 pub struct AppearanceManager {
     stage: u32,
@@ -111,23 +120,24 @@ impl AppearanceManager {
         let entry = &UNIT_TABLE[(self.stage as usize) % UNIT_TABLE.len()][self.unit as usize];
         match entry.pat {
             0 => {
+                let flip = if entry.flip_x {1} else {0};
                 {
-                    let i = ORDER[base + self.count as usize];
-                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2) as usize];
+                    let i = ORDER[base + (self.count + flip * 4) as usize];
+                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + flip) as usize];
                     let mut enemy = Enemy::new(enemy_type, &zero, 0, 0);
 
-                    let traj = Traj::new(Some(entry.table), &zero, true ^ entry.flip_x);
+                    let traj = Traj::new(Some(entry.table), &Vec2I::new(8 * ONE, 0), true);
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
                     new_borns.push(enemy);
                 }
                 {
-                    let i = ORDER[base + self.count as usize + 4];
-                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + 1) as usize];
+                    let i = ORDER[base + (self.count + (1 - flip) * 4) as usize];
+                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + (1 - flip)) as usize];
                     let mut enemy = Enemy::new(enemy_type, &zero, 0, 0);
 
-                    let traj = Traj::new(Some(entry.table), &zero, false ^ entry.flip_x);
+                    let traj = Traj::new(Some(entry.table), &Vec2I::new(8 * ONE, 0), false);
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
@@ -149,7 +159,7 @@ impl AppearanceManager {
                     let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + (self.count & 1)) as usize];
                     let mut enemy = Enemy::new(enemy_type, &zero, 0, 0);
 
-                    let traj = Traj::new(Some(entry.table), &zero, entry.flip_x);
+                    let traj = Traj::new(Some(entry.table), &Vec2I::new(8 * ONE, 0), entry.flip_x);
                     enemy.set_traj(traj);
                     enemy.formation_index = i as usize;
 
@@ -188,9 +198,10 @@ impl AppearanceManager {
                 }
             }
             3 => {
+                let flip = if entry.flip_x {1} else {0};
                 {
-                    let i = ORDER[base + self.count as usize];
-                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2) as usize];
+                    let i = ORDER[base + (self.count + flip * 4) as usize];
+                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + flip) as usize];
                     let mut enemy = Enemy::new(enemy_type, &zero, 0, 0);
 
                     let traj = Traj::new(Some(entry.table), &Vec2I::new(8 * ONE, 0), entry.flip_x);
@@ -200,8 +211,8 @@ impl AppearanceManager {
                     new_borns.push(enemy);
                 }
                 {
-                    let i = ORDER[base + self.count as usize + 4];
-                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + 1) as usize];
+                    let i = ORDER[base + (self.count + (1 - flip) * 4) as usize];
+                    let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + (1 - flip)) as usize];
                     let mut enemy = Enemy::new(enemy_type, &zero, 0, 0);
 
                     let traj = Traj::new(Some(entry.table), &Vec2I::new(-8 * ONE, 0), entry.flip_x);

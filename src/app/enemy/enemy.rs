@@ -112,7 +112,7 @@ impl Enemy {
 
                 let distance = ((dpos.x as f64).powi(2) + (dpos.y as f64).powi(2)).sqrt();
                 if distance > self.speed as f64 {
-                    const DLIMIT: i32 = 4 * ONE;
+                    const DLIMIT: i32 = 5 * ONE;
                     let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
                     let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
                     let d = diff_angle(target_angle, self.angle);
