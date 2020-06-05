@@ -19,9 +19,9 @@ pub struct RecapturedFighter {
 }
 
 impl RecapturedFighter {
-    pub fn new(pos: Vec2I) -> Self {
+    pub fn new(pos: &Vec2I) -> Self {
         Self {
-            pos: pos,
+            pos: *pos,
             state: State::Rotate,
             angle: 0,
         }
@@ -63,11 +63,11 @@ impl RecapturedFighter {
         match self.state {
             State::Rotate => {
                 let angle = ((self.angle / (ANGLE * ONE / 16)) * 360 / (ANGLE / 16)) as f64;
-                //renderer.draw_sprite_rot("rustacean", &pos + &Vec2I::new(-8, -8), angle, Some(Vec2I::new(7, 10)))?;
-                renderer.draw_sprite_rot("rustacean", &pos + &Vec2I::new(-8, -8), angle, None)?;
+                //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)))?;
+                renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
             }
             _ => {
-                renderer.draw_sprite("rustacean", &pos + &Vec2I::new(-8, -8))?;
+                renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8, -8)))?;
             }
         }
 

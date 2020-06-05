@@ -18,13 +18,13 @@ pub struct Traj {
 }
 
 impl Traj {
-    pub fn new(command_table: Option<&'static [TrajCommand]>, offset: Vec2I, flip_x: bool) -> Self {
+    pub fn new(command_table: Option<&'static [TrajCommand]>, offset: &Vec2I, flip_x: bool) -> Self {
         Self {
             pos: Vec2I::new(0, 0),
             angle: 0,
             speed: 0,
             vangle: 0,
-            offset,
+            offset: *offset,
             flip_x,
 
             command_table,

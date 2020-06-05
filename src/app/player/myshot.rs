@@ -11,9 +11,9 @@ pub struct MyShot {
 }
 
 impl MyShot {
-    pub fn new(pos: Vec2I, dual: bool, angle: i32) -> Self {
+    pub fn new(pos: &Vec2I, dual: bool, angle: i32) -> Self {
         Self {
-            pos,
+            pos: *pos,
             dual,
             angle,
         }
@@ -40,13 +40,13 @@ impl MyShot {
     {
         let pos = self.pos();
         if self.angle == 0 {
-            renderer.draw_sprite("myshot", &pos + &Vec2I::new(-2, -4))?;
+            renderer.draw_sprite("myshot", &(&pos + &Vec2I::new(-2, -4)))?;
             if self.dual {
-                renderer.draw_sprite("myshot", &pos + &Vec2I::new(-2 + 16, -4))?;
+                renderer.draw_sprite("myshot", &(&pos + &Vec2I::new(-2 + 16, -4)))?;
             }
         } else {
             assert!(!self.dual);
-            renderer.draw_sprite_rot("myshot", &pos + &Vec2I::new(-2, -4), calc_display_angle(self.angle), None)?;
+            renderer.draw_sprite_rot("myshot", &(&pos + &Vec2I::new(-2, -4)), calc_display_angle(self.angle), None)?;
         }
 
         Ok(())

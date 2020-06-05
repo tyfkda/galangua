@@ -214,13 +214,12 @@ impl GameManager {
     fn handle_event_queue(&mut self) {
         let mut i = 0;
         while i < self.event_queue.len() {
-            let event = &self.event_queue[i];
-            match *event {
+            match self.event_queue[i] {
                 EventType::MyShot(pos, dual, angle) => {
-                    self.spawn_myshot(pos, dual, angle);
+                    self.spawn_myshot(&pos, dual, angle);
                 }
                 EventType::EneShot(pos, speed) => {
-                    self.spawn_ene_shot(pos, speed);
+                    self.spawn_ene_shot(&pos, speed);
                 }
                 EventType::AddScore(add) => {
                     self.score += add;
@@ -229,10 +228,10 @@ impl GameManager {
                     }
                 }
                 EventType::EarnPoint(point_type, pos) => {
-                    self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, pos)));
+                    self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, &pos)));
                 }
                 EventType::SmallBomb(pos) => {
-                    self.spawn_effect(Effect::SmallBomb(SmallBomb::new(pos)));
+                    self.spawn_effect(Effect::SmallBomb(SmallBomb::new(&pos)));
                 }
                 EventType::DeadPlayer => {
                     self.star_manager.borrow_mut().set_stop(true);
@@ -244,7 +243,7 @@ impl GameManager {
                 }
                 EventType::CapturePlayer(capture_pos) => {
                     self.star_manager.borrow_mut().set_capturing(true);
-                    self.player.start_capture(capture_pos);
+                    self.player.start_capture(&capture_pos);
                     self.state = GameState::Capturing;
                 }
                 EventType::CapturePlayerCompleted => {
@@ -257,7 +256,7 @@ impl GameManager {
                     self.next_player();
                 }
                 EventType::RecapturePlayer(pos) => {
-                    self.player.start_recapture_effect(pos);
+                    self.player.start_recapture_effect(&pos);
                     self.enemy_manager.enable_attack(false);
                     self.state = GameState::Recapturing;
                 }
@@ -276,13 +275,13 @@ impl GameManager {
         self.event_queue.clear();
     }
 
-    fn spawn_myshot(&mut self, pos: Vec2I, dual: bool, angle: i32) {
+    fn spawn_myshot(&mut self, pos: &Vec2I, dual: bool, angle: i32) {
         if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
             *myshot_opt = Some(MyShot::new(pos, dual, angle));
         }
     }
 
-    fn spawn_ene_shot(&mut self, pos: Vec2I, speed: i32) {
+    fn spawn_ene_shot(&mut self, pos: &Vec2I, speed: i32) {
         let player_pos = [
             Some(self.player.pos()),
             self.player.dual_pos(),

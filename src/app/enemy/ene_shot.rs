@@ -9,10 +9,10 @@ pub struct EneShot {
 }
 
 impl EneShot {
-    pub fn new(pos: Vec2I, vel: Vec2I) -> Self {
+    pub fn new(pos: &Vec2I, vel: &Vec2I) -> Self {
         Self {
-            pos,
-            vel,
+            pos: *pos,
+            vel: *vel,
         }
     }
 
@@ -32,7 +32,7 @@ impl EneShot {
         where R: RendererTrait
     {
         let pos = self.pos();
-        renderer.draw_sprite("ene_shot", &pos + &Vec2I::new(-2, -4))?;
+        renderer.draw_sprite("ene_shot", &(&pos + &Vec2I::new(-2, -4)))?;
 
         Ok(())
     }

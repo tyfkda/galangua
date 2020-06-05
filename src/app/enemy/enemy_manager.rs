@@ -173,7 +173,7 @@ impl EnemyManager {
         for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
             let shot = shot_opt.as_mut().unwrap();
             shot.update();
-            if out_of_screen(shot.pos()) {
+            if out_of_screen(&shot.pos()) {
                 *shot_opt = None;
             }
         }
@@ -183,7 +183,7 @@ impl EnemyManager {
         self.enemies.iter().position(|x| x.is_none())
     }
 
-    pub fn spawn_shot(&mut self, pos: Vec2I, target_pos: &[Option<Vec2I>], speed: i32) {
+    pub fn spawn_shot(&mut self, pos: &Vec2I, target_pos: &[Option<Vec2I>], speed: i32) {
         if let Some(index) = self.shots.iter().position(|x| x.is_none()) {
             let mut rng = rand::thread_rng();
             let count = target_pos.iter().filter(|x| x.is_some()).count();
@@ -196,7 +196,7 @@ impl EnemyManager {
                 ((d.x as f64) * f).round() as i32,
                 ((d.y as f64) * f).round() as i32,
             );
-            self.shots[index] = Some(EneShot::new(pos, vel));
+            self.shots[index] = Some(EneShot::new(&pos, &vel));
         }
     }
 
@@ -209,7 +209,7 @@ impl EnemyManager {
     }
 }
 
-fn out_of_screen(pos: Vec2I) -> bool {
+fn out_of_screen(pos: &Vec2I) -> bool {
     pos.x < -16 || pos.x > WIDTH + 16
         || pos.y < -16 || pos.y > HEIGHT + 16
 }

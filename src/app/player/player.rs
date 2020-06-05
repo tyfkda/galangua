@@ -130,20 +130,20 @@ impl Player {
         match self.state {
             State::Normal | State::MoveHomePos => {
                 let pos = self.pos();
-                renderer.draw_sprite("rustacean", &pos + &Vec2I::new(-8, -8))?;
+                renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8, -8)))?;
                 if self.dual {
-                    renderer.draw_sprite("rustacean", &pos + &Vec2I::new(-8 + 16, -8))?;
+                    renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8 + 16, -8)))?;
                 }
             }
             State::Capturing => {
                 let pos = self.pos();
                 let angle = calc_display_angle(self.angle);
-                //renderer.draw_sprite_rot("rustacean", &pos + &Vec2I::new(-8, -8), angle, Some(Vec2I::new(7, 10)))?;
-                renderer.draw_sprite_rot("rustacean", &pos + &Vec2I::new(-8, -8), angle, None)?;
+                //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)))?;
+                renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
             }
             State::Captured => {
                 let pos = self.pos();
-                renderer.draw_sprite("rustacean_captured", &pos + &Vec2I::new(-8, -8))?;
+                renderer.draw_sprite("rustacean_captured", &(&pos + &Vec2I::new(-8, -8)))?;
             }
             State::CaptureCompleted | State::Dead => {}
         }
@@ -154,7 +154,7 @@ impl Player {
 
         if self.left_ship > 0 {
             for i in 0..self.left_ship - 1 {
-                renderer.draw_sprite("rustacean", Vec2I::new(i as i32 * 16, HEIGHT - 16))?;
+                renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16))?;
             }
         }
 
@@ -216,9 +216,9 @@ impl Player {
         }
     }
 
-    pub fn start_capture(&mut self, capture_pos: Vec2I) {
+    pub fn start_capture(&mut self, capture_pos: &Vec2I) {
         self.state = State::Capturing;
-        self.capture_pos = capture_pos;
+        self.capture_pos = *capture_pos;
         self.angle = 0;
     }
 
@@ -226,7 +226,7 @@ impl Player {
         self.state = State::CaptureCompleted;
     }
 
-    pub fn start_recapture_effect(&mut self, pos: Vec2I) {
+    pub fn start_recapture_effect(&mut self, pos: &Vec2I) {
         self.recaptured_fighter = Some(RecapturedFighter::new(pos));
     }
 

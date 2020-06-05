@@ -46,7 +46,7 @@ pub struct Enemy {
 }
 
 impl Enemy {
-    pub fn new(enemy_type: EnemyType, pos: Vec2I, angle: i32, speed: i32) -> Self {
+    pub fn new(enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32) -> Self {
         let life = match enemy_type {
             EnemyType::Owl => 2,
             _ => 1,
@@ -56,7 +56,7 @@ impl Enemy {
             enemy_type,
             state: EnemyState::Flying,
             life,
-            pos,
+            pos: *pos,
             angle,
             speed,
             vangle: 0,
@@ -140,13 +140,13 @@ impl Enemy {
 
         let angle = calc_display_angle(self.angle);
         let pos = self.pos();
-        renderer.draw_sprite_rot(sprite, &pos + &Vec2I::new(-8, -8), angle, None)?;
+        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
 
         if let Some(tractor_beam) = &self.tractor_beam {
             tractor_beam.draw(renderer)?;
         }
         if self.capturing_player {
-            renderer.draw_sprite("rustacean_captured", &pos + &Vec2I::new(-8, -8 - 16))?;
+            renderer.draw_sprite("rustacean_captured", &(&pos + &Vec2I::new(-8, -8 - 16)))?;
         }
 
         Ok(())
@@ -315,7 +315,7 @@ impl Enemy {
                     self.angle = ANGLE / 2 * ONE;
                     self.vangle = 0;
 
-                    self.tractor_beam = Some(TractorBeam::new(&self.pos + &Vec2I::new(0, 8 * ONE)));
+                    self.tractor_beam = Some(TractorBeam::new(&(&self.pos + &Vec2I::new(0, 8 * ONE))));
 
                     self.attack_step += 1;
                     self.count = 0;

@@ -78,7 +78,7 @@ impl StarManager {
             let col = &COLOR_TABLE[star.c as usize];
             renderer.set_draw_color(col[0], col[1], col[2]);
             let pos = round_up(&star.pos);
-            renderer.fill_rect(Some([pos, Vec2I::new(1, 1)]))?;
+            renderer.fill_rect(Some([&pos, &Vec2I::new(1, 1)]))?;
         }
 
         Ok(())

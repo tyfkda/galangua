@@ -74,8 +74,9 @@ impl RendererTrait for SdlRenderer {
         }
     }
 
-    fn draw_sprite(&mut self, sprite_name: &str, mut pos: Vec2I) -> Result<(), String> {
+    fn draw_sprite(&mut self, sprite_name: &str, pos: &Vec2I) -> Result<(), String> {
         let sheet = self.sprite_sheet.get(sprite_name).expect(&format!("No sprite: {}", sprite_name));
+        let mut pos = *pos;
         if let Some(trimmed) = &sheet.trimmed {
             pos.x += trimmed.sprite_source_size.x;
             pos.y += trimmed.sprite_source_size.y;
@@ -88,8 +89,9 @@ impl RendererTrait for SdlRenderer {
         Ok(())
     }
 
-    fn draw_sprite_rot(&mut self, sprite_name: &str, mut pos: Vec2I, angle: f64, center: Option<Vec2I>) -> Result<(), String> {
+    fn draw_sprite_rot(&mut self, sprite_name: &str, pos: &Vec2I, angle: f64, center: Option<&Vec2I>) -> Result<(), String> {
         let sheet = self.sprite_sheet.get(sprite_name).expect(&format!("No sprite: {}", sprite_name));
+        let mut pos = *pos;
         if let Some(trimmed) = &sheet.trimmed {
             pos.x += trimmed.sprite_source_size.x;
             pos.y += trimmed.sprite_source_size.y;
@@ -108,7 +110,7 @@ impl RendererTrait for SdlRenderer {
         self.canvas.set_draw_color(Color::RGB(r, g, b));
     }
 
-    fn fill_rect(&mut self, dst: Option<[Vec2I; 2]>) -> Result<(), String> {
+    fn fill_rect(&mut self, dst: Option<[&Vec2I; 2]>) -> Result<(), String> {
         if let Some(rect) = dst {
             self.canvas.fill_rect(Some(Rect::new(rect[0].x * self.scale, rect[0].y * self.scale, (rect[1].x * self.scale) as u32, (rect[1].y * self.scale) as u32)))?;
         } else {
