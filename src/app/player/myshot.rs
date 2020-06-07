@@ -2,7 +2,7 @@ use crate::app::consts::{WIDTH, HEIGHT};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::{calc_velocity, round_up, ANGLE, ONE};
+use crate::util::math::{calc_velocity, quantize_angle, round_up, ONE};
 
 pub struct MyShot {
     pos: Vec2I,
@@ -46,7 +46,7 @@ impl MyShot {
             }
         } else {
             assert!(!self.dual);
-            renderer.draw_sprite_rot("myshot", &(&pos + &Vec2I::new(-2, -4)), calc_display_angle(self.angle), None)?;
+            renderer.draw_sprite_rot("myshot", &(&pos + &Vec2I::new(-2, -4)), quantize_angle(self.angle, 16), None)?;
         }
 
         Ok(())
@@ -75,13 +75,4 @@ impl Collidable for MyShot {
             size: Vec2I::new(1, 8),
         })
     }
-}
-
-fn calc_display_angle(angle: i32) -> f64 {
-    // Quantize.
-    let div = 16;
-    let angle = (angle + ANGLE * ONE / div / 2) & (ANGLE * ONE - (ANGLE * ONE / div));
-    let angle: f64 = (angle as f64) * (360.0 / ((ANGLE * ONE) as f64));
-
-    angle
 }

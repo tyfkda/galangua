@@ -2,7 +2,7 @@ use crate::app::consts::*;
 use crate::app::game::{EventQueue, EventType};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::{clamp, round_up, ANGLE, ONE};
+use crate::util::math::{clamp, quantize_angle, round_up, ANGLE, ONE};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum State {
@@ -62,7 +62,7 @@ impl RecapturedFighter {
         let pos = round_up(&self.pos);
         match self.state {
             State::Rotate => {
-                let angle = ((self.angle / (ANGLE * ONE / 16)) * 360 / (ANGLE / 16)) as f64;
+                let angle = quantize_angle(self.angle, 16);
                 //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)))?;
                 renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
             }

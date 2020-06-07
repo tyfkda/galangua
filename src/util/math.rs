@@ -35,6 +35,18 @@ fn test_diff_angle() {
     assert_eq!((ANGLE - 30 - 100) * ONE, diff_angle(-30 * ONE, 100 * ONE));
 }
 
+pub fn quantize_angle(angle: i32, div: i32) -> u8 {
+    let off = ANGLE / div;
+    (((angle + off * (ONE / 2)) / ONE) & (ANGLE - off)) as u8
+}
+
+#[test]
+fn test_quantize_angle() {
+    assert_eq!(0x80, quantize_angle(0x87 * ONE, 16));
+    assert_eq!(0x00, quantize_angle(0xfc * ONE, 16));
+    assert_eq!(0xe0, quantize_angle(-0x28 * ONE, 16));
+}
+
 pub fn clamp<T>(value: T, min: T, max: T) -> T
     where T: Copy + PartialOrd
 {

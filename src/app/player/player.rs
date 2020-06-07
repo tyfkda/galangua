@@ -4,7 +4,7 @@ use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::{clamp, round_up, ANGLE, ONE};
+use crate::util::math::{clamp, quantize_angle, round_up, ANGLE, ONE};
 use crate::util::pad::{Pad, PAD_A, PAD_L, PAD_R};
 
 const DEFAULT_LEFT_SHIP: u32 = 3;
@@ -145,7 +145,7 @@ impl Player {
             }
             State::Capturing => {
                 let pos = self.pos();
-                let angle = calc_display_angle(self.angle);
+                let angle = quantize_angle(self.angle, 16);
                 //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)))?;
                 renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
             }
@@ -265,13 +265,4 @@ impl Collidable for Player {
             None
         }
     }
-}
-
-fn calc_display_angle(angle: i32) -> f64 {
-    // Quantize.
-    let div = 16;
-    let angle = (angle + ANGLE * ONE / div / 2) & (ANGLE * ONE - (ANGLE * ONE / div));
-    let angle: f64 = (angle as f64) * (360.0 / ((ANGLE * ONE) as f64));
-
-    angle
 }

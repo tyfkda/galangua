@@ -7,7 +7,7 @@ use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
+use crate::util::math::{calc_velocity, clamp, diff_angle, quantize_angle, round_up, ANGLE, ONE};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EnemyType {
@@ -150,7 +150,7 @@ impl Enemy {
             }
         };
 
-        let angle = calc_display_angle(self.angle);
+        let angle = quantize_angle(self.angle, 16);
         let pos = self.pos();
         renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
 
@@ -403,13 +403,4 @@ impl Collidable for Enemy {
             size: Vec2I::new(12, 12),
         })
     }
-}
-
-fn calc_display_angle(angle: i32) -> f64 {
-    // Quantize.
-    let div = 16;
-    let angle = (angle + ANGLE * ONE / div / 2) & (ANGLE * ONE - (ANGLE * ONE / div));
-    let angle: f64 = (angle as f64) * (360.0 / ((ANGLE * ONE) as f64));
-
-    angle
 }

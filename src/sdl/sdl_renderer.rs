@@ -89,7 +89,7 @@ impl RendererTrait for SdlRenderer {
         Ok(())
     }
 
-    fn draw_sprite_rot(&mut self, sprite_name: &str, pos: &Vec2I, angle: f64, center: Option<&Vec2I>) -> Result<(), String> {
+    fn draw_sprite_rot(&mut self, sprite_name: &str, pos: &Vec2I, angle: u8, center: Option<&Vec2I>) -> Result<(), String> {
         let sheet = self.sprite_sheet.get(sprite_name).expect(&format!("No sprite: {}", sprite_name));
         let mut pos = *pos;
         if let Some(trimmed) = &sheet.trimmed {
@@ -102,7 +102,7 @@ impl RendererTrait for SdlRenderer {
         self.canvas.copy_ex(&texture,
                             Some(Rect::new(sheet.frame.x, sheet.frame.y, sheet.frame.w, sheet.frame.h)),
                             Some(Rect::new(pos.x * self.scale, pos.y * self.scale, sheet.frame.w * self.scale as u32, sheet.frame.h * self.scale as u32)),
-                            angle, center, false, false)?;
+                            (angle as f64) * (360.0 / 256.0), center, false, false)?;
         Ok(())
     }
 
