@@ -8,6 +8,7 @@ use crate::util::math::{clamp, round_up, ANGLE, ONE};
 use crate::util::pad::{Pad, PAD_A, PAD_L, PAD_R};
 
 const DEFAULT_LEFT_SHIP: u32 = 3;
+const Y_POSITION: i32 = HEIGHT - 16 - 8;
 
 #[derive(PartialEq)]
 enum State {
@@ -16,6 +17,7 @@ enum State {
     Capturing,
     Captured,
     CaptureCompleted,
+    EscapeCapturing,
     MoveHomePos,
 }
 
@@ -32,7 +34,7 @@ pub struct Player {
 impl Player {
     pub fn new() -> Self {
         Self {
-            pos: &Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE,
+            pos: &Vec2I::new(WIDTH / 2, Y_POSITION) * ONE,
             state: State::Normal,
             dual: false,
             angle: 0,
@@ -52,12 +54,17 @@ impl Player {
             State::Normal => {
                 self.update_normal(pad, event_queue);
             }
-            State::Dead => {
-            }
             State::Capturing => {
                 self.update_capture(pad, event_queue);
             }
-            State::Captured | State::CaptureCompleted => {}
+            State::EscapeCapturing => {
+                const D: i32 = 1 * ONE;
+                self.pos.y += D;
+                if self.pos.y >= Y_POSITION * ONE {
+                    self.pos.y = Y_POSITION * ONE;
+                    self.state = State::Normal;
+                }
+            }
             State::MoveHomePos => {
                 let x = (WIDTH / 2 - 8) * ONE;
                 let speed = 1 * ONE;
@@ -71,6 +78,7 @@ impl Player {
                     }
                 }
             }
+            State::Dead | State::Captured | State::CaptureCompleted => {}
         }
 
         if let Some(recaptured_fighter) = &mut self.recaptured_fighter {
@@ -128,7 +136,7 @@ impl Player {
         where R: RendererTrait
     {
         match self.state {
-            State::Normal | State::MoveHomePos => {
+            State::Normal | State::EscapeCapturing | State::MoveHomePos => {
                 let pos = self.pos();
                 renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8, -8)))?;
                 if self.dual {
@@ -222,8 +230,17 @@ impl Player {
         self.angle = 0;
     }
 
+    pub fn is_captured(&self) -> bool {
+        self.state == State::Captured
+    }
+
     pub fn complete_capture(&mut self) {
         self.state = State::CaptureCompleted;
+    }
+
+    pub fn escape_capturing(&mut self) {
+        self.state = State::EscapeCapturing;
+        self.angle = 0;
     }
 
     pub fn start_recapture_effect(&mut self, pos: &Vec2I) {

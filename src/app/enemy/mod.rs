@@ -12,5 +12,6 @@ mod traj_command;
 mod traj_command_table;
 
 pub use self::accessor::Accessor;
+pub use self::enemy::CaptureState;
 pub use self::enemy_manager::EnemyManager;
 pub use self::enemy_collision::EnemyCollisionResult;

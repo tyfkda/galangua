@@ -1,3 +1,4 @@
+use crate::app::enemy::enemy::CaptureState;
 use crate::framework::types::Vec2I;
 
 // Collision Result
@@ -7,10 +8,6 @@ pub enum EnemyCollisionResult {
         pos: Vec2I,
         destroyed: bool,
         point: u32,
-        capturing_player: Option<CapturingPlayer>,
+        capture_state: CaptureState,
     },
-}
-
-pub struct CapturingPlayer {
-    pub pos: Vec2I,
 }

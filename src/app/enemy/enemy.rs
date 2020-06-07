@@ -9,7 +9,7 @@ use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{calc_velocity, clamp, diff_angle, round_up, ANGLE, ONE};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EnemyType {
     Bee,
     Butterfly,
@@ -23,6 +23,14 @@ pub enum EnemyState {
     MoveToFormation,
     Formation,
     Attack,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CaptureState {
+    None,
+    BeamTracting,
+    BeamClosing,
+    Capturing,
 }
 
 #[derive(Debug)]
@@ -42,7 +50,7 @@ pub struct Enemy {
     count: i32,
     target_pos: Vec2I,
     tractor_beam: Option<TractorBeam>,
-    pub(super) capturing_player: bool,
+    capture_state: CaptureState,
 }
 
 impl Enemy {
@@ -67,7 +75,7 @@ impl Enemy {
             count: 0,
             target_pos: Vec2I::new(0, 0),
             tractor_beam: None,
-            capturing_player: false,
+            capture_state: CaptureState::None,
         }
     }
 
@@ -77,6 +85,10 @@ impl Enemy {
 
     pub fn raw_pos(&self) -> &Vec2I {
         &self.pos
+    }
+
+    pub fn capture_state(&self) -> CaptureState {
+        self.capture_state
     }
 
     pub fn update<T: Accessor>(&mut self, formation: &Formation, accessor: &T, event_queue: &mut EventQueue) {
@@ -145,7 +157,7 @@ impl Enemy {
         if let Some(tractor_beam) = &self.tractor_beam {
             tractor_beam.draw(renderer)?;
         }
-        if self.capturing_player {
+        if self.capture_state == CaptureState::Capturing {
             renderer.draw_sprite("rustacean_captured", &(&pos + &Vec2I::new(-8, -8 - 16)))?;
         }
 
@@ -331,6 +343,7 @@ impl Enemy {
                     } else if tractor_beam.can_capture(accessor.get_raw_player_pos()) {
                         event_queue.push(EventType::CapturePlayer(&self.pos + &Vec2I::new(0, 16 * ONE)));
                         tractor_beam.start_capture();
+                        self.capture_state = CaptureState::BeamTracting;
                         self.attack_step = 100;
                         self.count = 0;
                     }
@@ -347,9 +360,9 @@ impl Enemy {
             }
             // Capture sequence
             100 => {
-                self.count += 1;
-                if self.count >= 80 {  // TODO: Synchronize with player capturing duration.
+                if accessor.is_player_captured() {
                     self.tractor_beam.as_mut().unwrap().close_capture();
+                    self.capture_state = CaptureState::BeamClosing;
                     self.attack_step += 1;
                     self.count = 0;
                 }
@@ -359,7 +372,7 @@ impl Enemy {
                     if tractor_beam.closed() {
                         // TODO: Turn and back to the formation.
                         self.tractor_beam = None;
-                        self.capturing_player = true;
+                        self.capture_state = CaptureState::Capturing;
                         event_queue.push(EventType::CapturePlayerCompleted);
 
                         self.speed = 3 * ONE / 2;

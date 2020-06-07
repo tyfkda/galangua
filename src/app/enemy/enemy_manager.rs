@@ -5,8 +5,8 @@ use crate::app::consts::*;
 use crate::app::enemy::appearance_manager::AppearanceManager;
 use crate::app::enemy::attack_manager::AttackManager;
 use crate::app::enemy::ene_shot::EneShot;
-use crate::app::enemy::enemy::{Enemy, EnemyState};
-use crate::app::enemy::enemy_collision::{CapturingPlayer, EnemyCollisionResult};
+use crate::app::enemy::enemy::{CaptureState, Enemy, EnemyState};
+use crate::app::enemy::enemy_collision::EnemyCollisionResult;
 use crate::app::enemy::Accessor;
 use crate::app::enemy::formation::Formation;
 use crate::app::game::EventQueue;
@@ -88,15 +88,11 @@ impl EnemyManager {
                 if colbox.check_collision(target) {
                     let pos = *enemy.raw_pos();
                     let (destroyed, point) = enemy.set_damage(power);
-                    let capturing_player = if !enemy.capturing_player { None } else {
-                        Some(CapturingPlayer {
-                            pos: &pos - &Vec2I::new(0, 16 * ONE),
-                        })
-                    };
+                    let capture_state = enemy.capture_state();
                     if destroyed {
                         *enemy_opt = None;
                     }
-                    return EnemyCollisionResult::Hit { pos, destroyed, point, capturing_player };
+                    return EnemyCollisionResult::Hit { pos, destroyed, point, capture_state };
                 }
             }
         }
@@ -111,7 +107,7 @@ impl EnemyManager {
                 if colbox.check_collision(target) {
                     let pos = *shot.raw_pos();
                     *shot_opt = None;
-                    return EnemyCollisionResult::Hit { pos, destroyed: false, point: 0, capturing_player: None };
+                    return EnemyCollisionResult::Hit { pos, destroyed: false, point: 0, capture_state: CaptureState::None };
                 }
             }
         }

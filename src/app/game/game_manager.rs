@@ -5,7 +5,7 @@ use crate::app::effect::StageIndicator;
 use crate::app::effect::StarManager;
 use crate::app::effect::{EarnedPoint, EarnedPointType, Effect, SmallBomb};
 use crate::app::enemy::Accessor as AccessorForEnemy;
-use crate::app::enemy::{EnemyCollisionResult, EnemyManager};
+use crate::app::enemy::{CaptureState, EnemyCollisionResult, EnemyManager};
 use crate::app::game::event_queue::{EventQueue, EventType};
 use crate::app::player::MyShot;
 use crate::app::player::Player;
@@ -13,6 +13,7 @@ use crate::app::util::{CollBox, Collidable};
 use crate::app::util::unsafe_util::peep;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
+use crate::util::math::ONE;
 use crate::util::pad::Pad;
 
 const MYSHOT_COUNT: usize = 2;
@@ -269,6 +270,10 @@ impl GameManager {
                     self.star_manager.borrow_mut().set_stop(false);
                     self.state = GameState::Playing;
                 }
+                EventType::EscapeCapturing => {
+                    self.star_manager.borrow_mut().set_capturing(false);
+                    self.player.escape_capturing();
+                }
             }
             i += 1;
         }
@@ -352,6 +357,10 @@ impl AccessorForEnemy for GameManager {
     fn is_player_dual(&self) -> bool {
         self.player.dual_pos().is_some()
     }
+
+    fn is_player_captured(&self) -> bool {
+        self.player.is_captured()
+    }
 }
 
 fn handle_collision_enemy(
@@ -360,7 +369,7 @@ fn handle_collision_enemy(
 {
     match enemy_manager.check_collision(&collbox, power) {
         EnemyCollisionResult::NoHit => { /* no hit */ }
-        EnemyCollisionResult::Hit { pos, destroyed, point, capturing_player } => {
+        EnemyCollisionResult::Hit { pos, destroyed, point, capture_state } => {
             if destroyed {
                 if effect {
                     if point > 0 {
@@ -381,8 +390,14 @@ fn handle_collision_enemy(
                     event_queue.push(EventType::SmallBomb(pos));
                 }
 
-                if let Some(capturing_player) = capturing_player {
-                    event_queue.push(EventType::RecapturePlayer(capturing_player.pos));
+                match capture_state {
+                    CaptureState::None => {}
+                    CaptureState::BeamTracting | CaptureState::BeamClosing => {
+                        event_queue.push(EventType::EscapeCapturing);
+                    }
+                    CaptureState::Capturing => {
+                        event_queue.push(EventType::RecapturePlayer(&pos - &Vec2I::new(0, 16 * ONE)));
+                    }
                 }
             }
             return Some(pos);
