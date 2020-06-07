@@ -7,7 +7,7 @@ use crate::app::game::GameManager;
 use crate::app::sprite_sheet::load_sprite_sheet;
 use crate::framework::{AppTrait, RendererTrait};
 use crate::util::fps_calc::FpsCalc;
-use crate::util::pad::{Pad, PAD_A, PAD_START};
+use crate::util::pad::{Pad, PAD_A, PAD_CANCEL, PAD_START};
 
 #[derive(PartialEq)]
 enum AppState {
@@ -42,6 +42,12 @@ impl GalanguaApp {
             paused: false,
         }
     }
+
+    fn back_to_title(&mut self) {
+        self.star_manager.borrow_mut().set_stop(false);
+        self.state = AppState::Title;
+        self.count = 0;
+    }
 }
 
 impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
@@ -64,16 +70,22 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
         Ok(())
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> bool {
         self.pad.update();
 
-        if self.state != AppState::Title {
-            if self.pad.is_trigger(PAD_START) {
-                self.paused = !self.paused;
+        if self.pad.is_trigger(PAD_CANCEL) {
+            if self.state != AppState::Title {
+                self.back_to_title();
+            } else {
+                return false;
             }
-            if self.paused {
-                return;
-            }
+        }
+
+        if self.pad.is_trigger(PAD_START) {
+            self.paused = !self.paused;
+        }
+        if self.paused {
+            return true;
         }
 
         self.star_manager.borrow_mut().update();
@@ -92,12 +104,11 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
                 self.frame_count += 1;
                 self.game_manager.update(&self.pad);
                 if self.game_manager.is_finished() {
-                    self.star_manager.borrow_mut().set_stop(false);
-                    self.state = AppState::Title;
-                    self.count = 0;
+                    self.back_to_title();
                 }
             }
         }
+        true
     }
 
     fn draw(&mut self, renderer: &mut R) -> Result<(), String>

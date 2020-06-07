@@ -4,7 +4,7 @@ use crate::framework::RendererTrait;
 
 pub trait AppTrait<R: RendererTrait> {
     fn init(&mut self, renderer: &mut R) -> Result<(), String>;
-    fn update(&mut self);
+    fn update(&mut self) -> bool;
     fn draw(&mut self, renderer: &mut R) -> Result<(), String>;
 
     fn on_key_down(&mut self, keycode: Keycode);

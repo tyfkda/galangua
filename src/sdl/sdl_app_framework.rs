@@ -53,7 +53,9 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
             }
 
             if !self.fast_forward {
-                self.app.update();
+                if !self.app.update() {
+                    break 'running;
+                }
             } else {
                 for _ in 0..10 {
                     self.app.update();
@@ -70,7 +72,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
         let mut event_pump = self.sdl_context.event_pump()?;
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                Event::Quit { .. } => {
                     return Ok(false);
                 }
                 Event::KeyDown { keycode: Some(key), .. } => {
