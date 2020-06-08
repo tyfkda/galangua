@@ -14,7 +14,8 @@ impl TextureManager {
         }
     }
 
-    pub fn load(&mut self, canvas: &mut WindowCanvas, base_path: &str, filenames: &Vec<&str>) -> Result<(), String> {
+    pub fn load(&mut self, canvas: &mut WindowCanvas, base_path: &str,
+                filenames: &Vec<&str>) -> Result<(), String> {
         self.resource_manager.load(base_path, filenames, |path: &str| {
             let texture_creator = canvas.texture_creator();
             texture_creator.load_texture(path)

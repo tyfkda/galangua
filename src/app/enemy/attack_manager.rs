@@ -52,7 +52,8 @@ impl AttackManager {
         }
 
         if let Some(slot) = self.attackers.iter_mut().find(|x| x.is_none()) {
-            let alive_indices = (0..enemies.len()).filter(|&i| enemies[i].is_some()).collect::<Vec<usize>>();
+            let alive_indices = (0..enemies.len())
+                .filter(|&i| enemies[i].is_some()).collect::<Vec<usize>>();
             let count = alive_indices.len();
             if count > 0 {
                 let mut rng = rand::thread_rng();
@@ -68,9 +69,13 @@ for _i in 0..100 {
                 let no = alive_indices[index];
                 *slot = Some(no);
 
-                let mut enemies = enemies.iter_mut().flat_map(|x| x).filter(|x| x.state == EnemyState::Formation);
+                let mut enemies = enemies.iter_mut()
+                    .flat_map(|x| x)
+                    .filter(|x| x.state == EnemyState::Formation);
                 let enemy = &mut enemies.nth(index).unwrap();
-                enemy.set_attack(enemy.enemy_type == EnemyType::Owl && !self.player_captured && !accessor.is_player_dual());
+                enemy.set_attack(enemy.enemy_type == EnemyType::Owl &&
+                                 !self.player_captured &&
+                                 !accessor.is_player_dual());
 
                 self.wait = 60 * 2;
             }

@@ -9,8 +9,8 @@ use crate::app::enemy::{CaptureState, EnemyCollisionResult, EnemyManager};
 use crate::app::game::event_queue::{EventQueue, EventType};
 use crate::app::player::MyShot;
 use crate::app::player::Player;
-use crate::app::util::{CollBox, Collidable};
 use crate::app::util::unsafe_util::peep;
+use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::ONE;
@@ -107,8 +107,7 @@ impl GameManager {
                     self.count = 0;
                 }
             }
-            GameState::Capturing | GameState::Recapturing => {
-            }
+            GameState::Capturing | GameState::Recapturing => {}
             GameState::PlayerDead => {
                 // TODO: Wait all enemies back to formation.
                 self.count += 1;
@@ -307,7 +306,9 @@ impl GameManager {
                 myshot.get_collbox_for_dual(),
             ];
             for collbox in colls.iter().flat_map(|x| x) {
-                if let Some(_) = handle_collision_enemy(&mut self.enemy_manager, &collbox, 1, true, &mut self.event_queue) {
+                if let Some(_) = handle_collision_enemy(
+                    &mut self.enemy_manager, &collbox, 1, true, &mut self.event_queue)
+                {
                     *myshot_opt = None;
                     break;
                 }
@@ -326,14 +327,18 @@ impl GameManager {
         ];
 
         for collbox in collbox_opts.iter().flat_map(|x| x) {
-            if let Some(pos) = handle_collision_enemy(&mut self.enemy_manager, &collbox, 100, false, &mut self.event_queue) {
+            if let Some(pos) = handle_collision_enemy(
+                &mut self.enemy_manager, &collbox, 100, false, &mut self.event_queue)
+            {
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
                     continue;
                 }
             }
 
-            if let EnemyCollisionResult::Hit{pos, ..} = self.enemy_manager.check_shot_collision(&collbox) {
+            if let EnemyCollisionResult::Hit{pos, ..} =
+                self.enemy_manager.check_shot_collision(&collbox)
+            {
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
                     continue;
@@ -396,7 +401,8 @@ fn handle_collision_enemy(
                         event_queue.push(EventType::EscapeCapturing);
                     }
                     CaptureState::Capturing => {
-                        event_queue.push(EventType::RecapturePlayer(&pos - &Vec2I::new(0, 16 * ONE)));
+                        event_queue.push(EventType::RecapturePlayer(
+                            &pos - &Vec2I::new(0, 16 * ONE)));
                     }
                 }
             }

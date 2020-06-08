@@ -91,7 +91,8 @@ impl Enemy {
         self.capture_state
     }
 
-    pub fn update<T: Accessor>(&mut self, formation: &Formation, accessor: &T, event_queue: &mut EventQueue) {
+    pub fn update<T: Accessor>(&mut self, formation: &Formation, accessor: &T,
+                               event_queue: &mut EventQueue) {
         if self.state == EnemyState::Formation {
             return;
         }
@@ -241,7 +242,9 @@ impl Enemy {
                 event_queue.push(EventType::EneShot(self.pos, 2 * ONE));
             }
             1 => {
-                if (self.vangle < 0 && self.angle <= -160 * ONE) || (self.vangle > 0 && self.angle >= 160 * ONE) {
+                if (self.vangle < 0 && self.angle <= -160 * ONE) ||
+                    (self.vangle > 0 && self.angle >= 160 * ONE)
+                {
                     self.vangle = 0;
                     self.attack_step += 1;
                     self.count = 0;
@@ -260,7 +263,9 @@ impl Enemy {
                 }
             }
             3 => {
-                if (self.vangle > 0 && self.angle >= -ANGLE / 2 * ONE) || (self.vangle < 0 && self.angle <= ANGLE / 2 * ONE) {
+                if (self.vangle > 0 && self.angle >= -ANGLE / 2 * ONE) ||
+                    (self.vangle < 0 && self.angle <= ANGLE / 2 * ONE)
+                {
                     self.vangle = 0;
                     self.attack_step += 1;
                     self.count = 0;
@@ -327,7 +332,8 @@ impl Enemy {
                     self.angle = ANGLE / 2 * ONE;
                     self.vangle = 0;
 
-                    self.tractor_beam = Some(TractorBeam::new(&(&self.pos + &Vec2I::new(0, 8 * ONE))));
+                    self.tractor_beam =
+                        Some(TractorBeam::new(&(&self.pos + &Vec2I::new(0, 8 * ONE))));
 
                     self.attack_step += 1;
                     self.count = 0;
@@ -341,7 +347,8 @@ impl Enemy {
                         self.attack_step += 1;
                         self.count = 0;
                     } else if tractor_beam.can_capture(accessor.get_raw_player_pos()) {
-                        event_queue.push(EventType::CapturePlayer(&self.pos + &Vec2I::new(0, 16 * ONE)));
+                        event_queue.push(
+                            EventType::CapturePlayer(&self.pos + &Vec2I::new(0, 16 * ONE)));
                         tractor_beam.start_capture();
                         self.capture_state = CaptureState::BeamTracting;
                         self.attack_step = 100;

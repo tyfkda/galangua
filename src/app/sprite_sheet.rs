@@ -11,7 +11,8 @@ pub fn load_sprite_sheet(filename: &str) -> Result<HashMap<String, SpriteSheet>,
     let file = File::open(filename).expect(&format!("file not found: {}", filename));
     let reader = BufReader::new(file);
 
-    let deserialized: Value = serde_json::from_reader(reader).expect(&format!("illegal json: {}", filename));
+    let deserialized: Value = serde_json::from_reader(reader)
+        .expect(&format!("illegal json: {}", filename));
 
     let mut m = HashMap::new();
 

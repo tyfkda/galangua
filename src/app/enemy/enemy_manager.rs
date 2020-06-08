@@ -7,8 +7,8 @@ use crate::app::enemy::attack_manager::AttackManager;
 use crate::app::enemy::ene_shot::EneShot;
 use crate::app::enemy::enemy::{CaptureState, Enemy, EnemyState};
 use crate::app::enemy::enemy_collision::EnemyCollisionResult;
-use crate::app::enemy::Accessor;
 use crate::app::enemy::formation::Formation;
+use crate::app::enemy::Accessor;
 use crate::app::game::EventQueue;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
@@ -108,7 +108,8 @@ impl EnemyManager {
                 if colbox.check_collision(target) {
                     let pos = *shot.raw_pos();
                     *shot_opt = None;
-                    return EnemyCollisionResult::Hit { pos, destroyed: false, point: 0, capture_state: CaptureState::None };
+                    return EnemyCollisionResult::Hit {
+                        pos, destroyed: false, point: 0, capture_state: CaptureState::None };
                 }
             }
         }
@@ -152,7 +153,10 @@ impl EnemyManager {
     }
 
     fn copy_formation_positions(&mut self) {
-        for enemy in self.enemies.iter_mut().flat_map(|x| x).filter(|x| x.state == EnemyState::Formation) {
+        for enemy in self.enemies.iter_mut()
+            .flat_map(|x| x)
+            .filter(|x| x.state == EnemyState::Formation)
+        {
             let index = enemy.formation_index as usize;
             let pos = self.formation.pos(index & 15, index / 16);
             enemy.pos = pos;
@@ -184,7 +188,8 @@ impl EnemyManager {
         if let Some(index) = self.shots.iter().position(|x| x.is_none()) {
             let mut rng = rand::thread_rng();
             let count = target_pos.iter().filter(|x| x.is_some()).count();
-            let target_opt: &Option<Vec2I> = target_pos.iter().filter(|x| x.is_some()).nth(rng.gen_range(0, count)).unwrap();
+            let target_opt: &Option<Vec2I> = target_pos.iter()
+                .filter(|x| x.is_some()).nth(rng.gen_range(0, count)).unwrap();
             let target: Vec2I = target_opt.unwrap();
             let d = &(&target * ONE) - &pos;
             let distance = ((d.x as f64).powi(2) + (d.y as f64).powi(2)).sqrt();

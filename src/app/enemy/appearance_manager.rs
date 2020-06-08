@@ -120,7 +120,7 @@ impl AppearanceManager {
         let entry = &UNIT_TABLE[(self.stage as usize) % UNIT_TABLE.len()][self.unit as usize];
         match entry.pat {
             0 => {
-                let flip = if entry.flip_x {1} else {0};
+                let flip = if entry.flip_x { 1 } else { 0 };
                 {
                     let i = ORDER[base + (self.count + flip * 4) as usize];
                     let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + flip) as usize];
@@ -198,7 +198,7 @@ impl AppearanceManager {
                 }
             }
             3 => {
-                let flip = if entry.flip_x {1} else {0};
+                let flip = if entry.flip_x { 1 } else { 0 };
                 {
                     let i = ORDER[base + (self.count + flip * 4) as usize];
                     let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + flip) as usize];

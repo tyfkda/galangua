@@ -60,11 +60,15 @@ impl Pad {
     pub fn on_joystick_axis(&mut self, axis_index: u8, dir: i8) {
         match axis_index {
             0 => {
-                let lr = if dir < 0 { PadBit::L } else if dir > 0 { PadBit::R } else { PadBit::empty() };
+                let lr = if dir < 0 { PadBit::L }
+                    else if dir > 0 { PadBit::R }
+                    else { PadBit::empty() };
                 self.joy = (self.joy & !(PadBit::L | PadBit::R)) | lr;
             }
             1 => {
-                let ud = if dir < 0 { PadBit::U } else if dir > 0 { PadBit::D } else { PadBit::empty() };
+                let ud = if dir < 0 { PadBit::U }
+                    else if dir > 0 { PadBit::D }
+                    else { PadBit::empty() };
                 self.joy = (self.joy & !(PadBit::U | PadBit::D)) | ud;
             }
             _ => {}

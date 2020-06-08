@@ -1,6 +1,6 @@
 use array_macro::*;
-use rand::Rng;
 use rand::rngs::ThreadRng;
+use rand::Rng;
 
 use crate::app::consts;
 use crate::framework::types::Vec2I;
@@ -28,7 +28,8 @@ impl StarManager {
         let mut rng = rand::thread_rng();
         let stars = array![|_i|
             Star {
-                pos: Vec2I::new(rng.gen_range(0, consts::WIDTH) * ONE, rng.gen_range(-16, consts::HEIGHT) * ONE),
+                pos: Vec2I::new(rng.gen_range(0, consts::WIDTH) * ONE,
+                                rng.gen_range(-16, consts::HEIGHT) * ONE),
                 t: rng.gen_range(0, 64),
                 c: choose_random_color(&mut rng),
             }

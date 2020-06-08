@@ -36,7 +36,7 @@ impl GalanguaApp {
             pad: Pad::new(),
             fps_calc: FpsCalc::new(),
             game_manager: GameManager::new(Rc::clone(&star_manager)),
-            star_manager: star_manager,
+            star_manager,
             frame_count: 0,
 
             paused: false,
@@ -142,8 +142,10 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
         }
         renderer.draw_str("font", 8 * 9, 8 * 0, "HIGH SCORE")?;
         renderer.set_texture_color_mod("font", 255, 255, 255);
-        renderer.draw_str("font", 8 * 0, 8 * 1, &format!("{:6}0", self.game_manager.score() / 10))?;
-        renderer.draw_str("font", 8 * 10, 8 * 1, &format!("{:6}0", self.game_manager.high_score() / 10))?;
+        renderer.draw_str("font", 8 * 0, 8 * 1,
+                          &format!("{:6}0", self.game_manager.score() / 10))?;
+        renderer.draw_str("font", 8 * 10, 8 * 1,
+                          &format!("{:6}0", self.game_manager.high_score() / 10))?;
 
         renderer.set_texture_color_mod("font", 128, 128, 128);
         renderer.draw_str("font", 8 * 23, 8 * 0, &format!("FPS{:2}", self.fps_calc.fps()))?;

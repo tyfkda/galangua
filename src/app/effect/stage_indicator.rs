@@ -75,11 +75,11 @@ struct FlagInfo {
 }
 
 const FLAG_INFO_TABLE: [FlagInfo; 5] = [
-    FlagInfo {sprite_name: "flag30", count: 30, width: FLAG30_WIDTH},
-    FlagInfo {sprite_name: "flag20", count: 20, width: FLAG20_WIDTH},
-    FlagInfo {sprite_name: "flag10", count: 10, width: FLAG10_WIDTH},
-    FlagInfo {sprite_name: "flag5",  count:  5, width: FLAG5_WIDTH},
-    FlagInfo {sprite_name: "flag1",  count:  1, width: FLAG1_WIDTH},
+    FlagInfo { sprite_name: "flag30", count: 30, width: FLAG30_WIDTH },
+    FlagInfo { sprite_name: "flag20", count: 20, width: FLAG20_WIDTH },
+    FlagInfo { sprite_name: "flag10", count: 10, width: FLAG10_WIDTH },
+    FlagInfo { sprite_name: "flag5", count: 5, width: FLAG5_WIDTH },
+    FlagInfo { sprite_name: "flag1", count: 1, width: FLAG1_WIDTH },
 ];
 
 fn calc_width(stage: u32) -> u32 {
