@@ -1,5 +1,6 @@
 use sdl2::event::Event;
 use sdl2::image::InitFlag;
+use sdl2::joystick::Joystick;
 use sdl2::keyboard::Keycode;
 use sdl2::Sdl;
 use std::thread;
@@ -31,6 +32,8 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
     pub fn run(&mut self, title: &str, width: u32, height: u32, scale: u32) -> Result<(), String> {
         let video_subsystem = self.sdl_context.video()?;
         let _image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?;
+
+        let _joystick = self.set_up_joystick()?;
 
         let window = video_subsystem
             .window(title, width * scale, height * scale)
@@ -79,13 +82,23 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                     if key == Keycode::LShift {
                         self.fast_forward = true;
                     }
-                    self.app.on_key_down(key);
+                    self.app.on_key(key, true);
                 }
                 Event::KeyUp { keycode: Some(key), .. } => {
                     if key == Keycode::LShift {
                         self.fast_forward = false;
                     }
-                    self.app.on_key_up(key);
+                    self.app.on_key(key, false);
+                }
+                Event::JoyAxisMotion { axis_idx, value: val, .. } => {
+                    let dir = if val > 10_000 { 1 } else if val < -10_000 { -1 } else { 0 };
+                    self.app.on_joystick_axis(axis_idx, dir);
+                }
+                Event::JoyButtonDown { button_idx, .. } => {
+                    self.app.on_joystick_button(button_idx, true);
+                }
+                Event::JoyButtonUp { button_idx, .. } => {
+                    self.app.on_joystick_button(button_idx, false);
                 }
                 _ => {}
             }
@@ -103,5 +116,17 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
         } else {
             self.last_update_time = now;
         }
+    }
+
+    fn set_up_joystick(&mut self) -> Result<Option<Joystick>, String> {
+        let joystick_subsystem = self.sdl_context.joystick()?;
+        let available = joystick_subsystem
+            .num_joysticks()
+            .map_err(|e| format!("can't enumerate joysticks: {}", e))?;
+        let joystick = (0..available).find_map(|id| match joystick_subsystem.open(id) {
+            Ok(c) => Some(c),
+            Err(_e) => None,
+        });
+        Ok(joystick)
     }
 }

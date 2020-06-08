@@ -51,12 +51,16 @@ impl GalanguaApp {
 }
 
 impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
-    fn on_key_down(&mut self, keycode: Keycode) {
-        self.pad.on_key_down(keycode);
+    fn on_key(&mut self, keycode: Keycode, down: bool) {
+        self.pad.on_key(keycode, down);
     }
 
-    fn on_key_up(&mut self, keycode: Keycode) {
-        self.pad.on_key_up(keycode);
+    fn on_joystick_axis(&mut self, axis_index: u8, dir: i8) {
+        self.pad.on_joystick_axis(axis_index, dir);
+    }
+
+    fn on_joystick_button(&mut self, button_index: u8, down: bool) {
+        self.pad.on_joystick_button(button_index, down);
     }
 
     fn init(&mut self, renderer: &mut R) -> Result<(), String>
