@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 array-macro = "1.0.4"
+bitflags = "1.2.1"
 counted-array = "0.1.2"
 lazy_static = "1.4.0"
 rand = "0.7"

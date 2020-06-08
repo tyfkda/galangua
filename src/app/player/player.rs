@@ -5,7 +5,7 @@ use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{clamp, quantize_angle, round_up, ANGLE, ONE};
-use crate::util::pad::{Pad, PAD_A, PAD_L, PAD_R};
+use crate::util::pad::{Pad, PadBit};
 
 const DEFAULT_LEFT_SHIP: u32 = 3;
 const Y_POSITION: i32 = HEIGHT - 16 - 8;
@@ -93,13 +93,13 @@ impl Player {
     }
 
     pub fn update_normal(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
-        if pad.is_pressed(PAD_L) {
+        if pad.is_pressed(PadBit::L) {
             self.pos.x -= 2 * ONE;
             if self.pos.x < 8 * ONE {
                 self.pos.x = 8 * ONE;
             }
         }
-        if pad.is_pressed(PAD_R) {
+        if pad.is_pressed(PadBit::R) {
             self.pos.x += 2 * ONE;
 
             let right = if self.dual { (WIDTH - 8 - 16) * ONE } else { (WIDTH - 8) * ONE };
@@ -126,7 +126,7 @@ impl Player {
     }
 
     fn fire_bullet(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
-        if pad.is_trigger(PAD_A) {
+        if pad.is_trigger(PadBit::A) {
             let pos = &self.pos + &Vec2I::new(0, 2 * ONE);
             event_queue.push(EventType::MyShot(pos, self.dual, self.angle));
         }

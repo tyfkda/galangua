@@ -7,7 +7,7 @@ use crate::app::game::GameManager;
 use crate::app::sprite_sheet::load_sprite_sheet;
 use crate::framework::{AppTrait, RendererTrait};
 use crate::util::fps_calc::FpsCalc;
-use crate::util::pad::{Pad, PAD_A, PAD_CANCEL, PAD_START};
+use crate::util::pad::{Pad, PadBit};
 
 #[derive(PartialEq)]
 enum AppState {
@@ -77,7 +77,7 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
     fn update(&mut self) -> bool {
         self.pad.update();
 
-        if self.pad.is_trigger(PAD_CANCEL) {
+        if self.pad.is_trigger(PadBit::CANCEL) {
             if self.state != AppState::Title {
                 self.back_to_title();
             } else {
@@ -85,7 +85,7 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
             }
         }
 
-        if self.pad.is_trigger(PAD_START) {
+        if self.pad.is_trigger(PadBit::START) {
             self.paused = !self.paused;
         }
         if self.paused {
@@ -98,7 +98,7 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
             AppState::Title => {
                 self.count = self.count.wrapping_add(1);
 
-                if self.pad.is_trigger(PAD_A) {
+                if self.pad.is_trigger(PadBit::A) {
                     self.game_manager.restart();
                     self.state = AppState::Game;
                     self.frame_count = 0;
