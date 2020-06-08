@@ -22,6 +22,10 @@ pub fn main() -> Result<(), String> {
   Move the fighter : Arrow keys (left or right)
   Shoot a bullet   : Space bar
   Quit the app     : Escape key")
+        .arg(clap::Arg::with_name("full")
+             .help("Use fullscreen")
+             .short("f")
+             .long("fullscreen"))
         .arg(clap::Arg::with_name("scale")
              .help("Specify window scale (default: 3)")
              .short("s")
@@ -29,6 +33,7 @@ pub fn main() -> Result<(), String> {
              .takes_value(true))
         .get_matches();
 
+    let fullscreen = matches.is_present("full");
     let scale = if let Some(scale) = matches.value_of("scale") {
         String::from(scale).parse().unwrap()
     } else {
@@ -39,7 +44,7 @@ pub fn main() -> Result<(), String> {
     let app = GalanguaApp::new(timer);
     let mut framework = SdlAppFramework::new(Box::new(app), map_key)?;
     framework.run(APP_NAME,
-                  consts::WIDTH as u32, consts::HEIGHT as u32, scale)
+                  consts::WIDTH as u32, consts::HEIGHT as u32, scale, fullscreen)
 }
 
 counted_array!(const KEY_MAP_TABLE: [(Keycode, VKey); _] = [

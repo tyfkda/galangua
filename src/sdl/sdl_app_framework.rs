@@ -41,19 +41,29 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
         })
     }
 
-    pub fn run(&mut self, title: &str, width: u32, height: u32, scale: u32) -> Result<(), String> {
+    pub fn run(&mut self, title: &str, width: u32, height: u32, scale: u32, fullscreen: bool) -> Result<(), String> {
         let video_subsystem = self.sdl_context.video()?;
         let _image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?;
 
         let _joystick = self.set_up_joystick()?;
 
-        let window = video_subsystem
-            .window(title, width * scale, height * scale)
-            .position_centered()
-            .resizable()
+        let mut window_builder = video_subsystem
+            .window(title, width * scale, height * scale);
+        if fullscreen {
+            window_builder.fullscreen();
+        } else {
+            window_builder
+                .position_centered()
+                .resizable();
+        }
+        let window = window_builder
             .opengl()
             .build()
             .map_err(|e| e.to_string())?;
+        if fullscreen {
+            self.sdl_context.mouse().show_cursor(false);
+        }
+
         let canvas = window
             .into_canvas()
             .present_vsync()
