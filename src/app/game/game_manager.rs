@@ -330,6 +330,9 @@ impl GameManager {
             if let Some(pos) = handle_collision_enemy(
                 &mut self.enemy_manager, &collbox, 100, false, &mut self.event_queue)
             {
+                let player_pos = self.player.get_raw_pos();
+                self.event_queue.push(EventType::SmallBomb(*player_pos));
+
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
                     continue;
@@ -339,6 +342,9 @@ impl GameManager {
             if let EnemyCollisionResult::Hit{pos, ..} =
                 self.enemy_manager.check_shot_collision(&collbox)
             {
+                let player_pos = self.player.get_raw_pos();
+                self.event_queue.push(EventType::SmallBomb(*player_pos));
+
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
                     continue;
