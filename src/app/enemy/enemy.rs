@@ -18,11 +18,12 @@ pub enum EnemyType {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EnemyState {
-    Flying,
+    None,
     Trajectory,
     MoveToFormation,
     Formation,
     Attack,
+    Troop,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -32,6 +33,8 @@ pub enum CaptureState {
     BeamClosing,
     Capturing,
 }
+
+const MAX_TROOPS: usize = 3;
 
 #[derive(Debug)]
 pub struct Enemy {
@@ -51,6 +54,7 @@ pub struct Enemy {
     target_pos: Vec2I,
     tractor_beam: Option<TractorBeam>,
     capture_state: CaptureState,
+    troops: Option<[Option<usize>; MAX_TROOPS]>,
 }
 
 impl Enemy {
@@ -62,7 +66,7 @@ impl Enemy {
 
         Self {
             enemy_type,
-            state: EnemyState::Flying,
+            state: EnemyState::None,
             life,
             pos: *pos,
             angle,
@@ -76,6 +80,7 @@ impl Enemy {
             target_pos: Vec2I::new(0, 0),
             tractor_beam: None,
             capture_state: CaptureState::None,
+            troops: None,
         }
     }
 
@@ -91,14 +96,16 @@ impl Enemy {
         self.capture_state
     }
 
-    pub fn update<T: Accessor>(&mut self, formation: &Formation, accessor: &T,
+    pub fn update<T: Accessor>(&mut self, formation: &Formation, accessor: &mut T,
                                event_queue: &mut EventQueue) {
         if self.state == EnemyState::Formation {
             return;
         }
 
+        let prev_pos = self.pos;
+
         match self.state {
-            EnemyState::Flying => {}
+            EnemyState::None | EnemyState::Formation | EnemyState::Troop => {}
             EnemyState::Trajectory => {
                 let cont = self.update_traj();
                 if !cont {
@@ -129,14 +136,41 @@ impl Enemy {
             EnemyState::Attack => {
                 self.update_attack(accessor, event_queue);
             }
-            _ => {}
         }
 
         self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
 
+        self.update_troops(&(&self.pos - &prev_pos), self.angle, accessor);
+
         if let Some(tractor_beam) = &mut self.tractor_beam {
             tractor_beam.update();
+        }
+    }
+
+    fn update_troops<T: Accessor>(&mut self, add: &Vec2I, angle: i32, accessor: &mut T) {
+        if let Some(troops) = &mut self.troops {
+            for troop_opt in troops.iter_mut() {
+                if let Some(index) = troop_opt {
+                    if !accessor.update_troop(*index, add, angle) {
+                        *troop_opt = None;
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn update_troop(&mut self, add: &Vec2I, angle: i32) -> bool {
+        self.pos += *add;
+        self.angle = angle;
+        true
+    }
+
+    fn release_troops<T: Accessor>(&mut self, accessor: &mut T) {
+        if let Some(troops) = &mut self.troops {
+            troops.iter().flat_map(|x| x)
+                .for_each(|index| accessor.set_to_formation(*index));
+            self.troops = None;
         }
     }
 
@@ -182,8 +216,16 @@ impl Enemy {
                     if self.state == EnemyState::Formation {
                         150
                     } else {
-                        // TODO: According to supporters.
-                        400
+                        let count = if let Some(troops) = &mut self.troops {
+                            troops.iter().flat_map(|x| x).count()
+                        } else {
+                            0
+                        };
+                        match count {
+                            0 => 400,
+                            1 => 800,
+                            2 | _ => 1600,
+                        }
                     }
                 }
             };
@@ -211,22 +253,58 @@ impl Enemy {
         }
     }
 
-    pub fn set_attack(&mut self, capture_attack: bool) {
+    pub fn set_attack<T: Accessor>(&mut self, capture_attack: bool, accessor: &mut T) {
         self.state = EnemyState::Attack;
         self.attack_type = if capture_attack { 1 } else { 0 };
         self.attack_step = 0;
         self.count = 0;
+
+        self.troops = None;
+        if !capture_attack && self.enemy_type == EnemyType::Owl {
+            self.choose_troops(accessor);
+        }
     }
 
-    fn update_attack<T: Accessor>(&mut self, accessor: &T, event_queue: &mut EventQueue) {
+    fn choose_troops<T: Accessor>(&mut self, accessor: &mut T) {
+        let row = 16;
+        let base = self.formation_index;
+        let indices = [base + row - 1, base + row + 1, base + row * 5];
+        let mut troops = [None; MAX_TROOPS];
+        for i in 0..MAX_TROOPS {
+            if accessor.is_enemy_formation(indices[i]) {
+                troops[i] = Some(indices[i]);
+            }
+        }
+        if troops.iter().any(|x| x.is_some()) {
+            self.troops = Some(troops);
+            troops.iter().flat_map(|x| x)
+                .for_each(|index| accessor.set_to_troop(*index));
+        } else {
+            self.troops = None;
+        }
+    }
+
+    pub fn set_to_troop(&mut self) {
+        self.state = EnemyState::Troop;
+        self.count = 0;
+    }
+
+    pub fn set_to_formation(&mut self) {
+        self.state = EnemyState::Formation;
+        self.speed = 0;
+        self.angle = 0;
+        self.vangle = 0;
+    }
+
+    fn update_attack<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
         match self.enemy_type {
-            EnemyType::Bee => { self.update_attack_bee(event_queue); }
-            EnemyType::Butterfly => { self.update_attack_butterfly(event_queue); }
+            EnemyType::Bee => { self.update_attack_bee(accessor, event_queue); }
+            EnemyType::Butterfly => { self.update_attack_butterfly(accessor, event_queue); }
             EnemyType::Owl => { self.update_attack_owl(accessor, event_queue); }
         }
     }
 
-    fn update_attack_bee(&mut self, event_queue: &mut EventQueue) {
+    fn update_attack_bee<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
         match self.attack_step {
             0 => {
                 self.speed = 1 * ONE;
@@ -274,23 +352,22 @@ impl Enemy {
             4 => {
                 if self.pos.y >= (HEIGHT + 16) * ONE {
                     // TODO: Warp to the top of the screen.
-                    self.state = EnemyState::Formation;
-                    self.speed = 0;
-                    self.angle = 0;
-                    self.vangle = 0;
+                    self.release_troops(accessor);
+                    self.set_to_formation();
                 }
             }
             _ => {}
         }
     }
 
-    fn update_attack_butterfly(&mut self, event_queue: &mut EventQueue) {
-        self.update_attack_bee(event_queue);
+    fn update_attack_butterfly<T: Accessor>(&mut self, accessor: &mut T,
+                                            event_queue: &mut EventQueue) {
+        self.update_attack_bee(accessor, event_queue);
     }
 
-    fn update_attack_owl<T: Accessor>(&mut self, accessor: &T, event_queue: &mut EventQueue) {
+    fn update_attack_owl<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
         if self.attack_type == 0 {
-            self.update_attack_bee(event_queue);
+            self.update_attack_bee(accessor, event_queue);
             return;
         }
 
@@ -359,10 +436,7 @@ impl Enemy {
             3 => {
                 if self.pos.y >= (HEIGHT + 16) * ONE {
                     // TODO: Warp to the top of the screen.
-                    self.state = EnemyState::Formation;
-                    self.speed = 0;
-                    self.angle = 0;
-                    self.vangle = 0;
+                    self.set_to_formation();
                 }
             }
             // Capture sequence
@@ -392,10 +466,7 @@ impl Enemy {
                 if self.pos.y >= (HEIGHT + 16) * ONE {
                     event_queue.push(EventType::CaptureSequenceEnded);
                     // TODO: Warp to the top of the screen.
-                    self.state = EnemyState::Formation;
-                    self.speed = 0;
-                    self.angle = 0;
-                    self.vangle = 0;
+                    self.set_to_formation();
                 }
             }
             _ => {}

@@ -39,7 +39,7 @@ impl AttackManager {
         self.player_captured = value;
     }
 
-    pub fn update<T: Accessor>(&mut self, enemies: &mut [Option<Enemy>], accessor: &T) {
+    pub fn update<T: Accessor>(&mut self, enemies: &mut [Option<Enemy>], accessor: &mut T) {
         if !self.enable {
             return;
         }
@@ -73,9 +73,10 @@ for _i in 0..100 {
                     .flat_map(|x| x)
                     .filter(|x| x.state == EnemyState::Formation);
                 let enemy = &mut enemies.nth(index).unwrap();
-                enemy.set_attack(enemy.enemy_type == EnemyType::Owl &&
-                                 !self.player_captured &&
-                                 !accessor.is_player_dual());
+                let capture_attack = enemy.enemy_type == EnemyType::Owl &&
+                    !self.player_captured &&
+                    !accessor.is_player_dual();
+                enemy.set_attack(capture_attack, accessor);
 
                 self.wait = 60 * 2;
             }

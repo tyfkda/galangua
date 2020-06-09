@@ -61,7 +61,7 @@ impl EnemyManager {
         self.appearance_manager.done && self.enemies.iter().all(|x| x.is_none())
     }
 
-    pub fn update<T: Accessor>(&mut self, accessor: &T, event_queue: &mut EventQueue) {
+    pub fn update<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
         self.update_appearance();
         self.update_formation();
         self.update_attackers(accessor);
@@ -148,7 +148,7 @@ impl EnemyManager {
         }
     }
 
-    fn update_attackers<T: Accessor>(&mut self, accessor: &T) {
+    fn update_attackers<T: Accessor>(&mut self, accessor: &mut T) {
         self.attack_manager.update(&mut self.enemies, accessor);
     }
 
@@ -163,7 +163,7 @@ impl EnemyManager {
         }
     }
 
-    fn update_enemies<T: Accessor>(&mut self, accessor: &T, event_queue: &mut EventQueue) {
+    fn update_enemies<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
             enemy.update(&self.formation, accessor, event_queue);
@@ -208,6 +208,44 @@ impl EnemyManager {
 
     pub fn enable_attack(&mut self, value: bool) {
         self.attack_manager.set_enable(value);
+    }
+
+    pub fn is_enemy_formation(&self, formation_index: usize) -> bool {
+        self.enemies.iter()
+            .flat_map(|x| x)
+            .find(|enemy|
+                  enemy.formation_index == formation_index &&
+                  enemy.state == EnemyState::Formation)
+            .is_some()
+    }
+
+    pub fn set_to_troop(&mut self, formation_index: usize) {
+        if let Some(enemy) = self.enemies.iter_mut()
+            .flat_map(|x| x)
+            .find(|enemy| enemy.formation_index == formation_index)
+        {
+            enemy.set_to_troop();
+        }
+    }
+
+    pub fn set_to_formation(&mut self, formation_index: usize) {
+        if let Some(enemy) = self.enemies.iter_mut()
+            .flat_map(|x| x)
+            .find(|enemy| enemy.formation_index == formation_index)
+        {
+            enemy.set_to_formation();
+        }
+    }
+
+    pub fn update_troop(&mut self, formation_index: usize, add: &Vec2I, angle: i32) -> bool {
+        if let Some(enemy) = self.enemies.iter_mut()
+            .flat_map(|x| x)
+            .find(|enemy| enemy.formation_index == formation_index)
+        {
+            enemy.update_troop(add, angle)
+        } else {
+            false
+        }
     }
 }
 

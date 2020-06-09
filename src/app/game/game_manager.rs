@@ -366,6 +366,22 @@ impl AccessorForEnemy for GameManager {
     fn is_player_captured(&self) -> bool {
         self.player.is_captured()
     }
+
+    fn is_enemy_formation(&self, formation_index: usize) -> bool {
+        self.enemy_manager.is_enemy_formation(formation_index)
+    }
+
+    fn set_to_troop(&mut self, formation_index: usize) {
+        self.enemy_manager.set_to_troop(formation_index)
+    }
+
+    fn set_to_formation(&mut self, formation_index: usize) {
+        self.enemy_manager.set_to_formation(formation_index)
+    }
+
+    fn update_troop(&mut self, formation_index: usize, add: &Vec2I, angle: i32) -> bool {
+        self.enemy_manager.update_troop(formation_index, add, angle)
+    }
 }
 
 fn handle_collision_enemy(
