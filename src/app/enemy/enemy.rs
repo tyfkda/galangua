@@ -151,7 +151,9 @@ impl Enemy {
         if let Some(troops) = &mut self.troops {
             for troop_opt in troops.iter_mut() {
                 if let Some(formation_index) = troop_opt {
-                    if !accessor.update_troop(formation_index, add, angle) {
+                    if let Some(enemy) = accessor.get_enemy_at_mut(formation_index) {
+                        enemy.update_troop(add, angle);
+                    } else {
                         //*troop_opt = None;
                     }
                 }
@@ -159,7 +161,7 @@ impl Enemy {
         }
     }
 
-    pub fn update_troop(&mut self, add: &Vec2I, angle: i32) -> bool {
+    fn update_troop(&mut self, add: &Vec2I, angle: i32) -> bool {
         self.pos += *add;
         self.angle = angle;
         true
@@ -168,7 +170,11 @@ impl Enemy {
     fn release_troops<T: Accessor>(&mut self, accessor: &mut T) {
         if let Some(troops) = &mut self.troops {
             troops.iter().flat_map(|x| x)
-                .for_each(|index| accessor.set_to_formation(index));
+                .for_each(|index| {
+                    if let Some(enemy) = accessor.get_enemy_at_mut(index) {
+                        enemy.set_to_formation();
+                    }
+                });
             self.troops = None;
         }
     }
@@ -271,13 +277,19 @@ impl Enemy {
             FormationIndex(base.0, base.1 - 1),
         ];
         for index in indices.iter() {
-            if accessor.is_enemy_formation(index) {
-                self.add_troop(*index);
+            if let Some(enemy) = accessor.get_enemy_at_mut(index) {
+                if enemy.state == EnemyState::Formation {
+                    self.add_troop(*index);
+                }
             }
         }
         if let Some(troops) = self.troops {
             troops.iter().flat_map(|x| x)
-                .for_each(|index| accessor.set_to_troop(index));
+                .for_each(|index| {
+                    if let Some(enemy) = accessor.get_enemy_at_mut(index) {
+                        enemy.set_to_troop();
+                    }
+                });
         }
     }
 
@@ -294,12 +306,12 @@ impl Enemy {
         }
     }
 
-    pub fn set_to_troop(&mut self) {
+    fn set_to_troop(&mut self) {
         self.state = EnemyState::Troop;
         self.count = 0;
     }
 
-    pub fn set_to_formation(&mut self) {
+    fn set_to_formation(&mut self) {
         self.state = EnemyState::Formation;
         self.speed = 0;
         self.angle = 0;

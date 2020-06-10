@@ -5,7 +5,7 @@ use crate::app::effect::StageIndicator;
 use crate::app::effect::StarManager;
 use crate::app::effect::{EarnedPoint, EarnedPointType, Effect, SmallBomb};
 use crate::app::enemy::Accessor as AccessorForEnemy;
-use crate::app::enemy::{CaptureState, EnemyCollisionResult, EnemyManager, FormationIndex};
+use crate::app::enemy::{CaptureState, Enemy, EnemyCollisionResult, EnemyManager, FormationIndex};
 use crate::app::game::event_queue::{EventQueue, EventType};
 use crate::app::player::MyShot;
 use crate::app::player::Player;
@@ -376,20 +376,8 @@ impl AccessorForEnemy for GameManager {
         self.player.is_captured()
     }
 
-    fn is_enemy_formation(&self, formation_index: &FormationIndex) -> bool {
-        self.enemy_manager.is_enemy_formation(formation_index)
-    }
-
-    fn set_to_troop(&mut self, formation_index: &FormationIndex) {
-        self.enemy_manager.set_to_troop(formation_index)
-    }
-
-    fn set_to_formation(&mut self, formation_index: &FormationIndex) {
-        self.enemy_manager.set_to_formation(formation_index)
-    }
-
-    fn update_troop(&mut self, formation_index: &FormationIndex, add: &Vec2I, angle: i32) -> bool {
-        self.enemy_manager.update_troop(formation_index, add, angle)
+    fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy> {
+        self.enemy_manager.get_enemy_at_mut(formation_index)
     }
 }
 

@@ -216,42 +216,9 @@ impl EnemyManager {
         self.attack_manager.set_enable(value);
     }
 
-    pub fn is_enemy_formation(&self, formation_index: &FormationIndex) -> bool {
-        self.enemies.iter()
-            .flat_map(|x| x)
-            .find(|enemy|
-                  enemy.formation_index == *formation_index &&
-                  enemy.state == EnemyState::Formation)
-            .is_some()
-    }
-
-    pub fn set_to_troop(&mut self, formation_index: &FormationIndex) {
-        if let Some(enemy) = self.enemies.iter_mut()
-            .flat_map(|x| x)
+    pub fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy> {
+        self.enemies.iter_mut().flat_map(|x| x)
             .find(|enemy| enemy.formation_index == *formation_index)
-        {
-            enemy.set_to_troop();
-        }
-    }
-
-    pub fn set_to_formation(&mut self, formation_index: &FormationIndex) {
-        if let Some(enemy) = self.enemies.iter_mut()
-            .flat_map(|x| x)
-            .find(|enemy| enemy.formation_index == *formation_index)
-        {
-            enemy.set_to_formation();
-        }
-    }
-
-    pub fn update_troop(&mut self, formation_index: &FormationIndex, add: &Vec2I, angle: i32) -> bool {
-        if let Some(enemy) = self.enemies.iter_mut()
-            .flat_map(|x| x)
-            .find(|enemy| enemy.formation_index == *formation_index)
-        {
-            enemy.update_troop(add, angle)
-        } else {
-            false
-        }
     }
 }
 
