@@ -13,7 +13,6 @@ use crate::app::util::unsafe_util::peep;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::ONE;
 use crate::util::pad::Pad;
 
 const MYSHOT_COUNT: usize = 2;
@@ -258,10 +257,16 @@ impl GameManager {
                 EventType::SpawnCapturedFighter(pos, formation_index) => {
                     self.enemy_manager.spawn_captured_fighter(&pos, &formation_index);
                 }
-                EventType::RecapturePlayer(pos) => {
-                    self.player.start_recapture_effect(&pos);
-                    self.enemy_manager.enable_attack(false);
-                    self.state = GameState::Recapturing;
+                EventType::RecapturePlayer(captured_fighter_index) => {
+                    if let Some(captured_fighter) = self.enemy_manager.get_enemy_at(
+                        &captured_fighter_index)
+                    {
+                        let pos = captured_fighter.raw_pos();
+                        self.player.start_recapture_effect(&pos);
+                        self.enemy_manager.remove_enemy(&captured_fighter_index);
+                        self.enemy_manager.enable_attack(false);
+                        self.state = GameState::Recapturing;
+                    }
                 }
                 EventType::MovePlayerHomePos => {
                     self.player.start_move_home_pos();
@@ -387,7 +392,9 @@ fn handle_collision_enemy(
 {
     match enemy_manager.check_collision(&collbox, power) {
         EnemyCollisionResult::NoHit => { /* no hit */ }
-        EnemyCollisionResult::Hit { pos, destroyed, point, capture_state } => {
+        EnemyCollisionResult::Hit {
+            pos, destroyed, point, capture_state, captured_fighter_index
+        } => {
             if destroyed {
                 if effect {
                     if point > 0 {
@@ -409,14 +416,13 @@ fn handle_collision_enemy(
                 }
 
                 match capture_state {
-                    CaptureState::None => {}
+                    CaptureState::None | CaptureState::Capturing => {}
                     CaptureState::BeamTracting | CaptureState::BeamClosing => {
                         event_queue.push(EventType::EscapeCapturing);
                     }
-                    CaptureState::Capturing => {
-                        event_queue.push(EventType::RecapturePlayer(
-                            &pos - &Vec2I::new(0, 16 * ONE)));
-                    }
+                }
+                if let Some(fi) = captured_fighter_index {
+                    event_queue.push(EventType::RecapturePlayer(fi));
                 }
             }
             return Some(pos);

@@ -90,10 +90,12 @@ impl EnemyManager {
                     let pos = *enemy.raw_pos();
                     let (destroyed, point) = enemy.set_damage(power);
                     let capture_state = enemy.capture_state();
+                    let captured_fighter_index = enemy.captured_fighter_index();
                     if destroyed {
                         *enemy_opt = None;
                     }
-                    return EnemyCollisionResult::Hit { pos, destroyed, point, capture_state };
+                    return EnemyCollisionResult::Hit {
+                        pos, destroyed, point, capture_state, captured_fighter_index };
                 }
             }
         }
@@ -109,7 +111,8 @@ impl EnemyManager {
                     let pos = *shot.raw_pos();
                     *shot_opt = None;
                     return EnemyCollisionResult::Hit {
-                        pos, destroyed: false, point: 0, capture_state: CaptureState::None };
+                        pos, destroyed: false, point: 0, capture_state: CaptureState::None,
+                        captured_fighter_index: None };
                 }
             }
         }
@@ -143,6 +146,17 @@ impl EnemyManager {
         enemy.state = EnemyState::Troop;
         enemy.formation_index = *formation_index;
         self.spawn(enemy)
+    }
+
+    pub fn remove_enemy(&mut self, formation_index: &FormationIndex) -> bool {
+        if let Some(slot) = self.enemies.iter_mut().filter(|x| x.is_some())
+            .find(|x| x.as_ref().unwrap().formation_index == *formation_index)
+        {
+            *slot = None;
+            true
+        } else {
+            false
+        }
     }
 
     fn update_formation(&mut self) {
@@ -214,6 +228,11 @@ impl EnemyManager {
 
     pub fn enable_attack(&mut self, value: bool) {
         self.attack_manager.set_enable(value);
+    }
+
+    pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {
+        self.enemies.iter().flat_map(|x| x)
+            .find(|enemy| enemy.formation_index == *formation_index)
     }
 
     pub fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy> {

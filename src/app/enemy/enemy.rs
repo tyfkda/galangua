@@ -97,6 +97,18 @@ impl Enemy {
         self.capture_state
     }
 
+    pub fn captured_fighter_index(&self) -> Option<FormationIndex> {
+        if self.capture_state == CaptureState::Capturing && self.troops.is_some() {
+            let fi = FormationIndex(self.formation_index.0, self.formation_index.1 - 1);
+            if self.troops.unwrap().iter().flat_map(|x| x)
+                .find(|index| **index == fi).is_some()
+            {
+                return Some(fi);
+            }
+        }
+        None
+    }
+
     pub fn update<T: Accessor>(&mut self, formation: &Formation, accessor: &mut T,
                                event_queue: &mut EventQueue) {
         if self.state == EnemyState::Formation {

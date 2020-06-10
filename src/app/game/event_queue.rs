@@ -46,7 +46,7 @@ pub enum EventType {
     CapturePlayerCompleted,
     CaptureSequenceEnded,
     SpawnCapturedFighter(Vec2I, FormationIndex),
-    RecapturePlayer(Vec2I),
+    RecapturePlayer(FormationIndex),
     MovePlayerHomePos,
     RecaptureEnded,
     EscapeCapturing,
