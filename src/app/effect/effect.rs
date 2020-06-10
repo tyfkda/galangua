@@ -32,9 +32,9 @@ impl Effect {
 #[derive(Clone, Copy)]
 pub enum EarnedPointType {
     Point1600,
+    Point1000,
     Point800,
     Point400,
-    Point150,
 }
 
 pub struct EarnedPoint {
@@ -64,9 +64,9 @@ impl EarnedPoint {
         let sprite: &str;
         match self.point_type {
             EarnedPointType::Point1600 => { sprite = "pts1600"; },
+            EarnedPointType::Point1000 => { sprite = "pts1000"; },
             EarnedPointType::Point800  => { sprite = "pts800"; },
             EarnedPointType::Point400  => { sprite = "pts400"; },
-            EarnedPointType::Point150  => { sprite = "pts150"; },
         }
 
         renderer.draw_sprite(sprite, &(&self.pos + &Vec2I::new(-8, -4)))?;

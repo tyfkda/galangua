@@ -407,9 +407,9 @@ fn handle_collision_enemy(
 
                     let point_type = match point {
                         1600 => Some(EarnedPointType::Point1600),
+                        1000 => Some(EarnedPointType::Point1000),
                         800 => Some(EarnedPointType::Point800),
                         400 => Some(EarnedPointType::Point400),
-                        150 => Some(EarnedPointType::Point150),
                         _ => None,
                     };
                     if let Some(point_type) = point_type {

@@ -245,9 +245,17 @@
 			"spriteSourceSize": {"x":16,"y":0,"w":16,"h":8},
 			"sourceSize": {"w":48,"h":8}
 		},
-		"pts1600.png":
+		"pts1000.png":
 		{
 			"frame": {"x":48,"y":52,"w":16,"h":7},
+			"rotated": false,
+			"trimmed": true,
+			"spriteSourceSize": {"x":0,"y":0,"w":16,"h":7},
+			"sourceSize": {"w":16,"h":8}
+		},
+		"pts1600.png":
+		{
+			"frame": {"x":64,"y":52,"w":16,"h":7},
 			"rotated": false,
 			"trimmed": true,
 			"spriteSourceSize": {"x":0,"y":0,"w":16,"h":7},
@@ -341,14 +349,6 @@
 			"spriteSourceSize": {"x":0,"y":2,"w":7,"h":14},
 			"sourceSize": {"w":8,"h":16}
 		},
-		"pts150.png":
-		{
-			"frame": {"x":80,"y":59,"w":14,"h":7},
-			"rotated": false,
-			"trimmed": true,
-			"spriteSourceSize": {"x":1,"y":0,"w":14,"h":7},
-			"sourceSize": {"w":16,"h":8}
-		},
 		"small_bomb2.png":
 		{
 			"frame": {"x":77,"y":66,"w":12,"h":12},
@@ -367,7 +367,7 @@
 		},
 		"beam00.png":
 		{
-			"frame": {"x":64,"y":52,"w":10,"h":5},
+			"frame": {"x":80,"y":59,"w":10,"h":5},
 			"rotated": false,
 			"trimmed": true,
 			"spriteSourceSize": {"x":19,"y":0,"w":10,"h":5},
