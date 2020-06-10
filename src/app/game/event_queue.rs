@@ -1,6 +1,7 @@
 use std::ops::Index;
 
 use crate::app::effect::EarnedPointType;
+use crate::app::enemy::FormationIndex;
 use crate::framework::types::Vec2I;
 
 pub struct EventQueue {
@@ -44,6 +45,7 @@ pub enum EventType {
     CapturePlayer(Vec2I),
     CapturePlayerCompleted,
     CaptureSequenceEnded,
+    SpawnCapturedFighter(Vec2I, FormationIndex),
     RecapturePlayer(Vec2I),
     MovePlayerHomePos,
     RecaptureEnded,

@@ -15,3 +15,6 @@ pub use self::accessor::Accessor;
 pub use self::enemy::CaptureState;
 pub use self::enemy_collision::EnemyCollisionResult;
 pub use self::enemy_manager::EnemyManager;
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct FormationIndex(u8, u8);  // x, y

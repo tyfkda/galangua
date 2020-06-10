@@ -1,11 +1,13 @@
 use lazy_static::lazy_static;
 
 use crate::app::consts::*;
+use crate::app::enemy::FormationIndex;
 use crate::framework::types::Vec2I;
 use crate::util::math::ONE;
 
 const X_COUNT: usize = 10;
-const Y_COUNT: usize = 5;
+const Y_COUNT: usize = 6;
+const BASE_Y: i32 = 24;
 
 lazy_static! {
     static ref BASE_X_TABLE: [i32; X_COUNT] = {
@@ -20,12 +22,11 @@ lazy_static! {
         table
     };
     static ref BASE_Y_TABLE: [i32; Y_COUNT] = {
-        let by = 32 + 8;
         let h = 16;
 
         let mut table: [i32; Y_COUNT] = Default::default();
         for i in 0..Y_COUNT {
-            let y = by + (i as i32) * h;
+            let y = BASE_Y + (i as i32) * h;
             table[i] = y * ONE;
         }
         table
@@ -105,7 +106,7 @@ impl Formation {
     fn update_formation_scale(&mut self) {
         let t = (self.moving_count as i32) & 255;
         let bx = WIDTH / 2 * ONE;
-        let by = (32 + 8) * ONE;
+        let by = (BASE_Y + 16) * ONE;
 
         for i in 0..X_COUNT {
             let pos_x = BASE_X_TABLE[i];
@@ -130,8 +131,8 @@ impl Formation {
         self.moving_count += 1;
     }
 
-    pub fn pos(&self, x: usize, y: usize) -> Vec2I {
-        Vec2I::new(self.xtbl[x], self.ytbl[y])
+    pub fn pos(&self, index: &FormationIndex) -> Vec2I {
+        Vec2I::new(self.xtbl[index.0 as usize], self.ytbl[index.1 as usize])
     }
 
     pub fn is_settle(&self) -> bool {

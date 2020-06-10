@@ -5,7 +5,7 @@ use crate::app::effect::StageIndicator;
 use crate::app::effect::StarManager;
 use crate::app::effect::{EarnedPoint, EarnedPointType, Effect, SmallBomb};
 use crate::app::enemy::Accessor as AccessorForEnemy;
-use crate::app::enemy::{CaptureState, EnemyCollisionResult, EnemyManager};
+use crate::app::enemy::{CaptureState, EnemyCollisionResult, EnemyManager, FormationIndex};
 use crate::app::game::event_queue::{EventQueue, EventType};
 use crate::app::player::MyShot;
 use crate::app::player::Player;
@@ -255,6 +255,9 @@ impl GameManager {
                     self.state = GameState::Playing;
                     self.next_player();
                 }
+                EventType::SpawnCapturedFighter(pos, formation_index) => {
+                    self.enemy_manager.spawn_captured_fighter(&pos, &formation_index);
+                }
                 EventType::RecapturePlayer(pos) => {
                     self.player.start_recapture_effect(&pos);
                     self.enemy_manager.enable_attack(false);
@@ -373,19 +376,19 @@ impl AccessorForEnemy for GameManager {
         self.player.is_captured()
     }
 
-    fn is_enemy_formation(&self, formation_index: usize) -> bool {
+    fn is_enemy_formation(&self, formation_index: &FormationIndex) -> bool {
         self.enemy_manager.is_enemy_formation(formation_index)
     }
 
-    fn set_to_troop(&mut self, formation_index: usize) {
+    fn set_to_troop(&mut self, formation_index: &FormationIndex) {
         self.enemy_manager.set_to_troop(formation_index)
     }
 
-    fn set_to_formation(&mut self, formation_index: usize) {
+    fn set_to_formation(&mut self, formation_index: &FormationIndex) {
         self.enemy_manager.set_to_formation(formation_index)
     }
 
-    fn update_troop(&mut self, formation_index: usize, add: &Vec2I, angle: i32) -> bool {
+    fn update_troop(&mut self, formation_index: &FormationIndex, add: &Vec2I, angle: i32) -> bool {
         self.enemy_manager.update_troop(formation_index, add, angle)
     }
 }

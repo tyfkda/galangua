@@ -2,7 +2,7 @@ use crate::app::consts::*;
 use crate::app::enemy::formation::Formation;
 use crate::app::enemy::tractor_beam::TractorBeam;
 use crate::app::enemy::traj::Traj;
-use crate::app::enemy::Accessor;
+use crate::app::enemy::{Accessor, FormationIndex};
 use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
@@ -14,6 +14,7 @@ pub enum EnemyType {
     Bee,
     Butterfly,
     Owl,
+    CapturedFighter,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -43,7 +44,7 @@ pub struct Enemy {
     pub angle: i32,
     pub speed: i32,
     pub vangle: i32,
-    pub formation_index: usize,
+    pub formation_index: FormationIndex,
 
     pub(super) enemy_type: EnemyType,
     life: u32,
@@ -54,7 +55,7 @@ pub struct Enemy {
     target_pos: Vec2I,
     tractor_beam: Option<TractorBeam>,
     capture_state: CaptureState,
-    troops: Option<[Option<usize>; MAX_TROOPS]>,
+    troops: Option<[Option<FormationIndex>; MAX_TROOPS]>,
 }
 
 impl Enemy {
@@ -72,7 +73,7 @@ impl Enemy {
             angle,
             speed,
             vangle: 0,
-            formation_index: 255,  // Dummy
+            formation_index: FormationIndex(255, 255),  // Dummy
             traj: None,
             attack_type: 0,
             attack_step: 0,
@@ -113,9 +114,7 @@ impl Enemy {
                 }
             }
             EnemyState::MoveToFormation => {
-                let ix = self.formation_index & 15;
-                let iy = self.formation_index / 16;
-                let target = formation.pos(ix, iy);
+                let target = formation.pos(&self.formation_index);
                 let dpos = Vec2I::new(target.x - self.pos.x, target.y - self.pos.y);
 
                 let distance = ((dpos.x as f64).powi(2) + (dpos.y as f64).powi(2)).sqrt();
@@ -151,9 +150,9 @@ impl Enemy {
     fn update_troops<T: Accessor>(&mut self, add: &Vec2I, angle: i32, accessor: &mut T) {
         if let Some(troops) = &mut self.troops {
             for troop_opt in troops.iter_mut() {
-                if let Some(index) = troop_opt {
-                    if !accessor.update_troop(*index, add, angle) {
-                        *troop_opt = None;
+                if let Some(formation_index) = troop_opt {
+                    if !accessor.update_troop(formation_index, add, angle) {
+                        //*troop_opt = None;
                     }
                 }
             }
@@ -169,7 +168,7 @@ impl Enemy {
     fn release_troops<T: Accessor>(&mut self, accessor: &mut T) {
         if let Some(troops) = &mut self.troops {
             troops.iter().flat_map(|x| x)
-                .for_each(|index| accessor.set_to_formation(*index));
+                .for_each(|index| accessor.set_to_formation(index));
             self.troops = None;
         }
     }
@@ -183,6 +182,7 @@ impl Enemy {
             EnemyType::Owl => {
                 if self.life <= 1 { "cpp2" } else { "cpp1" }
             }
+            EnemyType::CapturedFighter => "rustacean_captured",
         };
 
         let angle = quantize_angle(self.angle, 16);
@@ -191,9 +191,6 @@ impl Enemy {
 
         if let Some(tractor_beam) = &self.tractor_beam {
             tractor_beam.draw(renderer)?;
-        }
-        if self.capture_state == CaptureState::Capturing {
-            renderer.draw_sprite("rustacean_captured", &(&pos + &Vec2I::new(-8, -8 - 16)))?;
         }
 
         Ok(())
@@ -228,6 +225,7 @@ impl Enemy {
                         }
                     }
                 }
+                EnemyType::CapturedFighter => { 1000 }
             };
             (true, point)
         }
@@ -266,21 +264,33 @@ impl Enemy {
     }
 
     fn choose_troops<T: Accessor>(&mut self, accessor: &mut T) {
-        let row = 16;
-        let base = self.formation_index;
-        let indices = [base + row - 1, base + row + 1, base + row * 5];
-        let mut troops = [None; MAX_TROOPS];
-        for i in 0..MAX_TROOPS {
-            if accessor.is_enemy_formation(indices[i]) {
-                troops[i] = Some(indices[i]);
+        let base = &self.formation_index;
+        let indices = [
+            FormationIndex(base.0 - 1, base.1 + 1),
+            FormationIndex(base.0 + 1, base.1 + 1),
+            FormationIndex(base.0, base.1 - 1),
+        ];
+        for index in indices.iter() {
+            if accessor.is_enemy_formation(index) {
+                self.add_troop(*index);
             }
         }
-        if troops.iter().any(|x| x.is_some()) {
-            self.troops = Some(troops);
+        if let Some(troops) = self.troops {
             troops.iter().flat_map(|x| x)
-                .for_each(|index| accessor.set_to_troop(*index));
+                .for_each(|index| accessor.set_to_troop(index));
+        }
+    }
+
+    fn add_troop(&mut self, formation_index: FormationIndex) -> bool {
+        if self.troops.is_none() {
+            self.troops = Some(Default::default());
+        }
+
+        if let Some(slot) = self.troops.as_mut().unwrap().iter_mut().find(|x| x.is_none()) {
+            *slot = Some(formation_index);
+            true
         } else {
-            self.troops = None;
+            false
         }
     }
 
@@ -301,6 +311,7 @@ impl Enemy {
             EnemyType::Bee => { self.update_attack_bee(accessor, event_queue); }
             EnemyType::Butterfly => { self.update_attack_butterfly(accessor, event_queue); }
             EnemyType::Owl => { self.update_attack_owl(accessor, event_queue); }
+            EnemyType::CapturedFighter => { self.update_attack_bee(accessor, event_queue); }
         }
     }
 
@@ -309,7 +320,7 @@ impl Enemy {
             0 => {
                 self.speed = 1 * ONE;
                 self.angle = 0;
-                if (self.formation_index & 15) < 5 {
+                if self.formation_index.0 < 5 {
                     self.vangle = -4 * ONE;
                 } else {
                     self.vangle = 4 * ONE;
@@ -331,7 +342,7 @@ impl Enemy {
             2 => {
                 self.count += 1;
                 if self.count >= 10 {
-                    if (self.formation_index & 15) < 5 {
+                    if self.formation_index.0 < 5 {
                         self.vangle = 1 * ONE / 4;
                     } else {
                         self.vangle = -1 * ONE / 4;
@@ -376,7 +387,7 @@ impl Enemy {
             0 => {
                 self.speed = 3 * ONE / 2;
                 self.angle = 0;
-                if (self.formation_index & 15) < 5 {
+                if self.formation_index.0 < 5 {
                     self.vangle = -DLIMIT;
                 } else {
                     self.vangle = DLIMIT;
@@ -451,6 +462,11 @@ impl Enemy {
             101 => {
                 if let Some(tractor_beam) = &self.tractor_beam {
                     if tractor_beam.closed() {
+                        let fi = FormationIndex(self.formation_index.0, self.formation_index.1 - 1);
+                        event_queue.push(EventType::SpawnCapturedFighter(&self.pos + &Vec2I::new(0, 16 * ONE), fi));
+
+                        self.add_troop(fi);
+
                         // TODO: Turn and back to the formation.
                         self.tractor_beam = None;
                         self.capture_state = CaptureState::Capturing;
@@ -464,6 +480,7 @@ impl Enemy {
             }
             102 => {
                 if self.pos.y >= (HEIGHT + 16) * ONE {
+                    self.release_troops(accessor);
                     event_queue.push(EventType::CaptureSequenceEnded);
                     // TODO: Warp to the top of the screen.
                     self.set_to_formation();

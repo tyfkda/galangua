@@ -5,10 +5,10 @@ use crate::app::consts::*;
 use crate::app::enemy::appearance_manager::AppearanceManager;
 use crate::app::enemy::attack_manager::AttackManager;
 use crate::app::enemy::ene_shot::EneShot;
-use crate::app::enemy::enemy::{CaptureState, Enemy, EnemyState};
+use crate::app::enemy::enemy::{CaptureState, Enemy, EnemyState, EnemyType};
 use crate::app::enemy::enemy_collision::EnemyCollisionResult;
 use crate::app::enemy::formation::Formation;
-use crate::app::enemy::Accessor;
+use crate::app::enemy::{Accessor, FormationIndex};
 use crate::app::game::EventQueue;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
@@ -138,6 +138,13 @@ impl EnemyManager {
         }
     }
 
+    pub fn spawn_captured_fighter(&mut self, pos: &Vec2I, formation_index: &FormationIndex) -> bool {
+        let mut enemy = Enemy::new(EnemyType::CapturedFighter, &pos, 0, 0);
+        enemy.state = EnemyState::Troop;
+        enemy.formation_index = *formation_index;
+        self.spawn(enemy)
+    }
+
     fn update_formation(&mut self) {
         self.formation.update();
         self.copy_formation_positions();
@@ -157,8 +164,7 @@ impl EnemyManager {
             .flat_map(|x| x)
             .filter(|x| x.state == EnemyState::Formation)
         {
-            let index = enemy.formation_index as usize;
-            let pos = self.formation.pos(index & 15, index / 16);
+            let pos = self.formation.pos(&enemy.formation_index);
             enemy.pos = pos;
         }
     }
@@ -210,37 +216,37 @@ impl EnemyManager {
         self.attack_manager.set_enable(value);
     }
 
-    pub fn is_enemy_formation(&self, formation_index: usize) -> bool {
+    pub fn is_enemy_formation(&self, formation_index: &FormationIndex) -> bool {
         self.enemies.iter()
             .flat_map(|x| x)
             .find(|enemy|
-                  enemy.formation_index == formation_index &&
+                  enemy.formation_index == *formation_index &&
                   enemy.state == EnemyState::Formation)
             .is_some()
     }
 
-    pub fn set_to_troop(&mut self, formation_index: usize) {
+    pub fn set_to_troop(&mut self, formation_index: &FormationIndex) {
         if let Some(enemy) = self.enemies.iter_mut()
             .flat_map(|x| x)
-            .find(|enemy| enemy.formation_index == formation_index)
+            .find(|enemy| enemy.formation_index == *formation_index)
         {
             enemy.set_to_troop();
         }
     }
 
-    pub fn set_to_formation(&mut self, formation_index: usize) {
+    pub fn set_to_formation(&mut self, formation_index: &FormationIndex) {
         if let Some(enemy) = self.enemies.iter_mut()
             .flat_map(|x| x)
-            .find(|enemy| enemy.formation_index == formation_index)
+            .find(|enemy| enemy.formation_index == *formation_index)
         {
             enemy.set_to_formation();
         }
     }
 
-    pub fn update_troop(&mut self, formation_index: usize, add: &Vec2I, angle: i32) -> bool {
+    pub fn update_troop(&mut self, formation_index: &FormationIndex, add: &Vec2I, angle: i32) -> bool {
         if let Some(enemy) = self.enemies.iter_mut()
             .flat_map(|x| x)
-            .find(|enemy| enemy.formation_index == formation_index)
+            .find(|enemy| enemy.formation_index == *formation_index)
         {
             enemy.update_troop(add, angle)
         } else {
