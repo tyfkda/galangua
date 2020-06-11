@@ -40,10 +40,10 @@ const MAX_TROOPS: usize = 3;
 #[derive(Debug)]
 pub struct Enemy {
     pub state: EnemyState,
-    pub pos: Vec2I,
-    pub angle: i32,
-    pub speed: i32,
-    pub vangle: i32,
+    pos: Vec2I,
+    angle: i32,
+    speed: i32,
+    vangle: i32,
     pub formation_index: FormationIndex,
 
     pub(super) enemy_type: EnemyType,
@@ -111,14 +111,13 @@ impl Enemy {
 
     pub fn update<T: Accessor>(&mut self, formation: &Formation, accessor: &mut T,
                                event_queue: &mut EventQueue) {
-        if self.state == EnemyState::Formation {
-            return;
-        }
-
         let prev_pos = self.pos;
 
         match self.state {
-            EnemyState::None | EnemyState::Formation | EnemyState::Troop => {}
+            EnemyState::None | EnemyState::Troop => {}
+            EnemyState::Formation => {
+                self.pos = formation.pos(&self.formation_index);
+            }
             EnemyState::Trajectory => {
                 let cont = self.update_traj();
                 if !cont {

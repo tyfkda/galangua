@@ -161,8 +161,6 @@ impl EnemyManager {
 
     fn update_formation(&mut self) {
         self.formation.update();
-        self.copy_formation_positions();
-
         if self.wait_settle && self.formation.is_settle() {
             self.wait_settle = false;
             self.attack_manager.set_enable(true);
@@ -171,16 +169,6 @@ impl EnemyManager {
 
     fn update_attackers<T: Accessor>(&mut self, accessor: &mut T) {
         self.attack_manager.update(&mut self.enemies, accessor);
-    }
-
-    fn copy_formation_positions(&mut self) {
-        for enemy in self.enemies.iter_mut()
-            .flat_map(|x| x)
-            .filter(|x| x.state == EnemyState::Formation)
-        {
-            let pos = self.formation.pos(&enemy.formation_index);
-            enemy.pos = pos;
-        }
     }
 
     fn update_enemies<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
