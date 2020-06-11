@@ -2,14 +2,14 @@ use array_macro::*;
 use rand::Rng;
 
 use crate::app::consts::*;
+use crate::app::effect::EarnedPointType;
 use crate::app::enemy::appearance_manager::AppearanceManager;
 use crate::app::enemy::attack_manager::AttackManager;
 use crate::app::enemy::ene_shot::EneShot;
 use crate::app::enemy::enemy::{CaptureState, Enemy, EnemyState, EnemyType};
-use crate::app::enemy::enemy_collision::EnemyCollisionResult;
 use crate::app::enemy::formation::Formation;
 use crate::app::enemy::{Accessor, FormationIndex};
-use crate::app::game::EventQueue;
+use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
@@ -82,42 +82,67 @@ impl EnemyManager {
         Ok(())
     }
 
-    pub fn check_collision(&mut self, target: &CollBox, power: u32) -> EnemyCollisionResult {
+    pub fn check_collision(&mut self, target: &CollBox, power: u32,
+                           event_queue: &mut EventQueue) -> Option<Vec2I>
+    {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
             if let Some(colbox) = enemy.get_collbox() {
                 if colbox.check_collision(target) {
                     let pos = *enemy.raw_pos();
                     let (destroyed, point) = enemy.set_damage(power);
+
+                    if point > 0 {
+                        event_queue.push(EventType::AddScore(point));
+                        event_queue.push(EventType::SmallBomb(pos));
+
+                        let point_type = match point {
+                            1600 => Some(EarnedPointType::Point1600),
+                            1000 => Some(EarnedPointType::Point1000),
+                            800 => Some(EarnedPointType::Point800),
+                            400 => Some(EarnedPointType::Point400),
+                            _ => None,
+                        };
+                        if let Some(point_type) = point_type {
+                            event_queue.push(EventType::EarnPoint(point_type, pos));
+                        }
+                    }
+
                     let capture_state = enemy.capture_state();
                     let captured_fighter_index = enemy.captured_fighter_index();
+
                     if destroyed {
+                        match capture_state {
+                            CaptureState::None | CaptureState::Capturing => {}
+                            CaptureState::BeamTracting | CaptureState::BeamClosing => {
+                                event_queue.push(EventType::EscapeCapturing);
+                            }
+                        }
+                        if let Some(fi) = captured_fighter_index {
+                            event_queue.push(EventType::RecapturePlayer(fi));
+                        }
+
                         *enemy_opt = None;
                     }
-                    return EnemyCollisionResult::Hit {
-                        pos, destroyed, point, capture_state, captured_fighter_index };
+                    return Some(pos);
                 }
             }
         }
-
-        return EnemyCollisionResult::NoHit;
+        return None;
     }
 
-    pub fn check_shot_collision(&mut self, target: &CollBox) -> EnemyCollisionResult {
+    pub fn check_shot_collision(&mut self, target: &CollBox) -> Option<Vec2I> {
         for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
             let shot = shot_opt.as_mut().unwrap();
             if let Some(colbox) = shot.get_collbox() {
                 if colbox.check_collision(target) {
                     let pos = *shot.raw_pos();
                     *shot_opt = None;
-                    return EnemyCollisionResult::Hit {
-                        pos, destroyed: false, point: 0, capture_state: CaptureState::None,
-                        captured_fighter_index: None };
+                    return Some(pos);
                 }
             }
         }
-
-        return EnemyCollisionResult::NoHit;
+        return None;
     }
 
     fn update_appearance(&mut self) {

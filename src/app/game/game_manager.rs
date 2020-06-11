@@ -3,9 +3,9 @@ use std::rc::Rc;
 
 use crate::app::effect::StageIndicator;
 use crate::app::effect::StarManager;
-use crate::app::effect::{EarnedPoint, EarnedPointType, Effect, SmallBomb};
+use crate::app::effect::{EarnedPoint, Effect, SmallBomb};
 use crate::app::enemy::Accessor as AccessorForEnemy;
-use crate::app::enemy::{CaptureState, Enemy, EnemyCollisionResult, EnemyManager, FormationIndex};
+use crate::app::enemy::{Enemy, EnemyManager, FormationIndex};
 use crate::app::game::event_queue::{EventQueue, EventType};
 use crate::app::player::MyShot;
 use crate::app::player::Player;
@@ -307,6 +307,7 @@ impl GameManager {
     }
 
     fn check_collision_myshot_enemy(&mut self) {
+        let power = 1;
         for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
             let myshot = myshot_opt.as_ref().unwrap();
             let colls: [Option<CollBox>; 2] = [
@@ -314,8 +315,8 @@ impl GameManager {
                 myshot.get_collbox_for_dual(),
             ];
             for collbox in colls.iter().flat_map(|x| x) {
-                if let Some(_) = handle_collision_enemy(
-                    &mut self.enemy_manager, &collbox, 1, true, &mut self.event_queue)
+                if let Some(_) = self.enemy_manager.check_collision(
+                    collbox, power, &mut self.event_queue)
                 {
                     *myshot_opt = None;
                     break;
@@ -335,8 +336,9 @@ impl GameManager {
         ];
 
         for collbox in collbox_opts.iter().flat_map(|x| x) {
-            if let Some(pos) = handle_collision_enemy(
-                &mut self.enemy_manager, &collbox, 100, false, &mut self.event_queue)
+            let power = 100;
+            if let Some(pos) = self.enemy_manager.check_collision(
+                collbox, power, &mut self.event_queue)
             {
                 let player_pos = self.player.get_raw_pos();
                 self.event_queue.push(EventType::SmallBomb(*player_pos));
@@ -347,9 +349,7 @@ impl GameManager {
                 }
             }
 
-            if let EnemyCollisionResult::Hit{pos, ..} =
-                self.enemy_manager.check_shot_collision(&collbox)
-            {
+            if let Some(pos) = self.enemy_manager.check_shot_collision(&collbox) {
                 let player_pos = self.player.get_raw_pos();
                 self.event_queue.push(EventType::SmallBomb(*player_pos));
 
@@ -388,49 +388,4 @@ impl AccessorForEnemy for GameManager {
     fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
         self.enemy_manager.get_formation_pos(formation_index)
     }
-}
-
-fn handle_collision_enemy(
-    enemy_manager: &mut EnemyManager, collbox: &CollBox, power: u32, effect: bool,
-    event_queue: &mut EventQueue) -> Option<Vec2I>
-{
-    match enemy_manager.check_collision(&collbox, power) {
-        EnemyCollisionResult::NoHit => { /* no hit */ }
-        EnemyCollisionResult::Hit {
-            pos, destroyed, point, capture_state, captured_fighter_index
-        } => {
-            if destroyed {
-                if effect {
-                    if point > 0 {
-                        event_queue.push(EventType::AddScore(point));
-                    }
-
-                    let point_type = match point {
-                        1600 => Some(EarnedPointType::Point1600),
-                        1000 => Some(EarnedPointType::Point1000),
-                        800 => Some(EarnedPointType::Point800),
-                        400 => Some(EarnedPointType::Point400),
-                        _ => None,
-                    };
-                    if let Some(point_type) = point_type {
-                        event_queue.push(EventType::EarnPoint(point_type, pos));
-                    }
-
-                    event_queue.push(EventType::SmallBomb(pos));
-                }
-
-                match capture_state {
-                    CaptureState::None | CaptureState::Capturing => {}
-                    CaptureState::BeamTracting | CaptureState::BeamClosing => {
-                        event_queue.push(EventType::EscapeCapturing);
-                    }
-                }
-                if let Some(fi) = captured_fighter_index {
-                    event_queue.push(EventType::RecapturePlayer(fi));
-                }
-            }
-            return Some(pos);
-        }
-    }
-    None
 }
