@@ -174,7 +174,7 @@ impl EnemyManager {
     fn update_enemies<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
-            enemy.update(&self.formation, accessor, event_queue);
+            enemy.update(accessor, event_queue);
         }
     }
 
@@ -226,6 +226,10 @@ impl EnemyManager {
     pub fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy> {
         self.enemies.iter_mut().flat_map(|x| x)
             .find(|enemy| enemy.formation_index == *formation_index)
+    }
+
+    pub fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
+        self.formation.pos(formation_index)
     }
 }
 

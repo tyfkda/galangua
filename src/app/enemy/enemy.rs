@@ -1,5 +1,4 @@
 use crate::app::consts::*;
-use crate::app::enemy::formation::Formation;
 use crate::app::enemy::tractor_beam::TractorBeam;
 use crate::app::enemy::traj::Traj;
 use crate::app::enemy::{Accessor, FormationIndex};
@@ -109,14 +108,13 @@ impl Enemy {
         None
     }
 
-    pub fn update<T: Accessor>(&mut self, formation: &Formation, accessor: &mut T,
-                               event_queue: &mut EventQueue) {
+    pub fn update<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
         let prev_pos = self.pos;
 
         match self.state {
             EnemyState::None | EnemyState::Troop => {}
             EnemyState::Formation => {
-                self.pos = formation.pos(&self.formation_index);
+                self.pos = accessor.get_formation_pos(&self.formation_index);
             }
             EnemyState::Trajectory => {
                 let cont = self.update_traj();
@@ -125,7 +123,7 @@ impl Enemy {
                 }
             }
             EnemyState::MoveToFormation => {
-                let target = formation.pos(&self.formation_index);
+                let target = accessor.get_formation_pos(&self.formation_index);
                 let dpos = Vec2I::new(target.x - self.pos.x, target.y - self.pos.y);
 
                 let distance = ((dpos.x as f64).powi(2) + (dpos.y as f64).powi(2)).sqrt();

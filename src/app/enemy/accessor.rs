@@ -8,4 +8,5 @@ pub trait Accessor {
     fn is_player_dual(&self) -> bool;
     fn is_player_captured(&self) -> bool;
     fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy>;
+    fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I;
 }

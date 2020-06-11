@@ -384,6 +384,10 @@ impl AccessorForEnemy for GameManager {
     fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy> {
         self.enemy_manager.get_enemy_at_mut(formation_index)
     }
+
+    fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
+        self.enemy_manager.get_formation_pos(formation_index)
+    }
 }
 
 fn handle_collision_enemy(
