@@ -39,7 +39,7 @@ impl AttackManager {
         self.player_captured = value;
     }
 
-    pub fn update<T: Accessor>(&mut self, enemies: &mut [Option<Enemy>], accessor: &mut T) {
+    pub fn update(&mut self, enemies: &mut [Option<Enemy>], accessor: &mut dyn Accessor) {
         if !self.enable {
             return;
         }

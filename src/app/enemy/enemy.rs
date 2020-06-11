@@ -125,7 +125,7 @@ impl Enemy {
         self.dead
     }
 
-    pub fn update<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
+    pub fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         let prev_pos = self.pos;
 
         match self.state {
@@ -164,7 +164,7 @@ impl Enemy {
         }
     }
 
-    fn update_troops<T: Accessor>(&mut self, add: &Vec2I, angle: i32, accessor: &mut T) {
+    fn update_troops(&mut self, add: &Vec2I, angle: i32, accessor: &mut dyn Accessor) {
         for troop_opt in self.troops.iter_mut() {
             if let Some(formation_index) = troop_opt {
                 if let Some(troop) = accessor.get_enemy_at_mut(formation_index) {
@@ -182,7 +182,7 @@ impl Enemy {
         true
     }
 
-    fn release_troops<T: Accessor>(&mut self, accessor: &mut T) {
+    fn release_troops(&mut self, accessor: &mut dyn Accessor) {
         for troop_opt in self.troops.iter_mut() {
             if let Some(index) = troop_opt {
                 if let Some(enemy) = accessor.get_enemy_at_mut(index) {
@@ -220,8 +220,8 @@ impl Enemy {
         Ok(())
     }
 
-    pub fn set_damage<T: Accessor>(&mut self, power: u32, accessor: &T,
-                                   event_queue: &mut EventQueue) -> DamageResult
+    pub fn set_damage(&mut self, power: u32, accessor: &dyn Accessor,
+                      event_queue: &mut EventQueue) -> DamageResult
     {
         if self.life > power {
             self.life -= power;
@@ -238,7 +238,7 @@ impl Enemy {
         }
     }
 
-    fn live_troops<T: Accessor>(&self, accessor: &T) -> bool {
+    fn live_troops(&self, accessor: &dyn Accessor) -> bool {
         self.troops.iter().flat_map(|x| x)
             .filter_map(|index| accessor.get_enemy_at(index))
             .any(|enemy| enemy.enemy_type != EnemyType::CapturedFighter)
@@ -291,7 +291,7 @@ impl Enemy {
         }
     }
 
-    fn update_move_to_formation<T: Accessor>(&mut self, accessor: &T) -> bool {
+    fn update_move_to_formation(&mut self, accessor: &dyn Accessor) -> bool {
         let target = accessor.get_formation_pos(&self.formation_index);
         let diff = &target - &self.pos;
         let sq_distance = square(diff.x >> (ONE_BIT / 2)) + square(diff.y >> (ONE_BIT / 2));
@@ -311,7 +311,7 @@ impl Enemy {
         }
     }
 
-    pub fn set_attack<T: Accessor>(&mut self, capture_attack: bool, accessor: &mut T) {
+    pub fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) {
         self.state = EnemyState::Attack;
         self.attack_type = if capture_attack { 1 } else { 0 };
         self.attack_step = 0;
@@ -325,7 +325,7 @@ impl Enemy {
         }
     }
 
-    fn choose_troops<T: Accessor>(&mut self, accessor: &mut T) {
+    fn choose_troops(&mut self, accessor: &mut dyn Accessor) {
         let base = &self.formation_index;
         let indices = [
             FormationIndex(base.0 - 1, base.1 + 1),
@@ -372,7 +372,7 @@ impl Enemy {
         }
     }
 
-    fn update_attack<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
+    fn update_attack(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         match self.enemy_type {
             EnemyType::Bee => { self.update_attack_bee(accessor, event_queue); }
             EnemyType::Butterfly => { self.update_attack_butterfly(accessor, event_queue); }
@@ -381,7 +381,7 @@ impl Enemy {
         }
     }
 
-    fn update_attack_bee<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
+    fn update_attack_bee(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         match self.attack_step {
             0 => {
                 self.speed = 1 * ONE;
@@ -437,12 +437,12 @@ impl Enemy {
         }
     }
 
-    fn update_attack_butterfly<T: Accessor>(&mut self, accessor: &mut T,
-                                            event_queue: &mut EventQueue) {
+    fn update_attack_butterfly(&mut self, accessor: &mut dyn Accessor,
+                               event_queue: &mut EventQueue) {
         self.update_attack_bee(accessor, event_queue);
     }
 
-    fn update_attack_owl<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
+    fn update_attack_owl(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         if self.attack_type == 0 {
             self.update_attack_bee(accessor, event_queue);
             return;
