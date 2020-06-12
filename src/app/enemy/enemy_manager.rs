@@ -82,21 +82,21 @@ impl EnemyManager {
         Ok(())
     }
 
-    pub fn check_collision(&mut self, target: &CollBox, power: u32,
-                           event_queue: &mut EventQueue) -> Option<Vec2I>
-    {
+    pub fn check_collision<T: Accessor>(
+        &mut self, target: &CollBox, power: u32, accessor: &T, event_queue: &mut EventQueue,
+    ) -> Option<Vec2I> {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
             if let Some(colbox) = enemy.get_collbox() {
                 if colbox.check_collision(target) {
                     let pos = *enemy.raw_pos();
-                    let (destroyed, point) = enemy.set_damage(power);
+                    let result = enemy.set_damage(power, accessor);
 
-                    if point > 0 {
-                        event_queue.push(EventType::AddScore(point));
+                    if result.point > 0 {
+                        event_queue.push(EventType::AddScore(result.point));
                         event_queue.push(EventType::SmallBomb(pos));
 
-                        let point_type = match point {
+                        let point_type = match result.point {
                             1600 => Some(EarnedPointType::Point1600),
                             1000 => Some(EarnedPointType::Point1000),
                             800 => Some(EarnedPointType::Point800),
@@ -111,7 +111,7 @@ impl EnemyManager {
                     let capture_state = enemy.capture_state();
                     let captured_fighter_index = enemy.captured_fighter_index();
 
-                    if destroyed {
+                    if result.destroyed {
                         match capture_state {
                             CaptureState::None | CaptureState::Capturing => {}
                             CaptureState::BeamTracting | CaptureState::BeamClosing => {
@@ -121,7 +121,9 @@ impl EnemyManager {
                         if let Some(fi) = captured_fighter_index {
                             event_queue.push(EventType::RecapturePlayer(fi));
                         }
+                    }
 
+                    if result.killed {
                         *enemy_opt = None;
                     }
                     return Some(pos);
@@ -200,6 +202,9 @@ impl EnemyManager {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
             enemy.update(accessor, event_queue);
+            if enemy.is_dead() {
+                *enemy_opt = None;
+            }
         }
     }
 

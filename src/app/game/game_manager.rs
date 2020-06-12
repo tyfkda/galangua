@@ -313,6 +313,7 @@ impl GameManager {
 
     fn check_collision_myshot_enemy(&mut self) {
         let power = 1;
+        let accessor = unsafe { peep(self) };
         for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
             let myshot = myshot_opt.as_ref().unwrap();
             let colls: [Option<CollBox>; 2] = [
@@ -321,7 +322,7 @@ impl GameManager {
             ];
             for collbox in colls.iter().flat_map(|x| x) {
                 if let Some(_) = self.enemy_manager.check_collision(
-                    collbox, power, &mut self.event_queue)
+                    collbox, power, accessor, &mut self.event_queue)
                 {
                     *myshot_opt = None;
                     break;
@@ -342,8 +343,9 @@ impl GameManager {
 
         for collbox in collbox_opts.iter().flat_map(|x| x) {
             let power = 100;
+            let accessor = unsafe { peep(self) };
             if let Some(pos) = self.enemy_manager.check_collision(
-                collbox, power, &mut self.event_queue)
+                collbox, power, accessor, &mut self.event_queue)
             {
                 let player_pos = self.player.get_raw_pos();
                 self.event_queue.push(EventType::SmallBomb(*player_pos));
@@ -384,6 +386,10 @@ impl AccessorForEnemy for GameManager {
 
     fn is_player_captured(&self) -> bool {
         self.player.is_captured()
+    }
+
+    fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {
+        self.enemy_manager.get_enemy_at(formation_index)
     }
 
     fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy> {

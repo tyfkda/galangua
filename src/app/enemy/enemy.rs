@@ -36,6 +36,13 @@ pub enum CaptureState {
     Capturing,
 }
 
+#[derive(Debug)]
+pub struct DamageResult {
+    pub destroyed: bool,
+    pub killed: bool,
+    pub point: u32,
+}
+
 const MAX_TROOPS: usize = 3;
 
 #[derive(Debug)]
@@ -57,6 +64,8 @@ pub struct Enemy {
     tractor_beam: Option<TractorBeam>,
     capture_state: CaptureState,
     troops: Option<[Option<FormationIndex>; MAX_TROOPS]>,
+    ghost: bool,
+    dead: bool,
 }
 
 impl Enemy {
@@ -83,6 +92,8 @@ impl Enemy {
             tractor_beam: None,
             capture_state: CaptureState::None,
             troops: None,
+            ghost: false,
+            dead: false,
         }
     }
 
@@ -108,6 +119,10 @@ impl Enemy {
             }
         }
         None
+    }
+
+    pub fn is_dead(&self) -> bool {
+        self.dead
     }
 
     pub fn update<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
@@ -141,6 +156,10 @@ impl Enemy {
 
         if let Some(tractor_beam) = &mut self.tractor_beam {
             tractor_beam.update();
+        }
+
+        if self.ghost && !self.dead && !self.live_troops(accessor) {
+            self.dead = true;
         }
     }
 
@@ -179,6 +198,10 @@ impl Enemy {
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
         where R: RendererTrait
     {
+        if self.ghost {
+            return Ok(());
+        }
+
         let sprite = match self.enemy_type {
             EnemyType::Bee => "gopher",
             EnemyType::Butterfly => "dman",
@@ -199,38 +222,55 @@ impl Enemy {
         Ok(())
     }
 
-    pub fn set_damage(&mut self, power: u32) -> (bool, u32) {
+    pub fn set_damage<T: Accessor>(&mut self, power: u32, accessor: &T) -> DamageResult {
         if self.life > power {
             self.life -= power;
-            (false, 0)
+            DamageResult {destroyed: false, killed: false, point: 0}
         } else {
             self.life = 0;
-            let point = match self.enemy_type {
-                EnemyType::Bee => {
-                    if self.state == EnemyState::Formation { 50 } else { 100 }
-                }
-                EnemyType::Butterfly => {
-                    if self.state == EnemyState::Formation { 80 } else { 160 }
-                }
-                EnemyType::Owl => {
-                    if self.state == EnemyState::Formation {
-                        150
+            if self.live_troops(accessor) {
+                self.ghost = true;
+            }
+            DamageResult {destroyed: true, killed: !self.ghost, point: self.calc_point()}
+        }
+    }
+
+    fn live_troops<T: Accessor>(&self, accessor: &T) -> bool {
+        if let Some(troops) = self.troops {
+            troops.iter().flat_map(|x| x)
+                .map(|index| accessor.get_enemy_at(index))
+                .any(|enemy| enemy.is_some() &&
+                     enemy.unwrap().enemy_type != EnemyType::CapturedFighter)
+        } else {
+            false
+        }
+    }
+
+    fn calc_point(&self) -> u32 {
+        match self.enemy_type {
+            EnemyType::Bee => {
+                if self.state == EnemyState::Formation { 50 } else { 100 }
+            }
+            EnemyType::Butterfly => {
+                if self.state == EnemyState::Formation { 80 } else { 160 }
+            }
+            EnemyType::Owl => {
+                if self.state == EnemyState::Formation {
+                    150
+                } else {
+                    let count = if let Some(troops) = &self.troops {
+                        troops.iter().flat_map(|x| x).count()
                     } else {
-                        let count = if let Some(troops) = &mut self.troops {
-                            troops.iter().flat_map(|x| x).count()
-                        } else {
-                            0
-                        };
-                        match count {
-                            0 => 400,
-                            1 => 800,
-                            2 | _ => 1600,
-                        }
+                        0
+                    };
+                    match count {
+                        0 => 400,
+                        1 => 800,
+                        2 | _ => 1600,
                     }
                 }
-                EnemyType::CapturedFighter => { 1000 }
-            };
-            (true, point)
+            }
+            EnemyType::CapturedFighter => { 1000 }
         }
     }
 
@@ -333,6 +373,10 @@ impl Enemy {
         self.speed = 0;
         self.angle = 0;
         self.vangle = 0;
+
+        if self.ghost {
+            self.dead = true;
+        }
     }
 
     fn update_attack<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
@@ -537,9 +581,13 @@ impl Enemy {
 
 impl Collidable for Enemy {
     fn get_collbox(&self) -> Option<CollBox> {
-        Some(CollBox {
-            top_left: &self.pos() - &Vec2I::new(8, 8),
-            size: Vec2I::new(12, 12),
-        })
+        if !self.ghost {
+            Some(CollBox {
+                top_left: &self.pos() - &Vec2I::new(8, 8),
+                size: Vec2I::new(12, 12),
+            })
+        } else {
+            None
+        }
     }
 }
