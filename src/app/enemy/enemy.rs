@@ -123,21 +123,7 @@ impl Enemy {
                 }
             }
             EnemyState::MoveToFormation => {
-                let target = accessor.get_formation_pos(&self.formation_index);
-                let dpos = Vec2I::new(target.x - self.pos.x, target.y - self.pos.y);
-
-                let distance = ((dpos.x as f64).powi(2) + (dpos.y as f64).powi(2)).sqrt();
-                if distance > self.speed as f64 {
-                    const DLIMIT: i32 = 5 * ONE;
-                    let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
-                    let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
-                    let d = diff_angle(target_angle, self.angle);
-                    self.angle += clamp(d, -DLIMIT, DLIMIT);
-                    self.vangle = 0;
-                } else {
-                    self.pos = target;
-                    self.speed = 0;
-                    self.angle = 0;
+                if !self.update_move_to_formation(accessor) {
                     self.state = EnemyState::Formation;
                 }
             }
@@ -262,6 +248,27 @@ impl Enemy {
 
             cont
         } else {
+            false
+        }
+    }
+
+    fn update_move_to_formation<T: Accessor>(&mut self, accessor: &T) -> bool {
+        let target = accessor.get_formation_pos(&self.formation_index);
+        let dpos = Vec2I::new(target.x - self.pos.x, target.y - self.pos.y);
+
+        let distance = ((dpos.x as f64).powi(2) + (dpos.y as f64).powi(2)).sqrt();
+        if distance > self.speed as f64 {
+            const DLIMIT: i32 = 5 * ONE;
+            let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
+            let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
+            let d = diff_angle(target_angle, self.angle);
+            self.angle += clamp(d, -DLIMIT, DLIMIT);
+            self.vangle = 0;
+            true
+        } else {
+            self.pos = target;
+            self.speed = 0;
+            self.angle = 0;
             false
         }
     }
@@ -488,22 +495,37 @@ impl Enemy {
 
                         self.add_troop(fi);
 
-                        // TODO: Turn and back to the formation.
                         self.tractor_beam = None;
                         self.capture_state = CaptureState::Capturing;
                         event_queue.push(EventType::CapturePlayerCompleted);
 
                         self.speed = 3 * ONE / 2;
                         self.attack_step += 1;
-                        self.count = 0;
                     }
                 }
             }
             102 => {
-                if self.pos.y >= (HEIGHT + 16) * ONE {
-                    self.release_troops(accessor);
+                if !self.update_move_to_formation(accessor) {
+                    self.speed = 0;
+                    self.attack_step += 1;
+                }
+            }
+            103 => {
+                let fi = FormationIndex(self.formation_index.0, self.formation_index.1 - 1);
+                let mut done = false;
+                if let Some(captured_fighter) = accessor.get_enemy_at_mut(&fi) {
+                    let mut y = captured_fighter.pos.y;
+                    y -= 1 * ONE;
+                    let topy = self.pos.y - 16 * ONE;
+                    if y <= topy {
+                        y = topy;
+                        done = true;
+                    }
+                    captured_fighter.pos.y = y;
+                }
+                if done {
                     event_queue.push(EventType::CaptureSequenceEnded);
-                    // TODO: Warp to the top of the screen.
+                    self.release_troops(accessor);
                     self.set_to_formation();
                 }
             }
