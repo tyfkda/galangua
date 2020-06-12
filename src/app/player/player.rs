@@ -63,6 +63,7 @@ impl Player {
                 if self.pos.y >= Y_POSITION * ONE {
                     self.pos.y = Y_POSITION * ONE;
                     self.state = State::Normal;
+                    event_queue.push(EventType::EscapeEnded);
                 }
             }
             State::MoveHomePos => {

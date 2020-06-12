@@ -242,6 +242,7 @@ impl GameManager {
                 }
                 EventType::CapturePlayer(capture_pos) => {
                     self.star_manager.borrow_mut().set_capturing(true);
+                    self.enemy_manager.enable_attack(false);
                     self.player.start_capture(&capture_pos);
                     self.state = GameState::Capturing;
                 }
@@ -251,6 +252,7 @@ impl GameManager {
                     self.enemy_manager.set_capture_state(true);
                 }
                 EventType::CaptureSequenceEnded => {
+                    self.enemy_manager.enable_attack(true);
                     self.state = GameState::Playing;
                     self.next_player();
                 }
@@ -280,6 +282,9 @@ impl GameManager {
                 EventType::EscapeCapturing => {
                     self.star_manager.borrow_mut().set_capturing(false);
                     self.player.escape_capturing();
+                }
+                EventType::EscapeEnded => {
+                    self.enemy_manager.enable_attack(true);
                 }
             }
             i += 1;

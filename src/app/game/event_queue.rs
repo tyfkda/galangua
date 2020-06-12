@@ -50,4 +50,5 @@ pub enum EventType {
     MovePlayerHomePos,
     RecaptureEnded,
     EscapeCapturing,
+    EscapeEnded,
 }
