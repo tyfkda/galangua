@@ -6,7 +6,9 @@ use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::{calc_velocity, clamp, diff_angle, quantize_angle, round_up, ANGLE, ONE};
+use crate::util::math::{
+    calc_velocity, clamp, diff_angle, quantize_angle, round_up, square,
+    ANGLE, ONE, ONE_BIT};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EnemyType {
@@ -254,12 +256,11 @@ impl Enemy {
 
     fn update_move_to_formation<T: Accessor>(&mut self, accessor: &T) -> bool {
         let target = accessor.get_formation_pos(&self.formation_index);
-        let dpos = Vec2I::new(target.x - self.pos.x, target.y - self.pos.y);
-
-        let distance = ((dpos.x as f64).powi(2) + (dpos.y as f64).powi(2)).sqrt();
-        if distance > self.speed as f64 {
+        let diff = &target - &self.pos;
+        let sq_distance = square(diff.x >> (ONE_BIT / 2)) + square(diff.y >> (ONE_BIT / 2));
+        if sq_distance > square(self.speed >> (ONE_BIT / 2)) {
             const DLIMIT: i32 = 5 * ONE;
-            let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
+            let target_angle_rad = (diff.x as f64).atan2(-diff.y as f64);
             let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
             let d = diff_angle(target_angle, self.angle);
             self.angle += clamp(d, -DLIMIT, DLIMIT);

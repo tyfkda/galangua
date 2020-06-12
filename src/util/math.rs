@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+use std::ops::Mul;
 
 use crate::framework::types::Vec2I;
 
@@ -68,7 +69,11 @@ fn test_clamp() {
     assert_eq!(5.0, clamp(5.0, 1.0, 10.0));
 }
 
-pub fn round_up_i32(v: i32) -> i32 {
+pub fn square<T: Mul<Output = T> + Copy>(value: T) -> T {
+    value * value
+}
+
+pub const fn round_up_i32(v: i32) -> i32 {
     (v + ONE / 2) >> ONE_BIT
 }
 
