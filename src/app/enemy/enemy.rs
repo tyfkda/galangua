@@ -63,7 +63,7 @@ pub struct Enemy {
     target_pos: Vec2I,
     tractor_beam: Option<TractorBeam>,
     capture_state: CaptureState,
-    troops: Option<[Option<FormationIndex>; MAX_TROOPS]>,
+    troops: [Option<FormationIndex>; MAX_TROOPS],
     ghost: bool,
     dead: bool,
 }
@@ -91,7 +91,7 @@ impl Enemy {
             target_pos: Vec2I::new(0, 0),
             tractor_beam: None,
             capture_state: CaptureState::None,
-            troops: None,
+            troops: Default::default(),
             ghost: false,
             dead: false,
         }
@@ -110,9 +110,9 @@ impl Enemy {
     }
 
     pub fn captured_fighter_index(&self) -> Option<FormationIndex> {
-        if self.capture_state == CaptureState::Capturing && self.troops.is_some() {
+        if self.capture_state == CaptureState::Capturing {
             let fi = FormationIndex(self.formation_index.0, self.formation_index.1 - 1);
-            if self.troops.unwrap().iter().flat_map(|x| x)
+            if self.troops.iter().flat_map(|x| x)
                 .find(|index| **index == fi).is_some()
             {
                 return Some(fi);
@@ -165,14 +165,12 @@ impl Enemy {
     }
 
     fn update_troops<T: Accessor>(&mut self, add: &Vec2I, angle: i32, accessor: &mut T) {
-        if let Some(troops) = &mut self.troops {
-            for troop_opt in troops.iter_mut() {
-                if let Some(formation_index) = troop_opt {
-                    if let Some(troop) = accessor.get_enemy_at_mut(formation_index) {
-                        troop.update_troop(add, angle);
-                    } else {
-                        //*troop_opt = None;
-                    }
+        for troop_opt in self.troops.iter_mut() {
+            if let Some(formation_index) = troop_opt {
+                if let Some(troop) = accessor.get_enemy_at_mut(formation_index) {
+                    troop.update_troop(add, angle);
+                } else {
+                    //*troop_opt = None;
                 }
             }
         }
@@ -185,14 +183,13 @@ impl Enemy {
     }
 
     fn release_troops<T: Accessor>(&mut self, accessor: &mut T) {
-        if let Some(troops) = &mut self.troops {
-            troops.iter().flat_map(|x| x)
-                .for_each(|index| {
-                    if let Some(enemy) = accessor.get_enemy_at_mut(index) {
-                        enemy.set_to_formation();
-                    }
-                });
-            self.troops = None;
+        for troop_opt in self.troops.iter_mut() {
+            if let Some(index) = troop_opt {
+                if let Some(enemy) = accessor.get_enemy_at_mut(index) {
+                    enemy.set_to_formation();
+                }
+                *troop_opt = None;
+            }
         }
     }
 
@@ -237,14 +234,10 @@ impl Enemy {
     }
 
     fn live_troops<T: Accessor>(&self, accessor: &T) -> bool {
-        if let Some(troops) = self.troops {
-            troops.iter().flat_map(|x| x)
-                .map(|index| accessor.get_enemy_at(index))
-                .any(|enemy| enemy.is_some() &&
-                     enemy.unwrap().enemy_type != EnemyType::CapturedFighter)
-        } else {
-            false
-        }
+        self.troops.iter().flat_map(|x| x)
+            .map(|index| accessor.get_enemy_at(index))
+            .any(|enemy| enemy.is_some() &&
+                 enemy.unwrap().enemy_type != EnemyType::CapturedFighter)
     }
 
     fn calc_point(&self) -> u32 {
@@ -259,11 +252,10 @@ impl Enemy {
                 if self.state == EnemyState::Formation {
                     150
                 } else {
-                    let count = if let Some(troops) = &self.troops {
-                        troops.iter().flat_map(|x| x).count()
-                    } else {
-                        0
-                    };
+                    let fi = FormationIndex(self.formation_index.0, self.formation_index.1 - 1);
+                    let count = self.troops.iter().flat_map(|x| x)
+                        .filter(|index| **index != fi)
+                        .count();
                     match count {
                         0 => 400,
                         1 => 800,
@@ -321,7 +313,9 @@ impl Enemy {
         self.attack_step = 0;
         self.count = 0;
 
-        self.troops = None;
+        for slot in self.troops.iter_mut() {
+            *slot = None;
+        }
         if !capture_attack && self.enemy_type == EnemyType::Owl {
             self.choose_troops(accessor);
         }
@@ -341,22 +335,16 @@ impl Enemy {
                 }
             }
         }
-        if let Some(troops) = self.troops {
-            troops.iter().flat_map(|x| x)
-                .for_each(|index| {
-                    if let Some(enemy) = accessor.get_enemy_at_mut(index) {
-                        enemy.set_to_troop();
-                    }
-                });
-        }
+        self.troops.iter().flat_map(|x| x)
+            .for_each(|index| {
+                if let Some(enemy) = accessor.get_enemy_at_mut(index) {
+                    enemy.set_to_troop();
+                }
+            });
     }
 
     fn add_troop(&mut self, formation_index: FormationIndex) -> bool {
-        if self.troops.is_none() {
-            self.troops = Some(Default::default());
-        }
-
-        if let Some(slot) = self.troops.as_mut().unwrap().iter_mut().find(|x| x.is_none()) {
+        if let Some(slot) = self.troops.iter_mut().find(|x| x.is_none()) {
             *slot = Some(formation_index);
             true
         } else {
