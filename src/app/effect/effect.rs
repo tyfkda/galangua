@@ -61,16 +61,13 @@ impl EarnedPoint {
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
         where R: RendererTrait
     {
-        let sprite: &str;
-        match self.point_type {
-            EarnedPointType::Point1600 => { sprite = "pts1600"; },
-            EarnedPointType::Point1000 => { sprite = "pts1000"; },
-            EarnedPointType::Point800  => { sprite = "pts800"; },
-            EarnedPointType::Point400  => { sprite = "pts400"; },
-        }
-
+        let sprite: &str = match self.point_type {
+            EarnedPointType::Point1600 => "pts1600",
+            EarnedPointType::Point1000 => "pts1000",
+            EarnedPointType::Point800  => "pts800",
+            EarnedPointType::Point400  => "pts400",
+        };
         renderer.draw_sprite(sprite, &(&self.pos + &Vec2I::new(-8, -4)))?;
-
         Ok(())
     }
 }
@@ -101,9 +98,7 @@ impl SmallBomb {
     {
         let pat = min(self.frame_count / 4, 2) as usize;
         let table = ["small_bomb1", "small_bomb2", "small_bomb3"];
-
         renderer.draw_sprite(table[pat], &(&self.pos + &Vec2I::new(-8, -8)))?;
-
         Ok(())
     }
 }

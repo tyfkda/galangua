@@ -235,9 +235,8 @@ impl Enemy {
 
     fn live_troops<T: Accessor>(&self, accessor: &T) -> bool {
         self.troops.iter().flat_map(|x| x)
-            .map(|index| accessor.get_enemy_at(index))
-            .any(|enemy| enemy.is_some() &&
-                 enemy.unwrap().enemy_type != EnemyType::CapturedFighter)
+            .filter_map(|index| accessor.get_enemy_at(index))
+            .any(|enemy| enemy.enemy_type != EnemyType::CapturedFighter)
     }
 
     fn calc_point(&self) -> u32 {

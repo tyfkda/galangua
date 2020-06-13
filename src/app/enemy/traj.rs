@@ -107,7 +107,7 @@ impl Traj {
             }
 
             if i < command_table.len() {
-                self.command_table = Some(&command_table[i..command_table.len()]);
+                self.command_table = Some(&command_table[i..]);
             } else {
                 self.command_table = None;
             }
