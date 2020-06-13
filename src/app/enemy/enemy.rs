@@ -141,7 +141,8 @@ impl Enemy {
             }
             EnemyState::MoveToFormation => {
                 if !self.update_move_to_formation(accessor) {
-                    self.state = EnemyState::Formation;
+                    self.release_troops(accessor);
+                    self.set_to_formation();
                 }
             }
             EnemyState::Attack => {
@@ -167,8 +168,8 @@ impl Enemy {
         if let Some(troops) = &mut self.troops {
             for troop_opt in troops.iter_mut() {
                 if let Some(formation_index) = troop_opt {
-                    if let Some(enemy) = accessor.get_enemy_at_mut(formation_index) {
-                        enemy.update_troop(add, angle);
+                    if let Some(troop) = accessor.get_enemy_at_mut(formation_index) {
+                        troop.update_troop(add, angle);
                     } else {
                         //*troop_opt = None;
                     }
@@ -430,14 +431,14 @@ impl Enemy {
                 {
                     self.vangle = 0;
                     self.attack_step += 1;
-                    self.count = 0;
                 }
             }
             4 => {
-                if self.pos.y >= (HEIGHT + 16) * ONE {
-                    // TODO: Warp to the top of the screen.
-                    self.release_troops(accessor);
-                    self.set_to_formation();
+                if self.pos.y >= (HEIGHT + 8) * ONE {
+                    let target_pos = accessor.get_formation_pos(&self.formation_index);
+                    let offset = Vec2I::new(target_pos.x - self.pos.x, (-32 - (HEIGHT + 8)) * ONE);
+                    self.warp(offset);
+                    self.state = EnemyState::MoveToFormation;
                 }
             }
             _ => {}
@@ -506,7 +507,6 @@ impl Enemy {
                         self.tractor_beam = None;
                         self.speed = 3 * ONE / 2;
                         self.attack_step += 1;
-                        self.count = 0;
                     } else if tractor_beam.can_capture(accessor.get_raw_player_pos()) {
                         event_queue.push(
                             EventType::CapturePlayer(&self.pos + &Vec2I::new(0, 16 * ONE)));
@@ -518,9 +518,11 @@ impl Enemy {
                 }
             }
             3 => {
-                if self.pos.y >= (HEIGHT + 16) * ONE {
-                    // TODO: Warp to the top of the screen.
-                    self.set_to_formation();
+                if self.pos.y >= (HEIGHT + 8) * ONE {
+                    let target_pos = accessor.get_formation_pos(&self.formation_index);
+                    let offset = Vec2I::new(target_pos.x - self.pos.x, (-32 - (HEIGHT + 8)) * ONE);
+                    self.warp(offset);
+                    self.state = EnemyState::MoveToFormation;
                 }
             }
             // Capture sequence
@@ -576,6 +578,11 @@ impl Enemy {
             }
             _ => {}
         }
+    }
+
+    fn warp(&mut self, offset: Vec2I) {
+        self.pos += offset;
+        // No need to modify troops, because offset is calculated from previous position.
     }
 }
 
