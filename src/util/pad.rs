@@ -1,5 +1,6 @@
 use bitflags::bitflags;
-use sdl2::keyboard::Keycode;
+
+use crate::framework::VKey;
 
 bitflags! {
     pub struct PadBit: u32 {
@@ -48,7 +49,7 @@ impl Pad {
         self.trg.contains(btn)
     }
 
-    pub fn on_key(&mut self, keycode: Keycode, down: bool) {
+    pub fn on_key(&mut self, keycode: VKey, down: bool) {
         let bit = get_key_bit(keycode);
         if down {
             self.key |= bit;
@@ -90,13 +91,13 @@ impl Pad {
     }
 }
 
-fn get_key_bit(key: Keycode) -> PadBit {
+fn get_key_bit(key: VKey) -> PadBit {
     match key {
-        Keycode::Left => PadBit::L,
-        Keycode::Right => PadBit::R,
-        Keycode::Space => PadBit::A,
-        Keycode::Escape => PadBit::CANCEL,
-        Keycode::Return => PadBit::START,
+        VKey::Left => PadBit::L,
+        VKey::Right => PadBit::R,
+        VKey::Space => PadBit::A,
+        VKey::Escape => PadBit::CANCEL,
+        VKey::Return => PadBit::START,
         _ => PadBit::empty(),
     }
 }
@@ -104,7 +105,7 @@ fn get_key_bit(key: Keycode) -> PadBit {
 #[test]
 fn test_trigger() {
     let mut pad = Pad::new();
-    pad.on_key(Keycode::Space, true);
+    pad.on_key(VKey::Space, true);
     pad.update();
 
     assert_eq!(true, pad.is_pressed(PadBit::A));

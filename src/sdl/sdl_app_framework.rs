@@ -6,25 +6,29 @@ use sdl2::Sdl;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
-use crate::framework::AppTrait;
+use crate::framework::{AppTrait, VKey};
 use crate::sdl::sdl_renderer::SdlRenderer;
+
+type MapKeyFunc = fn(Keycode) -> Option<VKey>;
 
 pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
     sdl_context: Sdl,
     last_update_time: SystemTime,
 
     app: Box<App>,
+    map_key: MapKeyFunc,
     fast_forward: bool,
 }
 
 impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
-    pub fn new(app: Box<App>) -> Result<Self, String> {
+    pub fn new(app: Box<App>, map_key: MapKeyFunc) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
 
         Ok(Self {
             sdl_context,
             last_update_time: SystemTime::now(),
             app,
+            map_key,
             fast_forward: false,
         })
     }
@@ -82,13 +86,17 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                     if key == Keycode::LShift {
                         self.fast_forward = true;
                     }
-                    self.app.on_key(key, true);
+                    if let Some(vkey) = (self.map_key)(key) {
+                        self.app.on_key(vkey, true);
+                    }
                 }
                 Event::KeyUp { keycode: Some(key), .. } => {
                     if key == Keycode::LShift {
                         self.fast_forward = false;
                     }
-                    self.app.on_key(key, false);
+                    if let Some(vkey) = (self.map_key)(key) {
+                        self.app.on_key(vkey, false);
+                    }
                 }
                 Event::JoyAxisMotion { axis_idx, value: val, .. } => {
                     let dir = if val > 10_000 { 1 } else if val < -10_000 { -1 } else { 0 };

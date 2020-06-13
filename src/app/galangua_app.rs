@@ -1,11 +1,10 @@
-use sdl2::keyboard::Keycode;
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::app::effect::StarManager;
 use crate::app::game::GameManager;
 use crate::app::sprite_sheet::load_sprite_sheet;
-use crate::framework::{AppTrait, RendererTrait};
+use crate::framework::{AppTrait, RendererTrait, VKey};
 use crate::util::fps_calc::FpsCalc;
 use crate::util::pad::{Pad, PadBit};
 
@@ -51,7 +50,7 @@ impl GalanguaApp {
 }
 
 impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
-    fn on_key(&mut self, keycode: Keycode, down: bool) {
+    fn on_key(&mut self, keycode: VKey, down: bool) {
         self.pad.on_key(keycode, down);
     }
 
