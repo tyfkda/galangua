@@ -220,7 +220,9 @@ impl Enemy {
         Ok(())
     }
 
-    pub fn set_damage<T: Accessor>(&mut self, power: u32, accessor: &T) -> DamageResult {
+    pub fn set_damage<T: Accessor>(&mut self, power: u32, accessor: &T,
+                                   event_queue: &mut EventQueue) -> DamageResult
+    {
         if self.life > power {
             self.life -= power;
             DamageResult {destroyed: false, killed: false, point: 0}
@@ -228,6 +230,9 @@ impl Enemy {
             self.life = 0;
             if self.live_troops(accessor) {
                 self.ghost = true;
+            }
+            if self.enemy_type == EnemyType::CapturedFighter {
+                event_queue.push(EventType::CapturedFighterDestroyed);
             }
             DamageResult {destroyed: true, killed: !self.ghost, point: self.calc_point()}
         }

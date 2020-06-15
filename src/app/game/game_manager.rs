@@ -286,6 +286,9 @@ impl GameManager {
                 EventType::EscapeEnded => {
                     self.enemy_manager.enable_attack(true);
                 }
+                EventType::CapturedFighterDestroyed => {
+                    self.enemy_manager.set_capture_state(false);
+                }
             }
             i += 1;
         }

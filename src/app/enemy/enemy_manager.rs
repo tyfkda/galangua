@@ -90,7 +90,7 @@ impl EnemyManager {
             if let Some(colbox) = enemy.get_collbox() {
                 if colbox.check_collision(target) {
                     let pos = *enemy.raw_pos();
-                    let result = enemy.set_damage(power, accessor);
+                    let result = enemy.set_damage(power, accessor, event_queue);
 
                     if result.point > 0 {
                         event_queue.push(EventType::AddScore(result.point));
