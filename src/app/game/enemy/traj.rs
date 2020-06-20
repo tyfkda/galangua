@@ -1,5 +1,6 @@
+use super::traj_command::TrajCommand;
+
 use crate::app::consts::*;
-use crate::app::enemy::traj_command::TrajCommand;
 use crate::framework::types::Vec2I;
 use crate::util::math::{calc_velocity, ANGLE, COS_TABLE, ONE, SIN_TABLE};
 

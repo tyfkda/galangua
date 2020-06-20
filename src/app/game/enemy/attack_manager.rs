@@ -1,7 +1,7 @@
 use rand::Rng;
 
-use crate::app::enemy::enemy::{Enemy, EnemyState, EnemyType};
-use crate::app::enemy::Accessor;
+use super::enemy::{Enemy, EnemyState, EnemyType};
+use super::Accessor;
 
 const MAX_ATTACKER_COUNT: usize = 1;
 

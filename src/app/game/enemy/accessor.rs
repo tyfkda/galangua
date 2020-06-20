@@ -1,6 +1,7 @@
 // Accessor of game information for Enemy.
 
-use crate::app::enemy::{Enemy, FormationIndex};
+use super::{Enemy, FormationIndex};
+
 use crate::framework::types::Vec2I;
 
 pub trait Accessor {

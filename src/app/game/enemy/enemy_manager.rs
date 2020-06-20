@@ -1,14 +1,15 @@
 use array_macro::*;
 use rand::Rng;
 
+use super::appearance_manager::AppearanceManager;
+use super::attack_manager::AttackManager;
+use super::ene_shot::EneShot;
+use super::enemy::{CaptureState, Enemy, EnemyType};
+use super::formation::Formation;
+use super::{Accessor, FormationIndex};
+
 use crate::app::consts::*;
-use crate::app::effect::EarnedPointType;
-use crate::app::enemy::appearance_manager::AppearanceManager;
-use crate::app::enemy::attack_manager::AttackManager;
-use crate::app::enemy::ene_shot::EneShot;
-use crate::app::enemy::enemy::{CaptureState, Enemy, EnemyType};
-use crate::app::enemy::formation::Formation;
-use crate::app::enemy::{Accessor, FormationIndex};
+use crate::app::game::effect::EarnedPointType;
 use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;

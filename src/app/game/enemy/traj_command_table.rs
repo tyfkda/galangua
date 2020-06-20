@@ -1,7 +1,8 @@
 use counted_array::counted_array;
 
+use super::traj_command::TrajCommand;
+
 use crate::app::consts::*;
-use crate::app::enemy::traj_command::TrajCommand;
 use crate::util::math::{ANGLE, ONE};
 
 counted_array!(pub const COMMAND_TABLE1: [TrajCommand; _] = [

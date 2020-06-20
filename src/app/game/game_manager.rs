@@ -1,14 +1,12 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::app::effect::StageIndicator;
-use crate::app::effect::StarManager;
-use crate::app::effect::{EarnedPoint, Effect, SmallBomb};
-use crate::app::enemy::Accessor as AccessorForEnemy;
-use crate::app::enemy::{Enemy, EnemyManager, FormationIndex};
-use crate::app::game::event_queue::{EventQueue, EventType};
-use crate::app::player::MyShot;
-use crate::app::player::Player;
+use super::enemy::Accessor as AccessorForEnemy;
+use super::enemy::{Enemy, EnemyManager, FormationIndex};
+use super::event_queue::{EventQueue, EventType};
+use super::player::{MyShot, Player};
+
+use super::effect::{EarnedPoint, Effect, SmallBomb, StageIndicator, StarManager};
 use crate::app::util::unsafe_util::peep;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;

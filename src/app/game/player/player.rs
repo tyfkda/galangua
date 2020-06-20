@@ -1,5 +1,5 @@
 use crate::app::consts::*;
-use crate::app::effect::RecapturedFighter;
+use crate::app::game::effect::RecapturedFighter;
 use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;

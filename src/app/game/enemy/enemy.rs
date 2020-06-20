@@ -1,7 +1,8 @@
+use super::tractor_beam::TractorBeam;
+use super::traj::Traj;
+use super::{Accessor, FormationIndex};
+
 use crate::app::consts::*;
-use crate::app::enemy::tractor_beam::TractorBeam;
-use crate::app::enemy::traj::Traj;
-use crate::app::enemy::{Accessor, FormationIndex};
 use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;

@@ -1,10 +1,11 @@
 use counted_array::counted_array;
 
-use crate::app::enemy::enemy::{Enemy, EnemyState, EnemyType};
-use crate::app::enemy::traj::Traj;
-use crate::app::enemy::traj_command::TrajCommand;
-use crate::app::enemy::traj_command_table::*;
-use crate::app::enemy::FormationIndex;
+use super::enemy::{Enemy, EnemyState, EnemyType};
+use super::traj::Traj;
+use super::traj_command::TrajCommand;
+use super::traj_command_table::*;
+use super::FormationIndex;
+
 use crate::framework::types::Vec2I;
 use crate::util::math::ONE;
 

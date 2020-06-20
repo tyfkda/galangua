@@ -1,9 +1,10 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::app::effect::StarManager;
-use crate::app::game::GameManager;
-use crate::app::sprite_sheet::load_sprite_sheet;
+use super::game::effect::StarManager;
+use super::game::GameManager;
+use super::util::sprite_sheet::load_sprite_sheet;
+
 use crate::framework::{AppTrait, RendererTrait, VKey};
 use crate::util::fps_calc::FpsCalc;
 use crate::util::pad::{Pad, PadBit};

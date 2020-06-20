@@ -1,7 +1,8 @@
 use lazy_static::lazy_static;
 
+use super::FormationIndex;
+
 use crate::app::consts::*;
-use crate::app::enemy::FormationIndex;
 use crate::framework::types::Vec2I;
 use crate::util::math::ONE;
 
