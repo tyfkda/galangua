@@ -47,7 +47,7 @@ const MAX_TROOPS: usize = 3;
 
 #[derive(Debug)]
 pub struct Enemy {
-    pub state: EnemyState,
+    state: EnemyState,
     pos: Vec2I,
     angle: i32,
     speed: i32,
@@ -103,6 +103,10 @@ impl Enemy {
 
     pub fn raw_pos(&self) -> &Vec2I {
         &self.pos
+    }
+
+    pub fn get_state(&self) -> EnemyState {
+        self.state
     }
 
     pub fn capture_state(&self) -> CaptureState {
@@ -356,7 +360,7 @@ impl Enemy {
         }
     }
 
-    fn set_to_troop(&mut self) {
+    pub fn set_to_troop(&mut self) {
         self.state = EnemyState::Troop;
         self.count = 0;
     }

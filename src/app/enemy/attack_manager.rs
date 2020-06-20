@@ -71,7 +71,7 @@ for _i in 0..100 {
 
                 let mut enemies = enemies.iter_mut()
                     .flat_map(|x| x)
-                    .filter(|x| x.state == EnemyState::Formation);
+                    .filter(|x| x.get_state() == EnemyState::Formation);
                 let enemy = &mut enemies.nth(index).unwrap();
                 let capture_attack = enemy.enemy_type == EnemyType::Owl &&
                     !self.player_captured &&
@@ -87,7 +87,7 @@ for _i in 0..100 {
         for attacker_opt in self.attackers.iter_mut().filter(|x| x.is_some()) {
             let index = attacker_opt.unwrap();
             if let Some(enemy) = &enemies[index] {
-                if enemy.state == EnemyState::Formation {
+                if enemy.get_state() == EnemyState::Formation {
                     *attacker_opt = None;
                 }
             } else {

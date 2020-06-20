@@ -6,7 +6,7 @@ use crate::app::effect::EarnedPointType;
 use crate::app::enemy::appearance_manager::AppearanceManager;
 use crate::app::enemy::attack_manager::AttackManager;
 use crate::app::enemy::ene_shot::EneShot;
-use crate::app::enemy::enemy::{CaptureState, Enemy, EnemyState, EnemyType};
+use crate::app::enemy::enemy::{CaptureState, Enemy, EnemyType};
 use crate::app::enemy::formation::Formation;
 use crate::app::enemy::{Accessor, FormationIndex};
 use crate::app::game::{EventQueue, EventType};
@@ -170,7 +170,7 @@ impl EnemyManager {
 
     pub fn spawn_captured_fighter(&mut self, pos: &Vec2I, formation_index: &FormationIndex) -> bool {
         let mut enemy = Enemy::new(EnemyType::CapturedFighter, &pos, 0, 0);
-        enemy.state = EnemyState::Troop;
+        enemy.set_to_troop();
         enemy.formation_index = *formation_index;
         self.spawn(enemy)
     }

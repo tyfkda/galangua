@@ -245,6 +245,6 @@ impl AppearanceManager {
     }
 
     fn is_stationary(&self, enemies: &[Option<Enemy>]) -> bool {
-        enemies.iter().flat_map(|x| x).all(|x| x.state == EnemyState::Formation)
+        enemies.iter().flat_map(|x| x).all(|x| x.get_state() == EnemyState::Formation)
     }
 }
