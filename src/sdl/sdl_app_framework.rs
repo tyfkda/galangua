@@ -50,6 +50,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
         let window = video_subsystem
             .window(title, width * scale, height * scale)
             .position_centered()
+            .resizable()
             .opengl()
             .build()
             .map_err(|e| e.to_string())?;
