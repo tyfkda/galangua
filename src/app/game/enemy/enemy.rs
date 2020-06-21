@@ -67,7 +67,7 @@ pub struct Enemy {
     capture_state: CaptureState,
     troops: [Option<FormationIndex>; MAX_TROOPS],
     ghost: bool,
-    dead: bool,
+    disappeared: bool,
 }
 
 impl Enemy {
@@ -93,7 +93,7 @@ impl Enemy {
             capture_state: CaptureState::None,
             troops: Default::default(),
             ghost: false,
-            dead: false,
+            disappeared: false,
         }
     }
 
@@ -125,8 +125,8 @@ impl Enemy {
         None
     }
 
-    pub fn is_dead(&self) -> bool {
-        self.dead
+    pub fn is_disappeared(&self) -> bool {
+        self.disappeared
     }
 
     pub fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
@@ -143,8 +143,8 @@ impl Enemy {
             tractor_beam.update();
         }
 
-        if self.ghost && !self.dead && !self.live_troops(accessor) {
-            self.dead = true;
+        if self.ghost && !self.disappeared && !self.live_troops(accessor) {
+            self.disappeared = true;
         }
     }
 
@@ -290,7 +290,7 @@ impl Enemy {
         self.vangle = 0;
 
         if self.ghost {
-            self.dead = true;
+            self.disappeared = true;
         }
 
         self.set_state(EnemyState::Formation);

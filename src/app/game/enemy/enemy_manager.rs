@@ -203,7 +203,7 @@ impl EnemyManager {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
             enemy.update(accessor, event_queue);
-            if enemy.is_dead() {
+            if enemy.is_disappeared() {
                 *enemy_opt = None;
             }
         }
