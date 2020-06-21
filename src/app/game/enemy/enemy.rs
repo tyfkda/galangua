@@ -66,7 +66,6 @@ pub struct Enemy {
     tractor_beam: Option<TractorBeam>,
     capture_state: CaptureState,
     troops: [Option<FormationIndex>; MAX_TROOPS],
-    ghost: bool,
     disappeared: bool,
 }
 
@@ -92,7 +91,6 @@ impl Enemy {
             tractor_beam: None,
             capture_state: CaptureState::None,
             troops: Default::default(),
-            ghost: false,
             disappeared: false,
         }
     }
@@ -129,6 +127,10 @@ impl Enemy {
         self.disappeared
     }
 
+    fn is_ghost(&self) -> bool {
+        self.life == 0
+    }
+
     pub fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         let prev_pos = self.pos;
 
@@ -143,7 +145,7 @@ impl Enemy {
             tractor_beam.update();
         }
 
-        if self.ghost && !self.disappeared && !self.live_troops(accessor) {
+        if self.is_ghost() && !self.disappeared && !self.live_troops(accessor) {
             self.disappeared = true;
         }
     }
@@ -180,7 +182,7 @@ impl Enemy {
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
         where R: RendererTrait
     {
-        if self.ghost {
+        if self.is_ghost() {
             return Ok(());
         }
 
@@ -289,7 +291,7 @@ impl Enemy {
         self.angle = 0;
         self.vangle = 0;
 
-        if self.ghost {
+        if self.is_ghost() {
             self.disappeared = true;
         }
 
@@ -304,7 +306,7 @@ impl Enemy {
 
 impl Collidable for Enemy {
     fn get_collbox(&self) -> Option<CollBox> {
-        if !self.ghost {
+        if !self.is_ghost() {
             Some(CollBox {
                 top_left: &self.pos() - &Vec2I::new(8, 8),
                 size: Vec2I::new(12, 12),
@@ -404,12 +406,13 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
                 me.life -= power;
                 DamageResult { destroyed: false, killed: false, point: 0 }
             } else {
+                let mut killed = true;
                 me.life = 0;
                 if me.live_troops(accessor) {
-                    me.ghost = true;
+                    killed = false;  // Keep alive as a ghost.
                 }
                 let point = (me.vtable.calc_point)(me);
-                DamageResult { destroyed: true, killed: !me.ghost, point }
+                DamageResult {destroyed: true, killed, point}
             }
         },
     },
