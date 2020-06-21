@@ -52,10 +52,11 @@ impl AttackManager {
         }
 
         if let Some(slot) = self.attackers.iter_mut().find(|x| x.is_none()) {
-            let alive_indices = (0..enemies.len())
-                .filter(|&i| enemies[i].is_some()).collect::<Vec<usize>>();
-            let count = alive_indices.len();
-            if count > 0 {
+            if enemies.iter().any(|slot| slot.is_some()) {
+                let alive_indices = (0..enemies.len())
+                    .filter(|&i| enemies[i].is_some()).collect::<Vec<usize>>();
+                let count = alive_indices.len();
+
                 let mut rng = rand::thread_rng();
 //                let index = rng.gen_range(0, count);
 let mut index = 0;
