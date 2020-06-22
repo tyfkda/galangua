@@ -18,7 +18,7 @@ lazy_static! {
         let mut table: [i32; X_COUNT] = Default::default();
         for j in 0..X_COUNT {
             let x = cx - ((X_COUNT - 1) as i32) * w / 2 + (j as i32) * w;
-            table[j] = x * ONE;
+            table[j] = x;
         }
         table
     };
@@ -28,7 +28,7 @@ lazy_static! {
         let mut table: [i32; Y_COUNT] = Default::default();
         for i in 0..Y_COUNT {
             let y = BASE_Y + (i as i32) * h;
-            table[i] = y * ONE;
+            table[i] = y;
         }
         table
     };
@@ -67,10 +67,10 @@ impl Formation {
         self.done_appearance = false;
 
         for j in 0..X_COUNT {
-            self.xtbl[j] = BASE_X_TABLE[j];
+            self.xtbl[j] = BASE_X_TABLE[j] * ONE;
         }
         for i in 0..Y_COUNT {
-            self.ytbl[i] = BASE_Y_TABLE[i];
+            self.ytbl[i] = BASE_Y_TABLE[i] * ONE;
         }
     }
 
@@ -87,14 +87,12 @@ impl Formation {
 
     fn update_formation_slide(&mut self) {
         let t = (self.moving_count as i32 + 64) & 255;
-        let dx = ONE / 2;
+        let space = WIDTH - X_COUNT as i32 * 16;
+        let dx = space * ONE / 128;
+        let dx = if t >= 128 { -dx } else { dx };
 
         for i in 0..X_COUNT {
-            if t < 128 {
-                self.xtbl[i] += dx;
-            } else {
-                self.xtbl[i] -= dx;
-            }
+            self.xtbl[i] += dx;
         }
 
         self.moving_count += 1;
@@ -106,27 +104,20 @@ impl Formation {
 
     fn update_formation_scale(&mut self) {
         let t = (self.moving_count as i32) & 255;
-        let bx = WIDTH / 2 * ONE;
-        let by = (BASE_Y + 16) * ONE;
+        let bx = WIDTH / 2;
+        let by = BASE_Y + 16;
+        let space = WIDTH - X_COUNT as i32 * 16;
+        let factor = (space / 2 * ONE) / ((X_COUNT as i32 - 1) * 16 / 2);
+        let factor = if t >= 128 { -factor } else { factor };
 
         for i in 0..X_COUNT {
             let pos_x = BASE_X_TABLE[i];
-            let dx = (pos_x - bx) * 2 * 16 / (5 * 16 * ONE / 2);
-            if t < 128 {
-                self.xtbl[i] += dx;
-            } else {
-                self.xtbl[i] -= dx;
-            }
+            self.xtbl[i] += (pos_x - bx) * factor / 128;
         }
 
         for i in 0..Y_COUNT {
             let pos_y = BASE_Y_TABLE[i];
-            let dy = (pos_y - by) * 2 * 16 / (5 * 16 * ONE / 2);
-            if t < 128 {
-                self.ytbl[i] += dy;
-            } else {
-                self.ytbl[i] -= dy;
-            }
+            self.ytbl[i] += (pos_y - by) * factor / 128;
         }
 
         self.moving_count += 1;
