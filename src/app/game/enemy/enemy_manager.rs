@@ -1,5 +1,6 @@
 use array_macro::*;
-use rand::Rng;
+use rand::{Rng, SeedableRng};
+use rand_xoshiro::Xoshiro128Plus;
 
 use super::appearance_manager::AppearanceManager;
 use super::attack_manager::AttackManager;
@@ -224,7 +225,7 @@ impl EnemyManager {
 
     pub fn spawn_shot(&mut self, pos: &Vec2I, target_pos: &[Option<Vec2I>], speed: i32) {
         if let Some(index) = self.shots.iter().position(|x| x.is_none()) {
-            let mut rng = rand::thread_rng();
+            let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
             let count = target_pos.iter().flat_map(|x| x).count();
             let target: &Vec2I = target_pos.iter()
                 .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();

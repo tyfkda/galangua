@@ -1,6 +1,6 @@
 use array_macro::*;
-use rand::rngs::ThreadRng;
-use rand::Rng;
+use rand::{Rng, SeedableRng};
+use rand_xoshiro::Xoshiro128Plus;
 
 use crate::app::consts;
 use crate::framework::types::Vec2I;
@@ -25,7 +25,7 @@ pub struct StarManager {
 
 impl StarManager {
     pub fn new() -> Self {
-        let mut rng = rand::thread_rng();
+        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
         let stars = array![|_i|
             Star {
                 pos: Vec2I::new(rng.gen_range(0, consts::WIDTH) * ONE,
@@ -50,7 +50,7 @@ impl StarManager {
         }
 
         let capturing = self.state == State::Capturing;
-        let mut rng = rand::thread_rng();
+        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
         let vy = if capturing { -3 * ONE } else { self.scroll_vel };
         for star in self.stars.iter_mut() {
             let mut y = star.pos.y + vy;
@@ -112,7 +112,7 @@ struct Star {
 
 const COLOR_TABLE: [u32; 4] = [0, 71, 151, 222];
 
-fn choose_random_color(rng: &mut ThreadRng) -> u32 {
+fn choose_random_color<T: Rng>(rng: &mut T) -> u32 {
     let c = rng.gen_range(1, 4 * 4 * 4);
     let r = c % 4;
     let g = (c / 4) % 4;

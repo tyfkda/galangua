@@ -1,4 +1,5 @@
-use rand::Rng;
+use rand::{Rng, SeedableRng};
+use rand_xoshiro::Xoshiro128Plus;
 
 use super::enemy::{Enemy, EnemyState, EnemyType};
 use super::Accessor;
@@ -57,7 +58,7 @@ impl AttackManager {
                     .filter(|&i| enemies[i].is_some()).collect::<Vec<usize>>();
                 let count = alive_indices.len();
 
-                let mut rng = rand::thread_rng();
+                let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
 //                let index = rng.gen_range(0, count);
 let mut index = 0;
 for _i in 0..100 {
