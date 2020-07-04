@@ -24,4 +24,5 @@ features = ["image", "unsafe_textures"]
 [workspace]
 members = [
     "galangua-core",
+    "galangua-wasm",
 ]
