@@ -14,7 +14,6 @@ use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::ONE;
 
 const MAX_ENEMY_COUNT: usize = 64;
 const MAX_SHOT_COUNT: usize = 16;
@@ -229,7 +228,7 @@ impl EnemyManager {
             let count = target_pos.iter().flat_map(|x| x).count();
             let target: &Vec2I = target_pos.iter()
                 .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();
-            let d = &(target * ONE) - &pos;
+            let d = target - &pos;
             let distance = ((d.x as f64).powi(2) + (d.y as f64).powi(2)).sqrt();
             let f = (speed as f64) / distance;
             let vel = Vec2I::new(

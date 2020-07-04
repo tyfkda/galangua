@@ -301,7 +301,7 @@ impl GameManager {
 
     fn spawn_ene_shot(&mut self, pos: &Vec2I, speed: i32) {
         let player_pos = [
-            Some(self.player.pos()),
+            Some(*self.player.get_raw_pos()),
             self.player.dual_pos(),
         ];
         self.enemy_manager.spawn_shot(pos, &player_pos, speed);
@@ -337,18 +337,17 @@ impl GameManager {
             return;
         }
 
-        let collbox_opts = [
-            self.player.dual_collbox(),
-            self.player.get_collbox(),
+        let collbox_opts: [Option<(CollBox, Vec2I)>; 2] = [
+            self.player.dual_collbox().map(|c| (c, self.player.dual_pos().unwrap())),
+            self.player.get_collbox().map(|c| (c, *self.player.get_raw_pos())),
         ];
 
-        for collbox in collbox_opts.iter().flat_map(|x| x) {
+        for (collbox, player_pos) in collbox_opts.iter().flat_map(|x| x) {
             let power = 100;
             let accessor = unsafe { peep(self) };
             if let Some(pos) = self.enemy_manager.check_collision(
                 collbox, power, accessor, &mut self.event_queue)
             {
-                let player_pos = self.player.get_raw_pos();
                 self.event_queue.push(EventType::SmallBomb(*player_pos));
 
                 if self.player.crash(&pos) {
@@ -358,7 +357,6 @@ impl GameManager {
             }
 
             if let Some(pos) = self.enemy_manager.check_shot_collision(&collbox) {
-                let player_pos = self.player.get_raw_pos();
                 self.event_queue.push(EventType::SmallBomb(*player_pos));
 
                 if self.player.crash(&pos) {
@@ -382,7 +380,7 @@ impl AccessorForEnemy for GameManager {
     }
 
     fn is_player_dual(&self) -> bool {
-        self.player.dual_pos().is_some()
+        self.player.is_dual()
     }
 
     fn is_player_captured(&self) -> bool {

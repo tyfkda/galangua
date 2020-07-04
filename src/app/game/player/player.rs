@@ -174,7 +174,7 @@ impl Player {
         self.state == State::Normal
     }
 
-    pub fn pos(&self) -> Vec2I {
+    fn pos(&self) -> Vec2I {
         round_up(&self.pos)
     }
 
@@ -184,10 +184,14 @@ impl Player {
 
     pub fn dual_pos(&self) -> Option<Vec2I> {
         if self.dual {
-            Some(&self.pos() + &Vec2I::new(16, 0))
+            Some(&self.pos + &Vec2I::new(16 * ONE, 0))
         } else {
             None
         }
+    }
+
+    pub fn is_dual(&self) -> bool {
+        self.dual
     }
 
     pub fn dual_collbox(&self) -> Option<CollBox> {
