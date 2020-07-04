@@ -25,8 +25,7 @@ pub fn load_sprite_sheet(filename: &str) -> Result<HashMap<String, SpriteSheet>,
         if sheet["trimmed"].as_bool() == Some(true) {
             let sprite_source_size = convert_rect(&sheet["spriteSourceSize"]);
             let source_size = convert_size(&sheet["sourceSize"]);
-            trimmed = Some(Trimmed {sprite_source_size,
-                                    source_size});
+            trimmed = Some(Trimmed { sprite_source_size, source_size });
         }
 
         let texture = deserialized["meta"]["image"].as_str().unwrap();
@@ -43,15 +42,17 @@ pub fn load_sprite_sheet(filename: &str) -> Result<HashMap<String, SpriteSheet>,
 }
 
 fn convert_rect(value: &Value) -> Rect {
-    Rect {x: value["x"].as_i64().unwrap() as i32,
-          y: value["y"].as_i64().unwrap() as i32,
-          w: value["w"].as_i64().unwrap() as u32,
-          h: value["h"].as_i64().unwrap() as u32}
+    Rect {
+        x: value["x"].as_i64().unwrap() as i32,
+        y: value["y"].as_i64().unwrap() as i32,
+        w: value["w"].as_i64().unwrap() as u32,
+        h: value["h"].as_i64().unwrap() as u32,
+    }
 }
 
 fn convert_size(value: &Value) -> Size {
-    Size {w: value["w"].as_i64().unwrap() as u32,
-          h: value["h"].as_i64().unwrap() as u32}
+    Size { w: value["w"].as_i64().unwrap() as u32,
+           h: value["h"].as_i64().unwrap() as u32 }
 }
 
 fn get_mainname(filename: &str) -> String {

@@ -212,13 +212,13 @@ impl Enemy {
 
     fn set_state(&mut self, state: EnemyState) {
         self.state = state;
-        match state {
-            EnemyState::None | EnemyState::Troop => { self.update_fn = update_none; }
-            EnemyState::Trajectory => { self.update_fn = update_trajectory; }
-            EnemyState::MoveToFormation => { self.update_fn = update_move_to_formation; }
-            EnemyState::Formation => { self.update_fn = update_formation; }
-            EnemyState::AttackNormal => { self.update_fn = update_attack_normal; }
-            EnemyState::AttackCapture => { self.update_fn = update_attack_capture; }
+        self.update_fn = match state {
+            EnemyState::None | EnemyState::Troop => update_none,
+            EnemyState::Trajectory => update_trajectory,
+            EnemyState::MoveToFormation => update_move_to_formation,
+            EnemyState::Formation => update_formation,
+            EnemyState::AttackNormal => update_attack_normal,
+            EnemyState::AttackCapture => update_attack_capture,
         }
     }
 
@@ -265,12 +265,11 @@ impl Enemy {
                 }
             }
         }
-        self.troops.iter().flat_map(|x| x)
-            .for_each(|index| {
-                if let Some(enemy) = accessor.get_enemy_at_mut(index) {
-                    enemy.set_to_troop();
-                }
-            });
+        self.troops.iter().flat_map(|x| x).for_each(|index| {
+            if let Some(enemy) = accessor.get_enemy_at_mut(index) {
+                enemy.set_to_troop();
+            }
+        });
     }
 
     fn add_troop(&mut self, formation_index: FormationIndex) -> bool {
@@ -338,11 +337,11 @@ fn bee_set_damage(me: &mut Enemy, power: u32, _accessor: &dyn Accessor,
                   _event_queue: &mut EventQueue) -> DamageResult {
     if me.life > power {
         me.life -= power;
-        DamageResult {destroyed: false, killed: false, point: 0}
+        DamageResult { destroyed: false, killed: false, point: 0 }
     } else {
         me.life = 0;
         let point = (me.vtable.calc_point)(me);
-        DamageResult {destroyed: true, killed: true, point}
+        DamageResult { destroyed: true, killed: true, point }
     }
 }
 
@@ -412,7 +411,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
                     killed = false;  // Keep alive as a ghost.
                 }
                 let point = (me.vtable.calc_point)(me);
-                DamageResult {destroyed: true, killed, point}
+                DamageResult { destroyed: true, killed, point }
             }
         },
     },
@@ -425,12 +424,12 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
         set_damage: |me: &mut Enemy, power: u32, _accessor: &dyn Accessor, event_queue: &mut EventQueue| -> DamageResult {
             if me.life > power {
                 me.life -= power;
-                DamageResult {destroyed: false, killed: false, point: 0}
+                DamageResult { destroyed: false, killed: false, point: 0 }
             } else {
                 me.life = 0;
                 event_queue.push(EventType::CapturedFighterDestroyed);
                 let point = (me.vtable.calc_point)(me);
-                DamageResult {destroyed: true, killed: true, point}
+                DamageResult { destroyed: true, killed: true, point }
             }
         },
     },
