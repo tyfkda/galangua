@@ -3,11 +3,11 @@ use sdl2::render::{Texture, WindowCanvas};
 
 use crate::framework::resource_manager::ResourceManager;
 
-pub struct TextureManager {
+pub struct SdlTextureManager {
     resource_manager: ResourceManager<Texture>,
 }
 
-impl TextureManager {
+impl SdlTextureManager {
     pub fn new() -> Self {
         Self {
             resource_manager: ResourceManager::new(),

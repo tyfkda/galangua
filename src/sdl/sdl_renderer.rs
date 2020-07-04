@@ -4,13 +4,14 @@ use sdl2::render::WindowCanvas;
 use std::collections::HashMap;
 
 use crate::framework::sprite_sheet::SpriteSheet;
-use crate::framework::texture_manager::TextureManager;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 
+use super::sdl_texture_manager::SdlTextureManager;
+
 pub struct SdlRenderer {
     canvas: WindowCanvas,
-    texture_manager: TextureManager,
+    texture_manager: SdlTextureManager,
     sprite_sheet: HashMap<String, SpriteSheet>,
     scale: i32,
 }
@@ -19,7 +20,7 @@ impl SdlRenderer {
     pub fn new(canvas: WindowCanvas, scale: u32) -> Self {
         Self {
             canvas,
-            texture_manager: TextureManager::new(),
+            texture_manager: SdlTextureManager::new(),
             sprite_sheet: HashMap::new(),
             scale: scale as i32,
         }
@@ -33,10 +34,6 @@ impl RendererTrait for SdlRenderer {
 
     fn set_sprite_sheet(&mut self, sprite_sheet: HashMap<String, SpriteSheet>) {
         self.sprite_sheet = sprite_sheet;
-    }
-
-    fn get_mut_texture_manager(&mut self) -> &mut TextureManager {
-        &mut self.texture_manager
     }
 
     fn clear(&mut self) {
