@@ -18,7 +18,7 @@ use galangua_core::framework::RendererTrait;
 pub struct WasmRenderer {
     canvas: HtmlCanvasElement,
     context: web_sys::CanvasRenderingContext2d,
-    images: HashMap<String, HtmlImageElement>,
+    images: Rc<RefCell<HashMap<String, HtmlImageElement>>>,
     sprite_sheet: Rc<RefCell<HashMap<String, SpriteSheet>>>,
 }
 
@@ -43,7 +43,7 @@ impl WasmRenderer {
         Self {
             canvas,
             context,
-            images: HashMap::new(),
+            images: Rc::new(RefCell::new(HashMap::new())),
             sprite_sheet: Rc::new(RefCell::new(HashMap::new())),
         }
     }
@@ -52,23 +52,36 @@ impl WasmRenderer {
 impl RendererTrait for WasmRenderer {
     fn load_textures(&mut self, base_path: &str, filenames: &[&str]) -> Result<(), String> {
         for &filename in filenames.iter() {
-            let image = HtmlImageElement::new().unwrap();
+            let image = Rc::new(RefCell::new(HtmlImageElement::new().unwrap()));
 
             let path: String = format!("{}/{}", base_path, filename);
             let basename = String::from(Path::new(filename).file_stem().unwrap().to_str().unwrap());
             {
                 let basename = basename.clone();
-
-                let closure = Closure::wrap(Box::new(move |_event: JsValue| {
+                let images = self.images.clone();
+                let image_dup = image.clone();
+                let closure = Closure::once_into_js(move |_event: JsValue| {
                     web_sys::console::log_1(&format!("Image loaded: {}", &basename).into());
-                    //self.images.insert(basename, image);
-                }) as Box<dyn FnMut(JsValue)>);
-                let cb = closure.as_ref().unchecked_ref::<js_sys::Function>();
-                image.set_onload(Some(cb));
-                image.set_src(&path);
-                closure.forget();  // TODO: Keep clousure until onload/onerror called.
+
+                    image_dup.borrow_mut().set_onerror(None);
+                    image_dup.borrow_mut().set_onload(None);
+
+                    let image = Rc::try_unwrap(image_dup).unwrap().into_inner();
+                    images.borrow_mut().insert(basename, image);
+                });
+                let cb = closure.as_ref().unchecked_ref();
+                image.borrow_mut().set_onload(Some(cb));
             }
-            self.images.insert(basename, image);  // TODO: Move this into closure.
+            {
+                let basename = basename.clone();
+                let closure = Closure::wrap(Box::new(move |_event: JsValue| {
+                    web_sys::console::log_1(&format!("Image load failed: {}", &basename).into());
+                }) as Box<dyn FnMut(JsValue)>);
+                let cb = closure.as_ref().unchecked_ref();
+                image.borrow_mut().set_onerror(Some(cb));
+                closure.forget();
+            }
+            image.borrow_mut().set_src(&path);
         }
         Ok(())
     }
@@ -101,7 +114,8 @@ impl RendererTrait for WasmRenderer {
     }
 
     fn draw_str(&mut self, tex_name: &str, x: i32, y: i32, text: &str) -> Result<(), String> {
-        let image = self.images.get(tex_name).ok_or_else(|| format!("no image: {}", tex_name))?;
+        let image = self.images.borrow();
+        let image = image.get(tex_name).ok_or_else(|| format!("no image: {}", tex_name))?;
 
         let mut x = x as f64;
         let y = y as f64;
@@ -124,7 +138,8 @@ impl RendererTrait for WasmRenderer {
         let sprite_sheet = self.sprite_sheet.borrow();
         let sheet = sprite_sheet.get(sprite_name)
             .ok_or_else(|| format!("No sprite: {}", sprite_name))?;
-        let image = self.images.get(&sheet.texture).ok_or_else(|| format!("no image: {}", &sheet.texture))?;
+        let image = self.images.borrow();
+        let image = image.get(&sheet.texture).ok_or_else(|| format!("no image: {}", &sheet.texture))?;
 
         let mut pos = *pos;
         if let Some(trimmed) = &sheet.trimmed {
@@ -144,7 +159,8 @@ impl RendererTrait for WasmRenderer {
         let sprite_sheet = self.sprite_sheet.borrow();
         let sheet = sprite_sheet.get(sprite_name)
             .ok_or_else(|| format!("No sprite: {}", sprite_name))?;
-        let image = self.images.get(&sheet.texture).ok_or_else(|| format!("no image: {}", &sheet.texture))?;
+        let image = self.images.borrow();
+        let image = image.get(&sheet.texture).ok_or_else(|| format!("no image: {}", &sheet.texture))?;
 
         let mut pos = *pos;
         if let Some(trimmed) = &sheet.trimmed {
