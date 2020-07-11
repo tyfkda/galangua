@@ -1,13 +1,11 @@
-mod app;
-mod framework;
 mod sdl;
-mod util;
 
 use sdl2::keyboard::Keycode;
 
-use crate::app::consts;
-use crate::app::GalanguaApp;
-use crate::framework::VKey;
+use galangua_core::app::consts;
+use galangua_core::app::GalanguaApp;
+use galangua_core::framework::VKey;
+
 use crate::sdl::SdlAppFramework;
 
 pub fn main() -> Result<(), String> {

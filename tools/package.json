@@ -2,7 +2,7 @@
   "name": "tmp",
   "scripts": {
     "start": "npm run pack && npm run copy",
-    "pack": "npx spritesheet-js -n chr --trim ../src/img/chr/*.png",
+    "pack": "npx spritesheet-js -n chr --trim ./img/chr/*.png",
     "copy": "cp chr* ../assets/"
   },
   "devDependencies": {
