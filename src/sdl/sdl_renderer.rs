@@ -28,7 +28,7 @@ impl SdlRenderer {
 }
 
 impl RendererTrait for SdlRenderer {
-    fn load_textures(&mut self, base_path: &str, filenames: &Vec<&str>) -> Result<(), String> {
+    fn load_textures(&mut self, base_path: &str, filenames: &[&str]) -> Result<(), String> {
         self.texture_manager.load(&mut self.canvas, base_path, filenames)
     }
 

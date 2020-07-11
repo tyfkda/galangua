@@ -66,7 +66,7 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
     fn init(&mut self, renderer: &mut R) -> Result<(), String>
         where R: RendererTrait
     {
-        renderer.load_textures("assets", &vec!["chr.png", "font.png"])?;
+        renderer.load_textures("assets", &["chr.png", "font.png"])?;
 
         let sprite_sheet = load_sprite_sheet("assets/chr.json").expect("sprite sheet");
         renderer.set_sprite_sheet(sprite_sheet);
