@@ -3,7 +3,7 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::WindowCanvas;
 use std::collections::HashMap;
 
-use crate::framework::sprite_sheet::SpriteSheet;
+use crate::framework::sprite_sheet::{load_sprite_sheet, SpriteSheet};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 
@@ -32,8 +32,10 @@ impl RendererTrait for SdlRenderer {
         self.texture_manager.load(&mut self.canvas, base_path, filenames)
     }
 
-    fn set_sprite_sheet(&mut self, sprite_sheet: HashMap<String, SpriteSheet>) {
-        self.sprite_sheet = sprite_sheet;
+    fn load_sprite_sheet(&mut self, filename: &str) -> Result<(), String> {
+        let text = std::fs::read_to_string(filename).map_err(|e| e.to_string())?;
+        self.sprite_sheet = load_sprite_sheet(&text);
+        Ok(())
     }
 
     fn clear(&mut self) {

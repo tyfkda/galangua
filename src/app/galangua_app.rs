@@ -3,7 +3,6 @@ use std::rc::Rc;
 
 use super::game::effect::StarManager;
 use super::game::GameManager;
-use super::util::sprite_sheet::load_sprite_sheet;
 
 use crate::framework::{AppTrait, RendererTrait, VKey};
 use crate::util::fps_calc::FpsCalc;
@@ -67,10 +66,7 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
         where R: RendererTrait
     {
         renderer.load_textures("assets", &["chr.png", "font.png"])?;
-
-        let sprite_sheet = load_sprite_sheet("assets/chr.json").expect("sprite sheet");
-        renderer.set_sprite_sheet(sprite_sheet);
-
+        renderer.load_sprite_sheet("assets/chr.json")?;
         Ok(())
     }
 

@@ -1,11 +1,8 @@
-use std::collections::HashMap;
-
-use crate::framework::sprite_sheet::SpriteSheet;
 use crate::framework::types::Vec2I;
 
 pub trait RendererTrait {
     fn load_textures(&mut self, base_path: &str, filenames: &[&str]) -> Result<(), String>;
-    fn set_sprite_sheet(&mut self, sprite_sheet: HashMap<String, SpriteSheet>);
+    fn load_sprite_sheet(&mut self, filename: &str) -> Result<(), String>;
     fn clear(&mut self);
     fn present(&mut self);
     fn set_texture_color_mod(&mut self, tex_name: &str, r: u8, g: u8, b: u8);
