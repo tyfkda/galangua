@@ -1,17 +1,18 @@
-mod app;
-mod framework;
 mod sdl;
-mod util;
+mod std_timer;
 
 use sdl2::keyboard::Keycode;
 
-use crate::app::consts;
-use crate::app::GalanguaApp;
-use crate::framework::VKey;
+use galangua_core::app::consts;
+use galangua_core::app::GalanguaApp;
+use galangua_core::framework::VKey;
+
 use crate::sdl::SdlAppFramework;
+use crate::std_timer::StdTimer;
 
 pub fn main() -> Result<(), String> {
-    let app = GalanguaApp::new();
+    let timer = StdTimer::new();
+    let app = GalanguaApp::new(timer);
     let mut framework = SdlAppFramework::new(Box::new(app), map_key)?;
     framework.run("Galangua",
                   consts::WIDTH as u32, consts::HEIGHT as u32, 3)

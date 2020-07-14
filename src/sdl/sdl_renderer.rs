@@ -3,9 +3,9 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::WindowCanvas;
 use std::collections::HashMap;
 
-use crate::framework::sprite_sheet::{load_sprite_sheet, SpriteSheet};
-use crate::framework::types::Vec2I;
-use crate::framework::RendererTrait;
+use galangua_core::framework::sprite_sheet::{load_sprite_sheet, SpriteSheet};
+use galangua_core::framework::types::Vec2I;
+use galangua_core::framework::RendererTrait;
 
 use super::sdl_texture_manager::SdlTextureManager;
 

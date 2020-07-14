@@ -5,7 +5,7 @@ use super::game::effect::StarManager;
 use super::game::GameManager;
 
 use crate::framework::{AppTrait, RendererTrait, VKey};
-use crate::util::fps_calc::FpsCalc;
+use crate::util::fps_calc::{FpsCalc, TimerTrait};
 use crate::util::pad::{Pad, PadBit};
 
 #[derive(PartialEq)]
@@ -14,11 +14,11 @@ enum AppState {
     Game,
 }
 
-pub struct GalanguaApp {
+pub struct GalanguaApp<T: TimerTrait> {
     state: AppState,
     count: u32,
     pad: Pad,
-    fps_calc: FpsCalc,
+    fps_calc: FpsCalc<T>,
     game_manager: GameManager,
     star_manager: Rc<RefCell<StarManager>>,
     frame_count: u32,
@@ -26,14 +26,14 @@ pub struct GalanguaApp {
     paused: bool,
 }
 
-impl GalanguaApp {
-    pub fn new() -> Self {
+impl<T: TimerTrait> GalanguaApp<T> {
+    pub fn new(timer: T) -> Self {
         let star_manager = Rc::new(RefCell::new(StarManager::new()));
         Self {
             state: AppState::Title,
             count: 0,
             pad: Pad::new(),
-            fps_calc: FpsCalc::new(),
+            fps_calc: FpsCalc::new(timer),
             game_manager: GameManager::new(Rc::clone(&star_manager)),
             star_manager,
             frame_count: 0,
@@ -49,7 +49,7 @@ impl GalanguaApp {
     }
 }
 
-impl<R: RendererTrait> AppTrait<R> for GalanguaApp {
+impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
     fn on_key(&mut self, keycode: VKey, down: bool) {
         self.pad.on_key(keycode, down);
     }

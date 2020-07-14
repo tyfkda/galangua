@@ -1,7 +1,7 @@
 use sdl2::image::LoadTexture;
 use sdl2::render::{Texture, WindowCanvas};
 
-use crate::framework::resource_manager::ResourceManager;
+use galangua_core::framework::resource_manager::ResourceManager;
 
 pub struct SdlTextureManager {
     resource_manager: ResourceManager<Texture>,
