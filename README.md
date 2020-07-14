@@ -28,3 +28,20 @@ Galangua
 ### Run
 
     $ cargo run
+
+
+### Browser version
+
+#### Requirement
+
+  * [wasm-pack](https://rustwasm.github.io/wasm-pack/)
+
+#### Build
+
+    $ cd galangua-wasm
+    $ wasm-pack build
+    $ cd www
+    $ npm install
+    $ npm run build
+
+Files are generated in `galangua-wasm/www/dist`
