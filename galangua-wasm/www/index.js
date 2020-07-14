@@ -1,7 +1,11 @@
 import { WasmAppFramework, WasmRenderer } from 'galangua-wasm'
 
 const renderer = WasmRenderer.new('mycanvas')
-const framework = WasmAppFramework.new(renderer)
+const framework = WasmAppFramework.new(
+  renderer,
+  function get_now() {
+    return Date.now()
+  })
 
 document.addEventListener('keydown', (event) => {
   framework.on_key(event.code, true)

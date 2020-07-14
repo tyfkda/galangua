@@ -4,6 +4,7 @@ use galangua_core::app::GalanguaApp;
 use galangua_core::framework::{AppTrait, VKey};
 
 use super::wasm_renderer::WasmRenderer;
+use super::wasm_timer::WasmTimer;
 
 #[wasm_bindgen]
 pub struct WasmAppFramework {
@@ -13,10 +14,19 @@ pub struct WasmAppFramework {
 
 #[wasm_bindgen]
 impl WasmAppFramework {
-    pub fn new(mut renderer: WasmRenderer) -> Self {
+    pub fn new(mut renderer: WasmRenderer, get_now_fn: js_sys::Function) -> Self {
         web_sys::console::log_1(&"WasmAppFramework#new".into());
 
-        let mut app = Box::new(GalanguaApp::new());
+        let timer = WasmTimer::new(move || {
+            let this = JsValue::NULL;
+            if let Ok(v) = get_now_fn.call0(&this) {
+                if let Some(t) = v.as_f64() {
+                    return t;
+                }
+            }
+            0.0
+        });
+        let mut app = Box::new(GalanguaApp::new(timer));
 
         app.init(&mut renderer).expect("app.init failed");
 

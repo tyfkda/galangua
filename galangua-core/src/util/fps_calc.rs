@@ -1,30 +1,30 @@
-//use std::time::{Duration, SystemTime};
+pub trait TimerTrait {
+    fn passed_one_second(&mut self) -> bool;
+}
 
-pub struct FpsCalc {
+pub struct FpsCalc<T: TimerTrait> {
     fps: i32,
-    //last_fps_time: SystemTime,
+    timer: T,
     ndraw: i32,
 }
 
-impl FpsCalc {
-    pub fn new() -> Self {
+impl<T: TimerTrait> FpsCalc<T> {
+    pub fn new(timer: T) -> Self {
         Self {
             fps: 0,
-            //last_fps_time: SystemTime::now(),
+            timer,
             ndraw: 0,
         }
     }
 
     pub fn update(&mut self) -> bool {
-        /*self.ndraw += 1;
-        let now = SystemTime::now();
-        if now.duration_since(self.last_fps_time).expect("Time went backwards").as_secs() < 1 {
+        self.ndraw += 1;
+        if !self.timer.passed_one_second() {
             return false;
         }
 
         self.fps = self.ndraw;
         self.ndraw = 0;
-        self.last_fps_time = self.last_fps_time + Duration::from_secs(1);*/
         true
     }
 

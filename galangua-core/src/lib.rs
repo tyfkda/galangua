@@ -1,3 +1,3 @@
 pub mod app;
 pub mod framework;
-mod util;
+pub mod util;
