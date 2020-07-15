@@ -8,7 +8,7 @@ use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{
-    calc_velocity, clamp, diff_angle, quantize_angle, round_up, square,
+    atan2_lut, calc_velocity, clamp, diff_angle, quantize_angle, round_up, square,
     ANGLE, ONE, ONE_BIT};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -233,8 +233,7 @@ impl Enemy {
         let sq_distance = square(diff.x >> (ONE_BIT / 2)) + square(diff.y >> (ONE_BIT / 2));
         if sq_distance > square(self.speed >> (ONE_BIT / 2)) {
             const DLIMIT: i32 = 5 * ONE;
-            let target_angle_rad = (diff.x as f64).atan2(-diff.y as f64);
-            let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
+            let target_angle = atan2_lut(-diff.y, diff.x);
             let d = diff_angle(target_angle, self.angle);
             self.angle += clamp(d, -DLIMIT, DLIMIT);
             self.vangle = 0;
@@ -541,8 +540,7 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
         }
         1 => {
             let dpos = &me.target_pos - &me.pos;
-            let target_angle_rad = (dpos.x as f64).atan2(-dpos.y as f64);
-            let target_angle = ((target_angle_rad * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI)) + 0.5).floor() as i32) & (ANGLE * ONE - 1);
+            let target_angle = atan2_lut(-dpos.y, dpos.x);
             let mut d = diff_angle(target_angle, me.angle);
             if me.vangle > 0 && d < 0 {
                 d += ANGLE * ONE;
