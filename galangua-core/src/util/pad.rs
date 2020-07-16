@@ -102,16 +102,21 @@ fn get_key_bit(key: VKey) -> PadBit {
     }
 }
 
-#[test]
-fn test_trigger() {
-    let mut pad = Pad::new();
-    pad.on_key(VKey::Space, true);
-    pad.update();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    assert_eq!(true, pad.is_pressed(PadBit::A));
-    assert_eq!(true, pad.is_trigger(PadBit::A));
+    #[test]
+    fn test_trigger() {
+        let mut pad = Pad::new();
+        pad.on_key(VKey::Space, true);
+        pad.update();
 
-    pad.update();
-    assert_eq!(true, pad.is_pressed(PadBit::A));
-    assert_eq!(false, pad.is_trigger(PadBit::A));
+        assert_eq!(true, pad.is_pressed(PadBit::A));
+        assert_eq!(true, pad.is_trigger(PadBit::A));
+
+        pad.update();
+        assert_eq!(true, pad.is_pressed(PadBit::A));
+        assert_eq!(false, pad.is_trigger(PadBit::A));
+    }
 }
