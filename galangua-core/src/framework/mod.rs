@@ -1,6 +1,5 @@
 mod app_trait;
 mod renderer_trait;
-pub mod resource_manager;
 pub mod sprite_sheet;
 pub mod types;
 mod vkey;

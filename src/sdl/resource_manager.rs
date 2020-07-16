@@ -2,13 +2,13 @@ use std::collections::HashMap;
 use std::path::Path;
 
 pub struct ResourceManager<T> {
-    resource_map: HashMap<String, T>,
+    map: HashMap<String, T>,
 }
 
 impl<T> ResourceManager<T> {
     pub fn new() -> Self {
         Self {
-            resource_map: HashMap::new(),
+            map: HashMap::new(),
         }
     }
 
@@ -18,18 +18,18 @@ impl<T> ResourceManager<T> {
         for filename in filenames {
             let resource = loader(&format!("{}/{}", base_path, filename))?;
             let key = Path::new(filename).file_stem().unwrap().to_str().unwrap();
-            self.resource_map.insert(String::from(key), resource);
+            self.map.insert(String::from(key), resource);
         }
 
         Ok(())
     }
 
     pub fn get(&self, key: &str) -> Option<&T> {
-        self.resource_map.get(key)
+        self.map.get(key)
     }
 
     pub fn get_mut(&mut self, key: &str) -> Option<&mut T> {
-        self.resource_map.get_mut(key)
+        self.map.get_mut(key)
     }
 }
 
