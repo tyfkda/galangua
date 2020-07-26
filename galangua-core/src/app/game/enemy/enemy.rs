@@ -25,8 +25,7 @@ pub enum EnemyState {
     Trajectory,
     MoveToFormation,
     Formation,
-    AttackNormal,
-    AttackCapture,
+    Attack,
     Troop,
 }
 
@@ -212,15 +211,22 @@ impl Enemy {
     }
 
     fn set_state(&mut self, state: EnemyState) {
-        self.state = state;
-        self.update_fn = match state {
+        let update_fn = match state {
             EnemyState::None | EnemyState::Troop => update_none,
             EnemyState::Trajectory => update_trajectory,
             EnemyState::MoveToFormation => update_move_to_formation,
             EnemyState::Formation => update_formation,
-            EnemyState::AttackNormal => update_attack_normal,
-            EnemyState::AttackCapture => update_attack_capture,
-        }
+            EnemyState::Attack => update_attack_normal,
+        };
+        self.set_state_with_fn(state, update_fn);
+    }
+
+    fn set_state_with_fn(
+        &mut self, state: EnemyState,
+        update_fn: fn(enemy: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue),
+    ) {
+        self.state = state;
+        self.update_fn = update_fn;
     }
 
     pub fn set_traj(&mut self, traj: Traj) {
@@ -330,7 +336,7 @@ struct EnemyVtable {
 fn bee_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut dyn Accessor) {
     me.attack_step = 0;
     me.count = 0;
-    me.set_state(EnemyState::AttackNormal);
+    me.set_state_with_fn(EnemyState::Attack, update_attack_normal);
 }
 
 fn bee_set_damage(me: &mut Enemy, power: u32, _accessor: &dyn Accessor,
@@ -370,7 +376,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
     EnemyVtable {
         life: 2,
         set_attack: |me: &mut Enemy, capture_attack: bool, accessor: &mut dyn Accessor| {
-            let state = if capture_attack { EnemyState::AttackCapture } else { EnemyState::AttackNormal };
+            let update_fn = if capture_attack { update_attack_capture } else { update_attack_normal };
 
             me.attack_step = 0;
             me.count = 0;
@@ -382,7 +388,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
                 me.choose_troops(accessor);
             }
 
-            me.set_state(state);
+            me.set_state_with_fn(EnemyState::Attack, update_fn);
         },
         calc_point: |me: &Enemy| {
             if me.state == EnemyState::Formation {
