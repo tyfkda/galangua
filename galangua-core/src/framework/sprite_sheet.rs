@@ -31,8 +31,7 @@ pub struct SpriteSheet {
 }
 
 pub fn load_sprite_sheet(text: &str) -> HashMap<String, SpriteSheet> {
-    let deserialized: Value = serde_json::from_str(text)
-        .expect("illegal json");
+    let deserialized: Value = serde_json::from_str(text).expect("illegal json");
 
     let mut m = HashMap::new();
 

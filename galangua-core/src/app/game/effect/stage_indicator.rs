@@ -50,7 +50,8 @@ impl StageIndicator {
     }
 
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
-        where R: RendererTrait
+    where
+        R: RendererTrait,
     {
         let width = calc_width(self.stage);
         let mut x = consts::WIDTH - width as i32;

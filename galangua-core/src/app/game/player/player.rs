@@ -134,7 +134,8 @@ impl Player {
     }
 
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
-        where R: RendererTrait
+    where
+        R: RendererTrait,
     {
         match self.state {
             State::Normal | State::EscapeCapturing | State::MoveHomePos => {

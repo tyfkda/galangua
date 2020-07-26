@@ -63,7 +63,8 @@ impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
     }
 
     fn init(&mut self, renderer: &mut R) -> Result<(), String>
-        where R: RendererTrait
+    where
+        R: RendererTrait,
     {
         renderer.load_textures("assets", &["chr.png", "font.png"])?;
         renderer.load_sprite_sheet("assets/chr.json")?;
@@ -112,7 +113,8 @@ impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
     }
 
     fn draw(&mut self, renderer: &mut R) -> Result<(), String>
-        where R: RendererTrait
+    where
+        R: RendererTrait,
     {
         renderer.set_draw_color(0, 0, 0);
         renderer.clear();

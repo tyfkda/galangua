@@ -2,8 +2,8 @@ extern crate js_sys;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::path::Path;
+use std::rc::Rc;
 
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -110,8 +110,7 @@ impl RendererTrait for WasmRenderer {
 
     fn present(&mut self) {}
 
-    fn set_texture_color_mod(&mut self, _tex_name: &str, _r: u8, _g: u8, _b: u8) {
-    }
+    fn set_texture_color_mod(&mut self, _tex_name: &str, _r: u8, _g: u8, _b: u8) {}
 
     fn draw_str(&mut self, tex_name: &str, x: i32, y: i32, text: &str) -> Result<(), String> {
         let image = self.images.borrow();
@@ -125,9 +124,10 @@ impl RendererTrait for WasmRenderer {
         for c in text.chars() {
             let u: i32 = ((c as i32) - (' ' as i32)) % 16 * 8;
             let v: i32 = ((c as i32) - (' ' as i32)) / 16 * 8;
-            self.context.draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
-                &image, u as f64, v as f64, w, h,
-                x, y, w, h)
+            self.context
+                .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
+                    &image, u as f64, v as f64, w, h,
+                    x, y, w, h)
                 .or_else(|e| Err(format!("draw_image failed: {:?}", &e)))?;
             x += w;
         }
@@ -139,7 +139,8 @@ impl RendererTrait for WasmRenderer {
         let sheet = sprite_sheet.get(sprite_name)
             .ok_or_else(|| format!("No sprite: {}", sprite_name))?;
         let image = self.images.borrow();
-        let image = image.get(&sheet.texture).ok_or_else(|| format!("no image: {}", &sheet.texture))?;
+        let image = image.get(&sheet.texture)
+            .ok_or_else(|| format!("no image: {}", &sheet.texture))?;
 
         let mut pos = *pos;
         if let Some(trimmed) = &sheet.trimmed {
@@ -167,7 +168,9 @@ impl RendererTrait for WasmRenderer {
             pos.x += trimmed.sprite_source_size.x;
             pos.y += trimmed.sprite_source_size.y;
         }
-        let center = center.map_or_else(|| Vec2I::new(sheet.frame.w as i32 / 2, sheet.frame.h as i32 / 2), |v| *v);
+        let center = center.map_or_else(
+            || Vec2I::new(sheet.frame.w as i32 / 2, sheet.frame.h as i32 / 2),
+            |v| *v);
 
         self.context.save();
         self.context.translate((pos.x + center.x) as f64, (pos.y + center.y) as f64).or_else(|_| Err(String::from("translate")))?;

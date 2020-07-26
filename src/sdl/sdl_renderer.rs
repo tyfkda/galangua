@@ -122,9 +122,9 @@ impl RendererTrait for SdlRenderer {
 
     fn fill_rect(&mut self, dst: Option<[&Vec2I; 2]>) -> Result<(), String> {
         if let Some(rect) = dst {
-            self.canvas.fill_rect(Some(Rect::new(rect[0].x * self.scale, rect[0].y * self.scale,
-                                                 (rect[1].x * self.scale) as u32,
-                                                 (rect[1].y * self.scale) as u32)))?;
+            self.canvas.fill_rect(Some(Rect::new(
+                rect[0].x * self.scale, rect[0].y * self.scale,
+                (rect[1].x * self.scale) as u32, (rect[1].y * self.scale) as u32)))?;
         } else {
             self.canvas.fill_rect(None)?;
         }

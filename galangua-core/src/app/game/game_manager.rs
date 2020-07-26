@@ -182,7 +182,8 @@ impl GameManager {
     }
 
     pub fn draw<R>(&mut self, renderer: &mut R) -> Result<(), String>
-        where R: RendererTrait
+    where
+        R: RendererTrait,
     {
         self.player.draw(renderer)?;
         self.enemy_manager.draw(renderer)?;

@@ -29,7 +29,8 @@ impl EneShot {
     }
 
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
-        where R: RendererTrait
+    where
+        R: RendererTrait,
     {
         let pos = self.pos();
         renderer.draw_sprite("ene_shot", &(&pos + &Vec2I::new(-2, -4)))?;

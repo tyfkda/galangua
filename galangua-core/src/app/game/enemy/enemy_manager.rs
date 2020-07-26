@@ -71,7 +71,8 @@ impl EnemyManager {
     }
 
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
-        where R: RendererTrait
+    where
+        R: RendererTrait,
     {
         for enemy in self.enemies.iter().flat_map(|x| x) {
             enemy.draw(renderer)?;

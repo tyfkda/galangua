@@ -57,7 +57,8 @@ impl RecapturedFighter {
     }
 
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
-        where R: RendererTrait
+    where
+        R: RendererTrait,
     {
         let pos = round_up(&self.pos);
         match self.state {

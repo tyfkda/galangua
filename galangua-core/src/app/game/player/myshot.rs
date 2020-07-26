@@ -36,7 +36,8 @@ impl MyShot {
     }
 
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
-        where R: RendererTrait
+    where
+        R: RendererTrait,
     {
         let pos = self.pos();
         if self.angle == 0 {

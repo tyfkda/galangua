@@ -3,14 +3,16 @@ use galangua_core::util::fps_calc::TimerTrait;
 const SEC: u64 = 1000;
 
 pub struct WasmTimer<F>
-    where F: Fn() -> f64
+where
+    F: Fn() -> f64,
 {
     last_time: u64,
-    get_now: F
+    get_now: F,
 }
 
 impl<F> WasmTimer<F>
-    where F: Fn() -> f64
+where
+    F: Fn() -> f64,
 {
     pub fn new(get_now: F) -> Self {
         let last_time = get_now() as u64;
@@ -22,7 +24,8 @@ impl<F> WasmTimer<F>
 }
 
 impl<F> TimerTrait for WasmTimer<F>
-    where F: Fn() -> f64
+where
+    F: Fn() -> f64,
 {
     fn passed_one_second(&mut self) -> bool {
         let now = (self.get_now)() as u64;

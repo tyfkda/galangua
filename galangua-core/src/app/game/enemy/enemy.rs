@@ -180,7 +180,8 @@ impl Enemy {
     }
 
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
-        where R: RendererTrait
+    where
+        R: RendererTrait,
     {
         if self.is_ghost() {
             return Ok(());
@@ -558,8 +559,7 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
                 me.angle = ANGLE / 2 * ONE;
                 me.vangle = 0;
 
-                me.tractor_beam =
-                    Some(TractorBeam::new(&(&me.pos + &Vec2I::new(0, 8 * ONE))));
+                me.tractor_beam = Some(TractorBeam::new(&(&me.pos + &Vec2I::new(0, 8 * ONE))));
 
                 me.attack_step += 1;
                 me.count = 0;
@@ -572,8 +572,7 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
                     me.speed = 3 * ONE / 2;
                     me.attack_step += 1;
                 } else if tractor_beam.can_capture(accessor.get_raw_player_pos()) {
-                    event_queue.push(
-                        EventType::CapturePlayer(&me.pos + &Vec2I::new(0, 16 * ONE)));
+                    event_queue.push(EventType::CapturePlayer(&me.pos + &Vec2I::new(0, 16 * ONE)));
                     tractor_beam.start_capture();
                     me.capture_state = CaptureState::BeamTracting;
                     me.attack_step = 100;
@@ -602,7 +601,8 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
             if let Some(tractor_beam) = &me.tractor_beam {
                 if tractor_beam.closed() {
                     let fi = FormationIndex(me.formation_index.0, me.formation_index.1 - 1);
-                    event_queue.push(EventType::SpawnCapturedFighter(&me.pos + &Vec2I::new(0, 16 * ONE), fi));
+                    event_queue.push(EventType::SpawnCapturedFighter(
+                        &me.pos + &Vec2I::new(0, 16 * ONE), fi));
 
                     me.add_troop(fi);
 

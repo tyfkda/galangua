@@ -34,14 +34,16 @@ fn gen_sin_table(phase: usize) -> [i32; ANGLE as usize] {
 }
 
 fn gen_atan2_table() -> [u8; ATAN2_TABLE_LEN] {
-    let mut table: [MaybeUninit<u8>; ATAN2_TABLE_LEN] = unsafe { MaybeUninit::uninit().assume_init() };
+    let mut table: [MaybeUninit<u8>; ATAN2_TABLE_LEN] =
+        unsafe { MaybeUninit::uninit().assume_init() };
     let n = ATAN2_N;
 
     let mut i = 0;
     for x in (n / 2)..n {
         for y in 1..x {
             let rad = (y as f64).atan2(x as f64);
-            let angle = (rad * (((ANGLE * ATAN2_SCALE) as f64) / (2.0 * std::f64::consts::PI))).round() as u16;
+            let angle = (rad * (((ANGLE * ATAN2_SCALE) as f64) / (2.0 * std::f64::consts::PI)))
+                .round() as u16;
             let angle = angle.min(std::u8::MAX as u16);  // Clamp, just in case.
             table[i] = MaybeUninit::new(angle as u8);
             i += 1;
@@ -63,14 +65,16 @@ fn find_msb(x: u32) -> i32 {
             hi = m;
         }
     }
-    return hi - 1
+    hi - 1
 }
 
 fn normalize_significand(mut x: i32, mut y: i32, bit: u32) -> (i32, i32) {
     assert!(x >= y && y >= 0);
     assert!(bit > 0);
 
-    if x == 0 { return (x, y); }
+    if x == 0 {
+        return (x, y);
+    }
 
     let mut msb = find_msb(x as u32) as u32;
     if msb >= bit {
@@ -143,7 +147,8 @@ pub fn quantize_angle(angle: i32, div: i32) -> u8 {
 }
 
 pub fn clamp<T>(value: T, min: T, max: T) -> T
-    where T: Copy + PartialOrd
+where
+    T: Copy + PartialOrd,
 {
     if value < min {
         min
