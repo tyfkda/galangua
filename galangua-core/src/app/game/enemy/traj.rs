@@ -73,37 +73,8 @@ impl Traj {
             while i < command_table.len() {
                 let command = &command_table[i];
                 i += 1;
-                match *command {
-                    TrajCommand::Pos(x, y) => {
-                        self.pos = Vec2I::new(x, y);
-                    }
-                    TrajCommand::Speed(speed) => {
-                        self.speed = speed;
-                    }
-                    TrajCommand::Angle(angle) => {
-                        self.angle = angle;
-                    }
-                    TrajCommand::VAngle(vangle) => {
-                        self.vangle = vangle;
-                    }
-                    TrajCommand::Delay(delay) => {
-                        self.command_delay = delay;
-                        break;
-                    }
-                    TrajCommand::DestAngle(dest_angle, radius) => {
-                        let distance = 2.0 * std::f64::consts::PI * (radius as f64) / (ONE as f64);  // Circumference of radius [dot].
-                        let frame = distance * (ONE as f64) / (self.speed as f64);  // Frame count according to speed [frame].
-                        let dangle = (2.0 * std::f64::consts::PI) / frame;  // Angle which should be modified in one frame [rad].
-                        let vangle = dangle * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI));  // [ANGLE * ONE]
-                        if dest_angle > self.angle {
-                            self.vangle = vangle.round() as i32;
-                            self.command_delay = (((dest_angle - self.angle) as f64) / vangle).round() as u32;
-                        } else {
-                            self.vangle = -vangle.round() as i32;
-                            self.command_delay = (((self.angle - dest_angle) as f64) / vangle).round() as u32;
-                        }
-                        break;
-                    }
+                if !self.handle_one_command(command) {
+                    break;
                 }
             }
 
@@ -113,5 +84,41 @@ impl Traj {
                 self.command_table = None;
             }
         }
+    }
+
+    fn handle_one_command(&mut self, command: &TrajCommand) -> bool {
+        match *command {
+            TrajCommand::Pos(x, y) => {
+                self.pos = Vec2I::new(x, y);
+            }
+            TrajCommand::Speed(speed) => {
+                self.speed = speed;
+            }
+            TrajCommand::Angle(angle) => {
+                self.angle = angle;
+            }
+            TrajCommand::VAngle(vangle) => {
+                self.vangle = vangle;
+            }
+            TrajCommand::Delay(delay) => {
+                self.command_delay = delay;
+                return false;
+            }
+            TrajCommand::DestAngle(dest_angle, radius) => {
+                let distance = 2.0 * std::f64::consts::PI * (radius as f64) / (ONE as f64);  // Circumference of radius [dot].
+                let frame = distance * (ONE as f64) / (self.speed as f64);  // Frame count according to speed [frame].
+                let dangle = (2.0 * std::f64::consts::PI) / frame;  // Angle which should be modified in one frame [rad].
+                let vangle = dangle * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI));  // [ANGLE * ONE]
+                if dest_angle > self.angle {
+                    self.vangle = vangle.round() as i32;
+                    self.command_delay = (((dest_angle - self.angle) as f64) / vangle).round() as u32;
+                } else {
+                    self.vangle = -vangle.round() as i32;
+                    self.command_delay = (((self.angle - dest_angle) as f64) / vangle).round() as u32;
+                }
+                return false;
+            }
+        }
+        true
     }
 }
