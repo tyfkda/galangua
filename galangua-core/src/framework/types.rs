@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Div, Mul, Sub};
+use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Vector2D<T> {
@@ -60,6 +60,16 @@ where
     type Output = Vector2D<Scalar>;
     fn div(self, rhs: Scalar) -> Self::Output {
         Self::Output { x: self.x / rhs, y: self.y / rhs }
+    }
+}
+
+impl<T> Neg for &Vector2D<T>
+where
+    T: Neg<Output = T> + Copy,
+{
+    type Output = Vector2D<T>;
+    fn neg(self) -> Self::Output {
+        Self::Output { x: -self.x, y: -self.y }
     }
 }
 
