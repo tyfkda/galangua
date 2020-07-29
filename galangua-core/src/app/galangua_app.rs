@@ -50,8 +50,8 @@ impl<T: TimerTrait> GalanguaApp<T> {
 }
 
 impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
-    fn on_key(&mut self, keycode: VKey, down: bool) {
-        self.pad.on_key(keycode, down);
+    fn on_key(&mut self, vkey: VKey, down: bool) {
+        self.pad.on_key(vkey, down);
     }
 
     fn on_joystick_axis(&mut self, axis_index: u8, dir: i8) {

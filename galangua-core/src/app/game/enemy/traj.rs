@@ -15,7 +15,7 @@ pub struct Traj {
     flip_x: bool,
 
     command_table: Option<&'static [TrajCommand]>,
-    command_delay: u32,
+    delay: u32,
 }
 
 impl Traj {
@@ -29,7 +29,7 @@ impl Traj {
             flip_x,
 
             command_table,
-            command_delay: 0,
+            delay: 0,
         }
     }
 
@@ -59,12 +59,12 @@ impl Traj {
         self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
 
-        self.command_table.is_some() || self.command_delay > 0
+        self.command_table.is_some() || self.delay > 0
     }
 
     fn handle_command(&mut self) {
-        if self.command_delay > 0 {
-            self.command_delay -= 1;
+        if self.delay > 0 {
+            self.delay -= 1;
             return;
         }
 
@@ -101,7 +101,7 @@ impl Traj {
                 self.vangle = vangle;
             }
             TrajCommand::Delay(delay) => {
-                self.command_delay = delay;
+                self.delay = delay;
                 return false;
             }
             TrajCommand::DestAngle(dest_angle, radius) => {
@@ -111,10 +111,10 @@ impl Traj {
                 let vangle = dangle * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI));  // [ANGLE * ONE]
                 if dest_angle > self.angle {
                     self.vangle = vangle.round() as i32;
-                    self.command_delay = (((dest_angle - self.angle) as f64) / vangle).round() as u32;
+                    self.delay = (((dest_angle - self.angle) as f64) / vangle).round() as u32;
                 } else {
                     self.vangle = -vangle.round() as i32;
-                    self.command_delay = (((self.angle - dest_angle) as f64) / vangle).round() as u32;
+                    self.delay = (((self.angle - dest_angle) as f64) / vangle).round() as u32;
                 }
                 return false;
             }
