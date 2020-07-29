@@ -59,16 +59,16 @@ impl Traj {
         self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
 
-        self.command_table.is_some()
+        self.command_table.is_some() || self.command_delay > 0
     }
 
     fn handle_command(&mut self) {
-        if let Some(command_table) = self.command_table {
-            if self.command_delay > 0 {
-                self.command_delay -= 1;
-                return;
-            }
+        if self.command_delay > 0 {
+            self.command_delay -= 1;
+            return;
+        }
 
+        if let Some(command_table) = self.command_table {
             let mut i = 0;
             while i < command_table.len() {
                 let command = &command_table[i];
