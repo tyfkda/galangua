@@ -1,7 +1,10 @@
 mod sdl;
 mod std_timer;
 
+use counted_array::counted_array;
+use lazy_static::lazy_static;
 use sdl2::keyboard::Keycode;
+use std::collections::HashMap;
 
 use galangua_core::app::consts;
 use galangua_core::app::GalanguaApp;
@@ -18,15 +21,39 @@ pub fn main() -> Result<(), String> {
                   consts::WIDTH as u32, consts::HEIGHT as u32, 3)
 }
 
+counted_array!(const KEY_MAP_TABLE: [(Keycode, VKey); _] = [
+    (Keycode::Space,  VKey::Space),
+    (Keycode::Return, VKey::Return),
+    (Keycode::Escape, VKey::Escape),
+    (Keycode::Left,   VKey::Left),
+    (Keycode::Right,  VKey::Right),
+    (Keycode::Up,     VKey::Up),
+    (Keycode::Down,   VKey::Down),
+
+    (Keycode::A, VKey::A), (Keycode::B, VKey::B), (Keycode::C, VKey::C), (Keycode::D, VKey::D),
+    (Keycode::E, VKey::E), (Keycode::F, VKey::F), (Keycode::G, VKey::G), (Keycode::H, VKey::H),
+    (Keycode::I, VKey::I), (Keycode::J, VKey::J), (Keycode::K, VKey::K), (Keycode::L, VKey::L),
+    (Keycode::M, VKey::M), (Keycode::N, VKey::N), (Keycode::O, VKey::O), (Keycode::P, VKey::P),
+    (Keycode::Q, VKey::Q), (Keycode::R, VKey::R), (Keycode::S, VKey::S), (Keycode::T, VKey::T),
+    (Keycode::U, VKey::U), (Keycode::V, VKey::V), (Keycode::W, VKey::W), (Keycode::X, VKey::X),
+    (Keycode::Y, VKey::Y), (Keycode::Z, VKey::Z),
+
+    (Keycode::Num0, VKey::Num0), (Keycode::Num1, VKey::Num1), (Keycode::Num2, VKey::Num2),
+    (Keycode::Num3, VKey::Num3), (Keycode::Num4, VKey::Num4), (Keycode::Num5, VKey::Num5),
+    (Keycode::Num6, VKey::Num6), (Keycode::Num7, VKey::Num7), (Keycode::Num8, VKey::Num8),
+    (Keycode::Num9, VKey::Num9),
+]);
+
+lazy_static! {
+    static ref KEY_MAP: HashMap<Keycode, VKey> = {
+        let mut m = HashMap::new();
+        for &(keycode, vkey) in KEY_MAP_TABLE.iter() {
+            m.insert(keycode, vkey);
+        }
+        m
+    };
+}
+
 fn map_key(keycode: Keycode) -> Option<VKey> {
-    match keycode {
-        Keycode::Space => Some(VKey::Space),
-        Keycode::Return => Some(VKey::Return),
-        Keycode::Escape => Some(VKey::Escape),
-        Keycode::Left => Some(VKey::Left),
-        Keycode::Right => Some(VKey::Right),
-        Keycode::Up => Some(VKey::Up),
-        Keycode::Down => Some(VKey::Down),
-        _ => None,
-    }
+    KEY_MAP.get(&keycode).map(|x| *x)
 }
