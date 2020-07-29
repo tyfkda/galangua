@@ -44,38 +44,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
         }
     }
 
-    fn back_to_title(&mut self) {
-        self.star_manager.borrow_mut().set_stop(false);
-        self.state = AppState::Title;
-        self.count = 0;
-    }
-}
-
-impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
-    fn on_key(&mut self, vkey: VKey, down: bool) {
-        self.pad.on_key(vkey, down);
-    }
-
-    fn on_joystick_axis(&mut self, axis_index: u8, dir: i8) {
-        self.pad.on_joystick_axis(axis_index, dir);
-    }
-
-    fn on_joystick_button(&mut self, button_index: u8, down: bool) {
-        self.pad.on_joystick_button(button_index, down);
-    }
-
-    fn init(&mut self, renderer: &mut R) -> Result<(), String>
-    where
-        R: RendererTrait,
-    {
-        renderer.load_textures("assets", &["chr.png", "font.png"])?;
-        renderer.load_sprite_sheet("assets/chr.json")?;
-        Ok(())
-    }
-
-    fn update(&mut self) -> bool {
-        self.pad.update();
-
+    fn update_main(&mut self) -> bool {
         if self.pad.is_trigger(PadBit::CANCEL) {
             if self.state != AppState::Title {
                 self.back_to_title();
@@ -117,13 +86,10 @@ impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
         true
     }
 
-    fn draw(&mut self, renderer: &mut R) -> Result<(), String>
+    fn draw_main<R>(&mut self, renderer: &mut R) -> Result<(), String>
     where
         R: RendererTrait,
     {
-        renderer.set_draw_color(0, 0, 0);
-        renderer.clear();
-
         self.star_manager.borrow().draw(renderer)?;
         match self.state {
             AppState::Title => {
@@ -152,6 +118,53 @@ impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
 
         renderer.set_texture_color_mod("font", 128, 128, 128);
         renderer.draw_str("font", 8 * 23, 8 * 0, &format!("FPS{:2}", self.fps_calc.fps()))?;
+
+        Ok(())
+    }
+
+    fn back_to_title(&mut self) {
+        self.star_manager.borrow_mut().set_stop(false);
+        self.state = AppState::Title;
+        self.count = 0;
+    }
+}
+
+impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
+    fn on_key(&mut self, vkey: VKey, down: bool) {
+        self.pad.on_key(vkey, down);
+    }
+
+    fn on_joystick_axis(&mut self, axis_index: u8, dir: i8) {
+        self.pad.on_joystick_axis(axis_index, dir);
+    }
+
+    fn on_joystick_button(&mut self, button_index: u8, down: bool) {
+        self.pad.on_joystick_button(button_index, down);
+    }
+
+    fn init(&mut self, renderer: &mut R) -> Result<(), String>
+    where
+        R: RendererTrait,
+    {
+        renderer.load_textures("assets", &["chr.png", "font.png"])?;
+        renderer.load_sprite_sheet("assets/chr.json")?;
+        Ok(())
+    }
+
+    fn update(&mut self) -> bool {
+        self.pad.update();
+        let result = self.update_main();
+        result
+    }
+
+    fn draw(&mut self, renderer: &mut R) -> Result<(), String>
+    where
+        R: RendererTrait,
+    {
+        renderer.set_draw_color(0, 0, 0);
+        renderer.clear();
+
+        self.draw_main(renderer)?;
 
         renderer.present();
 
