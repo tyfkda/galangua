@@ -20,12 +20,13 @@ pub struct Traj {
 
 impl Traj {
     pub fn new(command_table: Option<&'static [TrajCommand]>, offset: &Vec2I, flip_x: bool) -> Self {
+        let offset = if flip_x { Vec2I::new(-offset.x, offset.y) } else { *offset };
         Self {
             pos: ZERO_VEC,
             angle: 0,
             speed: 0,
             vangle: 0,
-            offset: *offset,
+            offset,
             flip_x,
 
             command_table,
@@ -37,20 +38,13 @@ impl Traj {
         let a: usize = (((self.angle + ONE / 2) & ((ANGLE - 1) * ONE)) / ONE) as usize;
         let cs = COS_TABLE[a];
         let sn = SIN_TABLE[a];
-        let mut x = self.pos.x + (cs * self.offset.x + sn * self.offset.y) / ONE;
+        let x = self.pos.x + (cs * self.offset.x + sn * self.offset.y) / ONE;
         let y = self.pos.y + (sn * self.offset.x - cs * self.offset.y) / ONE;
-        if self.flip_x {
-            x = WIDTH * ONE - x;
-        }
         Vec2I::new(x, y)
     }
 
     pub fn angle(&self) -> i32 {
-        if self.flip_x {
-            -self.angle & (ANGLE * ONE - 1)
-        } else {
-            self.angle
-        }
+        self.angle
     }
 
     pub fn update(&mut self) -> bool {
@@ -88,23 +82,35 @@ impl Traj {
 
     fn handle_one_command(&mut self, command: &TrajCommand) -> bool {
         match *command {
-            TrajCommand::Pos(x, y) => {
+            TrajCommand::Pos(mut x, y) => {
+                if self.flip_x {
+                    x = WIDTH * ONE - x;
+                }
                 self.pos = Vec2I::new(x, y);
             }
             TrajCommand::Speed(speed) => {
                 self.speed = speed;
             }
-            TrajCommand::Angle(angle) => {
+            TrajCommand::Angle(mut angle) => {
+                if self.flip_x {
+                    angle = -angle;
+                }
                 self.angle = angle;
             }
-            TrajCommand::VAngle(vangle) => {
+            TrajCommand::VAngle(mut vangle) => {
+                if self.flip_x {
+                    vangle = -vangle;
+                }
                 self.vangle = vangle;
             }
             TrajCommand::Delay(delay) => {
                 self.delay = delay;
                 return false;
             }
-            TrajCommand::DestAngle(dest_angle, radius) => {
+            TrajCommand::DestAngle(mut dest_angle, radius) => {
+                if self.flip_x {
+                    dest_angle = -dest_angle;
+                }
                 let distance = 2.0 * std::f64::consts::PI * (radius as f64) / (ONE as f64);  // Circumference of radius [dot].
                 let frame = distance * (ONE as f64) / (self.speed as f64);  // Frame count according to speed [frame].
                 let dangle = (2.0 * std::f64::consts::PI) / frame;  // Angle which should be modified in one frame [rad].
