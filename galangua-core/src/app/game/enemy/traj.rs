@@ -1,7 +1,7 @@
 use super::traj_command::TrajCommand;
 
 use crate::app::consts::*;
-use crate::framework::types::Vec2I;
+use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{calc_velocity, ANGLE, COS_TABLE, ONE, SIN_TABLE};
 
 // Trajectory
@@ -21,7 +21,7 @@ pub struct Traj {
 impl Traj {
     pub fn new(command_table: Option<&'static [TrajCommand]>, offset: &Vec2I, flip_x: bool) -> Self {
         Self {
-            pos: Vec2I::new(0, 0),
+            pos: ZERO_VEC,
             angle: 0,
             speed: 0,
             vangle: 0,

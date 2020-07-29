@@ -7,7 +7,7 @@ pub struct Vector2D<T> {
 }
 
 impl<T> Vector2D<T> {
-    pub fn new(x: T, y: T) -> Self {
+    pub const fn new(x: T, y: T) -> Self {
         Self { x, y }
     }
 }
@@ -76,6 +76,8 @@ where
 // Vec2I
 
 pub type Vec2I = Vector2D<i32>;
+
+pub const ZERO_VEC: Vec2I = Vec2I::new(0, 0);
 
 #[cfg(test)]
 mod tests {

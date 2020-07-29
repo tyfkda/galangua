@@ -5,7 +5,7 @@ use super::{Accessor, FormationIndex};
 use crate::app::consts::*;
 use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
-use crate::framework::types::Vec2I;
+use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
 use crate::util::math::{
     atan2_lut, calc_velocity, clamp, diff_angle, quantize_angle, round_up, square,
@@ -86,7 +86,7 @@ impl Enemy {
             update_fn: update_none,
             attack_step: 0,
             count: 0,
-            target_pos: Vec2I::new(0, 0),
+            target_pos: ZERO_VEC,
             tractor_beam: None,
             capture_state: CaptureState::None,
             troops: Default::default(),

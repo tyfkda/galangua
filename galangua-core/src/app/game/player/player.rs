@@ -2,7 +2,7 @@ use crate::app::consts::*;
 use crate::app::game::effect::RecapturedFighter;
 use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
-use crate::framework::types::Vec2I;
+use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
 use crate::util::math::{clamp, quantize_angle, round_up, ANGLE, ONE};
 use crate::util::pad::{Pad, PadBit};
@@ -38,7 +38,7 @@ impl Player {
             state: State::Normal,
             dual: false,
             angle: 0,
-            capture_pos: Vec2I::new(0, 0),
+            capture_pos: ZERO_VEC,
             recaptured_fighter: None,
             left_ship: DEFAULT_LEFT_SHIP,
         }
