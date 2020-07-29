@@ -23,6 +23,7 @@ pub struct GalanguaApp<T: TimerTrait> {
     star_manager: Rc<RefCell<StarManager>>,
     frame_count: u32,
 
+    #[cfg(debug_assertions)]
     paused: bool,
 }
 
@@ -38,6 +39,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
             star_manager,
             frame_count: 0,
 
+            #[cfg(debug_assertions)]
             paused: false,
         }
     }
@@ -82,11 +84,14 @@ impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
             }
         }
 
-        if self.pad.is_trigger(PadBit::START) {
-            self.paused = !self.paused;
-        }
-        if self.paused {
-            return true;
+        #[cfg(debug_assertions)]
+        {
+            if self.pad.is_trigger(PadBit::START) {
+                self.paused = !self.paused;
+            }
+            if self.paused {
+                return true;
+            }
         }
 
         self.star_manager.borrow_mut().update();

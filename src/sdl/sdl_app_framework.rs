@@ -18,6 +18,8 @@ pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
 
     app: Box<App>,
     map_key: MapKeyFunc,
+
+    #[cfg(debug_assertions)]
     fast_forward: bool,
 }
 
@@ -30,6 +32,8 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
             last_update_time: SystemTime::now(),
             app,
             map_key,
+
+            #[cfg(debug_assertions)]
             fast_forward: false,
         })
     }
@@ -60,13 +64,14 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                 break 'running;
             }
 
-            if !self.fast_forward {
+            #[cfg(debug_assertions)]
+            let step = if self.fast_forward { 10 } else { 1 };
+            #[cfg(not(debug_assertions))]
+            let step = 1;
+
+            for _ in 0..step {
                 if !self.app.update() {
                     break 'running;
-                }
-            } else {
-                for _ in 0..10 {
-                    self.app.update();
                 }
             }
             self.app.draw(&mut renderer)?;
@@ -84,6 +89,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                     return Ok(false);
                 }
                 Event::KeyDown { keycode: Some(key), .. } => {
+                    #[cfg(debug_assertions)]
                     if key == Keycode::LShift {
                         self.fast_forward = true;
                     }
@@ -92,6 +98,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                     }
                 }
                 Event::KeyUp { keycode: Some(key), .. } => {
+                    #[cfg(debug_assertions)]
                     if key == Keycode::LShift {
                         self.fast_forward = false;
                     }
