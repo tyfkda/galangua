@@ -11,12 +11,16 @@ use crate::util::pad::{Pad, PadBit};
 enum AppState {
     Title,
     Game,
+
+    #[cfg(debug_assertions)]
+    EditTraj,
 }
 
 pub struct GalanguaApp<T: TimerTrait> {
     state: AppState,
     count: u32,
     pad: Pad,
+    pressed_key: Option<VKey>,
     fps_calc: FpsCalc<T>,
     game_manager: Option<GameManager>,
     star_manager: StarManager,
@@ -39,6 +43,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
             state: AppState::Title,
             count: 0,
             pad: Pad::new(),
+            pressed_key: None,
             fps_calc: FpsCalc::new(timer),
             game_manager: None,
             star_manager,
@@ -83,6 +88,11 @@ impl<T: TimerTrait> GalanguaApp<T> {
                     self.state = AppState::Game;
                     self.frame_count = 0;
                 }
+
+                #[cfg(debug_assertions)]
+                if self.pressed_key == Some(VKey::E) {
+                    self.state = AppState::EditTraj;
+                }
             }
             AppState::Game => {
                 self.frame_count += 1;
@@ -97,6 +107,9 @@ impl<T: TimerTrait> GalanguaApp<T> {
                     self.back_to_title();
                 }
             }
+
+            #[cfg(debug_assertions)]
+            AppState::EditTraj => {}
         }
         true
     }
@@ -120,6 +133,8 @@ impl<T: TimerTrait> GalanguaApp<T> {
                 self.game_manager.as_mut().unwrap().draw(renderer)?;
                 draw_scores(renderer, &self.score_holder, (self.frame_count & 31) < 16)?;
             }
+            #[cfg(debug_assertions)]
+            AppState::EditTraj => {}
         }
 
         renderer.set_texture_color_mod("font", 128, 128, 128);
@@ -139,6 +154,9 @@ impl<T: TimerTrait> GalanguaApp<T> {
 impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
     fn on_key(&mut self, vkey: VKey, down: bool) {
         self.pad.on_key(vkey, down);
+        if down {
+            self.pressed_key = Some(vkey);
+        }
     }
 
     fn on_joystick_axis(&mut self, axis_index: u8, dir: i8) {
@@ -161,6 +179,7 @@ impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
     fn update(&mut self) -> bool {
         self.pad.update();
         let result = self.update_main();
+        self.pressed_key = None;
         result
     }
 
