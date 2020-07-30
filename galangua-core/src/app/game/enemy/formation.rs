@@ -62,9 +62,12 @@ impl Formation {
     }
 
     pub fn restart(&mut self) {
-        self.moving_pat = MovingPat::Slide;
-        self.moving_count = 0;
-        self.done_appearance = false;
+        *self = Self {
+            moving_pat: MovingPat::Slide,
+            moving_count: 0,
+            done_appearance: false,
+            ..*self
+        };
 
         for j in 0..X_COUNT {
             self.xtbl[j] = BASE_X_TABLE[j] * ONE;

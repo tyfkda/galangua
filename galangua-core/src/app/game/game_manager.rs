@@ -70,12 +70,8 @@ impl GameManager {
         self.event_queue.clear();
         self.player = Player::new();
 
-        for slot in self.myshots.iter_mut() {
-            *slot = None;
-        }
-        for slot in self.effects.iter_mut() {
-            *slot = None;
-        }
+        self.myshots = Default::default();
+        self.effects = Default::default();
 
         self.state = GameState::Playing;
         self.score = 0;

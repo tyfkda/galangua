@@ -23,13 +23,8 @@ impl AttackManager {
         }
     }
 
-    pub fn restart(&mut self, cont: bool) {
-        self.enable = false;
-        self.wait = 0;
-        self.attackers = Default::default();
-        if !cont {
-            self.player_captured = false;
-        }
+    pub fn restart(&mut self, _stage: u32) {
+        *self = Self::new();
     }
 
     pub fn set_enable(&mut self, value: bool) {

@@ -79,7 +79,7 @@ pub struct AppearanceManager {
     wait: u32,
     unit: u32,
     count: u32,
-    pub done: bool,
+    pub(super) done: bool,
 }
 
 impl AppearanceManager {
@@ -92,6 +92,10 @@ impl AppearanceManager {
             count: 0,
             done: false,
         }
+    }
+
+    pub fn restart(&mut self, stage: u32) {
+        *self = Self::new(stage)
     }
 
     pub fn update(&mut self, enemies: &[Option<Enemy>]) -> Option<Vec<Enemy>> {

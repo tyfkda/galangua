@@ -41,20 +41,16 @@ impl EnemyManager {
     }
 
     pub fn restart(&mut self, stage: u32) {
-        for slot in self.enemies.iter_mut() {
-            *slot = None;
-        }
-        for slot in self.shots.iter_mut() {
-            *slot = None;
-        }
+        self.enemies = array![None; MAX_ENEMY_COUNT];
+        self.shots = Default::default();
 
         self.start_next_stage(stage);
     }
 
     pub fn start_next_stage(&mut self, stage: u32) {
-        self.appearance_manager = AppearanceManager::new(stage);
+        self.appearance_manager.restart(stage);
         self.formation.restart();
-        self.attack_manager.restart(stage > 0);
+        self.attack_manager.restart(stage);
         self.wait_settle = true;
     }
 
