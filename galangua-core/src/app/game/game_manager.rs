@@ -1,6 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use super::enemy::Accessor as AccessorForEnemy;
 use super::enemy::{Enemy, EnemyManager, FormationIndex};
 use super::event_queue::{EventQueue, EventType};
@@ -28,10 +25,14 @@ enum GameState {
     Finished,
 }
 
+pub struct Params<'a> {
+    pub star_manager: &'a mut StarManager,
+    pub pad: &'a Pad,
+}
+
 pub struct GameManager {
     state: GameState,
     count: u32,
-    star_manager: Rc<RefCell<StarManager>>,
     stage_indicator: StageIndicator,
     player: Player,
     myshots: [Option<MyShot>; MYSHOT_COUNT],
@@ -44,11 +45,10 @@ pub struct GameManager {
 }
 
 impl GameManager {
-    pub fn new(star_manager: Rc<RefCell<StarManager>>) -> Self {
+    pub fn new() -> Self {
         Self {
             state: GameState::Playing,
             count: 0,
-            star_manager,
             stage_indicator: StageIndicator::new(),
             player: Player::new(),
             myshots: Default::default(),
@@ -75,7 +75,6 @@ impl GameManager {
 
         self.state = GameState::Playing;
         self.score = 0;
-        self.star_manager.borrow_mut().set_stop(false);
     }
 
     pub fn is_finished(&mut self) -> bool {
@@ -90,8 +89,8 @@ impl GameManager {
         self.high_score
     }
 
-    pub fn update(&mut self, pad: &Pad) {
-        self.update_common(pad);
+    pub fn update(&mut self, params: &mut Params) {
+        self.update_common(params);
 
         match self.state {
             GameState::Playing => {
@@ -105,7 +104,7 @@ impl GameManager {
                 // TODO: Wait all enemies back to formation.
                 self.count += 1;
                 if self.count >= 60 {
-                    self.next_player();
+                    self.next_player(params);
                 }
             }
             GameState::StageClear => {
@@ -136,10 +135,10 @@ impl GameManager {
         }
     }
 
-    fn next_player(&mut self) {
+    fn next_player(&mut self, params: &mut Params) {
         if self.player.decrement_and_restart() {
             self.enemy_manager.enable_attack(true);
-            self.star_manager.borrow_mut().set_stop(false);
+            params.star_manager.set_stop(false);
             self.state = GameState::Playing;
         } else {
             self.enemy_manager.enable_attack(false);
@@ -148,8 +147,8 @@ impl GameManager {
         }
     }
 
-    fn update_common(&mut self, pad: &Pad) {
-        self.player.update(&pad, &mut self.event_queue);
+    fn update_common(&mut self, params: &mut Params) {
+        self.player.update(params.pad, &mut self.event_queue);
         for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
             let myshot = myshot_opt.as_mut().unwrap();
             if !myshot.update() {
@@ -161,13 +160,13 @@ impl GameManager {
         self.enemy_manager.update(accessor, &mut self.event_queue);
 
         // For MyShot.
-        self.handle_event_queue();
+        self.handle_event_queue(params);
 
         //
 
         self.check_collision();
 
-        self.handle_event_queue();
+        self.handle_event_queue(params);
 
         for effect_opt in self.effects.iter_mut().filter(|x| x.is_some()) {
             let effect = effect_opt.as_mut().unwrap();
@@ -205,7 +204,7 @@ impl GameManager {
         Ok(())
     }
 
-    fn handle_event_queue(&mut self) {
+    fn handle_event_queue(&mut self, params: &mut Params) {
         let mut i = 0;
         while i < self.event_queue.len() {
             match self.event_queue[i] {
@@ -228,7 +227,7 @@ impl GameManager {
                     self.spawn_effect(Effect::SmallBomb(SmallBomb::new(&pos)));
                 }
                 EventType::DeadPlayer => {
-                    self.star_manager.borrow_mut().set_stop(true);
+                    params.star_manager.set_stop(true);
                     if self.state != GameState::Recapturing {
                         self.enemy_manager.enable_attack(false);
                         self.state = GameState::PlayerDead;
@@ -236,20 +235,20 @@ impl GameManager {
                     }
                 }
                 EventType::CapturePlayer(capture_pos) => {
-                    self.star_manager.borrow_mut().set_capturing(true);
+                    params.star_manager.set_capturing(true);
                     self.enemy_manager.enable_attack(false);
                     self.player.start_capture(&capture_pos);
                     self.state = GameState::Capturing;
                 }
                 EventType::CapturePlayerCompleted => {
-                    self.star_manager.borrow_mut().set_capturing(false);
+                    params.star_manager.set_capturing(false);
                     self.player.complete_capture();
                     self.enemy_manager.set_capture_state(true);
                 }
                 EventType::CaptureSequenceEnded => {
                     self.enemy_manager.enable_attack(true);
                     self.state = GameState::Playing;
-                    self.next_player();
+                    self.next_player(params);
                 }
                 EventType::SpawnCapturedFighter(pos, formation_index) => {
                     self.enemy_manager.spawn_captured_fighter(&pos, &formation_index);
@@ -271,11 +270,11 @@ impl GameManager {
                 EventType::RecaptureEnded => {
                     self.enemy_manager.enable_attack(true);
                     self.enemy_manager.set_capture_state(false);
-                    self.star_manager.borrow_mut().set_stop(false);
+                    params.star_manager.set_stop(false);
                     self.state = GameState::Playing;
                 }
                 EventType::EscapeCapturing => {
-                    self.star_manager.borrow_mut().set_capturing(false);
+                    params.star_manager.set_capturing(false);
                     self.player.escape_capturing();
                 }
                 EventType::EscapeEnded => {

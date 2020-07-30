@@ -1,8 +1,6 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use super::game::effect::StarManager;
-use super::game::GameManager;
+use super::game::game_manager::GameManager;
+use super::game::game_manager::Params as GameManagerParams;
 
 use crate::framework::{AppTrait, RendererTrait, VKey};
 use crate::util::fps_calc::{FpsCalc, TimerTrait};
@@ -20,7 +18,7 @@ pub struct GalanguaApp<T: TimerTrait> {
     pad: Pad,
     fps_calc: FpsCalc<T>,
     game_manager: GameManager,
-    star_manager: Rc<RefCell<StarManager>>,
+    star_manager: StarManager,
     frame_count: u32,
 
     #[cfg(debug_assertions)]
@@ -29,13 +27,13 @@ pub struct GalanguaApp<T: TimerTrait> {
 
 impl<T: TimerTrait> GalanguaApp<T> {
     pub fn new(timer: T) -> Self {
-        let star_manager = Rc::new(RefCell::new(StarManager::new()));
+        let star_manager = StarManager::new();
         Self {
             state: AppState::Title,
             count: 0,
             pad: Pad::new(),
             fps_calc: FpsCalc::new(timer),
-            game_manager: GameManager::new(Rc::clone(&star_manager)),
+            game_manager: GameManager::new(),
             star_manager,
             frame_count: 0,
 
@@ -63,7 +61,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
             }
         }
 
-        self.star_manager.borrow_mut().update();
+        self.star_manager.update();
 
         match self.state {
             AppState::Title => {
@@ -77,7 +75,11 @@ impl<T: TimerTrait> GalanguaApp<T> {
             }
             AppState::Game => {
                 self.frame_count += 1;
-                self.game_manager.update(&self.pad);
+                let mut params = GameManagerParams {
+                    star_manager: &mut self.star_manager,
+                    pad: &self.pad,
+                };
+                self.game_manager.update(&mut params);
                 if self.game_manager.is_finished() {
                     self.back_to_title();
                 }
@@ -90,7 +92,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
     where
         R: RendererTrait,
     {
-        self.star_manager.borrow().draw(renderer)?;
+        self.star_manager.draw(renderer)?;
         match self.state {
             AppState::Title => {
                 renderer.set_texture_color_mod("font", 255, 255, 255);
@@ -123,7 +125,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
     }
 
     fn back_to_title(&mut self) {
-        self.star_manager.borrow_mut().set_stop(false);
+        self.star_manager.set_stop(false);
         self.state = AppState::Title;
         self.count = 0;
     }
