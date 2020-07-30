@@ -18,7 +18,7 @@ pub struct GalanguaApp<T: TimerTrait> {
     count: u32,
     pad: Pad,
     fps_calc: FpsCalc<T>,
-    game_manager: GameManager,
+    game_manager: Option<GameManager>,
     star_manager: StarManager,
     frame_count: u32,
     score_holder: ScoreHolder,
@@ -40,7 +40,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
             count: 0,
             pad: Pad::new(),
             fps_calc: FpsCalc::new(timer),
-            game_manager: GameManager::new(),
+            game_manager: None,
             star_manager,
             frame_count: 0,
             score_holder,
@@ -76,7 +76,9 @@ impl<T: TimerTrait> GalanguaApp<T> {
                 self.count = self.count.wrapping_add(1);
 
                 if self.pad.is_trigger(PadBit::A) {
-                    self.game_manager.restart();
+                    let mut game_manager = GameManager::new();
+                    game_manager.restart();
+                    self.game_manager = Some(game_manager);
                     self.score_holder.reset_score();
                     self.state = AppState::Game;
                     self.frame_count = 0;
@@ -89,8 +91,9 @@ impl<T: TimerTrait> GalanguaApp<T> {
                     pad: &self.pad,
                     score_holder: &mut self.score_holder,
                 };
-                self.game_manager.update(&mut params);
-                if self.game_manager.is_finished() {
+                let game_manager = self.game_manager.as_mut().unwrap();
+                game_manager.update(&mut params);
+                if game_manager.is_finished() {
                     self.back_to_title();
                 }
             }
@@ -114,7 +117,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
                 draw_scores(renderer, &self.score_holder, true)?;
             }
             AppState::Game => {
-                self.game_manager.draw(renderer)?;
+                self.game_manager.as_mut().unwrap().draw(renderer)?;
                 draw_scores(renderer, &self.score_holder, (self.frame_count & 31) < 16)?;
             }
         }
@@ -129,6 +132,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
         self.star_manager.set_stop(false);
         self.state = AppState::Title;
         self.count = 0;
+        self.game_manager = None;
     }
 }
 
