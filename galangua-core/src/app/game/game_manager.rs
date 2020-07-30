@@ -24,6 +24,9 @@ enum GameState {
     NextStage,
     GameOver,
     Finished,
+
+    #[cfg(debug_assertions)]
+    EditTraj,
 }
 
 pub struct Params<'a> {
@@ -72,6 +75,21 @@ impl GameManager {
         self.effects = Default::default();
 
         self.state = GameState::Playing;
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn start_edit_mode(&mut self) {
+        self.stage = 0;
+        self.stage_indicator.set_stage(self.stage + 1);
+
+        self.enemy_manager.reset_stable();
+        self.event_queue.clear();
+        self.player = Player::new();
+
+        self.myshots = Default::default();
+        self.effects = Default::default();
+
+        self.state = GameState::EditTraj;
     }
 
     pub fn is_finished(&mut self) -> bool {
@@ -129,6 +147,9 @@ impl GameManager {
                 }
             }
             GameState::Finished => {}
+
+            #[cfg(debug_assertions)]
+            GameState::EditTraj => {}
         }
     }
 
@@ -298,6 +319,11 @@ impl GameManager {
     }
 
     fn check_collision(&mut self) {
+        #[cfg(debug_assertions)]
+        if self.state == GameState::EditTraj {
+            return;
+        }
+
         self.check_collision_myshot_enemy();
         self.check_collision_player_enemy();
     }

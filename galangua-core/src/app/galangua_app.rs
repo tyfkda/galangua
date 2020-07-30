@@ -92,6 +92,10 @@ impl<T: TimerTrait> GalanguaApp<T> {
                 #[cfg(debug_assertions)]
                 if self.pressed_key == Some(VKey::E) {
                     self.state = AppState::EditTraj;
+
+                    let mut game_manager = GameManager::new();
+                    game_manager.start_edit_mode();
+                    self.game_manager = Some(game_manager);
                 }
             }
             AppState::Game => {
@@ -109,7 +113,19 @@ impl<T: TimerTrait> GalanguaApp<T> {
             }
 
             #[cfg(debug_assertions)]
-            AppState::EditTraj => {}
+            AppState::EditTraj => {
+                self.frame_count += 1;
+                let mut params = GameManagerParams {
+                    star_manager: &mut self.star_manager,
+                    pad: &self.pad,
+                    score_holder: &mut self.score_holder,
+                };
+                let game_manager = self.game_manager.as_mut().unwrap();
+                game_manager.update(&mut params);
+                if game_manager.is_finished() {
+                    self.back_to_title();
+                }
+            }
         }
         true
     }
@@ -134,7 +150,12 @@ impl<T: TimerTrait> GalanguaApp<T> {
                 draw_scores(renderer, &self.score_holder, (self.frame_count & 31) < 16)?;
             }
             #[cfg(debug_assertions)]
-            AppState::EditTraj => {}
+            AppState::EditTraj => {
+                self.game_manager.as_mut().unwrap().draw(renderer)?;
+
+                renderer.set_texture_color_mod("font", 128, 128, 128);
+                renderer.draw_str("font", 2 * 8, 0 * 8, "EDIT MODE")?;
+            }
         }
 
         renderer.set_texture_color_mod("font", 128, 128, 128);

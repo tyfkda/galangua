@@ -291,7 +291,7 @@ impl Enemy {
         self.set_state(EnemyState::Troop);
     }
 
-    fn set_to_formation(&mut self) {
+    pub(super) fn set_to_formation(&mut self) {
         self.speed = 0;
         self.angle = 0;
         self.vangle = 0;
