@@ -12,6 +12,9 @@ use crate::sdl::sdl_renderer::SdlRenderer;
 
 type MapKeyFunc = fn(Keycode) -> Option<VKey>;
 
+const FPS: u32 = 60;
+const MIN_FPS: u32 = 15;
+
 pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
     sdl_context: Sdl,
     last_update_time: SystemTime,
@@ -59,15 +62,17 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
 
         self.app.init(&mut renderer)?;
 
+        self.last_update_time = SystemTime::now();
+        let mut skip_count = 0;
         'running: loop {
             if !self.pump_events()? {
                 break 'running;
             }
 
             #[cfg(debug_assertions)]
-            let step = if self.fast_forward { 10 } else { 1 };
+            let step = if self.fast_forward { 10 } else { 1 + skip_count };
             #[cfg(not(debug_assertions))]
-            let step = 1;
+            let step = 1 + skip_count;
 
             for _ in 0..step {
                 if !self.app.update() {
@@ -76,7 +81,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
             }
             self.app.draw(&mut renderer)?;
 
-            self.wait_frame(Duration::from_micros(1_000_000 / 60));
+            skip_count = self.wait_frame(Duration::from_micros(1_000_000 / FPS as u64));
         }
         Ok(())
     }
@@ -122,15 +127,24 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
         Ok(true)
     }
 
-    pub fn wait_frame(&mut self, duration: Duration) {
+    pub fn wait_frame(&mut self, duration: Duration) -> u32 {
         let next_update_time = self.last_update_time + duration;
         let now = SystemTime::now();
         if now < next_update_time {
-            let d = next_update_time.duration_since(now).expect("");
-            thread::sleep(d);
-            self.last_update_time += duration;
+            let wait = next_update_time.duration_since(now).expect("");
+            thread::sleep(wait);
+            self.last_update_time = next_update_time;
+            0
         } else {
-            self.last_update_time = now;
+            let late = now.duration_since(next_update_time).expect("");
+            let skip_count = (late.as_millis() as f64 / duration.as_millis() as f64).floor() as u32;
+            if skip_count <= FPS / MIN_FPS {
+                self.last_update_time = next_update_time + duration * skip_count;
+                skip_count
+            } else {
+                self.last_update_time = now;
+                FPS / MIN_FPS
+            }
         }
     }
 
