@@ -1,6 +1,7 @@
 use super::game::effect::StarManager;
 use super::game::game_manager::GameManager;
 use super::game::game_manager::Params as GameManagerParams;
+use super::game::score_holder::ScoreHolder;
 
 use crate::framework::{AppTrait, RendererTrait, VKey};
 use crate::util::fps_calc::{FpsCalc, TimerTrait};
@@ -20,6 +21,7 @@ pub struct GalanguaApp<T: TimerTrait> {
     game_manager: GameManager,
     star_manager: StarManager,
     frame_count: u32,
+    score_holder: ScoreHolder,
 
     #[cfg(debug_assertions)]
     paused: bool,
@@ -28,6 +30,11 @@ pub struct GalanguaApp<T: TimerTrait> {
 impl<T: TimerTrait> GalanguaApp<T> {
     pub fn new(timer: T) -> Self {
         let star_manager = StarManager::new();
+        let score_holder = ScoreHolder {
+            score: 0,
+            high_score: 1000,  //20_000,
+        };
+
         Self {
             state: AppState::Title,
             count: 0,
@@ -36,6 +43,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
             game_manager: GameManager::new(),
             star_manager,
             frame_count: 0,
+            score_holder,
 
             #[cfg(debug_assertions)]
             paused: false,
@@ -69,6 +77,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
 
                 if self.pad.is_trigger(PadBit::A) {
                     self.game_manager.restart();
+                    self.score_holder.reset_score();
                     self.state = AppState::Game;
                     self.frame_count = 0;
                 }
@@ -78,6 +87,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
                 let mut params = GameManagerParams {
                     star_manager: &mut self.star_manager,
                     pad: &self.pad,
+                    score_holder: &mut self.score_holder,
                 };
                 self.game_manager.update(&mut params);
                 if self.game_manager.is_finished() {
@@ -101,22 +111,13 @@ impl<T: TimerTrait> GalanguaApp<T> {
                 if self.count & 32 == 0 {
                     renderer.draw_str("font", 2 * 8, 25 * 8, "PRESS SPACE KEY TO START")?;
                 }
+                draw_scores(renderer, &self.score_holder, true)?;
             }
             AppState::Game => {
                 self.game_manager.draw(renderer)?;
+                draw_scores(renderer, &self.score_holder, (self.frame_count & 31) < 16)?;
             }
         }
-
-        renderer.set_texture_color_mod("font", 255, 0, 0);
-        if (self.frame_count & 31) < 16 || self.state != AppState::Game {
-            renderer.draw_str("font", 8 * 2, 8 * 0, "1UP")?;
-        }
-        renderer.draw_str("font", 8 * 9, 8 * 0, "HIGH SCORE")?;
-        renderer.set_texture_color_mod("font", 255, 255, 255);
-        renderer.draw_str("font", 8 * 0, 8 * 1,
-                          &format!("{:6}0", self.game_manager.score() / 10))?;
-        renderer.draw_str("font", 8 * 10, 8 * 1,
-                          &format!("{:6}0", self.game_manager.high_score() / 10))?;
 
         renderer.set_texture_color_mod("font", 128, 128, 128);
         renderer.draw_str("font", 8 * 23, 8 * 0, &format!("FPS{:2}", self.fps_calc.fps()))?;
@@ -174,4 +175,18 @@ impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
 
         Ok(())
     }
+}
+
+fn draw_scores<R: RendererTrait>(
+    renderer: &mut R, score_holder: &ScoreHolder, show_1up: bool
+) -> Result<(), String> {
+    renderer.set_texture_color_mod("font", 255, 0, 0);
+    if show_1up {
+        renderer.draw_str("font", 8 * 2, 8 * 0, "1UP")?;
+    }
+    renderer.draw_str("font", 8 * 9, 8 * 0, "HIGH SCORE")?;
+    renderer.set_texture_color_mod("font", 255, 255, 255);
+    renderer.draw_str("font", 8 * 0, 8 * 1, &format!("{:6}0", score_holder.score / 10))?;
+    renderer.draw_str("font", 8 * 10, 8 * 1, &format!("{:6}0", score_holder.high_score / 10))?;
+    Ok(())
 }

@@ -4,6 +4,7 @@ use super::event_queue::{EventQueue, EventType};
 use super::player::{MyShot, Player};
 
 use super::effect::{EarnedPoint, Effect, SmallBomb, StageIndicator, StarManager};
+use super::score_holder::ScoreHolder;
 use crate::app::util::unsafe_util::peep;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
@@ -28,6 +29,7 @@ enum GameState {
 pub struct Params<'a> {
     pub star_manager: &'a mut StarManager,
     pub pad: &'a Pad,
+    pub score_holder: &'a mut ScoreHolder,
 }
 
 pub struct GameManager {
@@ -40,8 +42,6 @@ pub struct GameManager {
     effects: [Option<Effect>; MAX_EFFECT_COUNT],
     event_queue: EventQueue,
     stage: u32,
-    score: u32,
-    high_score: u32,
 }
 
 impl GameManager {
@@ -57,8 +57,6 @@ impl GameManager {
             effects: Default::default(),
 
             stage: 0,
-            score: 0,
-            high_score: 1000,  //20_000,
         }
     }
 
@@ -74,20 +72,19 @@ impl GameManager {
         self.effects = Default::default();
 
         self.state = GameState::Playing;
-        self.score = 0;
     }
 
     pub fn is_finished(&mut self) -> bool {
         self.state == GameState::Finished
     }
 
-    pub fn score(&self) -> u32 {
-        self.score
+    /*pub fn score(&self) -> u32 {
+        self.score_holder.score
     }
 
     pub fn high_score(&self) -> u32 {
-        self.high_score
-    }
+        self.score_holder.high_score
+    }*/
 
     pub fn update(&mut self, params: &mut Params) {
         self.update_common(params);
@@ -215,10 +212,7 @@ impl GameManager {
                     self.spawn_ene_shot(&pos, speed);
                 }
                 EventType::AddScore(add) => {
-                    self.score += add;
-                    if self.score > self.high_score {
-                        self.high_score = self.score;
-                    }
+                    params.score_holder.add_score(add);
                 }
                 EventType::EarnPoint(point_type, pos) => {
                     self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, &pos)));
