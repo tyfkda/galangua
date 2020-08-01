@@ -64,8 +64,8 @@ impl GameManager {
     }
 
     #[cfg(debug_assertions)]
-    pub fn enemy_manager(&self) -> &EnemyManager {
-        &self.enemy_manager
+    pub fn enemy_manager_mut(&mut self) -> &mut EnemyManager {
+        &mut self.enemy_manager
     }
 
     pub fn restart(&mut self) {
@@ -406,6 +406,14 @@ impl AccessorForEnemy for GameManager {
 
     fn is_player_captured(&self) -> bool {
         self.player.is_captured()
+    }
+
+    fn can_player_capture(&self) -> bool {
+        #[cfg(debug_assertions)]
+        if self.state == GameState::EditTraj {
+            return false;
+        }
+        true
     }
 
     fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {

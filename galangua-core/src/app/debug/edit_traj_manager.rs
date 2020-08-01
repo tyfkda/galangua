@@ -1,5 +1,6 @@
 use crate::app::game::enemy::FormationIndex;
 use crate::app::game::game_manager::GameManager;
+use crate::app::util::unsafe_util::peep;
 use crate::util::math::ONE;
 use crate::framework::{RendererTrait, VKey};
 use crate::framework::types::Vec2I;
@@ -15,7 +16,7 @@ impl EditTrajManager {
         }
     }
 
-    pub fn update(&mut self, pressed_key: Option<VKey>, _game_manager: &GameManager) {
+    pub fn update(&mut self, pressed_key: Option<VKey>, game_manager: &mut GameManager) {
         if pressed_key == Some(VKey::Left) && self.fi.0 > 0 {
             self.fi.0 -= 1;
         }
@@ -28,10 +29,17 @@ impl EditTrajManager {
         if pressed_key == Some(VKey::Down) && self.fi.1 < 5 {
             self.fi.1 += 1;
         }
+
+        if pressed_key == Some(VKey::Num1) {
+            self.set_attack(game_manager, false);
+        }
+        if pressed_key == Some(VKey::Num2) {
+            self.set_attack(game_manager, true);
+        }
     }
 
-    pub fn draw<R: RendererTrait>(&mut self, renderer: &mut R, game_manager: &GameManager) -> Result<(), String> {
-        let enemy_manager = game_manager.enemy_manager();
+    pub fn draw<R: RendererTrait>(&mut self, renderer: &mut R, game_manager: &mut GameManager) -> Result<(), String> {
+        let enemy_manager = game_manager.enemy_manager_mut();
         let pos = &(&enemy_manager.get_formation_pos(&self.fi) / ONE) + &Vec2I::new(-8, -8);
         renderer.set_draw_color(255, 0, 255);
         renderer.fill_rect(Some([&pos, &Vec2I::new(16, 1)]))?;
@@ -42,5 +50,13 @@ impl EditTrajManager {
         renderer.set_texture_color_mod("font", 128, 128, 128);
         renderer.draw_str("font", 2 * 8, 0 * 8, "EDIT MODE")?;
         Ok(())
+    }
+
+    fn set_attack(&mut self, game_manager: &mut GameManager, capture_attack: bool) {
+        let accessor = unsafe { peep(game_manager) };
+        let enemy_manager = game_manager.enemy_manager_mut();
+        if let Some(enemy) = enemy_manager.get_enemy_at_mut(&self.fi) {
+            enemy.set_attack(capture_attack, accessor);
+        }
     }
 }

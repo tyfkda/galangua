@@ -578,7 +578,8 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
                     me.tractor_beam = None;
                     me.speed = 3 * ONE / 2;
                     me.attack_step += 1;
-                } else if tractor_beam.can_capture(accessor.get_raw_player_pos()) {
+                } else if accessor.can_player_capture() &&
+                          tractor_beam.can_capture(accessor.get_raw_player_pos()) {
                     event_queue.push(EventType::CapturePlayer(&me.pos + &Vec2I::new(0, 16 * ONE)));
                     tractor_beam.start_capture();
                     me.capture_state = CaptureState::BeamTracting;
