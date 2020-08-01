@@ -63,6 +63,11 @@ impl GameManager {
         }
     }
 
+    #[cfg(debug_assertions)]
+    pub fn enemy_manager(&self) -> &EnemyManager {
+        &self.enemy_manager
+    }
+
     pub fn restart(&mut self) {
         self.stage = 0;
         self.stage_indicator.set_stage(self.stage + 1);

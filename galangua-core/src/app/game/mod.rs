@@ -1,5 +1,5 @@
 pub mod effect;
-mod enemy;
+pub mod enemy;
 mod event_queue;
 pub mod game_manager;
 mod player;

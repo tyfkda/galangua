@@ -15,4 +15,4 @@ pub use self::enemy::{CaptureState, Enemy};
 pub use self::enemy_manager::EnemyManager;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct FormationIndex(u8, u8);  // x, y
+pub struct FormationIndex(pub u8, pub u8);  // x, y

@@ -7,6 +7,9 @@ use crate::framework::{AppTrait, RendererTrait, VKey};
 use crate::util::fps_calc::{FpsCalc, TimerTrait};
 use crate::util::pad::{Pad, PadBit};
 
+#[cfg(debug_assertions)]
+use super::debug::EditTrajManager;
+
 #[derive(PartialEq)]
 enum AppState {
     Title,
@@ -29,6 +32,8 @@ pub struct GalanguaApp<T: TimerTrait> {
 
     #[cfg(debug_assertions)]
     paused: bool,
+    #[cfg(debug_assertions)]
+    edit_traj_manager: Option<EditTrajManager>,
 }
 
 impl<T: TimerTrait> GalanguaApp<T> {
@@ -52,6 +57,8 @@ impl<T: TimerTrait> GalanguaApp<T> {
 
             #[cfg(debug_assertions)]
             paused: false,
+            #[cfg(debug_assertions)]
+            edit_traj_manager: None,
         }
     }
 
@@ -96,6 +103,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
                     let mut game_manager = GameManager::new();
                     game_manager.start_edit_mode();
                     self.game_manager = Some(game_manager);
+                    self.edit_traj_manager = Some(EditTrajManager::new());
                 }
             }
             AppState::Game => {
@@ -115,12 +123,15 @@ impl<T: TimerTrait> GalanguaApp<T> {
             #[cfg(debug_assertions)]
             AppState::EditTraj => {
                 self.frame_count += 1;
+
+                let game_manager = self.game_manager.as_mut().unwrap();
+                self.edit_traj_manager.as_mut().unwrap().update(self.pressed_key, game_manager);
+
                 let mut params = GameManagerParams {
                     star_manager: &mut self.star_manager,
                     pad: &self.pad,
                     score_holder: &mut self.score_holder,
                 };
-                let game_manager = self.game_manager.as_mut().unwrap();
                 game_manager.update(&mut params);
                 if game_manager.is_finished() {
                     self.back_to_title();
@@ -151,10 +162,10 @@ impl<T: TimerTrait> GalanguaApp<T> {
             }
             #[cfg(debug_assertions)]
             AppState::EditTraj => {
-                self.game_manager.as_mut().unwrap().draw(renderer)?;
+                let game_manager = self.game_manager.as_mut().unwrap();
+                game_manager.draw(renderer)?;
 
-                renderer.set_texture_color_mod("font", 128, 128, 128);
-                renderer.draw_str("font", 2 * 8, 0 * 8, "EDIT MODE")?;
+                self.edit_traj_manager.as_mut().unwrap().draw(renderer, game_manager)?;
             }
         }
 
