@@ -95,10 +95,11 @@ fn get_key_bit(key: VKey) -> PadBit {
     match key {
         VKey::Left => PadBit::L,
         VKey::Right => PadBit::R,
+        VKey::Up => PadBit::U,
+        VKey::Down => PadBit::D,
         VKey::Space => PadBit::A,
         VKey::Escape => PadBit::CANCEL,
         VKey::Return => PadBit::START,
-        _ => PadBit::empty(),
     }
 }
 
