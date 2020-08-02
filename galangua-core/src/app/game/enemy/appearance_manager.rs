@@ -133,7 +133,7 @@ impl AppearanceManager {
                     let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + flip) as usize];
                     let mut enemy = Enemy::new(enemy_type, &ZERO_VEC, 0, 0);
 
-                    let traj = Traj::new(Some(entry.table), &Vec2I::new(8 * ONE, 0), true);
+                    let traj = Traj::new(entry.table, &Vec2I::new(8 * ONE, 0), true);
                     enemy.set_traj(traj);
                     enemy.formation_index = index;
 
@@ -144,7 +144,7 @@ impl AppearanceManager {
                     let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + (1 - flip)) as usize];
                     let mut enemy = Enemy::new(enemy_type, &ZERO_VEC, 0, 0);
 
-                    let traj = Traj::new(Some(entry.table), &Vec2I::new(8 * ONE, 0), false);
+                    let traj = Traj::new(entry.table, &Vec2I::new(8 * ONE, 0), false);
                     enemy.set_traj(traj);
                     enemy.formation_index = index;
 
@@ -166,7 +166,7 @@ impl AppearanceManager {
                     let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + (self.count & 1)) as usize];
                     let mut enemy = Enemy::new(enemy_type, &ZERO_VEC, 0, 0);
 
-                    let traj = Traj::new(Some(entry.table), &Vec2I::new(8 * ONE, 0), entry.flip_x);
+                    let traj = Traj::new(entry.table, &Vec2I::new(8 * ONE, 0), entry.flip_x);
                     enemy.set_traj(traj);
                     enemy.formation_index = index;
 
@@ -188,7 +188,7 @@ impl AppearanceManager {
                     let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + (self.count & 1)) as usize];
                     let mut enemy = Enemy::new(enemy_type, &ZERO_VEC, 0, 0);
 
-                    let traj = Traj::new(Some(entry.table), &ZERO_VEC, entry.flip_x);
+                    let traj = Traj::new(entry.table, &ZERO_VEC, entry.flip_x);
                     enemy.set_traj(traj);
                     enemy.formation_index = index;
 
@@ -211,7 +211,7 @@ impl AppearanceManager {
                     let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + flip) as usize];
                     let mut enemy = Enemy::new(enemy_type, &ZERO_VEC, 0, 0);
 
-                    let traj = Traj::new(Some(entry.table), &Vec2I::new(8 * ONE, 0), entry.flip_x);
+                    let traj = Traj::new(entry.table, &Vec2I::new(8 * ONE, 0), entry.flip_x);
                     enemy.set_traj(traj);
                     enemy.formation_index = index;
 
@@ -222,7 +222,7 @@ impl AppearanceManager {
                     let enemy_type = ENEMY_TYPE_TABLE[(self.unit * 2 + (1 - flip)) as usize];
                     let mut enemy = Enemy::new(enemy_type, &ZERO_VEC, 0, 0);
 
-                    let traj = Traj::new(Some(entry.table), &Vec2I::new(-8 * ONE, 0), entry.flip_x);
+                    let traj = Traj::new(entry.table, &Vec2I::new(-8 * ONE, 0), entry.flip_x);
                     enemy.set_traj(traj);
                     enemy.formation_index = index;
 

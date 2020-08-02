@@ -14,12 +14,12 @@ pub struct Traj {
     offset: Vec2I,
     flip_x: bool,
 
-    command_table: Option<&'static [TrajCommand]>,
+    command_table: &'static [TrajCommand],
     delay: u32,
 }
 
 impl Traj {
-    pub fn new(command_table: Option<&'static [TrajCommand]>, offset: &Vec2I, flip_x: bool) -> Self {
+    pub fn new(command_table: &'static [TrajCommand], offset: &Vec2I, flip_x: bool) -> Self {
         let offset = if flip_x { Vec2I::new(-offset.x, offset.y) } else { *offset };
         Self {
             pos: ZERO_VEC,
@@ -29,7 +29,7 @@ impl Traj {
             offset,
             flip_x,
 
-            command_table,
+            command_table: command_table,
             delay: 0,
         }
     }
@@ -53,7 +53,7 @@ impl Traj {
         self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
 
-        self.command_table.is_some() || self.delay > 0
+        !self.command_table.is_empty() || self.delay > 0
     }
 
     fn handle_command(&mut self) {
@@ -62,21 +62,17 @@ impl Traj {
             return;
         }
 
-        if let Some(command_table) = self.command_table {
+        if !self.command_table.is_empty() {
             let mut i = 0;
-            while i < command_table.len() {
-                let command = &command_table[i];
+            while i < self.command_table.len() {
+                let command = &self.command_table[i];
                 i += 1;
                 if !self.handle_one_command(command) {
                     break;
                 }
             }
 
-            if i < command_table.len() {
-                self.command_table = Some(&command_table[i..]);
-            } else {
-                self.command_table = None;
-            }
+            self.command_table = &self.command_table[i..];
         }
     }
 
