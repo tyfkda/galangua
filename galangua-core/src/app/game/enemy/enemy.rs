@@ -455,6 +455,7 @@ fn update_trajectory(me: &mut Enemy, _accessor: &mut dyn Accessor, _event_queue:
         me.vangle = traj.vangle;
 
         if !cont {
+            me.traj = None;
             me.set_state(EnemyState::MoveToFormation);
         }
     }
