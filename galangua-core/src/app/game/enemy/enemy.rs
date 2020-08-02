@@ -11,6 +11,9 @@ use crate::util::math::{
     atan2_lut, calc_velocity, clamp, diff_angle, quantize_angle, round_up, square,
     ANGLE, ONE, ONE_BIT};
 
+#[cfg(debug_assertions)]
+use super::traj_command::TrajCommand;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EnemyType {
     Bee,
@@ -255,6 +258,17 @@ impl Enemy {
 
     pub fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) {
         (self.vtable.set_attack)(self, capture_attack, accessor);
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
+        let mut traj = Traj::new_with_vec(traj_command_vec, &ZERO_VEC, flip_x);
+        traj.set_pos(&self.pos);
+
+        self.attack_step = 0;
+        self.count = 0;
+        self.traj = Some(traj);
+        self.set_state_with_fn(EnemyState::Attack, update_attack_traj);
     }
 
     fn choose_troops(&mut self, accessor: &mut dyn Accessor) {
@@ -650,4 +664,9 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
         }
         _ => {}
     }
+}
+
+#[cfg(debug_assertions)]
+fn update_attack_traj(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    update_trajectory(me, accessor, event_queue);
 }
