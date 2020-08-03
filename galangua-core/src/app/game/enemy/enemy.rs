@@ -11,6 +11,9 @@ use crate::util::math::{
     atan2_lut, calc_velocity, clamp, diff_angle, quantize_angle, round_up, square,
     ANGLE, ONE, ONE_BIT};
 
+#[cfg(debug_assertions)]
+use super::traj_command::TrajCommand;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EnemyType {
     Bee,
@@ -257,6 +260,17 @@ impl Enemy {
         (self.vtable.set_attack)(self, capture_attack, accessor);
     }
 
+    #[cfg(debug_assertions)]
+    pub fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
+        let mut traj = Traj::new_with_vec(traj_command_vec, &ZERO_VEC, flip_x);
+        traj.set_pos(&self.pos);
+
+        self.attack_step = 0;
+        self.count = 0;
+        self.traj = Some(traj);
+        self.set_state_with_fn(EnemyState::Attack, update_attack_traj);
+    }
+
     fn choose_troops(&mut self, accessor: &mut dyn Accessor) {
         let base = &self.formation_index;
         let indices = [
@@ -291,7 +305,7 @@ impl Enemy {
         self.set_state(EnemyState::Troop);
     }
 
-    fn set_to_formation(&mut self) {
+    pub(super) fn set_to_formation(&mut self) {
         self.speed = 0;
         self.angle = 0;
         self.vangle = 0;
@@ -578,7 +592,8 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
                     me.tractor_beam = None;
                     me.speed = 3 * ONE / 2;
                     me.attack_step += 1;
-                } else if tractor_beam.can_capture(accessor.get_raw_player_pos()) {
+                } else if accessor.can_player_capture() &&
+                          tractor_beam.can_capture(accessor.get_raw_player_pos()) {
                     event_queue.push(EventType::CapturePlayer(&me.pos + &Vec2I::new(0, 16 * ONE)));
                     tractor_beam.start_capture();
                     me.capture_state = CaptureState::BeamTracting;
@@ -649,4 +664,9 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
         }
         _ => {}
     }
+}
+
+#[cfg(debug_assertions)]
+fn update_attack_traj(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    update_trajectory(me, accessor, event_queue);
 }

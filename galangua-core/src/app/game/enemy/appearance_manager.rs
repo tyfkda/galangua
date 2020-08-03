@@ -11,7 +11,7 @@ use crate::util::math::ONE;
 
 const fn pos(x: u8, y: u8) -> FormationIndex { FormationIndex(x, y) }
 
-const ORDER: [FormationIndex; 40] = [
+pub(super) const ORDER: [FormationIndex; 40] = [
     pos(4, 2), pos(5, 2), pos(4, 3), pos(5, 3),
     pos(4, 4), pos(5, 4), pos(4, 5), pos(5, 5),
 
@@ -28,7 +28,7 @@ const ORDER: [FormationIndex; 40] = [
     pos(0, 4), pos(1, 4), pos(0, 5), pos(1, 5),
 ];
 
-const ENEMY_TYPE_TABLE: [EnemyType; 2 * 5] = [
+pub(super) const ENEMY_TYPE_TABLE: [EnemyType; 2 * 5] = [
     EnemyType::Butterfly, EnemyType::Bee,
     EnemyType::Owl, EnemyType::Butterfly,
     EnemyType::Butterfly, EnemyType::Butterfly,

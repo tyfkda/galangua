@@ -7,16 +7,23 @@ use crate::framework::{AppTrait, RendererTrait, VKey};
 use crate::util::fps_calc::{FpsCalc, TimerTrait};
 use crate::util::pad::{Pad, PadBit};
 
+#[cfg(debug_assertions)]
+use super::debug::EditTrajManager;
+
 #[derive(PartialEq)]
 enum AppState {
     Title,
     Game,
+
+    #[cfg(debug_assertions)]
+    EditTraj,
 }
 
 pub struct GalanguaApp<T: TimerTrait> {
     state: AppState,
     count: u32,
     pad: Pad,
+    pressed_key: Option<VKey>,
     fps_calc: FpsCalc<T>,
     game_manager: Option<GameManager>,
     star_manager: StarManager,
@@ -25,6 +32,8 @@ pub struct GalanguaApp<T: TimerTrait> {
 
     #[cfg(debug_assertions)]
     paused: bool,
+    #[cfg(debug_assertions)]
+    edit_traj_manager: Option<EditTrajManager>,
 }
 
 impl<T: TimerTrait> GalanguaApp<T> {
@@ -39,6 +48,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
             state: AppState::Title,
             count: 0,
             pad: Pad::new(),
+            pressed_key: None,
             fps_calc: FpsCalc::new(timer),
             game_manager: None,
             star_manager,
@@ -47,6 +57,8 @@ impl<T: TimerTrait> GalanguaApp<T> {
 
             #[cfg(debug_assertions)]
             paused: false,
+            #[cfg(debug_assertions)]
+            edit_traj_manager: None,
         }
     }
 
@@ -83,6 +95,16 @@ impl<T: TimerTrait> GalanguaApp<T> {
                     self.state = AppState::Game;
                     self.frame_count = 0;
                 }
+
+                #[cfg(debug_assertions)]
+                if self.pressed_key == Some(VKey::E) {
+                    self.state = AppState::EditTraj;
+
+                    let mut game_manager = GameManager::new();
+                    game_manager.start_edit_mode();
+                    self.game_manager = Some(game_manager);
+                    self.edit_traj_manager = Some(EditTrajManager::new());
+                }
             }
             AppState::Game => {
                 self.frame_count += 1;
@@ -92,6 +114,24 @@ impl<T: TimerTrait> GalanguaApp<T> {
                     score_holder: &mut self.score_holder,
                 };
                 let game_manager = self.game_manager.as_mut().unwrap();
+                game_manager.update(&mut params);
+                if game_manager.is_finished() {
+                    self.back_to_title();
+                }
+            }
+
+            #[cfg(debug_assertions)]
+            AppState::EditTraj => {
+                self.frame_count += 1;
+
+                let game_manager = self.game_manager.as_mut().unwrap();
+                self.edit_traj_manager.as_mut().unwrap().update(self.pressed_key, game_manager);
+
+                let mut params = GameManagerParams {
+                    star_manager: &mut self.star_manager,
+                    pad: &self.pad,
+                    score_holder: &mut self.score_holder,
+                };
                 game_manager.update(&mut params);
                 if game_manager.is_finished() {
                     self.back_to_title();
@@ -120,6 +160,13 @@ impl<T: TimerTrait> GalanguaApp<T> {
                 self.game_manager.as_mut().unwrap().draw(renderer)?;
                 draw_scores(renderer, &self.score_holder, (self.frame_count & 31) < 16)?;
             }
+            #[cfg(debug_assertions)]
+            AppState::EditTraj => {
+                let game_manager = self.game_manager.as_mut().unwrap();
+                game_manager.draw(renderer)?;
+
+                self.edit_traj_manager.as_mut().unwrap().draw(renderer, game_manager)?;
+            }
         }
 
         renderer.set_texture_color_mod("font", 128, 128, 128);
@@ -139,6 +186,9 @@ impl<T: TimerTrait> GalanguaApp<T> {
 impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
     fn on_key(&mut self, vkey: VKey, down: bool) {
         self.pad.on_key(vkey, down);
+        if down {
+            self.pressed_key = Some(vkey);
+        }
     }
 
     fn on_joystick_axis(&mut self, axis_index: u8, dir: i8) {
@@ -161,6 +211,7 @@ impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
     fn update(&mut self) -> bool {
         self.pad.update();
         let result = self.update_main();
+        self.pressed_key = None;
         result
     }
 

@@ -258,6 +258,35 @@ impl EnemyManager {
     pub fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
         self.formation.pos(formation_index)
     }
+
+    // Debug
+
+    #[cfg(debug_assertions)]
+    pub fn reset_stable(&mut self) {
+        self.enemies = array![None; MAX_ENEMY_COUNT];
+        self.shots = Default::default();
+
+        let stage = 0;
+        self.appearance_manager.restart(stage);
+        self.appearance_manager.done = true;
+        self.formation.restart();
+        self.formation.done_appearance();
+        self.attack_manager.restart(stage);
+        self.attack_manager.set_enable(false);
+        self.wait_settle = false;
+
+        for unit in 0..5 {
+            for i in 0..8 {
+                let index = super::appearance_manager::ORDER[unit * 8 + i];
+                let enemy_type = super::appearance_manager::ENEMY_TYPE_TABLE[unit * 2 + (i / 4)];
+                let pos = self.formation.pos(&index);
+                let mut enemy = Enemy::new(enemy_type, &pos, 0, 0);
+                enemy.formation_index = index;
+                enemy.set_to_formation();
+                self.spawn(enemy);
+            }
+        }
+    }
 }
 
 fn out_of_screen(pos: &Vec2I) -> bool {

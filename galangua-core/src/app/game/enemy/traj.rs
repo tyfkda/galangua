@@ -4,6 +4,9 @@ use crate::app::consts::*;
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{calc_velocity, ANGLE, COS_TABLE, ONE, SIN_TABLE};
 
+#[cfg(debug_assertions)]
+use crate::app::util::unsafe_util::extend_lifetime;
+
 // Trajectory
 #[derive(Clone, Debug)]
 pub struct Traj {
@@ -16,6 +19,8 @@ pub struct Traj {
 
     command_table: &'static [TrajCommand],
     delay: u32,
+
+    command_table_vec: Option<Vec<TrajCommand>>,
 }
 
 impl Traj {
@@ -31,7 +36,19 @@ impl Traj {
 
             command_table: command_table,
             delay: 0,
+
+            command_table_vec: None,
         }
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn new_with_vec(command_table_vec: Vec<TrajCommand>, offset: &Vec2I, flip_x: bool) -> Self {
+        // command_table is owned by vec, so it lives as long as self and not worry about that.
+        let command_table = unsafe { extend_lifetime(&command_table_vec) };
+
+        let mut me = Self::new(command_table, offset, flip_x);
+        me.command_table_vec = Some(command_table_vec);
+        me
     }
 
     pub fn pos(&self) -> Vec2I {
@@ -41,6 +58,10 @@ impl Traj {
         let x = self.pos.x + (cs * self.offset.x + sn * self.offset.y) / ONE;
         let y = self.pos.y + (sn * self.offset.x - cs * self.offset.y) / ONE;
         Vec2I::new(x, y)
+    }
+
+    pub fn set_pos(&mut self, pos: &Vec2I) {
+        self.pos = pos.clone();
     }
 
     pub fn angle(&self) -> i32 {

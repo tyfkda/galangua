@@ -100,6 +100,7 @@ fn get_key_bit(key: VKey) -> PadBit {
         VKey::Space => PadBit::A,
         VKey::Escape => PadBit::CANCEL,
         VKey::Return => PadBit::START,
+        _ => PadBit::empty(),
     }
 }
 
