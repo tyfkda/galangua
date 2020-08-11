@@ -182,7 +182,7 @@ impl Enemy {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R, pat: usize) -> Result<(), String>
     where
         R: RendererTrait,
     {
@@ -190,7 +190,7 @@ impl Enemy {
             return Ok(());
         }
 
-        let sprite = (self.vtable.sprite_name)(self);
+        let sprite = (self.vtable.sprite_name)(self, pat);
         let angle = quantize_angle(self.angle, 16);
         let pos = self.pos();
         renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
@@ -343,7 +343,7 @@ struct EnemyVtable {
     life: u32,
     set_attack: fn(me: &mut Enemy, capture_attack: bool, accessor: &mut dyn Accessor),
     calc_point: fn(me: &Enemy) -> u32,
-    sprite_name: fn(me: &Enemy) -> &str,
+    sprite_name: fn(me: &Enemy, pat: usize) -> &str,
     set_damage: fn(me: &mut Enemy, power: u32, accessor: &dyn Accessor,
                    event_queue: &mut EventQueue) -> DamageResult,
 }
@@ -382,6 +382,10 @@ fn bee_set_damage(me: &mut Enemy, power: u32, _accessor: &dyn Accessor,
     }
 }
 
+const BEE_SPRITE_NAMES: [&str; 2] = ["gopher1", "gopher2"];
+const BUTTERFLY_SPRITE_NAMES: [&str; 2] = ["dman1", "dman2"];
+const OWL_SPRITE_NAMES: [&str; 4] = ["cpp11", "cpp12", "cpp21", "cpp22"];
+
 const ENEMY_VTABLE: [EnemyVtable; 4] = [
     // Bee
     EnemyVtable {
@@ -390,7 +394,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
         calc_point: |me: &Enemy| {
             if me.state == EnemyState::Formation { 50 } else { 100 }
         },
-        sprite_name: |_me: &Enemy| "gopher",
+        sprite_name: |_me: &Enemy, pat: usize| BEE_SPRITE_NAMES[pat],
         set_damage: bee_set_damage,
     },
     // Butterfly
@@ -400,7 +404,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
         calc_point: |me: &Enemy| {
             if me.state == EnemyState::Formation { 80 } else { 160 }
         },
-        sprite_name: |_me: &Enemy| "dman",
+        sprite_name: |_me: &Enemy, pat: usize| BUTTERFLY_SPRITE_NAMES[pat],
         set_damage: bee_set_damage,
     },
     // Owl
@@ -445,7 +449,10 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
                 }
             }
         },
-        sprite_name: |me: &Enemy| { if me.life <= 1 { "cpp2" } else { "cpp1" } },
+        sprite_name: |me: &Enemy, pat: usize| {
+            let pat = if me.life <= 1 { pat + 2 } else { pat };
+            OWL_SPRITE_NAMES[pat as usize]
+        },
         set_damage: |me: &mut Enemy, power: u32, accessor: &dyn Accessor, _event_queue: &mut EventQueue| -> DamageResult {
             if me.life > power {
                 me.life -= power;
@@ -466,7 +473,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
         life: 1,
         set_attack: bee_set_attack,
         calc_point: |_me: &Enemy| 1000,
-        sprite_name: |_me: &Enemy| "rustacean_captured",
+        sprite_name: |_me: &Enemy, _pat: usize| "rustacean_captured",
         set_damage: |me: &mut Enemy, power: u32, _accessor: &dyn Accessor, event_queue: &mut EventQueue| -> DamageResult {
             if me.life > power {
                 me.life -= power;

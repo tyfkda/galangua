@@ -26,6 +26,7 @@ pub struct EnemyManager {
     appearance_manager: AppearanceManager,
     wait_settle: bool,
     attack_manager: AttackManager,
+    frame_count: u32,
 }
 
 impl EnemyManager {
@@ -37,6 +38,7 @@ impl EnemyManager {
             appearance_manager: AppearanceManager::new(0),
             wait_settle: true,
             attack_manager: AttackManager::new(),
+            frame_count: 0,
         }
     }
 
@@ -55,6 +57,7 @@ impl EnemyManager {
     }
 
     pub fn update<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
+        self.frame_count = self.frame_count.wrapping_add(1);
         self.update_appearance();
         self.update_formation();
         self.update_attackers(accessor);
@@ -66,8 +69,9 @@ impl EnemyManager {
     where
         R: RendererTrait,
     {
+        let pat = ((self.frame_count >> 5) & 1) as usize;
         for enemy in self.enemies.iter().flat_map(|x| x) {
-            enemy.draw(renderer)?;
+            enemy.draw(renderer, pat)?;
         }
         for shot in self.shots.iter().flat_map(|x| x) {
             shot.draw(renderer)?;
