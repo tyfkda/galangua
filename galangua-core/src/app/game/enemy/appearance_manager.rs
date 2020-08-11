@@ -90,12 +90,13 @@ impl AppearanceManager {
             wait: 0,
             unit: 0,
             count: 0,
-            done: false,
+            done: true,
         }
     }
 
     pub fn restart(&mut self, stage: u32) {
-        *self = Self::new(stage)
+        *self = Self::new(stage);
+        self.done = false;
     }
 
     pub fn update(&mut self, enemies: &[Option<Enemy>]) -> Option<Vec<Enemy>> {

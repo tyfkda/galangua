@@ -16,12 +16,12 @@ const MAX_EFFECT_COUNT: usize = 16;
 
 #[derive(PartialEq)]
 enum GameState {
+    StartStage,
     Playing,
     PlayerDead,
     Capturing,
     Recapturing,
     StageClear,
-    NextStage,
     GameOver,
     Finished,
 
@@ -72,14 +72,14 @@ impl GameManager {
         self.stage = 0;
         self.stage_indicator.set_stage(self.stage + 1);
 
-        self.enemy_manager.restart(self.stage);
         self.event_queue.clear();
         self.player = Player::new();
 
         self.myshots = Default::default();
         self.effects = Default::default();
 
-        self.state = GameState::Playing;
+        self.state = GameState::StartStage;
+        self.count = 0;
     }
 
     #[cfg(debug_assertions)]
@@ -113,6 +113,14 @@ impl GameManager {
         self.update_common(params);
 
         match self.state {
+            GameState::StartStage => {
+                self.stage_indicator.update();
+                self.count += 1;
+                if self.count >= 90 {
+                    self.enemy_manager.start_next_stage(self.stage);
+                    self.state = GameState::Playing;
+                }
+            }
             GameState::Playing => {
                 if self.enemy_manager.all_destroyed() {
                     self.state = GameState::StageClear;
@@ -133,16 +141,8 @@ impl GameManager {
                     self.stage += 1;
                     self.stage_indicator.set_stage(self.stage + 1);
 
-                    self.state = GameState::NextStage;
+                    self.state = GameState::StartStage;
                     self.count = 0;
-                }
-            }
-            GameState::NextStage => {
-                self.stage_indicator.update();
-                self.count += 1;
-                if self.count >= 90 {
-                    self.enemy_manager.start_next_stage(self.stage);
-                    self.state = GameState::Playing;
                 }
             }
             GameState::GameOver => {
@@ -214,7 +214,7 @@ impl GameManager {
         }
         self.stage_indicator.draw(renderer)?;
 
-        if self.state == GameState::NextStage {
+        if self.state == GameState::StartStage {
             renderer.set_texture_color_mod("font", 0, 255, 255);
             renderer.draw_str("font", 8 * 10, 8 * 17, &format!("STAGE {}", self.stage + 1))?;
         }
