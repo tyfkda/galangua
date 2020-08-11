@@ -21,6 +21,7 @@ enum GameState {
     PlayerDead,
     WaitReady,
     Capturing,
+    Captured,
     Recapturing,
     StageClear,
     GameOver,
@@ -129,6 +130,9 @@ impl GameManager {
                 }
             }
             GameState::Capturing | GameState::Recapturing => {}
+            GameState::Captured => {
+                self.count += 1;
+            }
             GameState::PlayerDead => {
                 self.count += 1;
                 if self.count >= 60 {
@@ -232,6 +236,12 @@ impl GameManager {
                 renderer.set_texture_color_mod("font", 0, 255, 255);
                 renderer.draw_str("font", (28 - 6) / 2 * 8, 8 * 22, "READY")?;
             }
+            GameState::Captured => {
+                if self.count < 120 {
+                    renderer.set_texture_color_mod("font", 255, 0, 0);
+                    renderer.draw_str("font", (28 - 18) / 2 * 8, 8 * 19, "FIGHTER CAPTURED")?;
+                }
+            }
             GameState::GameOver => {
                 renderer.set_texture_color_mod("font", 255, 255, 255);
                 renderer.draw_str("font", (28 - 10) / 2 * 8, 8 * 10, "GAME OVER")?;
@@ -279,6 +289,8 @@ impl GameManager {
                     params.star_manager.set_capturing(false);
                     self.player.complete_capture();
                     self.enemy_manager.set_capture_state(true);
+                    self.state = GameState::Captured;
+                    self.count = 0;
                 }
                 EventType::CaptureSequenceEnded => {
                     self.enemy_manager.enable_attack(true);

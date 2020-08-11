@@ -69,6 +69,7 @@ pub struct Enemy {
     tractor_beam: Option<TractorBeam>,
     capture_state: CaptureState,
     troops: [Option<FormationIndex>; MAX_TROOPS],
+    copy_angle_to_troops: bool,
     disappeared: bool,
 }
 
@@ -94,6 +95,7 @@ impl Enemy {
             tractor_beam: None,
             capture_state: CaptureState::None,
             troops: Default::default(),
+            copy_angle_to_troops: true,
             disappeared: false,
         }
     }
@@ -142,7 +144,8 @@ impl Enemy {
         self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
 
-        self.update_troops(&(&self.pos - &prev_pos), self.angle, accessor);
+        let angle_opt = if self.copy_angle_to_troops { Some(self.angle) } else { None };
+        self.update_troops(&(&self.pos - &prev_pos), angle_opt, accessor);
 
         if let Some(tractor_beam) = &mut self.tractor_beam {
             tractor_beam.update();
@@ -153,11 +156,11 @@ impl Enemy {
         }
     }
 
-    fn update_troops(&mut self, add: &Vec2I, angle: i32, accessor: &mut dyn Accessor) {
+    fn update_troops(&mut self, add: &Vec2I, angle_opt: Option<i32>, accessor: &mut dyn Accessor) {
         for troop_opt in self.troops.iter_mut() {
             if let Some(formation_index) = troop_opt {
                 if let Some(troop) = accessor.get_enemy_at_mut(formation_index) {
-                    troop.update_troop(add, angle);
+                    troop.update_troop(add, angle_opt);
                 } else {
                     //*troop_opt = None;
                 }
@@ -165,9 +168,11 @@ impl Enemy {
         }
     }
 
-    fn update_troop(&mut self, add: &Vec2I, angle: i32) -> bool {
+    fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) -> bool {
         self.pos += *add;
-        self.angle = angle;
+        if let Some(angle) = angle_opt {
+            self.angle = angle;
+        }
         true
     }
 
@@ -310,6 +315,7 @@ impl Enemy {
         self.speed = 0;
         self.angle = 0;
         self.vangle = 0;
+        self.copy_angle_to_troops = true;
 
         if self.is_ghost() {
             self.disappeared = true;
@@ -418,6 +424,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
                 *slot = None;
             }
             let update_fn = if !capture_attack {
+                me.copy_angle_to_troops = true;
                 me.choose_troops(accessor);
 
                 let flip_x = me.formation_index.0 >= 5;
@@ -665,18 +672,26 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
                     me.capture_state = CaptureState::Capturing;
                     event_queue.push(EventType::CapturePlayerCompleted);
 
-                    me.speed = 3 * ONE / 2;
+                    me.copy_angle_to_troops = false;
                     me.attack_step += 1;
+                    me.count = 0;
                 }
             }
         }
         102 => {
+            me.count += 1;
+            if me.count >= 120 {
+                me.speed = 3 * ONE / 2;
+                me.attack_step += 1;
+            }
+        }
+        103 => {
             if !me.update_move_to_formation(accessor) {
                 me.speed = 0;
                 me.attack_step += 1;
             }
         }
-        103 => {
+        104 => {
             let fi = FormationIndex(me.formation_index.0, me.formation_index.1 - 1);
             let mut done = false;
             if let Some(captured_fighter) = accessor.get_enemy_at_mut(&fi) {
