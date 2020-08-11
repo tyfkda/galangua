@@ -31,19 +31,23 @@ impl AttackManager {
         self.enable = value;
     }
 
+    pub fn is_no_attacker(&self) -> bool {
+        self.attackers.iter().all(|x| x.is_none())
+    }
+
     pub fn set_capture_state(&mut self, value: bool) {
         self.player_captured = value;
     }
 
     pub fn update(&mut self, enemies: &mut [Option<Enemy>], accessor: &mut dyn Accessor) {
-        if !self.enable {
-            return;
-        }
-
         self.check_liveness(enemies);
 
         if self.wait > 0 {
             self.wait -= 1;
+            return;
+        }
+
+        if !self.enable {
             return;
         }
 

@@ -245,6 +245,10 @@ impl EnemyManager {
         self.attack_manager.set_enable(value);
     }
 
+    pub fn is_no_attacker(&self) -> bool {
+        self.attack_manager.is_no_attacker()
+    }
+
     pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {
         self.enemies.iter().flat_map(|x| x)
             .find(|enemy| enemy.formation_index == *formation_index)

@@ -19,6 +19,7 @@ enum GameState {
     StartStage,
     Playing,
     PlayerDead,
+    WaitReady,
     Capturing,
     Recapturing,
     StageClear,
@@ -129,10 +130,18 @@ impl GameManager {
             }
             GameState::Capturing | GameState::Recapturing => {}
             GameState::PlayerDead => {
-                // TODO: Wait all enemies back to formation.
                 self.count += 1;
                 if self.count >= 60 {
-                    self.next_player(params);
+                    self.state = GameState::WaitReady;
+                    self.count = 0;
+                }
+            }
+            GameState::WaitReady => {
+                if self.enemy_manager.is_no_attacker() {
+                    self.count += 1;
+                    if self.count >= 60 {
+                        self.next_player(params);
+                    }
                 }
             }
             GameState::StageClear => {
@@ -214,14 +223,20 @@ impl GameManager {
         }
         self.stage_indicator.draw(renderer)?;
 
-        if self.state == GameState::StartStage {
-            renderer.set_texture_color_mod("font", 0, 255, 255);
-            renderer.draw_str("font", 8 * 10, 8 * 17, &format!("STAGE {}", self.stage + 1))?;
-        }
-
-        if self.state == GameState::GameOver {
-            renderer.set_texture_color_mod("font", 255, 255, 255);
-            renderer.draw_str("font", (28 - 10) / 2 * 8, 8 * 10, "GAME OVER")?;
+        match self.state {
+            GameState::StartStage => {
+                renderer.set_texture_color_mod("font", 0, 255, 255);
+                renderer.draw_str("font", 8 * 10, 8 * 17, &format!("STAGE {}", self.stage + 1))?;
+            }
+            GameState::WaitReady => {
+                renderer.set_texture_color_mod("font", 0, 255, 255);
+                renderer.draw_str("font", (28 - 6) / 2 * 8, 8 * 22, "READY")?;
+            }
+            GameState::GameOver => {
+                renderer.set_texture_color_mod("font", 255, 255, 255);
+                renderer.draw_str("font", (28 - 10) / 2 * 8, 8 * 10, "GAME OVER")?;
+            }
+            _ => {}
         }
 
         Ok(())
