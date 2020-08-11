@@ -1,4 +1,5 @@
 use super::traj_command::TrajCommand;
+use super::{Accessor, FormationIndex};
 
 use crate::app::consts::*;
 use crate::framework::types::{Vec2I, ZERO_VEC};
@@ -8,7 +9,6 @@ use crate::util::math::{calc_velocity, ANGLE, COS_TABLE, ONE, SIN_TABLE};
 use crate::app::util::unsafe_util::extend_lifetime;
 
 // Trajectory
-#[derive(Clone, Debug)]
 pub struct Traj {
     pos: Vec2I,
     angle: i32,
@@ -16,15 +16,20 @@ pub struct Traj {
     pub vangle: i32,
     offset: Vec2I,
     flip_x: bool,
+    fi: FormationIndex,
 
     command_table: &'static [TrajCommand],
     delay: u32,
+    wait_pred: Option<Box<dyn Fn(&Vec2I) ->bool>>,
 
+    #[cfg(debug_assertions)]
     command_table_vec: Option<Vec<TrajCommand>>,
 }
 
 impl Traj {
-    pub fn new(command_table: &'static [TrajCommand], offset: &Vec2I, flip_x: bool) -> Self {
+    pub fn new(command_table: &'static [TrajCommand], offset: &Vec2I, flip_x: bool,
+               fi: FormationIndex,
+    ) -> Self {
         let offset = if flip_x { Vec2I::new(-offset.x, offset.y) } else { *offset };
         Self {
             pos: ZERO_VEC,
@@ -33,20 +38,25 @@ impl Traj {
             vangle: 0,
             offset,
             flip_x,
+            fi,
 
             command_table: command_table,
             delay: 0,
+            wait_pred: None,
 
+            #[cfg(debug_assertions)]
             command_table_vec: None,
         }
     }
 
     #[cfg(debug_assertions)]
-    pub fn new_with_vec(command_table_vec: Vec<TrajCommand>, offset: &Vec2I, flip_x: bool) -> Self {
+    pub fn new_with_vec(command_table_vec: Vec<TrajCommand>, offset: &Vec2I, flip_x: bool,
+                        fi: FormationIndex,
+    ) -> Self {
         // command_table is owned by vec, so it lives as long as self and not worry about that.
         let command_table = unsafe { extend_lifetime(&command_table_vec) };
 
-        let mut me = Self::new(command_table, offset, flip_x);
+        let mut me = Self::new(command_table, offset, flip_x, fi);
         me.command_table_vec = Some(command_table_vec);
         me
     }
@@ -68,8 +78,8 @@ impl Traj {
         self.angle
     }
 
-    pub fn update(&mut self) -> bool {
-        self.handle_command();
+    pub fn update(&mut self, accessor: &dyn Accessor) -> bool {
+        self.handle_command(accessor);
 
         self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
@@ -77,10 +87,15 @@ impl Traj {
         !self.command_table.is_empty() || self.delay > 0
     }
 
-    fn handle_command(&mut self) {
+    fn handle_command(&mut self, accessor: &dyn Accessor) {
         if self.delay > 0 {
             self.delay -= 1;
             return;
+        }
+        if let Some(wait_pred) = &self.wait_pred {
+            if !(wait_pred)(&self.pos) {
+                return;
+            }
         }
 
         if !self.command_table.is_empty() {
@@ -88,7 +103,7 @@ impl Traj {
             while i < self.command_table.len() {
                 let command = &self.command_table[i];
                 i += 1;
-                if !self.handle_one_command(command) {
+                if !self.handle_one_command(command, accessor) {
                     break;
                 }
             }
@@ -97,7 +112,7 @@ impl Traj {
         }
     }
 
-    fn handle_one_command(&mut self, command: &TrajCommand) -> bool {
+    fn handle_one_command(&mut self, command: &TrajCommand, accessor: &dyn Accessor) -> bool {
         match *command {
             TrajCommand::Pos(mut x, y) => {
                 if self.flip_x {
@@ -140,6 +155,21 @@ impl Traj {
                     self.delay = (((self.angle - dest_angle) as f64) / vangle).round() as u32;
                 }
                 return false;
+            }
+            TrajCommand::WaitYG(value) => {
+                self.wait_pred = Some(Box::new(move |&pos| pos.y >= value));
+                return false;
+            }
+            TrajCommand::AddPos(mut x, y) => {
+                if self.flip_x {
+                    x = -x;
+                }
+                self.pos.x += x;
+                self.pos.y += y;
+            }
+            TrajCommand::CopyFormationX => {
+                let formation_pos = accessor.get_formation_pos(&self.fi);
+                self.pos.x = formation_pos.x;
             }
         }
         true

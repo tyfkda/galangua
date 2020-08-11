@@ -82,7 +82,7 @@ impl EditTrajManager {
     }
 
     fn set_traj_attack(&mut self, game_manager: &mut GameManager, no: u32, flip_x: bool) {
-        let filename = format!("assets/debug_traj{}.txt", no);
+        let filename = format!("debug/debug_traj{}.txt", no);
         if let Some(traj_command_vec) = load_traj_command_file(&filename) {
             let enemy_manager = game_manager.enemy_manager_mut();
             if let Some(enemy) = enemy_manager.get_enemy_at_mut(&self.fi) {
@@ -107,22 +107,24 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
             for line in reader.lines() {
                 lineno += 1;
                 if let Ok(line) = line {
+                    if line.len() > 0 && line.starts_with("#") {
+                        continue;
+                    }
+
                     let words: Vec<&str> = line.split_whitespace().collect();
-                    if words.len() >= 2 {
+                    if words.len() >= 1 {
                         match words[0] {
                             "Pos" if words.len() >= 3 => {
-                                if let Ok(x) = &words[1].parse::<f64>() {
-                                    if let Ok(y) = &words[2].parse::<f64>() {
-                                        let ix = (x * one).round() as i32;
-                                        let iy = (y * one).round() as i32;
-                                        vec.push(TrajCommand::Pos(ix, iy));
-                                    }
+                                if let (Ok(x), Ok(y)) = (&words[1].parse::<f64>(), &words[2].parse::<f64>()) {
+                                    let ix = (x * one).round() as i32;
+                                    let iy = (y * one).round() as i32;
+                                    vec.push(TrajCommand::Pos(ix, iy));
                                     continue;
                                 }
                                 println!("Line {}: number expected", lineno);
                                 err = true;
                             }
-                            "Speed" => {
+                            "Speed" if words.len() >= 2 => {
                                 if let Ok(speed) = &words[1].parse::<f64>() {
                                     let ispeed = (speed * one).round() as i32;
                                     vec.push(TrajCommand::Speed(ispeed));
@@ -131,7 +133,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                     err = true;
                                 }
                             }
-                            "Angle" => {
+                            "Angle" if words.len() >= 2 => {
                                 if let Ok(angle) = &words[1].parse::<f64>() {
                                     let iangle = (angle * one).round() as i32;
                                     vec.push(TrajCommand::Angle(iangle));
@@ -140,7 +142,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                     err = true;
                                 }
                             }
-                            "VAngle" => {
+                            "VAngle" if words.len() >= 2 => {
                                 if let Ok(vangle) = &words[1].parse::<f64>() {
                                     let ivangle = (vangle * one).round() as i32;
                                     vec.push(TrajCommand::VAngle(ivangle));
@@ -149,7 +151,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                     err = true;
                                 }
                             }
-                            "Delay" => {
+                            "Delay" if words.len() >= 2 => {
                                 if let &Ok(delay) = &words[1].parse::<u32>() {
                                     vec.push(TrajCommand::Delay(delay));
                                 } else {
@@ -158,16 +160,36 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                 }
                             }
                             "DestAngle" if words.len() >= 3 => {
-                                if let Ok(angle) = &words[1].parse::<f64>() {
-                                    if let Ok(radius) = &words[2].parse::<f64>() {
-                                        let iangle = (angle * one).round() as i32;
-                                        let iradius = (radius * one).round() as i32;
-                                        vec.push(TrajCommand::DestAngle(iangle, iradius));
-                                    }
+                                if let (Ok(angle), Ok(radius)) = (&words[1].parse::<f64>(), &words[2].parse::<f64>()) {
+                                    let iangle = (angle * one).round() as i32;
+                                    let iradius = (radius * one).round() as i32;
+                                    vec.push(TrajCommand::DestAngle(iangle, iradius));
                                     continue;
                                 }
                                 println!("Line {}: number expected", lineno);
                                 err = true;
+                            }
+                            "WaitYG" if words.len() >= 2 => {
+                                if let Ok(value) = &words[1].parse::<f64>() {
+                                    let ivalue = (value * one).round() as i32;
+                                    vec.push(TrajCommand::WaitYG(ivalue));
+                                } else {
+                                    println!("Line {}: number expected", lineno);
+                                    err = true;
+                                }
+                            }
+                            "AddPos" if words.len() >= 3 => {
+                                if let (Ok(x), Ok(y)) = (&words[1].parse::<f64>(), &words[2].parse::<f64>()) {
+                                    let ix = (x * one).round() as i32;
+                                    let iy = (y * one).round() as i32;
+                                    vec.push(TrajCommand::AddPos(ix, iy));
+                                    continue;
+                                }
+                                println!("Line {}: number expected", lineno);
+                                err = true;
+                            }
+                            "CopyFormationX" => {
+                                vec.push(TrajCommand::CopyFormationX);
                             }
                             _ => {
                                 println!("Line {}: Unhandled, {:?}", lineno, words);

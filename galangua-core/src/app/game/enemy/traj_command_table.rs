@@ -32,3 +32,66 @@ counted_array!(pub const COMMAND_TABLE2: [TrajCommand; _] = [
     TrajCommand::DestAngle((-ANGLE + (ANGLE / 8)) * ONE, 20 * ONE),
     TrajCommand::VAngle(0),
 ]);
+
+counted_array!(pub const BEE_ATTACK_TABLE: [TrajCommand; _] = [
+    TrajCommand::Speed(2 * ONE),
+    TrajCommand::Angle(0),
+    TrajCommand::VAngle(-4 * ONE),
+    TrajCommand::Delay(41),
+
+    TrajCommand::VAngle(0),
+    TrajCommand::WaitYG(200 * ONE),
+
+    TrajCommand::VAngle(3 * ONE / 2),
+    TrajCommand::Delay(110),
+]);
+
+counted_array!(pub const BUTTERFLY_ATTACK_TABLE: [TrajCommand; _] = [
+    TrajCommand::Speed(2 * ONE),
+    TrajCommand::Angle(0 * ONE),
+    TrajCommand::VAngle(-4 * ONE),
+    TrajCommand::Delay(40),
+
+    TrajCommand::VAngle(0 * ONE),
+    TrajCommand::WaitYG(160 * ONE),
+
+    TrajCommand::VAngle(4 * ONE),
+    TrajCommand::Delay(18),
+
+    TrajCommand::VAngle(0 * ONE),
+    TrajCommand::Delay(10),
+
+    TrajCommand::VAngle(-4 * ONE),
+    TrajCommand::Delay(18),
+
+    TrajCommand::VAngle(0 * ONE),
+    TrajCommand::WaitYG(304 * ONE),
+    TrajCommand::AddPos(0 * ONE, -320 * ONE),
+    TrajCommand::CopyFormationX,
+    TrajCommand::Angle(128 * ONE),
+]);
+
+counted_array!(pub const OWL_ATTACK_TABLE: [TrajCommand; _] = [
+    TrajCommand::Speed(2 * ONE),
+    TrajCommand::Angle(0 * ONE),
+    TrajCommand::VAngle(-4 * ONE),
+    TrajCommand::Delay(32),
+
+    TrajCommand::VAngle(0 * ONE),
+    TrajCommand::WaitYG(110 * ONE),
+
+    TrajCommand::VAngle(-3 * ONE),
+    TrajCommand::Delay(94),
+
+    TrajCommand::VAngle(0 * ONE),
+    TrajCommand::WaitYG(200 * ONE),
+
+    TrajCommand::VAngle(1 * ONE),
+    TrajCommand::Delay(32),
+
+    TrajCommand::VAngle(0 * ONE),
+    TrajCommand::WaitYG(304 * ONE),
+    TrajCommand::AddPos(0 * ONE, -320 * ONE),
+    TrajCommand::CopyFormationX,
+    TrajCommand::Angle(128 * ONE),
+]);

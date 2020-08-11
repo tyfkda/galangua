@@ -1,5 +1,6 @@
 use super::tractor_beam::TractorBeam;
 use super::traj::Traj;
+use super::traj_command_table::{BEE_ATTACK_TABLE, BUTTERFLY_ATTACK_TABLE, OWL_ATTACK_TABLE};
 use super::{Accessor, FormationIndex};
 
 use crate::app::consts::*;
@@ -262,7 +263,7 @@ impl Enemy {
 
     #[cfg(debug_assertions)]
     pub fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
-        let mut traj = Traj::new_with_vec(traj_command_vec, &ZERO_VEC, flip_x);
+        let mut traj = Traj::new_with_vec(traj_command_vec, &ZERO_VEC, flip_x, self.formation_index);
         traj.set_pos(&self.pos);
 
         self.attack_step = 0;
@@ -348,9 +349,25 @@ struct EnemyVtable {
 }
 
 fn bee_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut dyn Accessor) {
+    let flip_x = me.formation_index.0 >= 5;
+    let mut traj = Traj::new(&BEE_ATTACK_TABLE, &ZERO_VEC, flip_x, me.formation_index);
+    traj.set_pos(&me.pos);
+
     me.attack_step = 0;
     me.count = 0;
-    me.set_state_with_fn(EnemyState::Attack, update_attack_normal);
+    me.traj = Some(traj);
+    me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
+}
+
+fn butterfly_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut dyn Accessor) {
+    let flip_x = me.formation_index.0 >= 5;
+    let mut traj = Traj::new(&BUTTERFLY_ATTACK_TABLE, &ZERO_VEC, flip_x, me.formation_index);
+    traj.set_pos(&me.pos);
+
+    me.attack_step = 0;
+    me.count = 0;
+    me.traj = Some(traj);
+    me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
 }
 
 fn bee_set_damage(me: &mut Enemy, power: u32, _accessor: &dyn Accessor,
@@ -379,7 +396,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
     // Butterfly
     EnemyVtable {
         life: 1,
-        set_attack: bee_set_attack,
+        set_attack: butterfly_set_attack,
         calc_point: |me: &Enemy| {
             if me.state == EnemyState::Formation { 80 } else { 160 }
         },
@@ -390,17 +407,26 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
     EnemyVtable {
         life: 2,
         set_attack: |me: &mut Enemy, capture_attack: bool, accessor: &mut dyn Accessor| {
-            let update_fn = if capture_attack { update_attack_capture } else { update_attack_normal };
-
             me.attack_step = 0;
             me.count = 0;
 
             for slot in me.troops.iter_mut() {
                 *slot = None;
             }
-            if !capture_attack {
+            let update_fn = if !capture_attack {
                 me.choose_troops(accessor);
-            }
+
+                let flip_x = me.formation_index.0 >= 5;
+                let mut traj = Traj::new(&OWL_ATTACK_TABLE, &ZERO_VEC, flip_x, me.formation_index);
+                traj.set_pos(&me.pos);
+
+                me.attack_step = 0;
+                me.count = 0;
+                me.traj = Some(traj);
+                update_attack_traj
+            } else {
+                update_attack_capture
+            };
 
             me.set_state_with_fn(EnemyState::Attack, update_fn);
         },
@@ -459,9 +485,9 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
 
 fn update_none(_me: &mut Enemy, _accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {}
 
-fn update_trajectory(me: &mut Enemy, _accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
+fn update_trajectory(me: &mut Enemy, accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
     if let Some(traj) = &mut me.traj {
-        let cont = traj.update();
+        let cont = traj.update(accessor);
 
         me.pos = traj.pos();
         me.angle = traj.angle();
@@ -666,7 +692,6 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
     }
 }
 
-#[cfg(debug_assertions)]
 fn update_attack_traj(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
     update_trajectory(me, accessor, event_queue);
 }

@@ -1,0 +1,22 @@
+Speed      2
+Angle      0
+VAngle     -4
+Delay      40
+
+VAngle     0
+WaitYG     160
+
+VAngle     4
+Delay      18
+
+VAngle     0
+Delay      10
+
+VAngle     -4
+Delay      18
+
+VAngle     0
+WaitYG     304
+AddPos     0 -320
+CopyFormationX
+Angle      128

@@ -6,4 +6,7 @@ pub enum TrajCommand {
     VAngle(i32),
     Delay(u32),
     DestAngle(i32, i32),
+    WaitYG(i32),  // wait until y is greater than
+    AddPos(i32, i32),
+    CopyFormationX,
 }

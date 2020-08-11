@@ -1,0 +1,10 @@
+Speed      2
+Angle      0
+VAngle     -4
+Delay      41
+
+VAngle     0
+WaitYG     200
+
+VAngle     1.5
+Delay      110
