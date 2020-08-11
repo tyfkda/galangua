@@ -20,7 +20,7 @@ pub struct Traj {
 
     command_table: &'static [TrajCommand],
     delay: u32,
-    wait_pred: Option<Box<dyn Fn(&Vec2I) ->bool>>,
+    wait_pred: Option<Box<dyn Fn(&Vec2I) -> bool>>,
 
     #[cfg(debug_assertions)]
     command_table_vec: Option<Vec<TrajCommand>>,

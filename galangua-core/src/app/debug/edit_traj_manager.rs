@@ -1,10 +1,10 @@
-use crate::app::game::enemy::FormationIndex;
 use crate::app::game::enemy::traj_command::TrajCommand;
+use crate::app::game::enemy::FormationIndex;
 use crate::app::game::game_manager::GameManager;
 use crate::app::util::unsafe_util::peep;
-use crate::util::math::ONE;
-use crate::framework::{RendererTrait, VKey};
 use crate::framework::types::Vec2I;
+use crate::framework::{RendererTrait, VKey};
+use crate::util::math::ONE;
 
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
@@ -93,8 +93,6 @@ impl EditTrajManager {
         }
     }
 }
-
-
 
 fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
     match File::open(filename) {
@@ -205,6 +203,6 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                 Some(vec)
             }
         }
-        Err(_err) => None
+        Err(_err) => None,
     }
 }
