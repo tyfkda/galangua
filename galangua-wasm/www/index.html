@@ -2,18 +2,23 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Hello wasm-pack!</title>
-    <style>
-      html, body {
-        margin: 0;
-        background-color: #222;
-      }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
+    <title>Galangua</title>
+    <link rel="stylesheet" type="text/css" href="default.css">
   </head>
-  <body>
+  <body ontouchstart="return false;">
     <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
 
-    <canvas id="mycanvas" width="224" height="288" style="width: 672px; height: 864px; image-rendering: pixelated;"></canvas>
+    <div class="canvas-container full-size">
+      <canvas id="mycanvas" class="mycanvas" width="224" height="288"></canvas>
+    </div>
+
+    <!-- touch controller -->
+    <div id="touch-btn-holder" class="touch-btn-holder clearfix" style="display: none">
+      <div id="left-btn" class="touch-btn move-btn centering non-selectable pull-left" onSelectStart="return false" oncontextmenu='return false;'>←</div
+      ><div id="right-btn" class="touch-btn move-btn centering non-selectable pull-left" onSelectStart="return false" oncontextmenu='return false;'>→</div
+      ><div id="shot-btn" class="touch-btn shot-btn centering non-selectable pull-right" onSelectStart="return false" oncontextmenu='return false;'>Shot</div>
+    </div>
 
     <script src="./bootstrap.js"></script>
   </body>
