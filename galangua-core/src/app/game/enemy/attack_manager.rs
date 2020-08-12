@@ -2,14 +2,14 @@ use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
 use super::enemy::{Enemy, EnemyState, EnemyType};
-use super::Accessor;
+use super::{Accessor, FormationIndex};
 
 const MAX_ATTACKER_COUNT: usize = 1;
 
 pub struct AttackManager {
     enable: bool,
     wait: u32,
-    attackers: [Option<usize>; MAX_ATTACKER_COUNT],
+    attackers: [Option<FormationIndex>; MAX_ATTACKER_COUNT],
     player_captured: bool,
 }
 
@@ -40,7 +40,7 @@ impl AttackManager {
     }
 
     pub fn update(&mut self, enemies: &mut [Option<Enemy>], accessor: &mut dyn Accessor) {
-        self.check_liveness(enemies);
+        self.check_liveness(enemies, accessor);
 
         if self.wait > 0 {
             self.wait -= 1;
@@ -68,9 +68,9 @@ for _i in 0..100 {
 }
 
                 let no = candidate_indices[index];
-                *slot = Some(no);
-
                 let enemy = &mut enemies[no].as_mut().unwrap();
+                *slot = Some(enemy.formation_index);
+
                 let capture_attack = enemy.enemy_type == EnemyType::Owl &&
                     !self.player_captured &&
                     !accessor.is_player_dual();
@@ -81,10 +81,10 @@ for _i in 0..100 {
         }
     }
 
-    pub fn check_liveness(&mut self, enemies: &mut [Option<Enemy>]) {
+    pub fn check_liveness(&mut self, _enemies: &mut [Option<Enemy>], accessor: &mut dyn Accessor) {
         for attacker_opt in self.attackers.iter_mut().filter(|x| x.is_some()) {
-            let index = attacker_opt.unwrap();
-            if let Some(enemy) = &enemies[index] {
+            let formation_index = attacker_opt.as_ref().unwrap();
+            if let Some(enemy) = accessor.get_enemy_at(formation_index) {
                 if enemy.get_state() == EnemyState::Formation {
                     *attacker_opt = None;
                 }
