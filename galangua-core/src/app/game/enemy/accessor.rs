@@ -9,6 +9,7 @@ pub trait Accessor {
     fn is_player_dual(&self) -> bool;
     fn is_player_captured(&self) -> bool;
     fn can_player_capture(&self) -> bool;
+    fn get_enemies(&self) -> &[Option<Enemy>];
     fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy>;
     fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy>;
     fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I;

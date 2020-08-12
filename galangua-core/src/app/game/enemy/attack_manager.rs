@@ -3,6 +3,7 @@ use rand_xoshiro::Xoshiro128Plus;
 
 use super::enemy::{Enemy, EnemyState, EnemyType};
 use super::{Accessor, FormationIndex};
+use crate::app::util::unsafe_util::peep;
 
 const MAX_ATTACKER_COUNT: usize = 1;
 
@@ -39,8 +40,8 @@ impl AttackManager {
         self.player_captured = value;
     }
 
-    pub fn update(&mut self, enemies: &mut [Option<Enemy>], accessor: &mut dyn Accessor) {
-        self.check_liveness(enemies, accessor);
+    pub fn update(&mut self, accessor: &mut dyn Accessor) {
+        self.check_liveness(accessor);
 
         if self.wait > 0 {
             self.wait -= 1;
@@ -52,28 +53,34 @@ impl AttackManager {
         }
 
         if let Some(slot) = self.attackers.iter_mut().find(|x| x.is_none()) {
-            let candidate_indices = (0..enemies.len())
-                .filter(|&i| enemies[i].as_ref().map_or(false, |e| e.get_state() == EnemyState::Formation))
-                .collect::<Vec<usize>>();
-            let count = candidate_indices.len();
+            let enemies = accessor.get_enemies();
+            let candidates = enemies.iter()
+                .flat_map(|x| x.as_ref())
+                .filter(|e| e.get_state() == EnemyState::Formation)
+                .collect::<Vec<&Enemy>>();
+            let count = candidates.len();
             if count > 0 {
                 let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
 //                let index = rng.gen_range(0, count);
 let mut index = 0;
 for _i in 0..100 {
     index = rng.gen_range(0, count);
-    if enemies[candidate_indices[index]].as_ref().unwrap().enemy_type == EnemyType::Owl {
+    if candidates[index].enemy_type == EnemyType::Owl {
         break;
     }
 }
 
-                let no = candidate_indices[index];
-                let enemy = &mut enemies[no].as_mut().unwrap();
-                *slot = Some(enemy.formation_index);
+                let candidate = candidates[index];
+                let formation_index = candidate.formation_index;
+                *slot = Some(formation_index);
 
-                let capture_attack = enemy.enemy_type == EnemyType::Owl &&
+                let capture_attack = candidate.enemy_type == EnemyType::Owl &&
                     !self.player_captured &&
                     !accessor.is_player_dual();
+                let enemy = {
+                    let accessor = unsafe { peep(accessor) };
+                    accessor.get_enemy_at_mut(&formation_index).unwrap()
+                };
                 enemy.set_attack(capture_attack, accessor);
 
                 self.wait = 60 * 2;
@@ -81,7 +88,7 @@ for _i in 0..100 {
         }
     }
 
-    pub fn check_liveness(&mut self, _enemies: &mut [Option<Enemy>], accessor: &mut dyn Accessor) {
+    pub fn check_liveness(&mut self, accessor: &mut dyn Accessor) {
         for attacker_opt in self.attackers.iter_mut().filter(|x| x.is_some()) {
             let formation_index = attacker_opt.as_ref().unwrap();
             if let Some(enemy) = accessor.get_enemy_at(formation_index) {

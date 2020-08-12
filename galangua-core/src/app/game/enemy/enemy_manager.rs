@@ -194,7 +194,7 @@ impl EnemyManager {
     }
 
     fn update_attackers<T: Accessor>(&mut self, accessor: &mut T) {
-        self.attack_manager.update(&mut self.enemies, accessor);
+        self.attack_manager.update(accessor);
     }
 
     fn update_enemies<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
@@ -248,6 +248,10 @@ impl EnemyManager {
 
     pub fn is_no_attacker(&self) -> bool {
         self.attack_manager.is_no_attacker()
+    }
+
+    pub fn get_enemies(&self) -> &[Option<Enemy>] {
+        &self.enemies
     }
 
     pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {
