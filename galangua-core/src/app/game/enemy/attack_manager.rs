@@ -52,28 +52,25 @@ impl AttackManager {
         }
 
         if let Some(slot) = self.attackers.iter_mut().find(|x| x.is_none()) {
-            if enemies.iter().any(|slot| slot.is_some()) {
-                let alive_indices = (0..enemies.len())
-                    .filter(|&i| enemies[i].is_some()).collect::<Vec<usize>>();
-                let count = alive_indices.len();
-
+            let candidate_indices = (0..enemies.len())
+                .filter(|&i| enemies[i].as_ref().map_or(false, |e| e.get_state() == EnemyState::Formation))
+                .collect::<Vec<usize>>();
+            let count = candidate_indices.len();
+            if count > 0 {
                 let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
 //                let index = rng.gen_range(0, count);
 let mut index = 0;
 for _i in 0..100 {
     index = rng.gen_range(0, count);
-    if enemies[alive_indices[index]].as_ref().unwrap().enemy_type == EnemyType::Owl {
+    if enemies[candidate_indices[index]].as_ref().unwrap().enemy_type == EnemyType::Owl {
         break;
     }
 }
 
-                let no = alive_indices[index];
+                let no = candidate_indices[index];
                 *slot = Some(no);
 
-                let mut enemies = enemies.iter_mut()
-                    .flat_map(|x| x)
-                    .filter(|x| x.get_state() == EnemyState::Formation);
-                let enemy = &mut enemies.nth(index).unwrap();
+                let enemy = &mut enemies[no].as_mut().unwrap();
                 let capture_attack = enemy.enemy_type == EnemyType::Owl &&
                     !self.player_captured &&
                     !accessor.is_player_dual();
