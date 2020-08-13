@@ -6,8 +6,8 @@ use crate::app::consts::*;
 use crate::framework::types::Vec2I;
 use crate::util::math::ONE;
 
-const X_COUNT: usize = 10;
-const Y_COUNT: usize = 6;
+pub(super) const X_COUNT: usize = 10;
+pub(super) const Y_COUNT: usize = 6;
 const BASE_Y: i32 = 24;
 
 lazy_static! {

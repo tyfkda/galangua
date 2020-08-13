@@ -1,17 +1,22 @@
+use array_macro::*;
+use rand::seq::SliceRandom;
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
-use super::enemy::{Enemy, EnemyState, EnemyType};
+use super::enemy::{EnemyState, EnemyType};
+use super::formation::{X_COUNT, Y_COUNT};
 use super::{Accessor, FormationIndex};
 use crate::app::util::unsafe_util::peep;
 
-const MAX_ATTACKER_COUNT: usize = 1;
+const MAX_ATTACKER_COUNT: usize = 3;
+const WAIT: u32 = 30;
 
 pub struct AttackManager {
     enable: bool,
     wait: u32,
     attackers: [Option<FormationIndex>; MAX_ATTACKER_COUNT],
     player_captured: bool,
+    cycle: u32,
 }
 
 impl AttackManager {
@@ -21,6 +26,7 @@ impl AttackManager {
             wait: 0,
             attackers: Default::default(),
             player_captured: false,
+            cycle: 0,
         }
     }
 
@@ -52,43 +58,16 @@ impl AttackManager {
             return;
         }
 
-        if let Some(slot) = self.attackers.iter_mut().find(|x| x.is_none()) {
-            let enemies = accessor.get_enemies();
-            let candidates = enemies.iter()
-                .flat_map(|x| x.as_ref())
-                .filter(|e| e.get_state() == EnemyState::Formation)
-                .collect::<Vec<&Enemy>>();
-            let count = candidates.len();
-            if count > 0 {
-                let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-//                let index = rng.gen_range(0, count);
-let mut index = 0;
-for _i in 0..100 {
-    index = rng.gen_range(0, count);
-    if candidates[index].enemy_type == EnemyType::Owl {
-        break;
-    }
-}
-
-                let candidate = candidates[index];
-                let formation_index = candidate.formation_index;
-                *slot = Some(formation_index);
-
-                let capture_attack = candidate.enemy_type == EnemyType::Owl &&
-                    !self.player_captured &&
-                    !accessor.is_player_dual();
-                let enemy = {
-                    let accessor = unsafe { peep(accessor) };
-                    accessor.get_enemy_at_mut(&formation_index).unwrap()
-                };
-                enemy.set_attack(capture_attack, accessor);
-
-                self.wait = 60 * 2;
+        if let Some(slot_index) = self.attackers.iter().position(|x| x.is_none()) {
+            if let Some(formation_index) = self.pick_attacker(accessor) {
+                self.attackers[slot_index] = Some(formation_index);
             }
+            self.wait = WAIT;
+            self.cycle += 1;
         }
     }
 
-    pub fn check_liveness(&mut self, accessor: &mut dyn Accessor) {
+    fn check_liveness(&mut self, accessor: &mut dyn Accessor) {
         for attacker_opt in self.attackers.iter_mut().filter(|x| x.is_some()) {
             let formation_index = attacker_opt.as_ref().unwrap();
             if let Some(enemy) = accessor.get_enemy_at(formation_index) {
@@ -99,5 +78,74 @@ for _i in 0..100 {
                 *attacker_opt = None;
             }
         }
+    }
+
+    fn pick_attacker(&mut self, accessor: &mut dyn Accessor) -> Option<FormationIndex> {
+        let candidates = self.enum_sides(accessor);
+        let fi = match self.cycle % 3 {
+            2 => {
+                self.pick_random(&candidates, &mut [1])
+            }
+            0 | 1 | _ => {
+                self.pick_random(&candidates, &mut [2, 3, 4, 5])
+            }
+        };
+        if let Some(fi) = fi {
+            let enemy = {
+                let accessor = unsafe { peep(accessor) };
+                accessor.get_enemy_at_mut(&fi).unwrap()
+            };
+
+            let capture_attack = enemy.enemy_type == EnemyType::Owl &&
+                (self.cycle / 3) & 1 != 0 &&
+                !self.player_captured &&
+                !accessor.is_player_dual();
+            enemy.set_attack(capture_attack, accessor);
+
+            Some(fi)
+        } else {
+            None
+        }
+    }
+
+    fn pick_random(&mut self, candidates: &[Option<[u8; 2]>; Y_COUNT], rows: &mut [u32]) -> Option<FormationIndex> {
+        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        rows.shuffle(&mut rng);
+        for &row in rows.iter() {
+            if let Some(pos) = candidates[row as usize] {
+                let index = rng.gen_range(0, 2);
+                return Some(FormationIndex(pos[index], row as u8));
+            }
+        }
+        None
+    }
+
+    fn enum_sides(&mut self, accessor: &mut dyn Accessor) -> [Option<[u8; 2]>; Y_COUNT] {
+        array![|i| {
+            let left = (0..X_COUNT).find_map(|j| {
+                let fi = FormationIndex(j as u8, i as u8);
+                if let Some(enemy) = accessor.get_enemy_at(&fi) {
+                    if enemy.get_state() == EnemyState::Formation {
+                        return Some(j);
+                    }
+                }
+                None
+            });
+
+            if let Some(l) = left {
+                let r = ((l as usize)..X_COUNT).rev().find_map(|j| {
+                    let fi = FormationIndex(j as u8, i as u8);
+                    if let Some(enemy) = accessor.get_enemy_at(&fi) {
+                        if enemy.get_state() == EnemyState::Formation {
+                            return Some(j);
+                        }
+                    }
+                    None
+                }).unwrap_or(l);
+                Some([l as u8, r as u8])
+            } else {
+                None
+            }
+        }; Y_COUNT]
     }
 }
