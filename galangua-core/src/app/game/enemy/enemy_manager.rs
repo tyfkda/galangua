@@ -71,7 +71,7 @@ impl EnemyManager {
         R: RendererTrait,
     {
         let pat = ((self.frame_count >> 5) & 1) as usize;
-        for enemy in self.enemies.iter().flat_map(|x| x) {
+        for enemy in self.enemies.iter().rev().flat_map(|x| x) {
             enemy.draw(renderer, pat)?;
         }
         for shot in self.shots.iter().flat_map(|x| x) {
@@ -159,8 +159,10 @@ impl EnemyManager {
     }
 
     fn spawn(&mut self, enemy: Enemy) -> bool {
-        if let Some(index) = self.find_slot() {
-            self.enemies[index] = Some(enemy);
+        let index = calc_array_index(&enemy.formation_index);
+        let slot = &mut self.enemies[index];
+        if slot.is_none() {
+            *slot = Some(enemy);
             true
         } else {
             false
@@ -217,10 +219,6 @@ impl EnemyManager {
         }
     }
 
-    fn find_slot(&self) -> Option<usize> {
-        self.enemies.iter().position(|x| x.is_none())
-    }
-
     pub fn spawn_shot(&mut self, pos: &Vec2I, target_pos: &[Option<Vec2I>], speed: i32) {
         if let Some(index) = self.shots.iter().position(|x| x.is_none()) {
             let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
@@ -255,13 +253,13 @@ impl EnemyManager {
     }
 
     pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {
-        self.enemies.iter().flat_map(|x| x)
-            .find(|enemy| enemy.formation_index == *formation_index)
+        let index = calc_array_index(formation_index);
+        self.enemies[index].as_ref()
     }
 
     pub fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy> {
-        self.enemies.iter_mut().flat_map(|x| x)
-            .find(|enemy| enemy.formation_index == *formation_index)
+        let index = calc_array_index(formation_index);
+        self.enemies[index].as_mut()
     }
 
     pub fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
@@ -301,4 +299,8 @@ impl EnemyManager {
 fn out_of_screen(pos: &Vec2I) -> bool {
     pos.x < -16 || pos.x > WIDTH + 16
         || pos.y < -16 || pos.y > HEIGHT + 16
+}
+
+fn calc_array_index(fi: &FormationIndex) -> usize {
+    (fi.0 + fi.1 * 10) as usize  // Caution!
 }
