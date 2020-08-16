@@ -64,7 +64,8 @@ pub struct Enemy {
     traj: Option<Traj>,
     update_fn: fn(enemy: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue),
     attack_step: i32,
-    count: i32,
+    count: u32,
+    attack_frame_count: u32,
     target_pos: Vec2I,
     tractor_beam: Option<TractorBeam>,
     capture_state: CaptureState,
@@ -91,6 +92,7 @@ impl Enemy {
             update_fn: update_none,
             attack_step: 0,
             count: 0,
+            attack_frame_count: 0,
             target_pos: ZERO_VEC,
             tractor_beam: None,
             capture_state: CaptureState::None,
@@ -187,6 +189,16 @@ impl Enemy {
         }
     }
 
+    pub fn update_attack(&mut self, _accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+        self.attack_frame_count += 1;
+
+        const SHOT_INTERVAL: u32 = 16;
+        const SHOT_COUNT: u32 = 2;
+        if self.attack_frame_count <= SHOT_INTERVAL * SHOT_COUNT && self.attack_frame_count % SHOT_INTERVAL == 0 {
+            event_queue.push(EventType::EneShot(self.pos, 3 * ONE));
+        }
+    }
+
     pub fn draw<R>(&self, renderer: &mut R, pat: usize) -> Result<(), String>
     where
         R: RendererTrait,
@@ -273,6 +285,7 @@ impl Enemy {
 
         self.attack_step = 0;
         self.count = 0;
+        self.attack_frame_count = 0;
         self.traj = Some(traj);
         self.set_state_with_fn(EnemyState::Attack, update_attack_traj);
     }
@@ -361,6 +374,7 @@ fn bee_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut dyn Acc
 
     me.attack_step = 0;
     me.count = 0;
+    me.attack_frame_count = 0;
     me.traj = Some(traj);
     me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
 }
@@ -372,6 +386,7 @@ fn butterfly_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut d
 
     me.attack_step = 0;
     me.count = 0;
+    me.attack_frame_count = 0;
     me.traj = Some(traj);
     me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
 }
@@ -419,6 +434,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
         set_attack: |me: &mut Enemy, capture_attack: bool, accessor: &mut dyn Accessor| {
             me.attack_step = 0;
             me.count = 0;
+            me.attack_frame_count = 0;
 
             for slot in me.troops.iter_mut() {
                 *slot = None;
@@ -527,6 +543,8 @@ fn update_formation(me: &mut Enemy, accessor: &mut dyn Accessor, _event_queue: &
 }
 
 fn update_attack_normal(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    me.update_attack(accessor, event_queue);
+
     match me.attack_step {
         0 => {
             me.speed = 1 * ONE;
@@ -715,5 +733,7 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
 }
 
 fn update_attack_traj(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    me.update_attack(accessor, event_queue);
+
     update_trajectory(me, accessor, event_queue);
 }
