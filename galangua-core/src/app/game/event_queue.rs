@@ -42,7 +42,7 @@ pub enum EventType {
     AddScore(u32),
     EneShot(Vec2I, i32),
     EarnPoint(EarnedPointType, Vec2I),
-    SmallBomb(Vec2I),
+    EnemyExplosion(Vec2I),
     DeadPlayer,
     CapturePlayer(Vec2I),
     CapturePlayerCompleted,

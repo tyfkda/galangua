@@ -3,7 +3,7 @@ use super::enemy::{Enemy, EnemyManager, FormationIndex};
 use super::event_queue::{EventQueue, EventType};
 use super::player::{MyShot, Player};
 
-use super::effect::{EarnedPoint, Effect, SmallBomb, StageIndicator, StarManager};
+use super::effect::{EarnedPoint, Effect, EnemyExplosion, PlayerExplosion, StageIndicator, StarManager};
 use super::score_holder::ScoreHolder;
 use crate::app::util::unsafe_util::peep;
 use crate::app::util::{CollBox, Collidable};
@@ -268,8 +268,8 @@ impl GameManager {
                 EventType::EarnPoint(point_type, pos) => {
                     self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, &pos)));
                 }
-                EventType::SmallBomb(pos) => {
-                    self.spawn_effect(Effect::SmallBomb(SmallBomb::new(&pos)));
+                EventType::EnemyExplosion(pos) => {
+                    self.spawn_effect(Effect::EnemyExplosion(EnemyExplosion::new(&pos)));
                 }
                 EventType::DeadPlayer => {
                     params.star_manager.set_stop(true);
@@ -396,7 +396,7 @@ impl GameManager {
             if let Some(pos) = self.enemy_manager.check_collision(
                 collbox, power, accessor, &mut self.event_queue)
             {
-                self.event_queue.push(EventType::SmallBomb(*player_pos));
+                self.spawn_effect(Effect::PlayerExplosion(PlayerExplosion::new(player_pos)));
 
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
@@ -405,7 +405,7 @@ impl GameManager {
             }
 
             if let Some(pos) = self.enemy_manager.check_shot_collision(&collbox) {
-                self.event_queue.push(EventType::SmallBomb(*player_pos));
+                self.spawn_effect(Effect::PlayerExplosion(PlayerExplosion::new(player_pos)));
 
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);

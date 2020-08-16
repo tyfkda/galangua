@@ -1,19 +1,19 @@
-use std::cmp::min;
-
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::round_up;
 
 pub enum Effect {
     EarnedPoint(EarnedPoint),
-    SmallBomb(SmallBomb),
+    EnemyExplosion(EnemyExplosion),
+    PlayerExplosion(PlayerExplosion),
 }
 
 impl Effect {
     pub fn update(&mut self) -> bool {
         match self {
             Effect::EarnedPoint(x) => x.update(),
-            Effect::SmallBomb(x) => x.update(),
+            Effect::EnemyExplosion(x) => x.update(),
+            Effect::PlayerExplosion(x) => x.update(),
         }
     }
 
@@ -23,7 +23,8 @@ impl Effect {
     {
         match self {
             Effect::EarnedPoint(x) => x.draw(renderer),
-            Effect::SmallBomb(x) => x.draw(renderer),
+            Effect::EnemyExplosion(x) => x.draw(renderer),
+            Effect::PlayerExplosion(x) => x.draw(renderer),
         }
     }
 }
@@ -76,12 +77,15 @@ impl EarnedPoint {
 
 //
 
-pub struct SmallBomb {
+const ENEMY_EXPLOSION_SPRITE_TABLE: [&str; 5] = ["ene_exp1", "ene_exp2", "ene_exp3", "ene_exp4", "ene_exp5"];
+const ENEMY_EXPLOSION_FRAME: u32 = 4;
+
+pub struct EnemyExplosion {
     pos: Vec2I,
     frame_count: u32,
 }
 
-impl SmallBomb {
+impl EnemyExplosion {
     pub fn new(pos: &Vec2I) -> Self {
         Self {
             pos: round_up(&pos),
@@ -92,16 +96,49 @@ impl SmallBomb {
     pub fn update(&mut self) -> bool {
         self.frame_count += 1;
 
-        self.frame_count < 15
+        self.frame_count < ENEMY_EXPLOSION_SPRITE_TABLE.len() as u32 * ENEMY_EXPLOSION_FRAME
     }
 
     pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
     where
         R: RendererTrait,
     {
-        let pat = min(self.frame_count / 4, 2) as usize;
-        let table = ["small_bomb1", "small_bomb2", "small_bomb3"];
-        renderer.draw_sprite(table[pat], &(&self.pos + &Vec2I::new(-8, -8)))?;
+        let pat = (self.frame_count / ENEMY_EXPLOSION_FRAME) as usize;
+        renderer.draw_sprite(ENEMY_EXPLOSION_SPRITE_TABLE[pat], &(&self.pos + &Vec2I::new(-16, -16)))?;
+        Ok(())
+    }
+}
+
+//
+
+const PLAYER_EXPLOSION_SPRITE_TABLE: [&str; 4] = ["pl_exp1", "pl_exp2", "pl_exp3", "pl_exp4"];
+const PLAYER_EXPLOSION_FRAME: u32 = 8;
+
+pub struct PlayerExplosion {
+    pos: Vec2I,
+    frame_count: u32,
+}
+
+impl PlayerExplosion {
+    pub fn new(pos: &Vec2I) -> Self {
+        Self {
+            pos: round_up(&pos),
+            frame_count: 0,
+        }
+    }
+
+    pub fn update(&mut self) -> bool {
+        self.frame_count += 1;
+
+        self.frame_count < PLAYER_EXPLOSION_SPRITE_TABLE.len() as u32 * PLAYER_EXPLOSION_FRAME
+    }
+
+    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    where
+        R: RendererTrait,
+    {
+        let pat = (self.frame_count / PLAYER_EXPLOSION_FRAME) as usize;
+        renderer.draw_sprite(PLAYER_EXPLOSION_SPRITE_TABLE[pat], &(&self.pos + &Vec2I::new(-16, -16)))?;
         Ok(())
     }
 }

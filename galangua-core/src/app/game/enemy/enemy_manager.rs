@@ -92,7 +92,7 @@ impl EnemyManager {
 
                     if result.point > 0 {
                         event_queue.push(EventType::AddScore(result.point));
-                        event_queue.push(EventType::SmallBomb(pos));
+                        event_queue.push(EventType::EnemyExplosion(pos));
 
                         let point_type = match result.point {
                             1600 => Some(EarnedPointType::Point1600),
