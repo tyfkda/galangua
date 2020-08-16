@@ -76,7 +76,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
             if self.pad.is_trigger(PadBit::START) {
                 self.paused = !self.paused;
             }
-            if self.paused {
+            if self.paused && self.pressed_key != Some(VKey::S) {
                 return true;
             }
         }
