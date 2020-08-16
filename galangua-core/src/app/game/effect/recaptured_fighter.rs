@@ -30,7 +30,7 @@ impl RecapturedFighter {
     pub fn update(&mut self, player_living: bool, event_queue: &mut EventQueue) {
         match self.state {
             State::Rotate => {
-                self.angle += ANGLE * ONE / 32;
+                self.angle += ANGLE * ONE / ANGLE_DIV;
                 if self.angle >= ANGLE * ONE * 4 {
                     self.state = State::SlideHorz;
                     event_queue.push(EventType::MovePlayerHomePos);
@@ -63,7 +63,7 @@ impl RecapturedFighter {
         let pos = round_up(&self.pos);
         match self.state {
             State::Rotate => {
-                let angle = quantize_angle(self.angle, 16);
+                let angle = quantize_angle(self.angle, ANGLE_DIV);
                 //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)))?;
                 renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
             }

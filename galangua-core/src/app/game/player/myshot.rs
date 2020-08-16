@@ -1,4 +1,4 @@
-use crate::app::consts::{HEIGHT, WIDTH};
+use crate::app::consts::*;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
@@ -48,7 +48,7 @@ impl MyShot {
         } else {
             assert!(!self.dual);
             renderer.draw_sprite_rot("myshot", &(&pos + &Vec2I::new(-2, -4)),
-                                     quantize_angle(self.angle, 16), None)?;
+                                     quantize_angle(self.angle, ANGLE_DIV), None)?;
         }
 
         Ok(())

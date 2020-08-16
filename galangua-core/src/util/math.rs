@@ -142,8 +142,9 @@ pub fn diff_angle(target: i32, base: i32) -> i32 {
 }
 
 pub fn quantize_angle(angle: i32, div: i32) -> u8 {
-    let off = ANGLE / div;
-    (((angle + off * (ONE / 2)) / ONE) & (ANGLE - off)) as u8
+    let round = (ANGLE * ONE + div) / (2 * div);
+    let a = ((angle + round) & (ANGLE * ONE - 1)) * div / (ANGLE * ONE);
+    (a * ANGLE / div) as u8
 }
 
 pub fn clamp<T>(value: T, min: T, max: T) -> T

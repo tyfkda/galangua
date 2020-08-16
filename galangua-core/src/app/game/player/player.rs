@@ -113,7 +113,7 @@ impl Player {
         let d = &self.capture_pos - &self.pos;
         self.pos.x += clamp(d.x, -D, D);
         self.pos.y += clamp(d.y, -D, D);
-        self.angle += ANGLE * ONE / 32;
+        self.angle += ANGLE * ONE / ANGLE_DIV;
 
         self.fire_bullet(pad, event_queue);
 
@@ -144,7 +144,7 @@ impl Player {
             }
             State::Capturing => {
                 let pos = self.pos();
-                let angle = quantize_angle(self.angle, 16);
+                let angle = quantize_angle(self.angle, ANGLE_DIV);
                 //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)))?;
                 renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
             }

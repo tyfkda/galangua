@@ -208,7 +208,7 @@ impl Enemy {
         }
 
         let sprite = (self.vtable.sprite_name)(self, pat);
-        let angle = quantize_angle(self.angle, 16);
+        let angle = quantize_angle(self.angle, ANGLE_DIV);
         let pos = self.pos();
         renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
 
