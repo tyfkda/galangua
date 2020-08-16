@@ -630,7 +630,7 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
             if let Some(tractor_beam) = &mut me.tractor_beam {
                 if tractor_beam.closed() {
                     me.tractor_beam = None;
-                    me.speed = 3 * ONE / 2;
+                    me.speed = 5 * ONE / 2;
                     me.attack_step += 1;
                 } else if accessor.can_player_capture() &&
                           tractor_beam.can_capture(accessor.get_raw_player_pos()) {
