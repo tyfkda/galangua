@@ -5,6 +5,7 @@ use super::player::{MyShot, Player};
 
 use super::effect::{EarnedPoint, Effect, EnemyExplosion, PlayerExplosion, StageIndicator, StarManager};
 use super::score_holder::ScoreHolder;
+use crate::app::consts::*;
 use crate::app::util::unsafe_util::peep;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
@@ -13,6 +14,7 @@ use crate::util::pad::Pad;
 
 const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;
+const DEFAULT_LEFT_SHIP: u32 = 3;
 
 #[derive(PartialEq)]
 enum GameState {
@@ -47,6 +49,7 @@ pub struct GameManager {
     effects: [Option<Effect>; MAX_EFFECT_COUNT],
     event_queue: EventQueue,
     stage: u32,
+    left_ship: u32,
 }
 
 impl GameManager {
@@ -62,6 +65,7 @@ impl GameManager {
             effects: Default::default(),
 
             stage: 0,
+            left_ship: 0,
         }
     }
 
@@ -73,6 +77,7 @@ impl GameManager {
     pub fn restart(&mut self) {
         self.stage = 0;
         self.stage_indicator.set_stage(self.stage + 1);
+        self.left_ship = DEFAULT_LEFT_SHIP;
 
         self.event_queue.clear();
         self.player = Player::new();
@@ -172,14 +177,16 @@ impl GameManager {
     }
 
     fn next_player(&mut self, params: &mut Params) {
-        if self.player.decrement_and_restart() {
-            self.enemy_manager.enable_attack(true);
-            params.star_manager.set_stop(false);
-            self.state = GameState::Playing;
-        } else {
+        self.left_ship -= 1;
+        if self.left_ship == 0 {
             self.enemy_manager.enable_attack(false);
             self.state = GameState::GameOver;
             self.count = 0;
+        } else {
+            self.player.restart();
+            self.enemy_manager.enable_attack(true);
+            params.star_manager.set_stop(false);
+            self.state = GameState::Playing;
         }
     }
 
@@ -227,14 +234,22 @@ impl GameManager {
         }
         self.stage_indicator.draw(renderer)?;
 
+        if self.left_ship > 0 {
+            for i in 0..self.left_ship - 1 {
+                renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16))?;
+            }
+        }
+
         match self.state {
             GameState::StartStage => {
                 renderer.set_texture_color_mod("font", 0, 255, 255);
                 renderer.draw_str("font", 8 * 10, 8 * 17, &format!("STAGE {}", self.stage + 1))?;
             }
             GameState::WaitReady => {
-                renderer.set_texture_color_mod("font", 0, 255, 255);
-                renderer.draw_str("font", (28 - 6) / 2 * 8, 8 * 22, "READY")?;
+                if self.left_ship > 1 {
+                    renderer.set_texture_color_mod("font", 0, 255, 255);
+                    renderer.draw_str("font", (28 - 6) / 2 * 8, 8 * 22, "READY")?;
+                }
             }
             GameState::Captured => {
                 if self.count < 120 {
