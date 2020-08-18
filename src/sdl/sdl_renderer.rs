@@ -25,6 +25,10 @@ impl SdlRenderer {
             scale: scale as i32,
         }
     }
+
+    pub fn present(&mut self) {
+        self.canvas.present();
+    }
 }
 
 impl RendererTrait for SdlRenderer {
@@ -40,10 +44,6 @@ impl RendererTrait for SdlRenderer {
 
     fn clear(&mut self) {
         self.canvas.clear();
-    }
-
-    fn present(&mut self) {
-        self.canvas.present();
     }
 
     fn set_texture_color_mod(&mut self, tex_name: &str, r: u8, g: u8, b: u8) {

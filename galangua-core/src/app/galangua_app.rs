@@ -224,8 +224,6 @@ impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
 
         self.draw_main(renderer)?;
 
-        renderer.present();
-
         self.fps_calc.update();
 
         Ok(())

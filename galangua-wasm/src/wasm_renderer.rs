@@ -108,8 +108,6 @@ impl RendererTrait for WasmRenderer {
         self.context.fill_rect(0.0, 0.0, self.canvas.width() as f64, self.canvas.height() as f64)
     }
 
-    fn present(&mut self) {}
-
     fn set_texture_color_mod(&mut self, _tex_name: &str, _r: u8, _g: u8, _b: u8) {}
 
     fn draw_str(&mut self, tex_name: &str, x: i32, y: i32, text: &str) -> Result<(), String> {

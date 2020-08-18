@@ -80,6 +80,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                 }
             }
             self.app.draw(&mut renderer)?;
+            renderer.present();
 
             skip_count = self.wait_frame(Duration::from_micros(1_000_000 / FPS as u64));
         }
