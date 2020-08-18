@@ -14,6 +14,7 @@ opt-level = 'z'  # Optimize for size.
 # cargo strip can reduce binary size: https://github.com/guedou/cargo-strip
 
 [dependencies]
+clap = "2.33.3"
 counted-array = "0.1.2"
 lazy_static = "1.4.0"
 

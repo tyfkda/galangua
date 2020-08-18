@@ -13,12 +13,33 @@ use galangua_core::framework::VKey;
 use crate::sdl::SdlAppFramework;
 use crate::std_timer::StdTimer;
 
+const APP_NAME: &str = "Galangua";
+
 pub fn main() -> Result<(), String> {
+    let matches = clap::App::new(APP_NAME)
+        .version("0.1.0")
+        .about("2D shoot'em up game, writen in Rust.
+  Move the fighter : Arrow keys (left or right)
+  Shoot a bullet   : Space bar
+  Quit the app     : Escape key")
+        .arg(clap::Arg::with_name("scale")
+             .help("Specify window scale (default: 3)")
+             .short("s")
+             .long("scale")
+             .takes_value(true))
+        .get_matches();
+
+    let scale = if let Some(scale) = matches.value_of("scale") {
+        String::from(scale).parse().unwrap()
+    } else {
+        3
+    };
+
     let timer = StdTimer::new();
     let app = GalanguaApp::new(timer);
     let mut framework = SdlAppFramework::new(Box::new(app), map_key)?;
-    framework.run("Galangua",
-                  consts::WIDTH as u32, consts::HEIGHT as u32, 3)
+    framework.run(APP_NAME,
+                  consts::WIDTH as u32, consts::HEIGHT as u32, scale)
 }
 
 counted_array!(const KEY_MAP_TABLE: [(Keycode, VKey); _] = [
