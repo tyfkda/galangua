@@ -58,7 +58,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
             .present_vsync()
             .build()
             .map_err(|e| e.to_string())?;
-        let mut renderer = SdlRenderer::new(canvas, scale);
+        let mut renderer = SdlRenderer::new(canvas, (width, height));
 
         self.app.init(&mut renderer)?;
 

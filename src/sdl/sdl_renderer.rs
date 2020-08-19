@@ -13,16 +13,16 @@ pub struct SdlRenderer {
     canvas: WindowCanvas,
     texture_manager: SdlTextureManager,
     sprite_sheet: HashMap<String, SpriteSheet>,
-    scale: i32,
 }
 
 impl SdlRenderer {
-    pub fn new(canvas: WindowCanvas, scale: u32) -> Self {
+    pub fn new(mut canvas: WindowCanvas, logical_size: (u32, u32)) -> Self {
+        canvas.set_logical_size(logical_size.0, logical_size.1).expect("logical size");
+
         Self {
             canvas,
             texture_manager: SdlTextureManager::new(),
             sprite_sheet: HashMap::new(),
-            scale: scale as i32,
         }
     }
 
@@ -54,10 +54,9 @@ impl RendererTrait for SdlRenderer {
 
     fn draw_str(&mut self, tex_name: &str, x: i32, y: i32, text: &str) -> Result<(), String> {
         if let Some(texture) = self.texture_manager.get_mut(tex_name) {
-            let w = (8 * self.scale) as u32;
-            let h = (8 * self.scale) as u32;
-            let mut x = x * self.scale;
-            let y = y * self.scale;
+            let w = 8;
+            let h = 8;
+            let mut x = x;
 
             for c in text.chars() {
                 let u: i32 = ((c as i32) - (' ' as i32)) % 16 * 8;
@@ -87,9 +86,9 @@ impl RendererTrait for SdlRenderer {
         self.canvas.copy(&texture,
                          Some(Rect::new(sheet.frame.x, sheet.frame.y,
                                         sheet.frame.w, sheet.frame.h)),
-                         Some(Rect::new(pos.x * self.scale, pos.y * self.scale,
-                                        sheet.frame.w * self.scale as u32,
-                                        sheet.frame.h * self.scale as u32)))?;
+                         Some(Rect::new(pos.x, pos.y,
+                                        sheet.frame.w as u32,
+                                        sheet.frame.h as u32)))?;
         Ok(())
     }
 
@@ -105,13 +104,13 @@ impl RendererTrait for SdlRenderer {
 
         let texture = self.texture_manager.get(&sheet.texture)
             .expect(&format!("No texture: {}", sheet.texture));
-        let center = center.map(|v| Point::new(v.x * self.scale, v.y * self.scale));
+        let center = center.map(|v| Point::new(v.x, v.y));
         self.canvas.copy_ex(&texture,
                             Some(Rect::new(sheet.frame.x, sheet.frame.y,
                                            sheet.frame.w, sheet.frame.h)),
-                            Some(Rect::new(pos.x * self.scale, pos.y * self.scale,
-                                           sheet.frame.w * self.scale as u32,
-                                           sheet.frame.h * self.scale as u32)),
+                            Some(Rect::new(pos.x, pos.y,
+                                           sheet.frame.w as u32,
+                                           sheet.frame.h as u32)),
                             (angle as f64) * (360.0 / 256.0), center, false, false)?;
         Ok(())
     }
@@ -123,8 +122,8 @@ impl RendererTrait for SdlRenderer {
     fn fill_rect(&mut self, dst: Option<[&Vec2I; 2]>) -> Result<(), String> {
         if let Some(rect) = dst {
             self.canvas.fill_rect(Some(Rect::new(
-                rect[0].x * self.scale, rect[0].y * self.scale,
-                (rect[1].x * self.scale) as u32, (rect[1].y * self.scale) as u32)))?;
+                rect[0].x, rect[0].y,
+                rect[1].x as u32, rect[1].y as u32)))?;
         } else {
             self.canvas.fill_rect(None)?;
         }
