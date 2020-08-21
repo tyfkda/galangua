@@ -3,17 +3,37 @@ use crate::framework::RendererTrait;
 use crate::util::math::round_up;
 
 pub enum Effect {
-    EarnedPoint(EarnedPoint),
-    EnemyExplosion(EnemyExplosion),
-    PlayerExplosion(PlayerExplosion),
+    SequentialSpriteAnime(SequentialSpriteAnime),
 }
 
 impl Effect {
+    pub fn create_earned_point(point_type: EarnedPointType, pos: &Vec2I) -> Self {
+        Effect::SequentialSpriteAnime(
+            SequentialSpriteAnime::new(
+                &round_up(&pos) + &Vec2I::new(-8, -4),
+                &EARNED_POINT_SPRITE_TABLE[point_type as usize],
+                EARNED_POINT_FRAME))
+    }
+
+    pub fn create_enemy_explosion(pos: &Vec2I) -> Self {
+        Effect::SequentialSpriteAnime(
+            SequentialSpriteAnime::new(
+                &round_up(&pos) + &Vec2I::new(-16, -16),
+                &ENEMY_EXPLOSION_SPRITE_TABLE,
+                ENEMY_EXPLOSION_FRAME))
+    }
+
+    pub fn create_player_explosion(pos: &Vec2I) -> Self {
+        Effect::SequentialSpriteAnime(
+            SequentialSpriteAnime::new(
+                &round_up(&pos) + &Vec2I::new(-16, -16),
+                &PLAYER_EXPLOSION_SPRITE_TABLE,
+                PLAYER_EXPLOSION_FRAME))
+    }
+
     pub fn update(&mut self) -> bool {
         match self {
-            Effect::EarnedPoint(x) => x.update(),
-            Effect::EnemyExplosion(x) => x.update(),
-            Effect::PlayerExplosion(x) => x.update(),
+            Effect::SequentialSpriteAnime(x) => x.update(),
         }
     }
 
@@ -22,10 +42,48 @@ impl Effect {
         R: RendererTrait,
     {
         match self {
-            Effect::EarnedPoint(x) => x.draw(renderer),
-            Effect::EnemyExplosion(x) => x.draw(renderer),
-            Effect::PlayerExplosion(x) => x.draw(renderer),
+            Effect::SequentialSpriteAnime(x) => x.draw(renderer),
         }
+    }
+}
+
+//
+
+pub struct SequentialSpriteAnime {
+    pos: Vec2I,
+    sprites: &'static [&'static str],
+    frame_wait: u32,
+    frame: u32,
+    count: u32,
+}
+
+impl SequentialSpriteAnime {
+    pub fn new(pos: Vec2I, sprites: &'static [&str], frame_wait: u32) -> Self {
+        Self {
+            pos,
+            sprites,
+            frame_wait,
+            frame: 0,
+            count: 0,
+        }
+    }
+
+    pub fn update(&mut self) -> bool {
+        self.count += 1;
+        if self.count >= self.frame_wait {
+            self.count = 0;
+            self.frame += 1;
+        }
+
+        self.frame < self.sprites.len() as u32
+    }
+
+    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    where
+        R: RendererTrait,
+    {
+        let sprite = self.sprites[self.frame as usize];
+        renderer.draw_sprite(sprite, &self.pos)
     }
 }
 
@@ -39,106 +97,16 @@ pub enum EarnedPointType {
     Point400,
 }
 
-pub struct EarnedPoint {
-    point_type: EarnedPointType,
-    pos: Vec2I,
-    frame_count: u32,
-}
-
-impl EarnedPoint {
-    pub fn new(point_type: EarnedPointType, pos: &Vec2I) -> Self {
-        Self {
-            point_type,
-            pos: round_up(&pos),
-            frame_count: 0,
-        }
-    }
-
-    pub fn update(&mut self) -> bool {
-        self.frame_count += 1;
-
-        self.frame_count < 30
-    }
-
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
-    where
-        R: RendererTrait,
-    {
-        let sprite: &str = match self.point_type {
-            EarnedPointType::Point1600 => "pts1600",
-            EarnedPointType::Point1000 => "pts1000",
-            EarnedPointType::Point800  => "pts800",
-            EarnedPointType::Point400  => "pts400",
-        };
-        renderer.draw_sprite(sprite, &(&self.pos + &Vec2I::new(-8, -4)))?;
-        Ok(())
-    }
-}
-
-//
+const EARNED_POINT_FRAME: u32 = 64;
+const EARNED_POINT_SPRITE_TABLE: [[&str; 1]; 4] = [
+    ["pts1600"],
+    ["pts1000"],
+    ["pts800"],
+    ["pts400"],
+];
 
 const ENEMY_EXPLOSION_SPRITE_TABLE: [&str; 5] = ["ene_exp1", "ene_exp2", "ene_exp3", "ene_exp4", "ene_exp5"];
 const ENEMY_EXPLOSION_FRAME: u32 = 4;
 
-pub struct EnemyExplosion {
-    pos: Vec2I,
-    frame_count: u32,
-}
-
-impl EnemyExplosion {
-    pub fn new(pos: &Vec2I) -> Self {
-        Self {
-            pos: round_up(&pos),
-            frame_count: 0,
-        }
-    }
-
-    pub fn update(&mut self) -> bool {
-        self.frame_count += 1;
-
-        self.frame_count < ENEMY_EXPLOSION_SPRITE_TABLE.len() as u32 * ENEMY_EXPLOSION_FRAME
-    }
-
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
-    where
-        R: RendererTrait,
-    {
-        let pat = (self.frame_count / ENEMY_EXPLOSION_FRAME) as usize;
-        renderer.draw_sprite(ENEMY_EXPLOSION_SPRITE_TABLE[pat], &(&self.pos + &Vec2I::new(-16, -16)))?;
-        Ok(())
-    }
-}
-
-//
-
 const PLAYER_EXPLOSION_SPRITE_TABLE: [&str; 4] = ["pl_exp1", "pl_exp2", "pl_exp3", "pl_exp4"];
 const PLAYER_EXPLOSION_FRAME: u32 = 8;
-
-pub struct PlayerExplosion {
-    pos: Vec2I,
-    frame_count: u32,
-}
-
-impl PlayerExplosion {
-    pub fn new(pos: &Vec2I) -> Self {
-        Self {
-            pos: round_up(&pos),
-            frame_count: 0,
-        }
-    }
-
-    pub fn update(&mut self) -> bool {
-        self.frame_count += 1;
-
-        self.frame_count < PLAYER_EXPLOSION_SPRITE_TABLE.len() as u32 * PLAYER_EXPLOSION_FRAME
-    }
-
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
-    where
-        R: RendererTrait,
-    {
-        let pat = (self.frame_count / PLAYER_EXPLOSION_FRAME) as usize;
-        renderer.draw_sprite(PLAYER_EXPLOSION_SPRITE_TABLE[pat], &(&self.pos + &Vec2I::new(-16, -16)))?;
-        Ok(())
-    }
-}

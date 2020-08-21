@@ -3,7 +3,7 @@ use super::enemy::{Enemy, EnemyManager, FormationIndex};
 use super::event_queue::{EventQueue, EventType};
 use super::player::{MyShot, Player};
 
-use super::effect::{EarnedPoint, Effect, EnemyExplosion, PlayerExplosion, StageIndicator, StarManager};
+use super::effect::{Effect, StageIndicator, StarManager};
 use super::score_holder::ScoreHolder;
 use crate::app::consts::*;
 use crate::app::util::unsafe_util::peep;
@@ -281,10 +281,10 @@ impl GameManager {
                     params.score_holder.add_score(add);
                 }
                 EventType::EarnPoint(point_type, pos) => {
-                    self.spawn_effect(Effect::EarnedPoint(EarnedPoint::new(point_type, &pos)));
+                    self.spawn_effect(Effect::create_earned_point(point_type, &pos));
                 }
                 EventType::EnemyExplosion(pos) => {
-                    self.spawn_effect(Effect::EnemyExplosion(EnemyExplosion::new(&pos)));
+                    self.spawn_effect(Effect::create_enemy_explosion(&pos));
                 }
                 EventType::DeadPlayer => {
                     params.star_manager.set_stop(true);
@@ -411,7 +411,7 @@ impl GameManager {
             if let Some(pos) = self.enemy_manager.check_collision(
                 collbox, power, accessor, &mut self.event_queue)
             {
-                self.spawn_effect(Effect::PlayerExplosion(PlayerExplosion::new(player_pos)));
+                self.spawn_effect(Effect::create_player_explosion(player_pos));
 
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
@@ -420,7 +420,7 @@ impl GameManager {
             }
 
             if let Some(pos) = self.enemy_manager.check_shot_collision(&collbox) {
-                self.spawn_effect(Effect::PlayerExplosion(PlayerExplosion::new(player_pos)));
+                self.spawn_effect(Effect::create_player_explosion(player_pos));
 
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
