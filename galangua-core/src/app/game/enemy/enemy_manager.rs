@@ -15,6 +15,7 @@ use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
+use crate::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
 const MAX_ENEMY_COUNT: usize = 64;
 const MAX_SHOT_COUNT: usize = 16;
@@ -227,12 +228,12 @@ impl EnemyManager {
             let target: &Vec2I = target_pos.iter()
                 .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();
             let d = target - &pos;
-            let distance = ((d.x as f64).powi(2) + (d.y as f64).powi(2)).sqrt();
-            let f = (speed as f64) / distance;
-            let vel = Vec2I::new(
-                ((d.x as f64) * f).round() as i32,
-                ((d.y as f64) * f).round() as i32,
-            );
+
+            let limit = ANGLE * ONE * 30 / 360;
+            let angle = atan2_lut(d.y, -d.x);  // 0=down
+            let angle = clamp(angle, -limit, limit);
+
+            let vel = calc_velocity(angle + ANGLE * ONE / 2, speed);
             self.shots[index] = Some(EneShot::new(&pos, &vel));
         }
     }

@@ -132,7 +132,7 @@ pub fn atan2_lut(mut x: i32, mut y: i32) -> i32 {
 
     if swapxy { ang = ANGLE * ONE / 4 - ang; }
     if negx   { ang = ANGLE * ONE / 2 - ang; }
-    if negy   { ang = ANGLE * ONE - ang; }
+    if negy   { ang = -ang; }
     ang
 }
 

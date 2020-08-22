@@ -621,6 +621,12 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
         1 => {
             let dpos = &me.target_pos - &me.pos;
             let target_angle = atan2_lut(-dpos.y, dpos.x);
+            let ang_limit = ANGLE * ONE / 2 - ANGLE * ONE * 30 / 360;
+            let target_angle = if target_angle >= 0 {
+                std::cmp::max(target_angle, ang_limit)
+            } else {
+                std::cmp::min(target_angle, -ang_limit)
+            };
             let mut d = diff_angle(target_angle, me.angle);
             if me.vangle > 0 && d < 0 {
                 d += ANGLE * ONE;
