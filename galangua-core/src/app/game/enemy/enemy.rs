@@ -195,7 +195,7 @@ impl Enemy {
         const SHOT_INTERVAL: u32 = 16;
         const SHOT_COUNT: u32 = 2;
         if self.attack_frame_count <= SHOT_INTERVAL * SHOT_COUNT && self.attack_frame_count % SHOT_INTERVAL == 0 {
-            event_queue.push(EventType::EneShot(self.pos, 3 * ONE));
+            event_queue.push(EventType::EneShot(self.pos, ENE_SHOT_SPEED));
         }
     }
 
@@ -557,7 +557,7 @@ fn update_attack_normal(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue
             me.attack_step += 1;
             me.count = 0;
 
-            event_queue.push(EventType::EneShot(me.pos, 2 * ONE));
+            event_queue.push(EventType::EneShot(me.pos, ENE_SHOT_SPEED));
         }
         1 => {
             if (me.vangle < 0 && me.angle <= -160 * ONE) ||

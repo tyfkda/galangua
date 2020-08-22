@@ -89,17 +89,17 @@ impl Formation {
     }
 
     fn update_formation_slide(&mut self) {
-        let t = (self.moving_count as i32 + 64) & 255;
+        let t = (self.moving_count as i32 + 128) & 511;
         let space = WIDTH - X_COUNT as i32 * 16;
-        let dx = space * ONE / 128;
-        let dx = if t >= 128 { -dx } else { dx };
+        let dx = space * ONE / 256;
+        let dx = if t >= 256 { -dx } else { dx };
 
         for i in 0..X_COUNT {
             self.xtbl[i] += dx;
         }
 
         self.moving_count += 1;
-        if self.done_appearance && (self.moving_count & 127) == 0 {
+        if self.done_appearance && (self.moving_count & 255) == 0 {
             self.moving_pat = MovingPat::Scale;
             self.moving_count = 0;
         }

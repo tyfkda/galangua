@@ -92,14 +92,14 @@ impl Player {
 
     pub fn update_normal(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
         if pad.is_pressed(PadBit::L) {
-            self.pos.x -= 2 * ONE;
-            if self.pos.x < 8 * ONE {
-                self.pos.x = 8 * ONE;
+            self.pos.x -= PLAYER_SPEED;
+            let left = 8 * ONE;
+            if self.pos.x < left {
+                self.pos.x = left;
             }
         }
         if pad.is_pressed(PadBit::R) {
-            self.pos.x += 2 * ONE;
-
+            self.pos.x += PLAYER_SPEED;
             let right = if self.dual { (WIDTH - 8 - 16) * ONE } else { (WIDTH - 8) * ONE };
             if self.pos.x > right {
                 self.pos.x = right;
