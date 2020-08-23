@@ -9,7 +9,7 @@ use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
 use crate::util::math::{
-    atan2_lut, calc_velocity, clamp, diff_angle, quantize_angle, round_up, square,
+    atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, quantize_angle, round_up, square,
     ANGLE, ONE, ONE_BIT};
 
 #[cfg(debug_assertions)]
@@ -269,7 +269,6 @@ impl Enemy {
         } else {
             self.pos = target;
             self.speed = 0;
-            self.angle = 0;
             false
         }
     }
@@ -326,7 +325,7 @@ impl Enemy {
 
     pub(super) fn set_to_formation(&mut self) {
         self.speed = 0;
-        self.angle = 0;
+        self.angle = normalize_angle(self.angle);
         self.vangle = 0;
         self.copy_angle_to_troops = true;
 
@@ -540,6 +539,9 @@ fn update_move_to_formation(me: &mut Enemy, accessor: &mut dyn Accessor, _event_
 
 fn update_formation(me: &mut Enemy, accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
     me.pos = accessor.get_formation_pos(&me.formation_index);
+
+    let ang = ANGLE * ONE / 128;
+    me.angle -= clamp(me.angle, -ang, ang);
 }
 
 fn update_attack_normal(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
@@ -712,10 +714,14 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
         103 => {
             if !me.update_move_to_formation(accessor) {
                 me.speed = 0;
+                me.angle = normalize_angle(me.angle);
                 me.attack_step += 1;
             }
         }
         104 => {
+            let ang = ANGLE * ONE / 128;
+            me.angle -= clamp(me.angle, -ang, ang);
+
             let fi = FormationIndex(me.formation_index.0, me.formation_index.1 - 1);
             let mut done = false;
             if let Some(captured_fighter) = accessor.get_enemy_at_mut(&fi) {

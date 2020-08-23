@@ -136,9 +136,14 @@ pub fn atan2_lut(mut x: i32, mut y: i32) -> i32 {
     ang
 }
 
-pub fn diff_angle(target: i32, base: i32) -> i32 {
+pub fn normalize_angle(angle: i32) -> i32 {
     let circumference = ANGLE * ONE;
-    ((target - base + circumference / 2) & (circumference - 1)) - circumference / 2
+    let half = circumference / 2;
+    ((angle + half) & (circumference - 1)) - half
+}
+
+pub fn diff_angle(target: i32, base: i32) -> i32 {
+    normalize_angle(target - base)
 }
 
 pub fn quantize_angle(angle: i32, div: i32) -> u8 {
@@ -201,6 +206,14 @@ mod tests {
         assert_eq!((113, 85), normalize_significand(113, 85, 7));
 
         assert_eq!((64, 63), normalize_significand(2043, 2016, 7));
+    }
+
+    #[test]
+    fn test_normalize_angle() {
+        assert_eq!(30 * ONE, normalize_angle(30 * ONE));
+        assert_eq!((150 - ANGLE) * ONE, normalize_angle(150 * ONE));
+        assert_eq!(-20 * ONE, normalize_angle(-20 * ONE));
+        assert_eq!((ANGLE - 190) * ONE, normalize_angle(-190 * ONE));
     }
 
     #[test]
