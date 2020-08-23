@@ -22,6 +22,7 @@ const MAX_SHOT_COUNT: usize = 16;
 
 pub struct EnemyManager {
     enemies: [Option<Enemy>; MAX_ENEMY_COUNT],
+    alive_enemy_count: u32,
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
     formation: Formation,
     appearance_manager: AppearanceManager,
@@ -34,6 +35,7 @@ impl EnemyManager {
     pub fn new() -> Self {
         Self {
             enemies: array![None; MAX_ENEMY_COUNT],
+            alive_enemy_count: 0,
             shots: Default::default(),
             formation: Formation::new(),
             appearance_manager: AppearanceManager::new(0),
@@ -45,6 +47,7 @@ impl EnemyManager {
 
     pub fn start_next_stage(&mut self, stage: u32) {
         self.enemies = array![None; MAX_ENEMY_COUNT];
+        self.alive_enemy_count = 0;
         self.shots = Default::default();
 
         self.appearance_manager.restart(stage);
@@ -54,7 +57,8 @@ impl EnemyManager {
     }
 
     pub fn all_destroyed(&self) -> bool {
-        self.appearance_manager.done && self.enemies.iter().all(|x| x.is_none())
+        self.appearance_manager.done && self.alive_enemy_count == 0 &&
+            self.shots.iter().all(|x| x.is_none())
     }
 
     pub fn update<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
@@ -124,6 +128,7 @@ impl EnemyManager {
 
                     if result.killed {
                         *enemy_opt = None;
+                        self.alive_enemy_count -= 1;
                     }
                     return Some(pos);
                 }
@@ -163,6 +168,7 @@ impl EnemyManager {
         let slot = &mut self.enemies[index];
         if slot.is_none() {
             *slot = Some(enemy);
+            self.alive_enemy_count += 1;
             true
         } else {
             false
@@ -181,6 +187,7 @@ impl EnemyManager {
             .find(|x| x.as_ref().unwrap().formation_index == *formation_index)
         {
             *slot = None;
+            self.alive_enemy_count -= 1;
             true
         } else {
             false
@@ -205,6 +212,7 @@ impl EnemyManager {
             enemy.update(accessor, event_queue);
             if enemy.is_disappeared() {
                 *enemy_opt = None;
+                self.alive_enemy_count -= 1;
             }
         }
     }
