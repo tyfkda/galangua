@@ -19,6 +19,14 @@ use crate::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
 const MAX_ENEMY_COUNT: usize = 64;
 const MAX_SHOT_COUNT: usize = 16;
+const RUSH_THRESHOLD: u32 = 5;
+
+#[derive(PartialEq)]
+enum StageState {
+    APPEARANCE,
+    NORMAL,
+    RUSH,
+}
 
 pub struct EnemyManager {
     enemies: [Option<Enemy>; MAX_ENEMY_COUNT],
@@ -26,8 +34,8 @@ pub struct EnemyManager {
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
     formation: Formation,
     appearance_manager: AppearanceManager,
-    wait_settle: bool,
     attack_manager: AttackManager,
+    stage_state: StageState,
     frame_count: u32,
 }
 
@@ -39,8 +47,8 @@ impl EnemyManager {
             shots: Default::default(),
             formation: Formation::new(),
             appearance_manager: AppearanceManager::new(0),
-            wait_settle: true,
             attack_manager: AttackManager::new(),
+            stage_state: StageState::APPEARANCE,
             frame_count: 0,
         }
     }
@@ -53,7 +61,8 @@ impl EnemyManager {
         self.appearance_manager.restart(stage);
         self.formation.restart();
         self.attack_manager.restart(stage);
-        self.wait_settle = true;
+        self.stage_state = StageState::APPEARANCE;
+        self.frame_count = 0;
     }
 
     pub fn all_destroyed(&self) -> bool {
@@ -128,7 +137,7 @@ impl EnemyManager {
 
                     if result.killed {
                         *enemy_opt = None;
-                        self.alive_enemy_count -= 1;
+                        self.decrement_alive_enemy();
                     }
                     return Some(pos);
                 }
@@ -159,7 +168,12 @@ impl EnemyManager {
             }
         }
         if !prev_done && self.appearance_manager.done {
+            self.stage_state = StageState::NORMAL;
             self.formation.done_appearance();
+            if self.alive_enemy_count <= RUSH_THRESHOLD {
+                self.stage_state = StageState::RUSH;
+            }
+            self.attack_manager.set_enable(true);
         }
     }
 
@@ -187,7 +201,7 @@ impl EnemyManager {
             .find(|x| x.as_ref().unwrap().formation_index == *formation_index)
         {
             *slot = None;
-            self.alive_enemy_count -= 1;
+            self.decrement_alive_enemy();
             true
         } else {
             false
@@ -196,10 +210,6 @@ impl EnemyManager {
 
     fn update_formation(&mut self) {
         self.formation.update();
-        if self.wait_settle && self.formation.is_settle() {
-            self.wait_settle = false;
-            self.attack_manager.set_enable(true);
-        }
     }
 
     fn update_attackers<T: Accessor>(&mut self, accessor: &mut T) {
@@ -207,13 +217,22 @@ impl EnemyManager {
     }
 
     fn update_enemies<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
-        for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
-            let enemy = enemy_opt.as_mut().unwrap();
-            enemy.update(accessor, event_queue);
-            if enemy.is_disappeared() {
-                *enemy_opt = None;
-                self.alive_enemy_count -= 1;
+        //for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
+        for i in 0..self.enemies.len() {
+            if let Some(enemy) = self.enemies[i].as_mut() {
+                enemy.update(accessor, event_queue);
+                if enemy.is_disappeared() {
+                    self.enemies[i] = None;
+                    self.decrement_alive_enemy();
+                }
             }
+        }
+    }
+
+    fn decrement_alive_enemy(&mut self) {
+        self.alive_enemy_count -= 1;
+        if self.alive_enemy_count <= RUSH_THRESHOLD && self.appearance_manager.done {
+            self.stage_state = StageState::RUSH;
         }
     }
 
@@ -274,6 +293,10 @@ impl EnemyManager {
         self.formation.pos(formation_index)
     }
 
+    pub fn is_rush(&self) -> bool {
+        self.stage_state == StageState::RUSH
+    }
+
     // Debug
 
     #[cfg(debug_assertions)]
@@ -288,7 +311,7 @@ impl EnemyManager {
         self.formation.done_appearance();
         self.attack_manager.restart(stage);
         self.attack_manager.set_enable(false);
-        self.wait_settle = false;
+        self.stage_state = StageState::NORMAL;
 
         for unit in 0..5 {
             for i in 0..8 {

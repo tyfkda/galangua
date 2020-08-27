@@ -1,6 +1,6 @@
 use super::tractor_beam::TractorBeam;
 use super::traj::Traj;
-use super::traj_command_table::{BEE_ATTACK_TABLE, BUTTERFLY_ATTACK_TABLE, OWL_ATTACK_TABLE};
+use super::traj_command_table::*;
 use super::{Accessor, FormationIndex};
 
 use crate::app::consts::*;
@@ -375,7 +375,23 @@ fn bee_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut dyn Acc
     me.count = 0;
     me.attack_frame_count = 0;
     me.traj = Some(traj);
-    me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
+    me.set_state_with_fn(EnemyState::Attack, update_bee_attack);
+}
+
+fn update_bee_attack(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    me.update_attack(accessor, event_queue);
+    update_trajectory(me, accessor, event_queue);
+
+    if me.state != EnemyState::Attack {
+        if accessor.is_rush() {
+            let flip_x = me.formation_index.0 >= 5;
+            let mut traj = Traj::new(&BEE_ATTACK_RUSH_CONT_TABLE, &ZERO_VEC, flip_x, me.formation_index);
+            traj.set_pos(&me.pos);
+
+            me.traj = Some(traj);
+            me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
+        }
+    }
 }
 
 fn butterfly_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut dyn Accessor) {
@@ -746,6 +762,24 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
 
 fn update_attack_traj(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
     me.update_attack(accessor, event_queue);
-
     update_trajectory(me, accessor, event_queue);
+
+    if me.state != EnemyState::Attack {
+        if accessor.is_rush() {
+            // Continue attacking
+            me.attack_step = 0;
+            me.count = 0;
+            me.attack_frame_count = 0;
+
+            let flip_x = me.formation_index.0 >= 5;
+            let mut traj = Traj::new(&OWL_ATTACK_TABLE, &ZERO_VEC, flip_x, me.formation_index);
+            traj.set_pos(&me.pos);
+
+            me.attack_step = 0;
+            me.count = 0;
+            me.traj = Some(traj);
+
+            me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
+        }
+    }
 }

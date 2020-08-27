@@ -129,8 +129,4 @@ impl Formation {
     pub fn pos(&self, index: &FormationIndex) -> Vec2I {
         Vec2I::new(self.xtbl[index.0 as usize], self.ytbl[index.1 as usize])
     }
-
-    pub fn is_settle(&self) -> bool {
-        self.done_appearance
-    }
 }

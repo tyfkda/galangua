@@ -13,4 +13,5 @@ pub trait Accessor {
     fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy>;
     fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy>;
     fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I;
+    fn is_rush(&self) -> bool;
 }

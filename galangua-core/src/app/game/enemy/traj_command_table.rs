@@ -40,10 +40,22 @@ counted_array!(pub const BEE_ATTACK_TABLE: [TrajCommand; _] = [
     TrajCommand::Delay(41),
 
     TrajCommand::VAngle(0),
-    TrajCommand::WaitYG(200 * ONE),
+    TrajCommand::WaitYG(210 * ONE),
 
-    TrajCommand::VAngle(3 * ONE / 2),
-    TrajCommand::Delay(110),
+    TrajCommand::VAngle(2 * ONE),
+    TrajCommand::Delay(80),
+]);
+
+counted_array!(pub const BEE_ATTACK_RUSH_CONT_TABLE: [TrajCommand; _] = [
+    TrajCommand::Speed(2 * ONE),
+    TrajCommand::VAngle(2 * ONE),
+    TrajCommand::Delay(65),
+
+    TrajCommand::VAngle(0),
+    TrajCommand::WaitYG(304 * ONE),
+    TrajCommand::AddPos(0 * ONE, -320 * ONE),
+    TrajCommand::CopyFormationX,
+    TrajCommand::Angle(128 * ONE),
 ]);
 
 counted_array!(pub const BUTTERFLY_ATTACK_TABLE: [TrajCommand; _] = [

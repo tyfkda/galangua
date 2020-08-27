@@ -4,7 +4,7 @@ VAngle     -4
 Delay      41
 
 VAngle     0
-WaitYG     200
+WaitYG     210
 
-VAngle     1.5
-Delay      110
+VAngle     2
+Delay      80

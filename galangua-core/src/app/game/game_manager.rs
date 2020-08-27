@@ -473,4 +473,8 @@ impl AccessorForEnemy for GameManager {
     fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
         self.enemy_manager.get_formation_pos(formation_index)
     }
+
+    fn is_rush(&self) -> bool {
+        self.state == GameState::Playing && self.enemy_manager.is_rush()
+    }
 }
