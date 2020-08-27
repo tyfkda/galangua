@@ -346,7 +346,7 @@ impl Collidable for Enemy {
     fn get_collbox(&self) -> Option<CollBox> {
         if !self.is_ghost() {
             Some(CollBox {
-                top_left: &self.pos() - &Vec2I::new(8, 8),
+                top_left: &self.pos() - &Vec2I::new(6, 6),
                 size: Vec2I::new(12, 12),
             })
         } else {
