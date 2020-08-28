@@ -455,7 +455,7 @@ impl AccessorForEnemy for GameManager {
         if self.state == GameState::EditTraj {
             return false;
         }
-        true
+        self.state == GameState::Playing
     }
 
     fn get_enemies(&self) -> &[Option<Enemy>] {
