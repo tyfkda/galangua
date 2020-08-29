@@ -5,7 +5,7 @@ use rand_xoshiro::Xoshiro128Plus;
 use super::appearance_manager::AppearanceManager;
 use super::attack_manager::AttackManager;
 use super::ene_shot::EneShot;
-use super::enemy::{CaptureState, Enemy, EnemyType};
+use super::enemy::{Enemy, EnemyType};
 use super::formation::Formation;
 use super::{Accessor, FormationIndex};
 
@@ -128,21 +128,6 @@ impl EnemyManager {
                 };
                 if let Some(point_type) = point_type {
                     event_queue.push(EventType::EarnPoint(point_type, pos));
-                }
-            }
-
-            let capture_state = enemy.capture_state();
-            let captured_fighter_index = enemy.captured_fighter_index();
-
-            if result.destroyed {
-                match capture_state {
-                    CaptureState::None | CaptureState::Capturing => {}
-                    CaptureState::BeamTracting | CaptureState::BeamClosing => {
-                        event_queue.push(EventType::EscapeCapturing);
-                    }
-                }
-                if let Some(fi) = captured_fighter_index {
-                    event_queue.push(EventType::RecapturePlayer(fi));
                 }
             }
 

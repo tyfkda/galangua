@@ -114,22 +114,6 @@ impl Enemy {
         self.state
     }
 
-    pub fn capture_state(&self) -> CaptureState {
-        self.capture_state
-    }
-
-    pub fn captured_fighter_index(&self) -> Option<FormationIndex> {
-        if self.capture_state == CaptureState::Capturing {
-            let fi = FormationIndex(self.formation_index.0, self.formation_index.1 - 1);
-            if self.troops.iter().flat_map(|x| x)
-                .find(|index| **index == fi).is_some()
-            {
-                return Some(fi);
-            }
-        }
-        None
-    }
-
     pub fn is_disappeared(&self) -> bool {
         self.disappeared
     }
@@ -418,6 +402,39 @@ fn bee_set_damage(me: &mut Enemy, power: u32, _accessor: &dyn Accessor,
     }
 }
 
+fn owl_set_damage(me: &mut Enemy, power: u32, accessor: &dyn Accessor,
+                  event_queue: &mut EventQueue) -> DamageResult {
+    if me.life > power {
+        me.life -= power;
+        DamageResult { destroyed: false, killed: false, point: 0 }
+    } else {
+        let mut killed = true;
+        me.life = 0;
+        if me.live_troops(accessor) {
+            killed = false;  // Keep alive as a ghost.
+        }
+        let point = (me.vtable.calc_point)(me);
+
+        // Release capturing.
+        match me.capture_state {
+            CaptureState::None => {}
+            CaptureState::BeamTracting | CaptureState::BeamClosing => {
+                event_queue.push(EventType::EscapeCapturing);
+            }
+            CaptureState::Capturing => {
+                let fi = FormationIndex(me.formation_index.0, me.formation_index.1 - 1);
+                if me.troops.iter().flat_map(|x| x)
+                    .find(|index| **index == fi).is_some()
+                {
+                    event_queue.push(EventType::RecapturePlayer(fi));
+                }
+            }
+        }
+
+        DamageResult { destroyed: true, killed, point }
+    }
+}
+
 const BEE_SPRITE_NAMES: [&str; 2] = ["gopher1", "gopher2"];
 const BUTTERFLY_SPRITE_NAMES: [&str; 2] = ["dman1", "dman2"];
 const OWL_SPRITE_NAMES: [&str; 4] = ["cpp11", "cpp12", "cpp21", "cpp22"];
@@ -491,20 +508,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
             let pat = if me.life <= 1 { pat + 2 } else { pat };
             OWL_SPRITE_NAMES[pat as usize]
         },
-        set_damage: |me: &mut Enemy, power: u32, accessor: &dyn Accessor, _event_queue: &mut EventQueue| -> DamageResult {
-            if me.life > power {
-                me.life -= power;
-                DamageResult { destroyed: false, killed: false, point: 0 }
-            } else {
-                let mut killed = true;
-                me.life = 0;
-                if me.live_troops(accessor) {
-                    killed = false;  // Keep alive as a ghost.
-                }
-                let point = (me.vtable.calc_point)(me);
-                DamageResult { destroyed: true, killed, point }
-            }
-        },
+        set_damage: owl_set_damage,
     },
     // CapturedFighter
     EnemyVtable {
