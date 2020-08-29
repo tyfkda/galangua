@@ -17,7 +17,7 @@ use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
-const MAX_ENEMY_COUNT: usize = 64;
+const MAX_ENEMY_COUNT: usize = 70;
 const MAX_SHOT_COUNT: usize = 16;
 const RUSH_THRESHOLD: u32 = 5;
 

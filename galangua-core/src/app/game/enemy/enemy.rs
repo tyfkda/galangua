@@ -1,3 +1,4 @@
+use super::formation::Y_COUNT;
 use super::tractor_beam::TractorBeam;
 use super::traj::Traj;
 use super::traj_command_table::*;
@@ -26,8 +27,9 @@ pub enum EnemyType {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EnemyState {
     None,
-    Trajectory,
+    Appearance,
     MoveToFormation,
+    Assault,
     Formation,
     Attack,
     Troop,
@@ -218,8 +220,9 @@ impl Enemy {
     fn set_state(&mut self, state: EnemyState) {
         let update_fn = match state {
             EnemyState::None | EnemyState::Troop => update_none,
-            EnemyState::Trajectory => update_trajectory,
+            EnemyState::Appearance => update_trajectory,
             EnemyState::MoveToFormation => update_move_to_formation,
+            EnemyState::Assault => update_assault,
             EnemyState::Formation => update_formation,
             EnemyState::Attack => update_attack_normal,
         };
@@ -234,9 +237,9 @@ impl Enemy {
         self.update_fn = update_fn;
     }
 
-    pub fn set_traj(&mut self, traj: Traj) {
+    pub fn set_appearance(&mut self, traj: Traj) {
         self.traj = Some(traj);
-        self.set_state(EnemyState::Trajectory);
+        self.set_state(EnemyState::Appearance);
     }
 
     fn update_move_to_formation(&mut self, accessor: &dyn Accessor) -> bool {
@@ -550,7 +553,17 @@ fn update_trajectory(me: &mut Enemy, accessor: &mut dyn Accessor, _event_queue: 
 
         if !cont {
             me.traj = None;
-            me.set_state(EnemyState::MoveToFormation);
+
+            if me.state == EnemyState::Appearance &&
+                me.formation_index.1 >= Y_COUNT as u8  // Assault
+            {
+                let player_pos = accessor.get_raw_player_pos();  // TODO: Dual.
+                me.target_pos = *player_pos;
+                me.vangle = 0;
+                me.set_state(EnemyState::Assault);
+            } else {
+                me.set_state(EnemyState::MoveToFormation);
+            }
         }
     }
 }
@@ -559,6 +572,28 @@ fn update_move_to_formation(me: &mut Enemy, accessor: &mut dyn Accessor, _event_
     if !me.update_move_to_formation(accessor) {
         me.release_troops(accessor);
         me.set_to_formation();
+    }
+}
+
+fn update_assault(me: &mut Enemy, _accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
+    let target = &me.target_pos;
+    let diff = target - &me.pos;
+
+    const DLIMIT: i32 = 5 * ONE;
+    let target_angle = atan2_lut(-diff.y, diff.x);
+    let d = diff_angle(target_angle, me.angle);
+    if d < -DLIMIT {
+        me.angle -= DLIMIT;
+    } else if d > DLIMIT {
+        me.angle += DLIMIT;
+    } else {
+        me.angle += d;
+        me.update_fn = update_assault2;
+    }
+}
+fn update_assault2(me: &mut Enemy, _accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
+    if me.pos.y >= (HEIGHT + 8) * ONE {
+        me.disappeared = true;
     }
 }
 

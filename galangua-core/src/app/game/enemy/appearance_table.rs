@@ -68,3 +68,12 @@ counted_array!(pub(super) const UNIT_TABLE: [[UnitTableEntry; 5]; _] = [
         UnitTableEntry { pat: 3, table: &COMMAND_TABLE1, flip_x: true },
     ],
 ]);
+
+counted_array!(pub(super) const ASSAULT_TABLE: [[u32; 5]; _] = [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [1, 0, 0, 1, 1],
+    [1, 0, 0, 1, 1],
+    [1, 0, 0, 1, 1],
+    [1, 1, 1, 1, 1],
+]);
