@@ -6,6 +6,7 @@ use rand_xoshiro::Xoshiro128Plus;
 use super::enemy::{EnemyState, EnemyType};
 use super::formation::{X_COUNT, Y_COUNT};
 use super::{Accessor, FormationIndex};
+use crate::app::game::{CaptureState, EventQueue, EventType};
 use crate::app::util::unsafe_util::peep;
 
 const MAX_ATTACKER_COUNT: usize = 3;
@@ -15,7 +16,6 @@ pub struct AttackManager {
     enable: bool,
     wait: u32,
     attackers: [Option<FormationIndex>; MAX_ATTACKER_COUNT],
-    player_captured: bool,
     cycle: u32,
 }
 
@@ -25,7 +25,6 @@ impl AttackManager {
             enable: false,
             wait: 0,
             attackers: Default::default(),
-            player_captured: false,
             cycle: 0,
         }
     }
@@ -42,11 +41,7 @@ impl AttackManager {
         self.attackers.iter().all(|x| x.is_none())
     }
 
-    pub fn set_capture_state(&mut self, value: bool) {
-        self.player_captured = value;
-    }
-
-    pub fn update(&mut self, accessor: &mut dyn Accessor) {
+    pub fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         self.check_liveness(accessor);
 
         if self.wait > 0 {
@@ -59,8 +54,11 @@ impl AttackManager {
         }
 
         if let Some(slot_index) = self.attackers.iter().position(|x| x.is_none()) {
-            if let Some(formation_index) = self.pick_attacker(accessor) {
+            if let Some((formation_index, capture_attack)) = self.pick_attacker(accessor) {
                 self.attackers[slot_index] = Some(formation_index);
+                if capture_attack {
+                    event_queue.push(EventType::StartCaptureAttack(formation_index));
+                }
             }
             self.wait = WAIT;
             self.cycle += 1;
@@ -80,7 +78,7 @@ impl AttackManager {
         }
     }
 
-    fn pick_attacker(&mut self, accessor: &mut dyn Accessor) -> Option<FormationIndex> {
+    fn pick_attacker(&mut self, accessor: &mut dyn Accessor) -> Option<(FormationIndex, bool)> {
         let candidates = self.enum_sides(accessor);
         let fi = match self.cycle % 3 {
             2 => {
@@ -98,11 +96,11 @@ impl AttackManager {
 
             let capture_attack = enemy.enemy_type == EnemyType::Owl &&
                 (self.cycle / 3) & 1 != 0 &&
-                !self.player_captured &&
+                accessor.capture_state() == CaptureState::NoCapture &&
                 !accessor.is_player_dual();
             enemy.set_attack(capture_attack, accessor);
 
-            Some(fi)
+            Some((fi, capture_attack))
         } else {
             None
         }

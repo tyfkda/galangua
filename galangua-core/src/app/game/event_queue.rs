@@ -44,6 +44,8 @@ pub enum EventType {
     EarnPoint(EarnedPointType, Vec2I),
     EnemyExplosion(Vec2I),
     DeadPlayer,
+    StartCaptureAttack(FormationIndex),
+    EndCaptureAttack,
     CapturePlayer(Vec2I),
     CapturePlayerCompleted,
     CaptureSequenceEnded,

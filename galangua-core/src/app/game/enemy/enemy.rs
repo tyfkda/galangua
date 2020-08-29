@@ -36,8 +36,8 @@ pub enum EnemyState {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CaptureState {
     None,
+    Attacking,
     BeamTracting,
-    BeamClosing,
     Capturing,
 }
 
@@ -418,7 +418,11 @@ fn owl_set_damage(me: &mut Enemy, power: u32, accessor: &dyn Accessor,
         // Release capturing.
         match me.capture_state {
             CaptureState::None => {}
-            CaptureState::BeamTracting | CaptureState::BeamClosing => {
+            CaptureState::Attacking => {
+                me.capture_state = CaptureState::None;
+                event_queue.push(EventType::EndCaptureAttack);
+            }
+            CaptureState::BeamTracting => {
                 event_queue.push(EventType::EscapeCapturing);
             }
             CaptureState::Capturing => {
@@ -484,6 +488,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
                 me.traj = Some(traj);
                 update_attack_traj
             } else {
+                me.capture_state = CaptureState::Attacking;
                 update_attack_capture
             };
 
@@ -694,13 +699,14 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
                 let offset = Vec2I::new(target_pos.x - me.pos.x, (-32 - (HEIGHT + 8)) * ONE);
                 me.warp(offset);
                 me.set_state(EnemyState::MoveToFormation);
+                me.capture_state = CaptureState::None;
+                event_queue.push(EventType::EndCaptureAttack);
             }
         }
         // Capture sequence
         100 => {
-            if accessor.is_player_captured() {
+            if accessor.is_player_capture_completed() {
                 me.tractor_beam.as_mut().unwrap().close_capture();
-                me.capture_state = CaptureState::BeamClosing;
                 me.attack_step += 1;
                 me.count = 0;
             }

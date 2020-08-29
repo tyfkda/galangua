@@ -74,7 +74,7 @@ impl EnemyManager {
         self.frame_count = self.frame_count.wrapping_add(1);
         self.update_appearance();
         self.update_formation();
-        self.update_attackers(accessor);
+        self.update_attackers(accessor, event_queue);
         self.update_enemies(accessor, event_queue);
         self.update_shots();
     }
@@ -207,8 +207,8 @@ impl EnemyManager {
         self.formation.update();
     }
 
-    fn update_attackers<T: Accessor>(&mut self, accessor: &mut T) {
-        self.attack_manager.update(accessor);
+    fn update_attackers<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
+        self.attack_manager.update(accessor, event_queue);
     }
 
     fn update_enemies<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
@@ -256,10 +256,6 @@ impl EnemyManager {
             let vel = calc_velocity(angle + ANGLE * ONE / 2, speed);
             self.shots[index] = Some(EneShot::new(&pos, &vel));
         }
-    }
-
-    pub fn set_capture_state(&mut self, value: bool) {
-        self.attack_manager.set_capture_state(value);
     }
 
     pub fn enable_attack(&mut self, value: bool) {

@@ -1,10 +1,11 @@
+use super::effect::{Effect, StageIndicator, StarManager};
 use super::enemy::Accessor as AccessorForEnemy;
 use super::enemy::{Enemy, EnemyManager, FormationIndex};
 use super::event_queue::{EventQueue, EventType};
 use super::player::{MyShot, Player};
-
-use super::effect::{Effect, StageIndicator, StarManager};
 use super::score_holder::ScoreHolder;
+use super::CaptureState;
+
 use crate::app::consts::*;
 use crate::app::util::unsafe_util::peep;
 use crate::app::util::{CollBox, Collidable};
@@ -50,6 +51,8 @@ pub struct GameManager {
     event_queue: EventQueue,
     stage: u32,
     left_ship: u32,
+    capture_state: CaptureState,
+    capture_enemy_fi: FormationIndex,
 }
 
 impl GameManager {
@@ -66,6 +69,8 @@ impl GameManager {
 
             stage: 0,
             left_ship: 0,
+            capture_state: CaptureState::NoCapture,
+            capture_enemy_fi: FormationIndex(0, 0),
         }
     }
 
@@ -294,16 +299,24 @@ impl GameManager {
                         self.count = 0;
                     }
                 }
+                EventType::StartCaptureAttack(formation_index) => {
+                    self.capture_state = CaptureState::CaptureAttacking;
+                    self.capture_enemy_fi = formation_index;
+                }
+                EventType::EndCaptureAttack => {
+                    self.capture_state = CaptureState::NoCapture;
+                }
                 EventType::CapturePlayer(capture_pos) => {
                     params.star_manager.set_capturing(true);
                     self.enemy_manager.enable_attack(false);
                     self.player.start_capture(&capture_pos);
                     self.state = GameState::Capturing;
+                    self.capture_state = CaptureState::Capturing;
                 }
                 EventType::CapturePlayerCompleted => {
                     params.star_manager.set_capturing(false);
                     self.player.complete_capture();
-                    self.enemy_manager.set_capture_state(true);
+                    self.capture_state = CaptureState::Captured;
                     self.state = GameState::Captured;
                     self.count = 0;
                 }
@@ -324,6 +337,7 @@ impl GameManager {
                         self.enemy_manager.remove_enemy(&captured_fighter_index);
                         self.enemy_manager.enable_attack(false);
                         self.state = GameState::Recapturing;
+                        self.capture_state = CaptureState::Recapturing;
                     }
                 }
                 EventType::MovePlayerHomePos => {
@@ -331,11 +345,12 @@ impl GameManager {
                 }
                 EventType::RecaptureEnded => {
                     self.enemy_manager.enable_attack(true);
-                    self.enemy_manager.set_capture_state(false);
+                    self.capture_state = CaptureState::NoCapture;
                     params.star_manager.set_stop(false);
                     self.state = GameState::Playing;
                 }
                 EventType::EscapeCapturing => {
+                    self.capture_state = CaptureState::NoCapture;
                     params.star_manager.set_capturing(false);
                     self.player.escape_capturing();
                 }
@@ -344,7 +359,7 @@ impl GameManager {
                     self.state = GameState::Playing;
                 }
                 EventType::CapturedFighterDestroyed => {
-                    self.enemy_manager.set_capture_state(false);
+                    self.capture_state = CaptureState::NoCapture;
                 }
             }
             i += 1;
@@ -448,16 +463,20 @@ impl AccessorForEnemy for GameManager {
         self.player.is_dual()
     }
 
-    fn is_player_captured(&self) -> bool {
-        self.player.is_captured()
-    }
-
     fn can_player_capture(&self) -> bool {
         #[cfg(debug_assertions)]
         if self.state == GameState::EditTraj {
             return false;
         }
         self.state == GameState::Playing
+    }
+
+    fn is_player_capture_completed(&self) -> bool {
+        self.player.is_captured()
+    }
+
+    fn capture_state(&self) -> CaptureState {
+        return self.capture_state
     }
 
     fn get_enemies(&self) -> &[Option<Enemy>] {
