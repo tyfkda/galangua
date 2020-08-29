@@ -385,9 +385,9 @@ impl GameManager {
                 myshot.get_collbox_for_dual(),
             ];
             for collbox in colls.iter().flat_map(|x| x) {
-                if let Some(_) = self.enemy_manager.check_collision(
-                    collbox, power, accessor, &mut self.event_queue)
-                {
+                if let Some(fi) = self.enemy_manager.check_collision(collbox) {
+                    self.enemy_manager.set_damage_to_enemy(
+                        &fi, power, accessor, &mut self.event_queue);
                     *myshot_opt = None;
                     break;
                 }
@@ -408,9 +408,10 @@ impl GameManager {
         for (collbox, player_pos) in collbox_opts.iter().flat_map(|x| x) {
             let power = 100;
             let accessor = unsafe { peep(self) };
-            if let Some(pos) = self.enemy_manager.check_collision(
-                collbox, power, accessor, &mut self.event_queue)
-            {
+            if let Some(fi) = self.enemy_manager.check_collision(collbox) {
+                let pos = self.enemy_manager.get_enemy_at(&fi).unwrap().raw_pos().clone();
+                self.enemy_manager.set_damage_to_enemy(&fi, power, accessor, &mut self.event_queue);
+
                 self.spawn_effect(Effect::create_player_explosion(player_pos));
 
                 if self.player.crash(&pos) {
