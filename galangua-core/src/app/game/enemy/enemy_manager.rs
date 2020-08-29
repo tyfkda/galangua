@@ -306,8 +306,8 @@ impl EnemyManager {
 
         for unit in 0..5 {
             for i in 0..8 {
-                let index = super::appearance_manager::ORDER[unit * 8 + i];
-                let enemy_type = super::appearance_manager::ENEMY_TYPE_TABLE[unit * 2 + (i / 4)];
+                let index = super::appearance_table::ORDER[unit * 8 + i];
+                let enemy_type = super::appearance_table::ENEMY_TYPE_TABLE[unit * 2 + (i / 4)];
                 let pos = self.formation.pos(&index);
                 let mut enemy = Enemy::new(enemy_type, &pos, 0, 0);
                 enemy.formation_index = index;

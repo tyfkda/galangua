@@ -1,5 +1,6 @@
 mod accessor;
 mod appearance_manager;
+mod appearance_table;
 mod attack_manager;
 mod ene_shot;
 mod enemy;
