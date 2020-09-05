@@ -17,10 +17,12 @@ pub struct Traj {
     offset: Vec2I,
     flip_x: bool,
     fi: FormationIndex,
+    pub(super) shot_enable: bool,
 
     command_table: &'static [TrajCommand],
     delay: u32,
     wait_pred: Option<Box<dyn Fn(&Vec2I) -> bool>>,
+    shot: Option<u32>,
 
     #[cfg(debug_assertions)]
     command_table_vec: Option<Vec<TrajCommand>>,
@@ -39,10 +41,12 @@ impl Traj {
             offset,
             flip_x,
             fi,
+            shot_enable: true,
 
             command_table: command_table,
             delay: 0,
             wait_pred: None,
+            shot: None,
 
             #[cfg(debug_assertions)]
             command_table_vec: None,
@@ -76,6 +80,15 @@ impl Traj {
 
     pub fn angle(&self) -> i32 {
         self.angle
+    }
+
+    pub fn is_shot(&mut self) -> Option<u32> {
+        if let Some(shot) = self.shot {
+            self.shot = None;
+            Some(shot)
+        } else {
+            None
+        }
     }
 
     pub fn update(&mut self, accessor: &dyn Accessor) -> bool {
@@ -170,6 +183,11 @@ impl Traj {
             TrajCommand::CopyFormationX => {
                 let formation_pos = accessor.get_formation_pos(&self.fi);
                 self.pos.x = formation_pos.x;
+            }
+            TrajCommand::Shot(delay) => {
+                if self.shot_enable {
+                    self.shot = Some(delay);
+                }
             }
         }
         true

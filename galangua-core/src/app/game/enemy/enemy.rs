@@ -64,6 +64,7 @@ pub struct Enemy {
 
     life: u32,
     traj: Option<Traj>,
+    shot_wait: Option<u32>,
     update_fn: fn(enemy: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue),
     attack_step: i32,
     count: u32,
@@ -91,6 +92,7 @@ impl Enemy {
             vangle: 0,
             formation_index: FormationIndex(255, 255),  // Dummy
             traj: None,
+            shot_wait: None,
             update_fn: update_none,
             attack_step: 0,
             count: 0,
@@ -542,7 +544,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
 
 fn update_none(_me: &mut Enemy, _accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {}
 
-fn update_trajectory(me: &mut Enemy, accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
+fn update_trajectory(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
     if let Some(traj) = &mut me.traj {
         let cont = traj.update(accessor);
 
@@ -550,6 +552,18 @@ fn update_trajectory(me: &mut Enemy, accessor: &mut dyn Accessor, _event_queue: 
         me.angle = traj.angle();
         me.speed = traj.speed;
         me.vangle = traj.vangle;
+        if let Some(wait) = traj.is_shot() {
+            me.shot_wait = Some(wait);
+        }
+
+        if let Some(wait) = me.shot_wait {
+            if wait > 0 {
+                me.shot_wait = Some(wait - 1);
+            } else {
+                event_queue.push(EventType::EneShot(me.pos, ENE_SHOT_SPEED));
+                me.shot_wait = None;
+            }
+        }
 
         if !cont {
             me.traj = None;

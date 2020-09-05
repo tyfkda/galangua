@@ -11,6 +11,7 @@ counted_array!(pub const COMMAND_TABLE1: [TrajCommand; _] = [
     TrajCommand::Angle((ANGLE / 2) * ONE),
     TrajCommand::VAngle(0),
     TrajCommand::Delay(5),
+    TrajCommand::Shot(0),
     TrajCommand::VAngle(2 * ONE),
     TrajCommand::Delay(17),
     TrajCommand::VAngle(0),
@@ -29,6 +30,7 @@ counted_array!(pub const COMMAND_TABLE2: [TrajCommand; _] = [
     TrajCommand::Delay(10),
     TrajCommand::VAngle(-2 * ONE),
     TrajCommand::Delay(17),
+    TrajCommand::Shot(8),
     TrajCommand::DestAngle((-ANGLE + (ANGLE / 8)) * ONE, 20 * ONE),
     TrajCommand::VAngle(0),
 ]);

@@ -9,4 +9,5 @@ pub enum TrajCommand {
     WaitYG(i32),  // wait until y is greater than
     AddPos(i32, i32),
     CopyFormationX,
+    Shot(u32),
 }
