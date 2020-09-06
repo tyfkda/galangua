@@ -2,6 +2,7 @@ use super::effect::{Effect, StageIndicator, StarManager};
 use super::enemy::Accessor as AccessorForEnemy;
 use super::enemy::{Enemy, EnemyManager, FormationIndex};
 use super::event_queue::{EventQueue, EventType};
+use super::player::Accessor as AccessorForPlayer;
 use super::player::{MyShot, Player};
 use super::score_holder::ScoreHolder;
 use super::CaptureState;
@@ -196,16 +197,21 @@ impl GameManager {
     }
 
     fn update_common(&mut self, params: &mut Params) {
-        self.player.update(params.pad, &mut self.event_queue);
-        for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
-            let myshot = myshot_opt.as_mut().unwrap();
-            if !myshot.update() {
-                *myshot_opt = None;
+        {
+            let accessor = unsafe { peep(self) };
+            self.player.update(params.pad, accessor, &mut self.event_queue);
+            for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
+                let myshot = myshot_opt.as_mut().unwrap();
+                if !myshot.update() {
+                    *myshot_opt = None;
+                }
             }
         }
 
-        let accessor = unsafe { peep(self) };
-        self.enemy_manager.update(accessor, &mut self.event_queue);
+        {
+            let accessor = unsafe { peep(self) };
+            self.enemy_manager.update(accessor, &mut self.event_queue);
+        }
 
         // For MyShot.
         self.handle_event_queue(params);
@@ -451,6 +457,12 @@ impl GameManager {
         if let Some(slot) = self.effects.iter_mut().find(|x| x.is_none()) {
             *slot = Some(effect);
         }
+    }
+}
+
+impl AccessorForPlayer for GameManager {
+    fn is_no_attacker(&self) -> bool {
+        self.enemy_manager.is_no_attacker()
     }
 }
 

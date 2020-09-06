@@ -4,6 +4,8 @@ use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{clamp, quantize_angle, round_up, ANGLE, ONE};
 
+use super::Accessor;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum State {
     Rotate,
@@ -27,11 +29,13 @@ impl RecapturedFighter {
         }
     }
 
-    pub(super) fn update(&mut self, player_living: bool, event_queue: &mut EventQueue) {
+    pub(super) fn update(
+        &mut self, player_living: bool, accessor: &dyn Accessor, event_queue: &mut EventQueue,
+    ) {
         match self.state {
             State::Rotate => {
                 self.angle += ANGLE * ONE / ANGLE_DIV;
-                if self.angle >= ANGLE * ONE * 4 {
+                if self.angle >= ANGLE * ONE * 4 && accessor.is_no_attacker() {
                     self.state = State::SlideHorz;
                     event_queue.push(EventType::MovePlayerHomePos);
                 }

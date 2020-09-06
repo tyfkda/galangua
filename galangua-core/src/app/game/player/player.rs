@@ -7,6 +7,7 @@ use crate::util::math::{clamp, quantize_angle, round_up, ANGLE, ONE};
 use crate::util::pad::{Pad, PadBit};
 
 use super::recaptured_fighter::RecapturedFighter;
+use super::Accessor;
 
 const Y_POSITION: i32 = HEIGHT - 16 - 8;
 
@@ -47,7 +48,7 @@ impl Player {
         self.pos = &Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE;
     }
 
-    pub fn update(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
+    pub fn update(&mut self, pad: &Pad, accessor: &dyn Accessor, event_queue: &mut EventQueue) {
         match self.state {
             State::Normal => {
                 self.update_normal(pad, event_queue);
@@ -81,7 +82,7 @@ impl Player {
         }
 
         if let Some(recaptured_fighter) = &mut self.recaptured_fighter {
-            recaptured_fighter.update(self.state != State::Dead, event_queue);
+            recaptured_fighter.update(self.state != State::Dead, accessor, event_queue);
             if self.state == State::Dead && recaptured_fighter.done() {
                 self.pos.x = WIDTH / 2 * ONE;
                 self.state = State::Normal;
