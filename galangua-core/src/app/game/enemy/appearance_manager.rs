@@ -14,6 +14,8 @@ use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::ONE;
 
 const ASSAULT_FORMATION_Y: u8 = 6;
+const UNIT_COUNT: u32 = 5;
+const STEP_WAIT: u32 = 16 / 3;
 
 #[derive(Clone, Copy, Debug)]
 struct Info {
@@ -86,7 +88,7 @@ impl AppearanceManager {
             self.wait -= 1;
             return None;
         }
-        if self.unit >= 5 {
+        if self.unit >= UNIT_COUNT {
             self.done = true;
             return None;
         }
@@ -143,33 +145,20 @@ impl AppearanceManager {
     fn create_orders(&mut self) {
         let base = self.unit * 8;
         let entry = &UNIT_TABLE[(self.stage as usize) % UNIT_TABLE.len()][self.unit as usize];
-        let enemy_types = &ENEMY_TYPE_TABLE[(self.unit * 2) as usize ..
-                                            (self.unit * 2) as usize + 2];
         let assault_count = ASSAULT_TABLE[min(self.stage as usize, ASSAULT_TABLE.len() - 1)][self.unit as usize];
-        let orders = &mut self.orders;
 
         match entry.pat {
             0 => {
                 let flip = if entry.flip_x { 1 } else { 0 };
-                let mut time = 0;
-                for count in 0..4 {
-                    {
-                        let fi = ORDER[(base + (count + flip * 4)) as usize];
-                        let enemy_type = enemy_types[flip as usize];
-                        orders.push(Info::new(time, enemy_type, fi, Vec2I::new(8 * ONE, 0),
-                                              true, entry.table))
-                    }
-                    {
-                        let fi = ORDER[(base + (count + (1 - flip) * 4)) as usize];
-                        let enemy_type = enemy_types[(1 - flip) as usize];
-                        orders.push(Info::new(time, enemy_type, fi, Vec2I::new(8 * ONE, 0),
-                                              false,entry.table));
-                    }
-                    time += 16 / 3;
+                for count in 0..8 {
+                    let side = count & 1;
+                    let fi = ORDER[(base + (count / 2 + (side ^ flip) * 4)) as usize];
+                    let info = self.create_info(fi, count);
+                    self.orders.push(info);
                 }
 
                 if assault_count > 0 {
-                    let n = orders.len() / 2;
+                    let n = self.orders.len() / 2;
                     let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
                     let mut index = rng.gen_range(0, n + 1);
                     let add = if index == 0 { 1 } else if index == n { -1 } else {
@@ -178,38 +167,31 @@ impl AppearanceManager {
 
                     let mut assault_index = 0;
                     for lr in 0..2 {
-                        orders.push(orders[0]);
+                        self.orders.push(self.orders[0]);
                         // Shift
                         for j in 0..(n - index) {
-                            orders[(n - j) * 2 + lr] = orders[(n - j - 1) * 2 + lr];
+                            self.orders[(n - j) * 2 + lr] = self.orders[(n - j - 1) * 2 + lr];
                         }
 
                         let fi = gen_assault_index(assault_index);
                         assault_index += 1;
-                        let enemy_type = enemy_types[(flip as usize ^ lr) as usize];
                         let ins = index * 2 + lr;
-                        orders[ins] = Info::new(0, enemy_type, fi, Vec2I::new(8 * ONE, 0),
-                                                lr == 0, entry.table);
+                        self.orders[ins] = self.create_info(fi, ins as u32);
                         index = ((index as i32) + add) as usize;
                     }
-                    // Recalc times.
-                    for i in 0..orders.len() {
-                        orders[i].time = ((i / 2) * (16 / 3)) as u32;
-                    }
+
+                    recalc_order_time(&mut self.orders, STEP_WAIT, 2);
                 }
             }
             1 => {
-                let mut time = 0;
                 for count in 0..8 {
                     let fi = ORDER[(base + (count / 2 + (count & 1) * 4)) as usize];
-                    let enemy_type = enemy_types[(count & 1) as usize];
-                    orders.push(Info::new(time, enemy_type, fi, Vec2I::new(8 * ONE, 0),
-                                          entry.flip_x, entry.table));
-                    time += 16 / 3;
+                    let info = self.create_info(fi, count);
+                    self.orders.push(info);
                 }
 
                 if assault_count > 0 {
-                    let n = orders.len();
+                    let n = self.orders.len();
                     let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
                     let index = rng.gen_range(0, n + 1);
 
@@ -217,28 +199,22 @@ impl AppearanceManager {
                     for i in 0..2 {
                         let fi = gen_assault_index(assault_index);
                         assault_index += 1;
-                        let enemy_type = enemy_types[((index + i) & 1) as usize];
-                        orders.insert(index + i, Info::new(time, enemy_type, fi, Vec2I::new(8 * ONE, 0),
-                                                           entry.flip_x, entry.table));
+                        let info = self.create_info(fi, (index + i) as u32);
+                        self.orders.insert(index + i, info);
                     }
-                    // Recalc times.
-                    for i in 0..orders.len() {
-                        orders[i].time = (i * (16 / 3)) as u32;
-                    }
+
+                    recalc_order_time(&mut self.orders, STEP_WAIT, 1);
                 }
             }
             2 => {
-                let mut time = 0;
                 for count in 0..8 {
                     let fi = ORDER[(base + count) as usize];
-                    let enemy_type = enemy_types[(count & 1) as usize];
-                    orders.push(Info::new(time, enemy_type, fi, ZERO_VEC, entry.flip_x,
-                                          entry.table));
-                    time += 16 / 3;
+                    let info = self.create_info(fi, count);
+                    self.orders.push(info);
                 }
 
                 if assault_count > 0 {
-                    let n = orders.len();
+                    let n = self.orders.len();
                     let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
                     let index = rng.gen_range(0, n + 1);
 
@@ -246,37 +222,24 @@ impl AppearanceManager {
                     for i in 0..2 {
                         let fi = gen_assault_index(assault_index);
                         assault_index += 1;
-                        let enemy_type = enemy_types[((index + i) & 1) as usize];
-                        orders.insert(index + i, Info::new(time, enemy_type, fi, ZERO_VEC, entry.flip_x,
-                                                           entry.table));
+                        let info = self.create_info(fi, (index + i) as u32);
+                        self.orders.insert(index + i, info);
                     }
-                    // Recalc times.
-                    for i in 0..orders.len() {
-                        orders[i].time = (i * (16 / 3)) as u32;
-                    }
+
+                    recalc_order_time(&mut self.orders, STEP_WAIT, 1);
                 }
             }
             3 => {
                 let flip = if entry.flip_x { 1 } else { 0 };
-                let mut time = 0;
-                for count in 0..4 {
-                    {
-                        let fi = ORDER[(base + (count + flip * 4)) as usize];
-                        let enemy_type = enemy_types[flip as usize];
-                        orders.push(Info::new(time, enemy_type, fi, Vec2I::new(8 * ONE, 0),
-                                              entry.flip_x, entry.table));
-                    }
-                    {
-                        let fi = ORDER[(base + (count + (1 - flip) * 4)) as usize];
-                        let enemy_type = enemy_types[(1 - flip) as usize];
-                        orders.push(Info::new(time, enemy_type, fi, Vec2I::new(-8 * ONE, 0),
-                                              entry.flip_x, entry.table));
-                    }
-                    time += 16 / 3;
+                for count in 0..8 {
+                    let side = count & 1;
+                    let fi = ORDER[(base + (count / 2 + (side ^ flip) * 4)) as usize];
+                    let info = self.create_info(fi, count);
+                    self.orders.push(info);
                 }
 
                 if assault_count > 0 {
-                    let n = orders.len() / 2;
+                    let n = self.orders.len() / 2;
                     let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
                     let mut index = rng.gen_range(0, n + 1);
                     let add = if index == 0 { 1 } else if index == n { -1 } else {
@@ -285,31 +248,59 @@ impl AppearanceManager {
 
                     let mut assault_index = 0;
                     for lr in 0..2 {
-                        orders.push(orders[0]);
+                        self.orders.push(self.orders[0]);
                         // Shift
                         for j in 0..(n - index) {
-                            orders[(n - j) * 2 + lr] = orders[(n - j - 1) * 2 + lr];
+                            self.orders[(n - j) * 2 + lr] = self.orders[(n - j - 1) * 2 + lr];
                         }
 
                         let fi = gen_assault_index(assault_index);
                         assault_index += 1;
-                        let enemy_type = enemy_types[(flip as usize) ^ lr];
-                        let flag = if lr == 0 { 1 } else { -1 };
                         let ins = index * 2 + lr;
-                        orders[ins] = Info::new(time, enemy_type, fi, Vec2I::new(8 * ONE * flag, 0),
-                                                entry.flip_x, entry.table);
+                        self.orders[ins] = self.create_info(fi, ins as u32);
 
                         index = ((index as i32) + add) as usize;
                     }
-                    // Recalc times.
-                    for i in 0..orders.len() {
-                        orders[i].time = ((i / 2) * (16 / 3)) as u32;
-                    }
+
+                    recalc_order_time(&mut self.orders, STEP_WAIT, 2);
                 }
             }
 
             _ => {
                 self.done = true;
+            }
+        }
+    }
+
+    fn create_info(&self, fi: FormationIndex, count: u32) -> Info {
+        let entry = &UNIT_TABLE[(self.stage as usize) % UNIT_TABLE.len()][self.unit as usize];
+        let enemy_types = &ENEMY_TYPE_TABLE[(self.unit * 2) as usize ..
+                                            (self.unit * 2) as usize + 2];
+        match entry.pat {
+            0 => {
+                let flip = if entry.flip_x { 1 } else { 0 };
+                let side = count & 1;
+                let enemy_type = enemy_types[(side ^ flip) as usize];
+                let time = (count / 2) * STEP_WAIT;
+                Info::new(time, enemy_type, fi, Vec2I::new(8 * ONE, 0), side == 0, entry.table)
+            }
+            1 => {
+                let enemy_type = enemy_types[(count & 1) as usize];
+                let time = count * STEP_WAIT;
+                Info::new(time, enemy_type, fi, Vec2I::new(8 * ONE, 0), entry.flip_x, entry.table)
+            }
+            2 => {
+                let enemy_type = enemy_types[(count & 1) as usize];
+                let time = count * STEP_WAIT;
+                Info::new(time, enemy_type, fi, ZERO_VEC, entry.flip_x, entry.table)
+            }
+            3 | _ => {
+                let flip = if entry.flip_x { 1 } else { 0 };
+                let side = count & 1;
+                let enemy_type = enemy_types[(side ^ flip) as usize];
+                let flag = 1 - (side as i32) * 2;
+                let time = (count / 2) * STEP_WAIT;
+                Info::new(time, enemy_type, fi, Vec2I::new(flag * 8 * ONE, 0), entry.flip_x, entry.table)
             }
         }
     }
@@ -341,4 +332,10 @@ impl AppearanceManager {
 fn gen_assault_index(assault_count: u8) -> FormationIndex {
     let x = assault_count;
     FormationIndex(x, ASSAULT_FORMATION_Y)
+}
+
+fn recalc_order_time(orders: &mut Vec<Info>, step_wait: u32, div: u32) {
+    for i in 0..orders.len() {
+        orders[i].time = step_wait * (i as u32 / div);
+    }
 }
