@@ -524,7 +524,9 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
     EnemyVtable {
         life: 1,
         set_attack: bee_set_attack,
-        calc_point: |_me: &Enemy| 1000,
+        calc_point: |me: &Enemy| {
+            if me.state == EnemyState::Formation { 500 } else { 1000 }
+        },
         sprite_name: |_me: &Enemy, _pat: usize| "rustacean_captured",
         set_damage: |me: &mut Enemy, power: u32, _accessor: &dyn Accessor, event_queue: &mut EventQueue| -> DamageResult {
             if me.life > power {
