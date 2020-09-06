@@ -1,11 +1,12 @@
 use crate::app::consts::*;
-use crate::app::game::effect::RecapturedFighter;
 use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
 use crate::util::math::{clamp, quantize_angle, round_up, ANGLE, ONE};
 use crate::util::pad::{Pad, PadBit};
+
+use super::recaptured_fighter::RecapturedFighter;
 
 const Y_POSITION: i32 = HEIGHT - 16 - 8;
 

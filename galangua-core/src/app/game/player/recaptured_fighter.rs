@@ -12,14 +12,14 @@ enum State {
     Done,
 }
 
-pub struct RecapturedFighter {
+pub(super) struct RecapturedFighter {
     pos: Vec2I,
     state: State,
     angle: i32,
 }
 
 impl RecapturedFighter {
-    pub fn new(pos: &Vec2I) -> Self {
+    pub(super) fn new(pos: &Vec2I) -> Self {
         Self {
             pos: *pos,
             state: State::Rotate,
@@ -27,7 +27,7 @@ impl RecapturedFighter {
         }
     }
 
-    pub fn update(&mut self, player_living: bool, event_queue: &mut EventQueue) {
+    pub(super) fn update(&mut self, player_living: bool, event_queue: &mut EventQueue) {
         match self.state {
             State::Rotate => {
                 self.angle += ANGLE * ONE / ANGLE_DIV;
@@ -56,7 +56,7 @@ impl RecapturedFighter {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub(super) fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
     where
         R: RendererTrait,
     {
@@ -75,7 +75,7 @@ impl RecapturedFighter {
         Ok(())
     }
 
-    pub fn done(&self) -> bool {
+    pub(super) fn done(&self) -> bool {
         self.state == State::Done
     }
 }
