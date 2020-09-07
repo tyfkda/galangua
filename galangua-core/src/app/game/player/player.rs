@@ -48,7 +48,7 @@ impl Player {
         self.pos = &Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE;
     }
 
-    pub fn update(&mut self, pad: &Pad, accessor: &dyn Accessor, event_queue: &mut EventQueue) {
+    pub fn update<A: Accessor>(&mut self, pad: &Pad, accessor: &A, event_queue: &mut EventQueue) {
         match self.state {
             State::Normal => {
                 self.update_normal(pad, event_queue);

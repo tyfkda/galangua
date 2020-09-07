@@ -41,7 +41,7 @@ impl AttackManager {
         self.attackers.iter().all(|x| x.is_none())
     }
 
-    pub fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    pub fn update<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
         self.check_liveness(accessor);
 
         if self.wait > 0 {
@@ -65,7 +65,7 @@ impl AttackManager {
         }
     }
 
-    fn check_liveness(&mut self, accessor: &mut dyn Accessor) {
+    fn check_liveness<A: Accessor>(&mut self, accessor: &mut A) {
         for attacker_opt in self.attackers.iter_mut().filter(|x| x.is_some()) {
             let formation_index = attacker_opt.as_ref().unwrap();
             if let Some(enemy) = accessor.get_enemy_at(formation_index) {
@@ -78,7 +78,7 @@ impl AttackManager {
         }
     }
 
-    fn pick_attacker(&mut self, accessor: &mut dyn Accessor) -> Option<(FormationIndex, bool)> {
+    fn pick_attacker<A: Accessor>(&mut self, accessor: &mut A) -> Option<(FormationIndex, bool)> {
         let candidates = self.enum_sides(accessor);
         let fi = match self.cycle % 3 {
             2 => {
@@ -119,7 +119,7 @@ impl AttackManager {
         None
     }
 
-    fn enum_sides(&mut self, accessor: &mut dyn Accessor) -> [Option<[u8; 2]>; Y_COUNT] {
+    fn enum_sides<A: Accessor>(&mut self, accessor: &mut A) -> [Option<[u8; 2]>; Y_COUNT] {
         array![|i| {
             let left = (0..X_COUNT).find_map(|j| {
                 let fi = FormationIndex(j as u8, i as u8);
@@ -148,7 +148,7 @@ impl AttackManager {
         }; Y_COUNT]
     }
 
-    fn pick_captured_fighter(&mut self, accessor: &mut dyn Accessor) -> Option<FormationIndex> {
+    fn pick_captured_fighter<A: Accessor>(&mut self, accessor: &mut A) -> Option<FormationIndex> {
         accessor.captured_fighter_index().and_then(|fi| {
             if let Some(captured_fighter) = accessor.get_enemy_at(&fi) {
                 if captured_fighter.get_state() == EnemyState::Formation &&

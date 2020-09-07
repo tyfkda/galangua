@@ -125,7 +125,7 @@ impl Enemy {
         self.life == 0
     }
 
-    pub fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    pub fn update<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
         let prev_pos = self.pos;
 
         (self.update_fn)(self, accessor, event_queue);
@@ -145,7 +145,7 @@ impl Enemy {
         }
     }
 
-    fn update_troops(&mut self, add: &Vec2I, angle_opt: Option<i32>, accessor: &mut dyn Accessor) {
+    fn update_troops<A: Accessor>(&mut self, add: &Vec2I, angle_opt: Option<i32>, accessor: &mut A) {
         for troop_opt in self.troops.iter_mut() {
             if let Some(formation_index) = troop_opt {
                 if let Some(troop) = accessor.get_enemy_at_mut(formation_index) {
@@ -206,9 +206,9 @@ impl Enemy {
         Ok(())
     }
 
-    pub fn set_damage(&mut self, power: u32, accessor: &dyn Accessor,
-                      event_queue: &mut EventQueue) -> DamageResult
-    {
+    pub fn set_damage<A: Accessor>(
+        &mut self, power: u32, accessor: &A, event_queue: &mut EventQueue,
+    ) -> DamageResult {
         (self.vtable.set_damage)(self, power, accessor, event_queue)
     }
 
@@ -262,7 +262,7 @@ impl Enemy {
         }
     }
 
-    pub fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) {
+    pub fn set_attack<A: Accessor>(&mut self, capture_attack: bool, accessor: &mut A) {
         (self.vtable.set_attack)(self, capture_attack, accessor);
     }
 

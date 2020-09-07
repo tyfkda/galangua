@@ -29,8 +29,8 @@ impl RecapturedFighter {
         }
     }
 
-    pub(super) fn update(
-        &mut self, player_living: bool, accessor: &dyn Accessor, event_queue: &mut EventQueue,
+    pub(super) fn update<A: Accessor>(
+        &mut self, player_living: bool, accessor: &A, event_queue: &mut EventQueue,
     ) {
         match self.state {
             State::Rotate => {
