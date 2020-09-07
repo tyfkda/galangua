@@ -12,7 +12,7 @@ pub mod traj_command;
 mod traj_command_table;
 
 pub use self::accessor::Accessor;
-pub use self::enemy::{CaptureState, Enemy};
+pub use self::enemy::Enemy;
 pub use self::enemy_manager::EnemyManager;
 
 #[derive(Clone, Copy, Debug, PartialEq)]

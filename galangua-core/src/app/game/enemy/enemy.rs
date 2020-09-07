@@ -36,11 +36,10 @@ pub enum EnemyState {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum CaptureState {
+pub enum CapturingState {
     None,
     Attacking,
     BeamTracting,
-    Capturing,
 }
 
 #[derive(Debug)]
@@ -71,7 +70,7 @@ pub struct Enemy {
     attack_frame_count: u32,
     target_pos: Vec2I,
     tractor_beam: Option<TractorBeam>,
-    capture_state: CaptureState,
+    capturing_state: CapturingState,
     troops: [Option<FormationIndex>; MAX_TROOPS],
     copy_angle_to_troops: bool,
     disappeared: bool,
@@ -99,7 +98,7 @@ impl Enemy {
             attack_frame_count: 0,
             target_pos: ZERO_VEC,
             tractor_beam: None,
-            capture_state: CaptureState::None,
+            capturing_state: CapturingState::None,
             troops: Default::default(),
             copy_angle_to_troops: true,
             disappeared: false,
@@ -254,6 +253,7 @@ impl Enemy {
             let d = diff_angle(target_angle, self.angle);
             self.angle += clamp(d, -DLIMIT, DLIMIT);
             self.vangle = 0;
+            self.capturing_state = CapturingState::None;
             true
         } else {
             self.pos = target;
@@ -421,16 +421,8 @@ fn owl_set_damage(me: &mut Enemy, power: u32, accessor: &dyn Accessor,
         let point = (me.vtable.calc_point)(me);
 
         // Release capturing.
-        match me.capture_state {
-            CaptureState::None => {}
-            CaptureState::Attacking => {
-                me.capture_state = CaptureState::None;
-                event_queue.push(EventType::EndCaptureAttack);
-            }
-            CaptureState::BeamTracting => {
-                event_queue.push(EventType::EscapeCapturing);
-            }
-            CaptureState::Capturing => {
+        match me.capturing_state {
+            CapturingState::None => {
                 let fi = FormationIndex(me.formation_index.0, me.formation_index.1 - 1);
                 if me.troops.iter().flat_map(|x| x)
                     .find(|index| **index == fi).is_some()
@@ -438,10 +430,29 @@ fn owl_set_damage(me: &mut Enemy, power: u32, accessor: &dyn Accessor,
                     event_queue.push(EventType::RecapturePlayer(fi));
                 }
             }
+            CapturingState::Attacking => {
+                event_queue.push(EventType::EndCaptureAttack);
+            }
+            CapturingState::BeamTracting => {
+                event_queue.push(EventType::EscapeCapturing);
+            }
         }
+        me.capturing_state = CapturingState::None;
 
         DamageResult { destroyed: true, killed, point }
     }
+}
+
+fn captured_fighter_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut dyn Accessor) {
+    let flip_x = me.formation_index.0 >= 5;
+    let mut traj = Traj::new(&OWL_ATTACK_TABLE, &ZERO_VEC, flip_x, me.formation_index);
+    traj.set_pos(&me.pos);
+
+    me.attack_step = 0;
+    me.count = 0;
+    me.attack_frame_count = 0;
+    me.traj = Some(traj);
+    me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
 }
 
 const BEE_SPRITE_NAMES: [&str; 2] = ["gopher1", "gopher2"];
@@ -493,7 +504,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
                 me.traj = Some(traj);
                 update_attack_traj
             } else {
-                me.capture_state = CaptureState::Attacking;
+                me.capturing_state = CapturingState::Attacking;
                 update_attack_capture
             };
 
@@ -523,7 +534,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
     // CapturedFighter
     EnemyVtable {
         life: 1,
-        set_attack: bee_set_attack,
+        set_attack: captured_fighter_set_attack,
         calc_point: |me: &Enemy| {
             if me.state == EnemyState::Formation { 500 } else { 1000 }
         },
@@ -738,7 +749,7 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
                           tractor_beam.can_capture(accessor.get_raw_player_pos()) {
                     event_queue.push(EventType::CapturePlayer(&me.pos + &Vec2I::new(0, 16 * ONE)));
                     tractor_beam.start_capture();
-                    me.capture_state = CaptureState::BeamTracting;
+                    me.capturing_state = CapturingState::BeamTracting;
                     me.attack_step = 100;
                     me.count = 0;
                 }
@@ -750,7 +761,7 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
                 let offset = Vec2I::new(target_pos.x - me.pos.x, (-32 - (HEIGHT + 8)) * ONE);
                 me.warp(offset);
                 me.set_state(EnemyState::MoveToFormation);
-                me.capture_state = CaptureState::None;
+                me.capturing_state = CapturingState::None;
                 event_queue.push(EventType::EndCaptureAttack);
             }
         }
@@ -772,7 +783,7 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
                     me.add_troop(fi);
 
                     me.tractor_beam = None;
-                    me.capture_state = CaptureState::Capturing;
+                    me.capturing_state = CapturingState::Attacking;
                     event_queue.push(EventType::CapturePlayerCompleted);
 
                     me.copy_angle_to_troops = false;
@@ -826,7 +837,9 @@ fn update_attack_traj(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: 
     update_trajectory(me, accessor, event_queue);
 
     if me.state != EnemyState::Attack {
-        if accessor.is_rush() {
+        if me.enemy_type == EnemyType::CapturedFighter {
+            me.disappeared = true;
+        } else if accessor.is_rush() {
             // Continue attacking
             me.attack_step = 0;
             me.count = 0;

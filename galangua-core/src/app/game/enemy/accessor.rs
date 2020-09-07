@@ -11,6 +11,7 @@ pub trait Accessor {
     fn can_player_capture(&self) -> bool;
     fn is_player_capture_completed(&self) -> bool;
     fn capture_state(&self) -> CaptureState;
+    fn captured_fighter_index(&self) -> Option<FormationIndex>;
     fn get_enemies(&self) -> &[Option<Enemy>];
     fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy>;
     fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy>;

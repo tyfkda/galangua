@@ -53,12 +53,12 @@ impl EnemyManager {
         }
     }
 
-    pub fn start_next_stage(&mut self, stage: u32) {
+    pub fn start_next_stage(&mut self, stage: u32, captured_fighter: Option<FormationIndex>) {
         self.enemies = array![None; MAX_ENEMY_COUNT];
         self.alive_enemy_count = 0;
         self.shots = Default::default();
 
-        self.appearance_manager.restart(stage);
+        self.appearance_manager.restart(stage, captured_fighter);
         self.formation.restart();
         self.attack_manager.restart(stage);
         self.stage_state = StageState::APPEARANCE;
@@ -296,7 +296,7 @@ impl EnemyManager {
         self.shots = Default::default();
 
         let stage = 0;
-        self.appearance_manager.restart(stage);
+        self.appearance_manager.restart(stage, None);
         self.appearance_manager.done = true;
         self.formation.restart();
         self.formation.done_appearance();

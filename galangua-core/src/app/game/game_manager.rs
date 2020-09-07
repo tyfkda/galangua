@@ -130,7 +130,12 @@ impl GameManager {
                 self.stage_indicator.update();
                 self.count += 1;
                 if self.count >= 90 {
-                    self.enemy_manager.start_next_stage(self.stage);
+                    let captured_fighter = if self.capture_state == CaptureState::Captured {
+                        Some(FormationIndex(self.capture_enemy_fi.0, self.capture_enemy_fi.1 - 1))
+                    } else {
+                        None
+                    };
+                    self.enemy_manager.start_next_stage(self.stage, captured_fighter);
                     self.state = GameState::Playing;
                 }
             }
@@ -311,6 +316,7 @@ impl GameManager {
                 }
                 EventType::EndCaptureAttack => {
                     self.capture_state = CaptureState::NoCapture;
+                    self.capture_enemy_fi = FormationIndex(0, 0);
                 }
                 EventType::CapturePlayer(capture_pos) => {
                     params.star_manager.set_capturing(true);
@@ -352,11 +358,13 @@ impl GameManager {
                 EventType::RecaptureEnded => {
                     self.enemy_manager.enable_attack(true);
                     self.capture_state = CaptureState::NoCapture;
+                    self.capture_enemy_fi = FormationIndex(0, 0);
                     params.star_manager.set_stop(false);
                     self.state = GameState::Playing;
                 }
                 EventType::EscapeCapturing => {
                     self.capture_state = CaptureState::NoCapture;
+                    self.capture_enemy_fi = FormationIndex(0, 0);
                     params.star_manager.set_capturing(false);
                     self.player.escape_capturing();
                 }
@@ -366,6 +374,7 @@ impl GameManager {
                 }
                 EventType::CapturedFighterDestroyed => {
                     self.capture_state = CaptureState::NoCapture;
+                    self.capture_enemy_fi = FormationIndex(0, 0);
                 }
             }
             i += 1;
@@ -489,6 +498,14 @@ impl AccessorForEnemy for GameManager {
 
     fn capture_state(&self) -> CaptureState {
         return self.capture_state
+    }
+
+    fn captured_fighter_index(&self) -> Option<FormationIndex> {
+        if self.capture_state == CaptureState::NoCapture {
+            None
+        } else {
+            Some(FormationIndex(self.capture_enemy_fi.0, self.capture_enemy_fi.1 - 1))
+        }
     }
 
     fn get_enemies(&self) -> &[Option<Enemy>] {

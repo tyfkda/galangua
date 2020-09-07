@@ -83,6 +83,7 @@ impl AttackManager {
         let fi = match self.cycle % 3 {
             2 => {
                 self.pick_random(&candidates, &mut [1])
+                    .or_else(|| self.pick_captured_fighter(accessor))
             }
             0 | 1 | _ => {
                 self.pick_random(&candidates, &mut [2, 3, 4, 5])
@@ -145,5 +146,18 @@ impl AttackManager {
                 None
             }
         }; Y_COUNT]
+    }
+
+    fn pick_captured_fighter(&mut self, accessor: &mut dyn Accessor) -> Option<FormationIndex> {
+        accessor.captured_fighter_index().and_then(|fi| {
+            if let Some(captured_fighter) = accessor.get_enemy_at(&fi) {
+                if captured_fighter.get_state() == EnemyState::Formation &&
+                    accessor.get_enemy_at(&FormationIndex(fi.0, fi.1 + 1)).is_none()
+                {
+                    return Some(fi);
+                }
+            }
+            None
+        })
     }
 }

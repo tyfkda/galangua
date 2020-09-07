@@ -47,6 +47,7 @@ pub struct AppearanceManager {
     pub(super) done: bool,
     orders: Vec<Info>,
     orders_ptr: &'static [Info],
+    captured_fighter: Option<FormationIndex>,
 }
 
 impl AppearanceManager {
@@ -60,13 +61,15 @@ impl AppearanceManager {
             done: true,
             orders: Vec::new(),
             orders_ptr: &[],
+            captured_fighter: None,
         }
     }
 
-    pub fn restart(&mut self, stage: u32) {
+    pub fn restart(&mut self, stage: u32, captured_fighter: Option<FormationIndex>) {
         *self = Self::new(stage);
         self.done = false;
         self.orders.clear();
+        self.captured_fighter = captured_fighter;
     }
 
     pub fn update(&mut self, enemies: &[Option<Enemy>]) -> Option<Vec<Enemy>> {
@@ -268,6 +271,14 @@ impl AppearanceManager {
 
             _ => {
                 self.done = true;
+            }
+        }
+
+        if self.unit == UNIT_COUNT - 1 {
+            if let Some(fi) = self.captured_fighter {
+                let mut info = self.create_info(fi, self.orders.len() as u32);
+                info.enemy_type = EnemyType::CapturedFighter;
+                self.orders.push(info);
             }
         }
     }
