@@ -170,7 +170,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
         }
 
         renderer.set_texture_color_mod("font", 128, 128, 128);
-        renderer.draw_str("font", 8 * 23, 8 * 0, &format!("FPS{:2}", self.fps_calc.fps()))?;
+        renderer.draw_str("font", 23 * 8, 0 * 8, &format!("FPS{:2}", self.fps_calc.fps()))?;
 
         Ok(())
     }
@@ -235,11 +235,11 @@ fn draw_scores<R: RendererTrait>(
 ) -> Result<(), String> {
     renderer.set_texture_color_mod("font", 255, 0, 0);
     if show_1up {
-        renderer.draw_str("font", 8 * 2, 8 * 0, "1UP")?;
+        renderer.draw_str("font", 2 * 8, 0 * 8, "1UP")?;
     }
-    renderer.draw_str("font", 8 * 9, 8 * 0, "HIGH SCORE")?;
+    renderer.draw_str("font", 9 * 8, 0 * 8, "HIGH SCORE")?;
     renderer.set_texture_color_mod("font", 255, 255, 255);
-    renderer.draw_str("font", 8 * 0, 8 * 1, &format!("{:6}0", score_holder.score / 10))?;
-    renderer.draw_str("font", 8 * 10, 8 * 1, &format!("{:6}0", score_holder.high_score / 10))?;
+    renderer.draw_str("font", 0 * 8, 1 * 8, &format!("{:6}0", score_holder.score / 10))?;
+    renderer.draw_str("font", 10 * 8, 1 * 8, &format!("{:6}0", score_holder.high_score / 10))?;
     Ok(())
 }

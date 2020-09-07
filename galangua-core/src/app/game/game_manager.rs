@@ -176,7 +176,7 @@ impl GameManager {
             }
             GameState::GameOver => {
                 self.count += 1;
-                if self.count >= 2 * 60 {
+                if self.count >= 35 * 60 / 10 {
                     self.state = GameState::Finished;
                 }
             }
@@ -259,23 +259,23 @@ impl GameManager {
         match self.state {
             GameState::StartStage => {
                 renderer.set_texture_color_mod("font", 0, 255, 255);
-                renderer.draw_str("font", 8 * 10, 8 * 17, &format!("STAGE {}", self.stage + 1))?;
+                renderer.draw_str("font", 10 * 8, 18 * 8, &format!("STAGE {}", self.stage + 1))?;
             }
             GameState::WaitReady => {
                 if self.left_ship > 1 {
                     renderer.set_texture_color_mod("font", 0, 255, 255);
-                    renderer.draw_str("font", (28 - 6) / 2 * 8, 8 * 22, "READY")?;
+                    renderer.draw_str("font", (28 - 6) / 2 * 8, 18 * 8, "READY")?;
                 }
             }
             GameState::Captured => {
                 if self.count < 120 {
                     renderer.set_texture_color_mod("font", 255, 0, 0);
-                    renderer.draw_str("font", (28 - 18) / 2 * 8, 8 * 19, "FIGHTER CAPTURED")?;
+                    renderer.draw_str("font", (28 - 16) / 2 * 8, 19 * 8, "FIGHTER CAPTURED")?;
                 }
             }
             GameState::GameOver => {
-                renderer.set_texture_color_mod("font", 255, 255, 255);
-                renderer.draw_str("font", (28 - 10) / 2 * 8, 8 * 10, "GAME OVER")?;
+                renderer.set_texture_color_mod("font", 0, 255, 255);
+                renderer.draw_str("font", (28 - 8) / 2 * 8, 18 * 8, "GAME OVER")?;
             }
             _ => {}
         }
