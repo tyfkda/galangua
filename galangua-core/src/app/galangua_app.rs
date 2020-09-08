@@ -3,12 +3,15 @@ use super::game::game_manager::GameManager;
 use super::game::game_manager::Params as GameManagerParams;
 use super::game::score_holder::ScoreHolder;
 
-use crate::framework::{AppTrait, RendererTrait, VKey};
+use crate::framework::{AppTrait, RendererTrait, SystemTrait, VKey};
 use crate::util::fps_calc::{FpsCalc, TimerTrait};
 use crate::util::pad::{Pad, PadBit};
 
 #[cfg(debug_assertions)]
 use super::debug::EditTrajManager;
+
+const KEY_HIGH_SCORE: &str = "highScore";
+const DEFAULT_HIGH_SCORE: u32 = 0;
 
 #[derive(PartialEq)]
 enum AppState {
@@ -19,7 +22,8 @@ enum AppState {
     EditTraj,
 }
 
-pub struct GalanguaApp<T: TimerTrait> {
+pub struct GalanguaApp<T: TimerTrait, S: SystemTrait> {
+    system: S,
     state: AppState,
     count: u32,
     pad: Pad,
@@ -29,6 +33,7 @@ pub struct GalanguaApp<T: TimerTrait> {
     star_manager: StarManager,
     frame_count: u32,
     score_holder: ScoreHolder,
+    prev_high_score: u32,
 
     #[cfg(debug_assertions)]
     paused: bool,
@@ -36,15 +41,18 @@ pub struct GalanguaApp<T: TimerTrait> {
     edit_traj_manager: Option<EditTrajManager>,
 }
 
-impl<T: TimerTrait> GalanguaApp<T> {
-    pub fn new(timer: T) -> Self {
+impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
+    pub fn new(timer: T, system: S) -> Self {
+        let high_score = system.get_u32(&KEY_HIGH_SCORE).or(Some(DEFAULT_HIGH_SCORE)).unwrap();
+
         let star_manager = StarManager::new();
         let score_holder = ScoreHolder {
             score: 0,
-            high_score: 1000,  //20_000,
+            high_score: high_score,
         };
 
         Self {
+            system,
             state: AppState::Title,
             count: 0,
             pad: Pad::new(),
@@ -54,6 +62,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
             star_manager,
             frame_count: 0,
             score_holder,
+            prev_high_score: 0,
 
             #[cfg(debug_assertions)]
             paused: false,
@@ -91,6 +100,7 @@ impl<T: TimerTrait> GalanguaApp<T> {
                     let mut game_manager = GameManager::new();
                     game_manager.restart();
                     self.game_manager = Some(game_manager);
+                    self.prev_high_score = self.score_holder.high_score;
                     self.score_holder.reset_score();
                     self.state = AppState::Game;
                     self.frame_count = 0;
@@ -177,13 +187,22 @@ impl<T: TimerTrait> GalanguaApp<T> {
 
     fn back_to_title(&mut self) {
         self.star_manager.set_stop(false);
+
+        if self.score_holder.high_score > self.prev_high_score {
+            self.on_high_score_updated();
+        }
+
         self.state = AppState::Title;
         self.count = 0;
         self.game_manager = None;
     }
+
+    fn on_high_score_updated(&mut self) {
+        self.system.set_u32(KEY_HIGH_SCORE, self.score_holder.high_score);
+    }
 }
 
-impl<R: RendererTrait, T: TimerTrait> AppTrait<R> for GalanguaApp<T> {
+impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaApp<T, S> {
     fn on_key(&mut self, vkey: VKey, down: bool) {
         self.pad.on_key(vkey, down);
         if down {

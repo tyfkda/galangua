@@ -5,6 +5,12 @@ const framework = WasmAppFramework.new(
   renderer,
   function get_now() {
     return Date.now()
+  },
+  function get_item(key) {
+    return localStorage.getItem(key)
+  },
+  function set_item(key, value) {
+    localStorage.setItem(key, value)
   })
 
 document.addEventListener('keydown', (event) => {

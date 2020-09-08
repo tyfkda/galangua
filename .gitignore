@@ -12,6 +12,8 @@ Cargo.lock
 
 ###
 
+/.savedata.json
+
 node_modules
 /tools/chr.json
 /tools/chr.png

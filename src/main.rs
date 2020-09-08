@@ -1,5 +1,6 @@
 mod sdl;
 mod std_timer;
+mod std_system;
 
 use counted_array::counted_array;
 use lazy_static::lazy_static;
@@ -12,6 +13,7 @@ use galangua_core::framework::VKey;
 
 use crate::sdl::SdlAppFramework;
 use crate::std_timer::StdTimer;
+use crate::std_system::StdSystem;
 
 const APP_NAME: &str = "Galangua";
 
@@ -41,7 +43,8 @@ pub fn main() -> Result<(), String> {
     };
 
     let timer = StdTimer::new();
-    let app = GalanguaApp::new(timer);
+    let system = StdSystem::new();
+    let app = GalanguaApp::new(timer, system);
     let mut framework = SdlAppFramework::new(app, map_key)?;
     framework.run(APP_NAME,
                   consts::WIDTH as u32, consts::HEIGHT as u32, scale, fullscreen)
