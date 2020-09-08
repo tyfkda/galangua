@@ -42,7 +42,7 @@ pub fn main() -> Result<(), String> {
 
     let timer = StdTimer::new();
     let app = GalanguaApp::new(timer);
-    let mut framework = SdlAppFramework::new(Box::new(app), map_key)?;
+    let mut framework = SdlAppFramework::new(app, map_key)?;
     framework.run(APP_NAME,
                   consts::WIDTH as u32, consts::HEIGHT as u32, scale, fullscreen)
 }

@@ -19,7 +19,7 @@ pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
     sdl_context: Sdl,
     last_update_time: SystemTime,
 
-    app: Box<App>,
+    app: App,
     map_key: MapKeyFunc,
 
     #[cfg(debug_assertions)]
@@ -27,7 +27,7 @@ pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
 }
 
 impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
-    pub fn new(app: Box<App>, map_key: MapKeyFunc) -> Result<Self, String> {
+    pub fn new(app: App, map_key: MapKeyFunc) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
 
         Ok(Self {
