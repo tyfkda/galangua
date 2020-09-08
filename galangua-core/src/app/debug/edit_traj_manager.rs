@@ -13,6 +13,7 @@ pub struct EditTrajManager {
     fi: FormationIndex,
     no: u32,
     flip_x: bool,
+    from_top: bool,
 }
 
 impl EditTrajManager {
@@ -21,6 +22,7 @@ impl EditTrajManager {
             fi: FormationIndex(0, 5),
             no: 0,
             flip_x: false,
+            from_top: false,
         }
     }
 
@@ -47,14 +49,17 @@ impl EditTrajManager {
         if pressed_key == Some(VKey::Num3) {
             self.set_attack(game_manager, true);
         }
-        if pressed_key == Some(VKey::Num8) && self.no > 0 {
+        if pressed_key == Some(VKey::Num9) && self.no > 0 {
             self.no -= 1;
         }
-        if pressed_key == Some(VKey::Num9) {
+        if pressed_key == Some(VKey::Num0) {
             self.no += 1;
         }
-        if pressed_key == Some(VKey::Num0) {
+        if pressed_key == Some(VKey::F) {
             self.flip_x = !self.flip_x;
+        }
+        if pressed_key == Some(VKey::T) {
+            self.from_top = !self.from_top;
         }
     }
 
@@ -68,8 +73,10 @@ impl EditTrajManager {
         renderer.fill_rect(Some([&(&pos + &Vec2I::new(15, 0)), &Vec2I::new(1, 16)]))?;
 
         renderer.set_texture_color_mod("font", 128, 128, 128);
-        renderer.draw_str("font", 2 * 8, 0 * 8, "EDIT MODE")?;
-        renderer.draw_str("font", 2 * 8, 1 * 8, &format!("NO={}, FLIP={}", self.no, self.flip_x.to_string().to_uppercase()))?;
+        renderer.draw_str("font", 0 * 8, 0 * 8, "EDIT MODE")?;
+        renderer.draw_str("font", 0 * 8, 1 * 8, &format!("NO={}", self.no))?;
+        renderer.draw_str("font", 0 * 8, 2 * 8, &format!("F)LIP={}", self.flip_x.to_string().to_uppercase()))?;
+        renderer.draw_str("font", 0 * 8, 3 * 8, &format!("T)OP={}", self.from_top.to_string().to_uppercase()))?;
         Ok(())
     }
 
@@ -86,6 +93,10 @@ impl EditTrajManager {
         if let Some(traj_command_vec) = load_traj_command_file(&filename) {
             let enemy_manager = game_manager.enemy_manager_mut();
             if let Some(enemy) = enemy_manager.get_enemy_at_mut(&self.fi) {
+                if self.from_top {
+                    let pos = *enemy.raw_pos();
+                    enemy.set_pos(&Vec2I::new(pos.x, -16 * ONE));
+                }
                 enemy.set_table_attack(traj_command_vec, flip_x);
             }
         } else {

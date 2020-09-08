@@ -1,6 +1,7 @@
 use super::formation::Y_COUNT;
 use super::tractor_beam::TractorBeam;
 use super::traj::Traj;
+use super::traj_command::TrajCommand;
 use super::traj_command_table::*;
 use super::{Accessor, FormationIndex};
 
@@ -12,9 +13,6 @@ use crate::framework::RendererTrait;
 use crate::util::math::{
     atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, quantize_angle, round_up, square,
     ANGLE, ONE, ONE_BIT};
-
-#[cfg(debug_assertions)]
-use super::traj_command::TrajCommand;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EnemyType {
@@ -267,6 +265,11 @@ impl Enemy {
     }
 
     #[cfg(debug_assertions)]
+    pub fn set_pos(&mut self, pos: &Vec2I) {
+        self.pos = *pos;
+    }
+
+    #[cfg(debug_assertions)]
     pub fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
         let mut traj = Traj::new_with_vec(traj_command_vec, &ZERO_VEC, flip_x, self.formation_index);
         traj.set_pos(&self.pos);
@@ -349,6 +352,7 @@ impl Collidable for Enemy {
 struct EnemyVtable {
     life: u32,
     set_attack: fn(me: &mut Enemy, capture_attack: bool, accessor: &mut dyn Accessor),
+    rush_traj_table: &'static [TrajCommand],
     calc_point: fn(me: &Enemy) -> u32,
     sprite_name: fn(me: &Enemy, pat: usize) -> &str,
     set_damage: fn(me: &mut Enemy, power: u32, accessor: &dyn Accessor,
@@ -464,6 +468,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
     EnemyVtable {
         life: 1,
         set_attack: bee_set_attack,
+        rush_traj_table: &BEE_RUSH_ATTACK_TABLE,
         calc_point: |me: &Enemy| {
             if me.state == EnemyState::Formation { 50 } else { 100 }
         },
@@ -474,6 +479,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
     EnemyVtable {
         life: 1,
         set_attack: butterfly_set_attack,
+        rush_traj_table: &BUTTERFLY_RUSH_ATTACK_TABLE,
         calc_point: |me: &Enemy| {
             if me.state == EnemyState::Formation { 80 } else { 160 }
         },
@@ -510,6 +516,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
 
             me.set_state_with_fn(EnemyState::Attack, update_fn);
         },
+        rush_traj_table: &OWL_RUSH_ATTACK_TABLE,
         calc_point: |me: &Enemy| {
             if me.state == EnemyState::Formation {
                 150
@@ -535,6 +542,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
     EnemyVtable {
         life: 1,
         set_attack: captured_fighter_set_attack,
+        rush_traj_table: &OWL_RUSH_ATTACK_TABLE,
         calc_point: |me: &Enemy| {
             if me.state == EnemyState::Formation { 500 } else { 1000 }
         },
@@ -840,13 +848,14 @@ fn update_attack_traj(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: 
         if me.enemy_type == EnemyType::CapturedFighter {
             me.disappeared = true;
         } else if accessor.is_rush() {
-            // Continue attacking
+            // Rush mode: Continue attacking
             me.attack_step = 0;
             me.count = 0;
             me.attack_frame_count = 0;
 
             let flip_x = me.formation_index.0 >= 5;
-            let mut traj = Traj::new(&OWL_ATTACK_TABLE, &ZERO_VEC, flip_x, me.formation_index);
+            let table = me.vtable.rush_traj_table;
+            let mut traj = Traj::new(table, &ZERO_VEC, flip_x, me.formation_index);
             traj.set_pos(&me.pos);
 
             me.attack_step = 0;

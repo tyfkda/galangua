@@ -13,10 +13,16 @@ VAngle     -3
 Delay      23
 
 VAngle     0
-Delay      37
+Delay      20
 
-VAngle     3
-Delay      23
+VAngle     0.5
+Delay      20
+
+VAngle     0
+WaitYG     220
+
+VAngle     2.5
+Delay      113
 
 VAngle     0
 WaitYG     304
