@@ -14,6 +14,7 @@ const WAIT: u32 = 30;
 
 pub struct AttackManager {
     enable: bool,
+    paused: bool,
     wait: u32,
     attackers: [Option<FormationIndex>; MAX_ATTACKER_COUNT],
     cycle: u32,
@@ -23,6 +24,7 @@ impl AttackManager {
     pub fn new() -> Self {
         Self {
             enable: false,
+            paused: false,
             wait: 0,
             attackers: Default::default(),
             cycle: 0,
@@ -37,6 +39,10 @@ impl AttackManager {
         self.enable = value;
     }
 
+    pub fn pause(&mut self, value: bool) {
+        self.paused = value;
+    }
+
     pub fn is_no_attacker(&self) -> bool {
         self.attackers.iter().all(|x| x.is_none())
     }
@@ -49,7 +55,7 @@ impl AttackManager {
             return;
         }
 
-        if !self.enable {
+        if !self.enable || self.paused {
             return;
         }
 

@@ -258,8 +258,9 @@ impl EnemyManager {
         }
     }
 
-    pub fn enable_attack(&mut self, value: bool) {
-        self.attack_manager.set_enable(value);
+    pub fn pause_attack(&mut self, value: bool) {
+        self.attack_manager.pause(value);
+        self.appearance_manager.pause(value);
     }
 
     pub fn is_no_attacker(&self) -> bool {

@@ -40,6 +40,7 @@ impl Info {
 
 pub struct AppearanceManager {
     stage: u32,
+    paused: bool,
     wait_stationary: bool,
     wait: u32,
     unit: u32,
@@ -54,6 +55,7 @@ impl AppearanceManager {
     pub fn new(stage: u32) -> Self {
         Self {
             stage,
+            paused: false,
             wait_stationary: false,
             wait: 0,
             unit: 0,
@@ -72,6 +74,10 @@ impl AppearanceManager {
         self.captured_fighter = captured_fighter;
     }
 
+    pub fn pause(&mut self, value: bool) {
+        self.paused = value;
+    }
+
     pub fn update(&mut self, enemies: &[Option<Enemy>]) -> Option<Vec<Enemy>> {
         if self.done {
             return None;
@@ -81,30 +87,33 @@ impl AppearanceManager {
     }
 
     fn update_main(&mut self, enemies: &[Option<Enemy>]) -> Option<Vec<Enemy>> {
-        if self.wait_stationary {
-            if !self.is_stationary(enemies) {
-                return None;
-            }
-            self.wait_stationary = false;
-        }
         if self.wait > 0 {
             self.wait -= 1;
             return None;
         }
-        if self.unit >= UNIT_COUNT {
-            self.done = true;
-            return None;
+
+        if !self.paused {
+            if self.wait_stationary {
+                if !self.is_stationary(enemies) {
+                    return None;
+                }
+                self.wait_stationary = false;
+            }
+            if self.unit >= UNIT_COUNT {
+                self.done = true;
+                return None;
+            }
+
+            if self.orders.is_empty() {
+                self.set_orders();
+                // orders is owned by vec, so it lives as long as self and not worry about that.
+                self.orders_ptr = unsafe { extend_lifetime(&self.orders) };
+
+                self.time = 0;
+            }
         }
 
-        if self.orders.is_empty() {
-            self.set_orders();
-            // orders is owned by vec, so it lives as long as self and not worry about that.
-            self.orders_ptr = unsafe { extend_lifetime(&self.orders) };
-
-            self.time = 0;
-        }
-
-        if self.orders_ptr[0].time < self.time {
+        if self.orders.is_empty() || self.orders_ptr[0].time < self.time {
             return None
         }
 

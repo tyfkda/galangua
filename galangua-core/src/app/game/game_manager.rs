@@ -190,12 +190,12 @@ impl GameManager {
     fn next_player(&mut self, params: &mut Params) {
         self.left_ship -= 1;
         if self.left_ship == 0 {
-            self.enemy_manager.enable_attack(false);
+            self.enemy_manager.pause_attack(true);
             self.state = GameState::GameOver;
             self.count = 0;
         } else {
             self.player.restart();
-            self.enemy_manager.enable_attack(true);
+            self.enemy_manager.pause_attack(false);
             params.star_manager.set_stop(false);
             self.state = GameState::Playing;
         }
@@ -305,7 +305,7 @@ impl GameManager {
                 EventType::DeadPlayer => {
                     params.star_manager.set_stop(true);
                     if self.state != GameState::Recapturing {
-                        self.enemy_manager.enable_attack(false);
+                        self.enemy_manager.pause_attack(true);
                         self.state = GameState::PlayerDead;
                         self.count = 0;
                     }
@@ -320,7 +320,7 @@ impl GameManager {
                 }
                 EventType::CapturePlayer(capture_pos) => {
                     params.star_manager.set_capturing(true);
-                    self.enemy_manager.enable_attack(false);
+                    self.enemy_manager.pause_attack(true);
                     self.player.start_capture(&capture_pos);
                     self.state = GameState::Capturing;
                     self.capture_state = CaptureState::Capturing;
@@ -333,7 +333,7 @@ impl GameManager {
                     self.count = 0;
                 }
                 EventType::CaptureSequenceEnded => {
-                    self.enemy_manager.enable_attack(true);
+                    self.enemy_manager.pause_attack(false);
                     self.state = GameState::Playing;
                     self.next_player(params);
                 }
@@ -347,7 +347,7 @@ impl GameManager {
                         let pos = captured_fighter.raw_pos();
                         self.player.start_recapture_effect(&pos);
                         self.enemy_manager.remove_enemy(&captured_fighter_index);
-                        self.enemy_manager.enable_attack(false);
+                        self.enemy_manager.pause_attack(true);
                         self.state = GameState::Recapturing;
                         self.capture_state = CaptureState::Recapturing;
                     }
@@ -356,7 +356,7 @@ impl GameManager {
                     self.player.start_move_home_pos();
                 }
                 EventType::RecaptureEnded => {
-                    self.enemy_manager.enable_attack(true);
+                    self.enemy_manager.pause_attack(false);
                     self.capture_state = CaptureState::NoCapture;
                     self.capture_enemy_fi = FormationIndex(0, 0);
                     params.star_manager.set_stop(false);
@@ -369,7 +369,7 @@ impl GameManager {
                     self.player.escape_capturing();
                 }
                 EventType::EscapeEnded => {
-                    self.enemy_manager.enable_attack(true);
+                    self.enemy_manager.pause_attack(false);
                     self.state = GameState::Playing;
                 }
                 EventType::CapturedFighterDestroyed => {
