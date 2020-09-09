@@ -32,6 +32,7 @@ pub struct EnemyManager {
     enemies: [Option<Enemy>; MAX_ENEMY_COUNT],
     alive_enemy_count: u32,
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
+    shot_paused_count: u32,
     formation: Formation,
     appearance_manager: AppearanceManager,
     attack_manager: AttackManager,
@@ -45,6 +46,7 @@ impl EnemyManager {
             enemies: array![None; MAX_ENEMY_COUNT],
             alive_enemy_count: 0,
             shots: Default::default(),
+            shot_paused_count: 0,
             formation: Formation::new(),
             appearance_manager: AppearanceManager::new(0),
             attack_manager: AttackManager::new(),
@@ -72,6 +74,10 @@ impl EnemyManager {
 
     pub fn update<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
         self.frame_count = self.frame_count.wrapping_add(1);
+        if self.shot_paused_count > 0 {
+            self.shot_paused_count -= 1;
+        }
+
         self.update_appearance();
         self.update_formation();
         self.update_attackers(accessor, event_queue);
@@ -108,7 +114,7 @@ impl EnemyManager {
 
     pub fn set_damage_to_enemy<T: Accessor>(
         &mut self, fi: &FormationIndex, power: u32,
-        accessor: &T, event_queue: &mut EventQueue,
+        accessor: &mut T, event_queue: &mut EventQueue,
     ) -> bool {
         let index = calc_array_index(fi);
         if let Some(enemy) = self.enemies[index].as_mut() {
@@ -241,7 +247,15 @@ impl EnemyManager {
         }
     }
 
+    pub fn pause_enemy_shot(&mut self, wait: u32) {
+        self.shot_paused_count = wait;
+    }
+
     pub fn spawn_shot(&mut self, pos: &Vec2I, target_pos: &[Option<Vec2I>], speed: i32) {
+        if self.shot_paused_count > 0 {
+            return;
+        }
+
         if let Some(index) = self.shots.iter().position(|x| x.is_none()) {
             let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
             let count = target_pos.iter().flat_map(|x| x).count();

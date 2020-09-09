@@ -524,6 +524,10 @@ impl AccessorForEnemy for GameManager {
         self.enemy_manager.get_formation_pos(formation_index)
     }
 
+    fn pause_enemy_shot(&mut self, wait: u32) {
+        self.enemy_manager.pause_enemy_shot(wait);
+    }
+
     fn is_rush(&self) -> bool {
         self.state == GameState::Playing && self.enemy_manager.is_rush()
     }

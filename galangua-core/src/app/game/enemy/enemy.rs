@@ -14,6 +14,8 @@ use crate::util::math::{
     atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, quantize_angle, round_up, square,
     ANGLE, ONE, ONE_BIT};
 
+const OWL_DESTROY_SHOT_WAIT: u32 = 3 * 60;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EnemyType {
     Bee,
@@ -205,7 +207,7 @@ impl Enemy {
     }
 
     pub fn set_damage<A: Accessor>(
-        &mut self, power: u32, accessor: &A, event_queue: &mut EventQueue,
+        &mut self, power: u32, accessor: &mut A, event_queue: &mut EventQueue,
     ) -> DamageResult {
         (self.vtable.set_damage)(self, power, accessor, event_queue)
     }
@@ -355,7 +357,7 @@ struct EnemyVtable {
     rush_traj_table: &'static [TrajCommand],
     calc_point: fn(me: &Enemy) -> u32,
     sprite_name: fn(me: &Enemy, pat: usize) -> &str,
-    set_damage: fn(me: &mut Enemy, power: u32, accessor: &dyn Accessor,
+    set_damage: fn(me: &mut Enemy, power: u32, accessor: &mut dyn Accessor,
                    event_queue: &mut EventQueue) -> DamageResult,
 }
 
@@ -399,7 +401,7 @@ fn butterfly_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut d
     me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
 }
 
-fn bee_set_damage(me: &mut Enemy, power: u32, _accessor: &dyn Accessor,
+fn bee_set_damage(me: &mut Enemy, power: u32, _accessor: &mut dyn Accessor,
                   _event_queue: &mut EventQueue) -> DamageResult {
     if me.life > power {
         me.life -= power;
@@ -411,7 +413,7 @@ fn bee_set_damage(me: &mut Enemy, power: u32, _accessor: &dyn Accessor,
     }
 }
 
-fn owl_set_damage(me: &mut Enemy, power: u32, accessor: &dyn Accessor,
+fn owl_set_damage(me: &mut Enemy, power: u32, accessor: &mut dyn Accessor,
                   event_queue: &mut EventQueue) -> DamageResult {
     if me.life > power {
         me.life -= power;
@@ -442,6 +444,8 @@ fn owl_set_damage(me: &mut Enemy, power: u32, accessor: &dyn Accessor,
             }
         }
         me.capturing_state = CapturingState::None;
+
+        accessor.pause_enemy_shot(OWL_DESTROY_SHOT_WAIT);
 
         DamageResult { destroyed: true, killed, point }
     }
@@ -547,7 +551,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
             if me.state == EnemyState::Formation { 500 } else { 1000 }
         },
         sprite_name: |_me: &Enemy, _pat: usize| "rustacean_captured",
-        set_damage: |me: &mut Enemy, power: u32, _accessor: &dyn Accessor, event_queue: &mut EventQueue| -> DamageResult {
+        set_damage: |me: &mut Enemy, power: u32, _accessor: &mut dyn Accessor, event_queue: &mut EventQueue| -> DamageResult {
             if me.life > power {
                 me.life -= power;
                 DamageResult { destroyed: false, killed: false, point: 0 }
