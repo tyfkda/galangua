@@ -1,4 +1,5 @@
 use super::traj_command::TrajCommand;
+use super::traj_command::TrajCommand::*;
 use super::{Accessor, FormationIndex};
 
 use crate::app::consts::*;
@@ -127,32 +128,32 @@ impl Traj {
 
     fn handle_one_command(&mut self, command: &TrajCommand, accessor: &dyn Accessor) -> bool {
         match *command {
-            TrajCommand::Pos(mut x, y) => {
+            Pos(mut x, y) => {
                 if self.flip_x {
                     x = WIDTH * ONE - x;
                 }
                 self.pos = Vec2I::new(x, y);
             }
-            TrajCommand::Speed(speed) => {
+            Speed(speed) => {
                 self.speed = speed;
             }
-            TrajCommand::Angle(mut angle) => {
+            Angle(mut angle) => {
                 if self.flip_x {
                     angle = -angle;
                 }
                 self.angle = angle;
             }
-            TrajCommand::VAngle(mut vangle) => {
+            VAngle(mut vangle) => {
                 if self.flip_x {
                     vangle = -vangle;
                 }
                 self.vangle = vangle;
             }
-            TrajCommand::Delay(delay) => {
+            Delay(delay) => {
                 self.delay = delay;
                 return false;
             }
-            TrajCommand::DestAngle(mut dest_angle, radius) => {
+            DestAngle(mut dest_angle, radius) => {
                 if self.flip_x {
                     dest_angle = -dest_angle;
                 }
@@ -169,22 +170,22 @@ impl Traj {
                 }
                 return false;
             }
-            TrajCommand::WaitYG(value) => {
+            WaitYG(value) => {
                 self.wait_pred = Some(Box::new(move |&pos| pos.y >= value));
                 return false;
             }
-            TrajCommand::AddPos(mut x, y) => {
+            AddPos(mut x, y) => {
                 if self.flip_x {
                     x = -x;
                 }
                 self.pos.x += x;
                 self.pos.y += y;
             }
-            TrajCommand::CopyFormationX => {
+            CopyFormationX => {
                 let formation_pos = accessor.get_formation_pos(&self.fi);
                 self.pos.x = formation_pos.x;
             }
-            TrajCommand::Shot(delay) => {
+            Shot(delay) => {
                 if self.shot_enable {
                     self.shot = Some(delay);
                 }
