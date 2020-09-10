@@ -76,6 +76,11 @@ counted_array!(pub(super) const ASSAULT_TABLE: [[u32; 5]; _] = [
     [1, 0, 0, 1, 1],
     [1, 0, 0, 1, 1],
     [1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1],
+    [2, 1, 1, 2, 2],
+    [2, 1, 1, 2, 2],
+    [2, 1, 1, 2, 2],
+    [2, 2, 2, 2, 2],
 ]);
 
 counted_array!(pub(super) const SHOT_ENABLE_TABLE: [[u32; 5]; _] = [

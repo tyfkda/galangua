@@ -153,6 +153,12 @@ impl Traj {
                 self.delay = delay;
                 return false;
             }
+            Accelerate => {
+                const MAX_STAGE: i32 = 16;
+                const MAX_SPEED: i32 = 5 * ONE;
+                let stage_no = accessor.get_stage_no();
+                self.speed += (MAX_SPEED - self.speed) * std::cmp::min(stage_no as i32, MAX_STAGE) / MAX_STAGE;
+            }
             DestAngle(mut dest_angle, radius) => {
                 if self.flip_x {
                     dest_angle = -dest_angle;

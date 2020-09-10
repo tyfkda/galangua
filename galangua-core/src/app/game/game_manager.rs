@@ -13,6 +13,7 @@ use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::pad::Pad;
+use crate::util::math::ONE;
 
 const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;
@@ -290,8 +291,8 @@ impl GameManager {
                 EventType::MyShot(pos, dual, angle) => {
                     self.spawn_myshot(&pos, dual, angle);
                 }
-                EventType::EneShot(pos, speed) => {
-                    self.spawn_ene_shot(&pos, speed);
+                EventType::EneShot(pos) => {
+                    self.spawn_ene_shot(&pos);
                 }
                 EventType::AddScore(add) => {
                     params.score_holder.add_score(add);
@@ -388,11 +389,12 @@ impl GameManager {
         }
     }
 
-    fn spawn_ene_shot(&mut self, pos: &Vec2I, speed: i32) {
+    fn spawn_ene_shot(&mut self, pos: &Vec2I) {
         let player_pos = [
             Some(*self.player.get_raw_pos()),
             self.player.dual_pos(),
         ];
+        let speed = calc_ene_shot_speed(self.stage);
         self.enemy_manager.spawn_shot(pos, &player_pos, speed);
     }
 
@@ -480,6 +482,10 @@ impl AccessorForEnemy for GameManager {
         self.player.get_raw_pos()
     }
 
+    fn get_dual_player_pos(&self) -> Option<Vec2I> {
+        self.player.dual_pos()
+    }
+
     fn is_player_dual(&self) -> bool {
         self.player.is_dual()
     }
@@ -531,4 +537,14 @@ impl AccessorForEnemy for GameManager {
     fn is_rush(&self) -> bool {
         self.state == GameState::Playing && self.enemy_manager.is_rush()
     }
+
+    fn get_stage_no(&self) -> u32 {
+        self.stage
+    }
+}
+
+fn calc_ene_shot_speed(stage: u32) -> i32 {
+    const MAX_STAGE: i32 = 16;
+    let per = std::cmp::min(stage as i32, MAX_STAGE) * ONE / MAX_STAGE;
+    (ENE_SHOT_SPEED2 - ENE_SHOT_SPEED1) * per / ONE + ENE_SHOT_SPEED1
 }

@@ -157,7 +157,7 @@ impl AppearanceManager {
     fn create_orders(&mut self) {
         let base = self.unit * 8;
         let entry = &UNIT_TABLE[(self.stage as usize) % UNIT_TABLE.len()][self.unit as usize];
-        let assault_count = ASSAULT_TABLE[min(self.stage as usize, ASSAULT_TABLE.len() - 1)][self.unit as usize];
+        let assault_count = ASSAULT_TABLE[min(self.stage as usize, ASSAULT_TABLE.len() - 1)][self.unit as usize] as usize;
 
         match entry.pat {
             0 => {
@@ -170,15 +170,12 @@ impl AppearanceManager {
                 }
 
                 if assault_count > 0 {
-                    let n = self.orders.len() / 2;
                     let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-                    let mut index = rng.gen_range(0, n + 1);
-                    let add = if index == 0 { 1 } else if index == n { -1 } else {
-                        rng.gen_range(0, 2) * 2 - 1
-                    };
-
                     let mut assault_index = 0;
-                    for lr in 0..2 {
+                    for i in 0..assault_count * 2 {
+                        let lr = i & 1;
+                        let n = self.orders.len() / 2;
+                        let index = rng.gen_range(0, n + 1);
                         self.orders.push(self.orders[0]);
                         // Shift
                         for j in 0..(n - index) {
@@ -189,7 +186,6 @@ impl AppearanceManager {
                         assault_index += 1;
                         let ins = index * 2 + lr;
                         self.orders[ins] = self.create_info(fi, ins as u32);
-                        index = ((index as i32) + add) as usize;
                     }
 
                     recalc_order_time(&mut self.orders, STEP_WAIT, 2);
@@ -203,16 +199,15 @@ impl AppearanceManager {
                 }
 
                 if assault_count > 0 {
-                    let n = self.orders.len();
                     let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-                    let index = rng.gen_range(0, n + 1);
-
                     let mut assault_index = 0;
-                    for i in 0..2 {
+                    for _i in 0..assault_count * 2 {
+                        let n = self.orders.len();
+                        let index = rng.gen_range(0, n + 1);
                         let fi = gen_assault_index(assault_index);
                         assault_index += 1;
-                        let info = self.create_info(fi, (index + i) as u32);
-                        self.orders.insert(index + i, info);
+                        let info = self.create_info(fi, index as u32);
+                        self.orders.insert(index, info);
                     }
 
                     recalc_order_time(&mut self.orders, STEP_WAIT, 1);
@@ -226,16 +221,15 @@ impl AppearanceManager {
                 }
 
                 if assault_count > 0 {
-                    let n = self.orders.len();
                     let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-                    let index = rng.gen_range(0, n + 1);
-
                     let mut assault_index = 0;
-                    for i in 0..2 {
+                    for _i in 0..assault_count * 2 {
+                        let n = self.orders.len();
+                        let index = rng.gen_range(0, n + 1);
                         let fi = gen_assault_index(assault_index);
                         assault_index += 1;
-                        let info = self.create_info(fi, (index + i) as u32);
-                        self.orders.insert(index + i, info);
+                        let info = self.create_info(fi, index as u32);
+                        self.orders.insert(index, info);
                     }
 
                     recalc_order_time(&mut self.orders, STEP_WAIT, 1);
@@ -251,15 +245,12 @@ impl AppearanceManager {
                 }
 
                 if assault_count > 0 {
-                    let n = self.orders.len() / 2;
                     let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-                    let mut index = rng.gen_range(0, n + 1);
-                    let add = if index == 0 { 1 } else if index == n { -1 } else {
-                        rng.gen_range(0, 2) * 2 - 1
-                    };
-
                     let mut assault_index = 0;
-                    for lr in 0..2 {
+                    for i in 0..assault_count * 2 {
+                        let lr = i & 1;
+                        let n = self.orders.len() / 2;
+                        let index = rng.gen_range(0, n + 1);
                         self.orders.push(self.orders[0]);
                         // Shift
                         for j in 0..(n - index) {
@@ -270,8 +261,6 @@ impl AppearanceManager {
                         assault_index += 1;
                         let ins = index * 2 + lr;
                         self.orders[ins] = self.create_info(fi, ins as u32);
-
-                        index = ((index as i32) + add) as usize;
                     }
 
                     recalc_order_time(&mut self.orders, STEP_WAIT, 2);

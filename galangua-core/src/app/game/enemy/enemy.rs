@@ -1,3 +1,6 @@
+use rand::{Rng, SeedableRng};
+use rand_xoshiro::Xoshiro128Plus;
+
 use super::formation::Y_COUNT;
 use super::tractor_beam::TractorBeam;
 use super::traj::Traj;
@@ -176,13 +179,21 @@ impl Enemy {
         }
     }
 
-    pub fn update_attack(&mut self, _accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    pub fn update_attack(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         self.attack_frame_count += 1;
 
-        const SHOT_INTERVAL: u32 = 16;
-        const SHOT_COUNT: u32 = 2;
-        if self.attack_frame_count <= SHOT_INTERVAL * SHOT_COUNT && self.attack_frame_count % SHOT_INTERVAL == 0 {
-            event_queue.push(EventType::EneShot(self.pos, ENE_SHOT_SPEED));
+        let stage_no = accessor.get_stage_no();
+        let shot_count = 2 + stage_no / 4;
+        let shot_count = std::cmp::min(shot_count , 5);
+        let shot_interval = 20 - shot_count;
+
+        if self.attack_frame_count <= shot_interval * shot_count && self.attack_frame_count % shot_interval == 0 {
+            event_queue.push(EventType::EneShot(self.pos));
+            for troop_fi in self.troops.iter().flat_map(|x| x) {
+                if let Some(enemy) = accessor.get_enemy_at(troop_fi) {
+                    event_queue.push(EventType::EneShot(enemy.pos));
+                }
+            }
         }
     }
 
@@ -248,10 +259,10 @@ impl Enemy {
         let diff = &target - &self.pos;
         let sq_distance = square(diff.x >> (ONE_BIT / 2)) + square(diff.y >> (ONE_BIT / 2));
         if sq_distance > square(self.speed >> (ONE_BIT / 2)) {
-            const DLIMIT: i32 = 5 * ONE;
+            let dlimit: i32 = self.speed * 5 / 3;
             let target_angle = atan2_lut(-diff.y, diff.x);
             let d = diff_angle(target_angle, self.angle);
-            self.angle += clamp(d, -DLIMIT, DLIMIT);
+            self.angle += clamp(d, -dlimit, dlimit);
             self.vangle = 0;
             self.capturing_state = CapturingState::None;
             true
@@ -333,6 +344,23 @@ impl Enemy {
     fn warp(&mut self, offset: Vec2I) {
         self.pos += offset;
         // No need to modify troops, because offset is calculated from previous position.
+    }
+
+    fn rush_attack(&mut self) {
+        self.attack_step = 0;
+        self.count = 0;
+        self.attack_frame_count = 0;
+
+        let flip_x = self.formation_index.0 >= 5;
+        let table = self.vtable.rush_traj_table;
+        let mut traj = Traj::new(table, &ZERO_VEC, flip_x, self.formation_index);
+        traj.set_pos(&self.pos);
+
+        self.attack_step = 0;
+        self.count = 0;
+        self.traj = Some(traj);
+
+        self.set_state_with_fn(EnemyState::Attack, update_attack_traj);
     }
 }
 
@@ -585,7 +613,7 @@ fn update_trajectory(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &
             if wait > 0 {
                 me.shot_wait = Some(wait - 1);
             } else {
-                event_queue.push(EventType::EneShot(me.pos, ENE_SHOT_SPEED));
+                event_queue.push(EventType::EneShot(me.pos));
                 me.shot_wait = None;
             }
         }
@@ -596,8 +624,16 @@ fn update_trajectory(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &
             if me.state == EnemyState::Appearance &&
                 me.formation_index.1 >= Y_COUNT as u8  // Assault
             {
-                let player_pos = accessor.get_raw_player_pos();  // TODO: Dual.
-                me.target_pos = *player_pos;
+                let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+                let target_pos = [
+                    Some(*accessor.get_raw_player_pos()),
+                    accessor.get_dual_player_pos(),
+                ];
+                let count = target_pos.iter().flat_map(|x| x).count();
+                let target: &Vec2I = target_pos.iter()
+                    .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();
+
+                me.target_pos = *target;
                 me.vangle = 0;
                 me.set_state(EnemyState::Assault);
             } else {
@@ -658,7 +694,7 @@ fn update_attack_normal(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue
             me.attack_step += 1;
             me.count = 0;
 
-            event_queue.push(EventType::EneShot(me.pos, ENE_SHOT_SPEED));
+            event_queue.push(EventType::EneShot(me.pos));
         }
         1 => {
             if (me.vangle < 0 && me.angle <= -160 * ONE) ||
@@ -772,9 +808,14 @@ fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queu
                 let target_pos = accessor.get_formation_pos(&me.formation_index);
                 let offset = Vec2I::new(target_pos.x - me.pos.x, (-32 - (HEIGHT + 8)) * ONE);
                 me.warp(offset);
-                me.set_state(EnemyState::MoveToFormation);
-                me.capturing_state = CapturingState::None;
-                event_queue.push(EventType::EndCaptureAttack);
+
+                if accessor.is_rush() {
+                    me.rush_attack();
+                } else {
+                    me.set_state(EnemyState::MoveToFormation);
+                    me.capturing_state = CapturingState::None;
+                    event_queue.push(EventType::EndCaptureAttack);
+                }
             }
         }
         // Capture sequence
@@ -853,20 +894,7 @@ fn update_attack_traj(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: 
             me.disappeared = true;
         } else if accessor.is_rush() {
             // Rush mode: Continue attacking
-            me.attack_step = 0;
-            me.count = 0;
-            me.attack_frame_count = 0;
-
-            let flip_x = me.formation_index.0 >= 5;
-            let table = me.vtable.rush_traj_table;
-            let mut traj = Traj::new(table, &ZERO_VEC, flip_x, me.formation_index);
-            traj.set_pos(&me.pos);
-
-            me.attack_step = 0;
-            me.count = 0;
-            me.traj = Some(traj);
-
-            me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
+            me.rush_attack();
         }
     }
 }

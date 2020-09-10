@@ -108,19 +108,20 @@ impl Formation {
     fn update_formation_scale(&mut self) {
         let t = (self.moving_count as i32) & 255;
         let bx = WIDTH / 2;
-        let by = BASE_Y + 16;
+        let by = BASE_Y;
         let space = WIDTH - X_COUNT as i32 * 16;
-        let factor = (space / 2 * ONE) / ((X_COUNT as i32 - 1) * 16 / 2);
-        let factor = if t >= 128 { -factor } else { factor };
+        let factor_x = (space / 2 * ONE) / ((X_COUNT as i32 - 1) * 16 / 2);
+        let factor_x = if t >= 128 { -factor_x } else { factor_x };
+        let factor_y = factor_x * 3 / 4;
 
         for i in 0..X_COUNT {
             let pos_x = BASE_X_TABLE[i];
-            self.xtbl[i] += (pos_x - bx) * factor / 128;
+            self.xtbl[i] += (pos_x - bx) * factor_x / 128;
         }
 
         for i in 0..Y_COUNT {
             let pos_y = BASE_Y_TABLE[i];
-            self.ytbl[i] += (pos_y - by) * factor / 128;
+            self.ytbl[i] += (pos_y - by) * factor_y / 128;
         }
 
         self.moving_count += 1;

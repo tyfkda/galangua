@@ -17,6 +17,7 @@ counted_array!(pub const COMMAND_TABLE1: [TrajCommand; _] = [
     Delay(17),
     VAngle(0),
     Delay(30),
+    Accelerate,
     DestAngle((ANGLE / 8) * ONE, 30 * ONE),
     VAngle(0),
 ]);
@@ -32,6 +33,7 @@ counted_array!(pub const COMMAND_TABLE2: [TrajCommand; _] = [
     VAngle(-2 * ONE),
     Delay(17),
     Shot(8),
+    Accelerate,
     DestAngle((-ANGLE + (ANGLE / 8)) * ONE, 20 * ONE),
     VAngle(0),
 ]);
