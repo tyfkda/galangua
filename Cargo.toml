@@ -31,3 +31,6 @@ members = [
     "galangua-core",
     "galangua-wasm",
 ]
+exclude = [
+    "tools"
+]
