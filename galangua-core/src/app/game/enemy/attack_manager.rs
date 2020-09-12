@@ -75,7 +75,7 @@ impl AttackManager {
         for attacker_opt in self.attackers.iter_mut().filter(|x| x.is_some()) {
             let formation_index = attacker_opt.as_ref().unwrap();
             if let Some(enemy) = accessor.get_enemy_at(formation_index) {
-                if enemy.get_state() == EnemyState::Formation {
+                if enemy.state() == EnemyState::Formation {
                     *attacker_opt = None;
                 }
             } else {
@@ -130,7 +130,7 @@ impl AttackManager {
             let left = (0..X_COUNT).find_map(|j| {
                 let fi = FormationIndex(j as u8, i as u8);
                 if let Some(enemy) = accessor.get_enemy_at(&fi) {
-                    if enemy.get_state() == EnemyState::Formation {
+                    if enemy.state() == EnemyState::Formation {
                         return Some(j);
                     }
                 }
@@ -141,7 +141,7 @@ impl AttackManager {
                 let r = ((l as usize)..X_COUNT).rev().find_map(|j| {
                     let fi = FormationIndex(j as u8, i as u8);
                     if let Some(enemy) = accessor.get_enemy_at(&fi) {
-                        if enemy.get_state() == EnemyState::Formation {
+                        if enemy.state() == EnemyState::Formation {
                             return Some(j);
                         }
                     }
@@ -157,7 +157,7 @@ impl AttackManager {
     fn pick_captured_fighter<A: Accessor>(&mut self, accessor: &mut A) -> Option<FormationIndex> {
         accessor.captured_fighter_index().and_then(|fi| {
             if let Some(captured_fighter) = accessor.get_enemy_at(&fi) {
-                if captured_fighter.get_state() == EnemyState::Formation &&
+                if captured_fighter.state() == EnemyState::Formation &&
                     accessor.get_enemy_at(&FormationIndex(fi.0, fi.1 + 1)).is_none()
                 {
                     return Some(fi);

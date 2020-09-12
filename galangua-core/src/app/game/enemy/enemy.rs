@@ -116,7 +116,7 @@ impl Enemy {
         &self.pos
     }
 
-    pub fn get_state(&self) -> EnemyState {
+    pub fn state(&self) -> EnemyState {
         self.state
     }
 

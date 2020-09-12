@@ -391,7 +391,7 @@ impl GameManager {
 
     fn spawn_ene_shot(&mut self, pos: &Vec2I) {
         let player_pos = [
-            Some(*self.player.get_raw_pos()),
+            Some(*self.player.raw_pos()),
             self.player.dual_pos(),
         ];
         let speed = calc_ene_shot_speed(self.stage);
@@ -435,7 +435,7 @@ impl GameManager {
 
         let collbox_opts: [Option<(CollBox, Vec2I)>; 2] = [
             self.player.dual_collbox().map(|c| (c, self.player.dual_pos().unwrap())),
-            self.player.get_collbox().map(|c| (c, *self.player.get_raw_pos())),
+            self.player.get_collbox().map(|c| (c, *self.player.raw_pos())),
         ];
 
         for (collbox, player_pos) in collbox_opts.iter().flat_map(|x| x) {
@@ -479,7 +479,7 @@ impl AccessorForPlayer for GameManager {
 
 impl AccessorForEnemy for GameManager {
     fn get_raw_player_pos(&self) -> &Vec2I {
-        self.player.get_raw_pos()
+        self.player.raw_pos()
     }
 
     fn get_dual_player_pos(&self) -> Option<Vec2I> {

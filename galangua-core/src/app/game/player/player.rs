@@ -172,7 +172,7 @@ impl Player {
         round_up(&self.pos)
     }
 
-    pub fn get_raw_pos(&self) -> &Vec2I {
+    pub fn raw_pos(&self) -> &Vec2I {
         &self.pos
     }
 
