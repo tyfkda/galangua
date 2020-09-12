@@ -115,14 +115,6 @@ impl GameManager {
         self.state == GameState::Finished
     }
 
-    /*pub fn score(&self) -> u32 {
-        self.score_holder.score
-    }
-
-    pub fn high_score(&self) -> u32 {
-        self.score_holder.high_score
-    }*/
-
     pub fn update(&mut self, params: &mut Params) {
         self.update_common(params);
 
