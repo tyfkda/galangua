@@ -3,6 +3,7 @@ Galangua
 
 2D shoot 'em up game, written in Rust.
 
+[![screenshot](doc/ss.png)](https://tyfkda.github.io/galangua/)
 
 ### How to play (Control)
 
