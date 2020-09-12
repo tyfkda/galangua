@@ -3,7 +3,7 @@
   "scripts": {
     "start": "npm run pack && npm run copy",
     "pack": "npx spritesheet-js -n chr --trim ./img/chr/*.png",
-    "copy": "cp chr* ../assets/"
+    "copy": "mv chr* ../../assets/"
   },
   "devDependencies": {
     "spritesheet-js": "1.2.6"

@@ -15,6 +15,4 @@ Cargo.lock
 /.savedata.json
 
 node_modules
-/tools/chr.json
-/tools/chr.png
-/tools/package-lock.json
+/tools/gen_sprite_sheet/package-lock.json
