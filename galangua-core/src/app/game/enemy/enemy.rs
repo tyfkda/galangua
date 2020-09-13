@@ -265,11 +265,11 @@ impl Enemy {
             let d = diff_angle(target_angle, self.angle);
             self.angle += clamp(d, -dlimit, dlimit);
             self.vangle = 0;
-            self.capturing_state = CapturingState::None;
             true
         } else {
             self.pos = target;
             self.speed = 0;
+            self.capturing_state = CapturingState::None;
             false
         }
     }
