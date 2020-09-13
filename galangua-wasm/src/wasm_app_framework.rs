@@ -37,7 +37,7 @@ impl WasmAppFramework {
             },
             move |key, value| {
                 let this = JsValue::NULL;
-                set_item_fn.call2(&this, &JsValue::from(key), &JsValue::from(value));
+                set_item_fn.call2(&this, &JsValue::from(key), &JsValue::from(value)).unwrap();
             },
         );
         let mut app = Box::new(GalanguaApp::new(timer, system));
