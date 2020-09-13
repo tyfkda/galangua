@@ -298,6 +298,7 @@ impl GameManager {
                     self.spawn_ene_shot(&pos);
                 }
                 EventType::AddScore(add) => {
+                    self.add_score(params.score_holder.score, add);
                     params.score_holder.add_score(add);
                 }
                 EventType::EarnPoint(point_type, pos) => {
@@ -382,6 +383,22 @@ impl GameManager {
             i += 1;
         }
         self.event_queue.clear();
+    }
+
+    fn add_score(&mut self, before: u32, add: u32) {
+        let ext = if before < 20_000 {
+            20_000
+        } else {
+            const UNIT: u32 = 70_000;
+            (before + UNIT - 1) / UNIT * UNIT
+        };
+        if before + add >= ext {
+            self.extend_ship();
+        }
+    }
+
+    fn extend_ship(&mut self) {
+        self.left_ship += 1;
     }
 
     fn spawn_myshot(&mut self, pos: &Vec2I, dual: bool, angle: i32) {
