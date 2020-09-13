@@ -71,7 +71,7 @@ impl StarManager {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R)
     where
         R: RendererTrait,
     {
@@ -85,10 +85,8 @@ impl StarManager {
             let b =  star.c       & 0xff;
             renderer.set_draw_color(r as u8, g as u8, b as u8);
             let pos = round_up(&star.pos);
-            renderer.fill_rect(Some([&pos, &Vec2I::new(1, 1)]))?;
+            renderer.fill_rect(Some([&pos, &Vec2I::new(1, 1)]));
         }
-
-        Ok(())
     }
 
     pub fn set_capturing(&mut self, value: bool) {

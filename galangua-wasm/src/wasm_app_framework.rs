@@ -42,7 +42,7 @@ impl WasmAppFramework {
         );
         let mut app = Box::new(GalanguaApp::new(timer, system));
 
-        app.init(&mut renderer).expect("app.init failed");
+        app.init(&mut renderer);
 
         Self {
             app,
@@ -61,10 +61,7 @@ impl WasmAppFramework {
     }
 
     pub fn draw(&mut self) {
-        self.app.draw(&mut self.renderer)
-            .unwrap_or_else(|e| {
-                web_sys::console::error_1(&format!("err: {:?}", e.to_string()).into());
-            })
+        self.app.draw(&mut self.renderer);
     }
 }
 

@@ -195,24 +195,22 @@ impl Enemy {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R, pat: usize) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R, pat: usize)
     where
         R: RendererTrait,
     {
         if self.is_ghost() {
-            return Ok(());
+            return;
         }
 
         let sprite = (self.vtable.sprite_name)(self, pat);
         let angle = quantize_angle(self.angle, ANGLE_DIV);
         let pos = self.pos();
-        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
+        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None);
 
         if let Some(tractor_beam) = &self.tractor_beam {
-            tractor_beam.draw(renderer)?;
+            tractor_beam.draw(renderer);
         }
-
-        Ok(())
     }
 
     pub fn set_damage<A: Accessor>(

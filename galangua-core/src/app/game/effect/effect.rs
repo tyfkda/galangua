@@ -37,7 +37,7 @@ impl Effect {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R)
     where
         R: RendererTrait,
     {
@@ -78,12 +78,12 @@ impl SequentialSpriteAnime {
         self.frame < self.sprites.len() as u32
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R)
     where
         R: RendererTrait,
     {
         let sprite = self.sprites[self.frame as usize];
-        renderer.draw_sprite(sprite, &self.pos)
+        renderer.draw_sprite(sprite, &self.pos);
     }
 }
 

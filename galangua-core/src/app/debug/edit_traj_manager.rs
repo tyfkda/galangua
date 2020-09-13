@@ -63,21 +63,20 @@ impl EditTrajManager {
         }
     }
 
-    pub fn draw<R: RendererTrait>(&mut self, renderer: &mut R, game_manager: &mut GameManager) -> Result<(), String> {
+    pub fn draw<R: RendererTrait>(&mut self, renderer: &mut R, game_manager: &mut GameManager) {
         let enemy_manager = game_manager.enemy_manager_mut();
         let pos = &(&enemy_manager.get_formation_pos(&self.fi) / ONE) + &Vec2I::new(-8, -8);
         renderer.set_draw_color(255, 0, 255);
-        renderer.fill_rect(Some([&pos, &Vec2I::new(16, 1)]))?;
-        renderer.fill_rect(Some([&pos, &Vec2I::new(1, 16)]))?;
-        renderer.fill_rect(Some([&(&pos + &Vec2I::new(0, 15)), &Vec2I::new(16, 1)]))?;
-        renderer.fill_rect(Some([&(&pos + &Vec2I::new(15, 0)), &Vec2I::new(1, 16)]))?;
+        renderer.fill_rect(Some([&pos, &Vec2I::new(16, 1)]));
+        renderer.fill_rect(Some([&pos, &Vec2I::new(1, 16)]));
+        renderer.fill_rect(Some([&(&pos + &Vec2I::new(0, 15)), &Vec2I::new(16, 1)]));
+        renderer.fill_rect(Some([&(&pos + &Vec2I::new(15, 0)), &Vec2I::new(1, 16)]));
 
         renderer.set_texture_color_mod("font", 128, 128, 128);
-        renderer.draw_str("font", 0 * 8, 0 * 8, "EDIT MODE")?;
-        renderer.draw_str("font", 0 * 8, 1 * 8, &format!("NO={}", self.no))?;
-        renderer.draw_str("font", 0 * 8, 2 * 8, &format!("F)LIP={}", self.flip_x.to_string().to_uppercase()))?;
-        renderer.draw_str("font", 0 * 8, 3 * 8, &format!("T)OP={}", self.from_top.to_string().to_uppercase()))?;
-        Ok(())
+        renderer.draw_str("font", 0 * 8, 0 * 8, "EDIT MODE");
+        renderer.draw_str("font", 0 * 8, 1 * 8, &format!("NO={}", self.no));
+        renderer.draw_str("font", 0 * 8, 2 * 8, &format!("F)LIP={}", self.flip_x.to_string().to_uppercase()));
+        renderer.draw_str("font", 0 * 8, 3 * 8, &format!("T)OP={}", self.from_top.to_string().to_uppercase()));
     }
 
     fn set_attack(&mut self, game_manager: &mut GameManager, capture_attack: bool) {

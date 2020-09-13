@@ -28,14 +28,12 @@ impl EneShot {
         self.pos += self.vel;
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R)
     where
         R: RendererTrait,
     {
         let pos = self.pos();
-        renderer.draw_sprite("ene_shot", &(&pos + &Vec2I::new(-2, -4)))?;
-
-        Ok(())
+        renderer.draw_sprite("ene_shot", &(&pos + &Vec2I::new(-2, -4)));
     }
 }
 

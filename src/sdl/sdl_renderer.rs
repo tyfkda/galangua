@@ -17,7 +17,8 @@ pub struct SdlRenderer {
 
 impl SdlRenderer {
     pub fn new(mut canvas: WindowCanvas, logical_size: (u32, u32)) -> Self {
-        canvas.set_logical_size(logical_size.0, logical_size.1).expect("logical size");
+        canvas.set_logical_size(logical_size.0, logical_size.1)
+            .expect("set_logical_size failed");
 
         Self {
             canvas,
@@ -32,14 +33,15 @@ impl SdlRenderer {
 }
 
 impl RendererTrait for SdlRenderer {
-    fn load_textures(&mut self, base_path: &str, filenames: &[&str]) -> Result<(), String> {
+    fn load_textures(&mut self, base_path: &str, filenames: &[&str]) {
         self.texture_manager.load(&mut self.canvas, base_path, filenames)
+            .expect("load_textures failed");
     }
 
-    fn load_sprite_sheet(&mut self, filename: &str) -> Result<(), String> {
-        let text = std::fs::read_to_string(filename).map_err(|e| e.to_string())?;
+    fn load_sprite_sheet(&mut self, filename: &str) {
+        let text = std::fs::read_to_string(filename)
+            .expect("load_sprite_sheet failed");
         self.sprite_sheet = load_sprite_sheet(&text);
-        Ok(())
     }
 
     fn clear(&mut self) {
@@ -52,29 +54,27 @@ impl RendererTrait for SdlRenderer {
         }
     }
 
-    fn draw_str(&mut self, tex_name: &str, x: i32, y: i32, text: &str) -> Result<(), String> {
-        if let Some(texture) = self.texture_manager.get_mut(tex_name) {
-            let w = 8;
-            let h = 8;
-            let mut x = x;
+    fn draw_str(&mut self, tex_name: &str, x: i32, y: i32, text: &str) {
+        let texture = self.texture_manager.get_mut(tex_name)
+            .expect("No texture");
+        let w = 8;
+        let h = 8;
+        let mut x = x;
 
-            for c in text.chars() {
-                let u: i32 = ((c as i32) - (' ' as i32)) % 16 * 8;
-                let v: i32 = ((c as i32) - (' ' as i32)) / 16 * 8;
-                self.canvas.copy(&texture,
-                                 Some(Rect::new(u, v, 8, 8)),
-                                 Some(Rect::new(x, y, w, h)))?;
-                x += w as i32;
-            }
-            Ok(())
-        } else {
-            Err(format!("No texture: {}", tex_name))
+        for c in text.chars() {
+            let u: i32 = ((c as i32) - (' ' as i32)) % 16 * 8;
+            let v: i32 = ((c as i32) - (' ' as i32)) / 16 * 8;
+            self.canvas.copy(&texture,
+                             Some(Rect::new(u, v, 8, 8)),
+                             Some(Rect::new(x, y, w, h)))
+                .expect("copy failed");
+            x += w as i32;
         }
     }
 
-    fn draw_sprite(&mut self, sprite_name: &str, pos: &Vec2I) -> Result<(), String> {
+    fn draw_sprite(&mut self, sprite_name: &str, pos: &Vec2I) {
         let sheet = self.sprite_sheet.get(sprite_name)
-            .expect(&format!("No sprite: {}", sprite_name));
+            .expect("No sprite");
         let mut pos = *pos;
         if let Some(trimmed) = &sheet.trimmed {
             pos.x += trimmed.sprite_source_size.x;
@@ -82,20 +82,20 @@ impl RendererTrait for SdlRenderer {
         }
 
         let texture = self.texture_manager.get(&sheet.texture)
-            .expect(&format!("No texture: {}", sheet.texture));
+            .expect("No texture");
         self.canvas.copy(&texture,
                          Some(Rect::new(sheet.frame.x, sheet.frame.y,
                                         sheet.frame.w, sheet.frame.h)),
                          Some(Rect::new(pos.x, pos.y,
                                         sheet.frame.w as u32,
-                                        sheet.frame.h as u32)))?;
-        Ok(())
+                                        sheet.frame.h as u32)))
+            .expect("copy failed");
     }
 
     fn draw_sprite_rot(&mut self, sprite_name: &str, pos: &Vec2I, angle: u8,
-                       center: Option<&Vec2I>) -> Result<(), String> {
+                       center: Option<&Vec2I>) {
         let sheet = self.sprite_sheet.get(sprite_name)
-            .expect(&format!("No sprite: {}", sprite_name));
+            .expect("No sprite");
         let mut pos = *pos;
         if let Some(trimmed) = &sheet.trimmed {
             pos.x += trimmed.sprite_source_size.x;
@@ -103,7 +103,7 @@ impl RendererTrait for SdlRenderer {
         }
 
         let texture = self.texture_manager.get(&sheet.texture)
-            .expect(&format!("No texture: {}", sheet.texture));
+            .expect("No texture");
         let center = center.map(|v| Point::new(v.x, v.y));
         self.canvas.copy_ex(&texture,
                             Some(Rect::new(sheet.frame.x, sheet.frame.y,
@@ -111,22 +111,22 @@ impl RendererTrait for SdlRenderer {
                             Some(Rect::new(pos.x, pos.y,
                                            sheet.frame.w as u32,
                                            sheet.frame.h as u32)),
-                            (angle as f64) * (360.0 / 256.0), center, false, false)?;
-        Ok(())
+                            (angle as f64) * (360.0 / 256.0), center, false, false)
+            .expect("copy_ex failed");
     }
 
     fn set_draw_color(&mut self, r: u8, g: u8, b: u8) {
         self.canvas.set_draw_color(Color::RGB(r, g, b));
     }
 
-    fn fill_rect(&mut self, dst: Option<[&Vec2I; 2]>) -> Result<(), String> {
+    fn fill_rect(&mut self, dst: Option<[&Vec2I; 2]>) {
         if let Some(rect) = dst {
-            self.canvas.fill_rect(Some(Rect::new(
-                rect[0].x, rect[0].y,
-                rect[1].x as u32, rect[1].y as u32)))?;
+            self.canvas.fill_rect(Some(Rect::new(rect[0].x, rect[0].y,
+                                                 rect[1].x as u32, rect[1].y as u32)))
+                .expect("fill_rect failed");
         } else {
-            self.canvas.fill_rect(None)?;
+            self.canvas.fill_rect(None)
+                .expect("fill_rect failed");
         }
-        Ok(())
     }
 }

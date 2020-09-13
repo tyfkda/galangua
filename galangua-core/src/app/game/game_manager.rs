@@ -239,52 +239,50 @@ impl GameManager {
         }
     }
 
-    pub fn draw<R>(&mut self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&mut self, renderer: &mut R)
     where
         R: RendererTrait,
     {
-        self.player.draw(renderer)?;
-        self.enemy_manager.draw(renderer)?;
+        self.player.draw(renderer);
+        self.enemy_manager.draw(renderer);
         for myshot in self.myshots.iter().flat_map(|x| x) {
-            myshot.draw(renderer)?;
+            myshot.draw(renderer);
         }
 
         for effect in self.effects.iter().flat_map(|x| x) {
-            effect.draw(renderer)?;
+            effect.draw(renderer);
         }
-        self.stage_indicator.draw(renderer)?;
+        self.stage_indicator.draw(renderer);
 
         if self.left_ship > 0 {
             for i in 0..self.left_ship - 1 {
-                renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16))?;
+                renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16));
             }
         }
 
         match self.state {
             GameState::StartStage => {
                 renderer.set_texture_color_mod("font", 0, 255, 255);
-                renderer.draw_str("font", 10 * 8, 18 * 8, &format!("STAGE {}", self.stage + 1))?;
+                renderer.draw_str("font", 10 * 8, 18 * 8, &format!("STAGE {}", self.stage + 1));
             }
             GameState::WaitReady | GameState::WaitReady2 => {
                 if self.left_ship > 1 || self.state == GameState::WaitReady2 {
                     renderer.set_texture_color_mod("font", 0, 255, 255);
-                    renderer.draw_str("font", (28 - 6) / 2 * 8, 18 * 8, "READY")?;
+                    renderer.draw_str("font", (28 - 6) / 2 * 8, 18 * 8, "READY");
                 }
             }
             GameState::Captured => {
                 if self.count < 120 {
                     renderer.set_texture_color_mod("font", 255, 0, 0);
-                    renderer.draw_str("font", (28 - 16) / 2 * 8, 19 * 8, "FIGHTER CAPTURED")?;
+                    renderer.draw_str("font", (28 - 16) / 2 * 8, 19 * 8, "FIGHTER CAPTURED");
                 }
             }
             GameState::GameOver => {
                 renderer.set_texture_color_mod("font", 0, 255, 255);
-                renderer.draw_str("font", (28 - 8) / 2 * 8, 18 * 8, "GAME OVER")?;
+                renderer.draw_str("font", (28 - 8) / 2 * 8, 18 * 8, "GAME OVER");
             }
             _ => {}
         }
-
-        Ok(())
     }
 
     fn handle_event_queue(&mut self, params: &mut Params) {

@@ -60,7 +60,7 @@ impl RecapturedFighter {
         }
     }
 
-    pub(super) fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub(super) fn draw<R>(&self, renderer: &mut R)
     where
         R: RendererTrait,
     {
@@ -68,15 +68,13 @@ impl RecapturedFighter {
         match self.state {
             State::Rotate => {
                 let angle = quantize_angle(self.angle, ANGLE_DIV);
-                //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)))?;
-                renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
+                //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)));
+                renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None);
             }
             _ => {
-                renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8, -8)))?;
+                renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8, -8)));
             }
         }
-
-        Ok(())
     }
 
     pub(super) fn done(&self) -> bool {

@@ -138,36 +138,34 @@ impl Player {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R)
     where
         R: RendererTrait,
     {
         match self.state {
             State::Normal | State::EscapeCapturing | State::MoveHomePos => {
                 let pos = self.pos();
-                renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8, -8)))?;
+                renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8, -8)));
                 if self.dual {
-                    renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8 + 16, -8)))?;
+                    renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8 + 16, -8)));
                 }
             }
             State::Capturing => {
                 let pos = self.pos();
                 let angle = quantize_angle(self.angle, ANGLE_DIV);
-                //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)))?;
-                renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None)?;
+                //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)));
+                renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None);
             }
             State::Captured => {
                 let pos = self.pos();
-                renderer.draw_sprite("rustacean_captured", &(&pos + &Vec2I::new(-8, -8)))?;
+                renderer.draw_sprite("rustacean_captured", &(&pos + &Vec2I::new(-8, -8)));
             }
             State::CaptureCompleted | State::Dead => {}
         }
 
         if let Some(recaptured_fighter) = &self.recaptured_fighter {
-            recaptured_fighter.draw(renderer)?;
+            recaptured_fighter.draw(renderer);
         }
-
-        Ok(())
     }
 
     pub fn active(&self) -> bool {

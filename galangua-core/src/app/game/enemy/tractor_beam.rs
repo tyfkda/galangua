@@ -79,7 +79,7 @@ impl TractorBeam {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R)
     where
         R: RendererTrait,
     {
@@ -91,11 +91,9 @@ impl TractorBeam {
         let pos = &pos + &Vec2I::new(-24, 0);
         for i in 0..n {
             set_hsv_color(renderer, tex_name, hue + i as u32 * 160, 255, 255);
-            renderer.draw_sprite(SPRITE_NAMES[i], &(&pos + &Vec2I::new(0, Y_OFFSET_TABLE[i])))?;
+            renderer.draw_sprite(SPRITE_NAMES[i], &(&pos + &Vec2I::new(0, Y_OFFSET_TABLE[i])));
         }
         renderer.set_texture_color_mod(tex_name, 255, 255, 255);
-
-        Ok(())
     }
 
     pub fn pos(&self) -> Vec2I {

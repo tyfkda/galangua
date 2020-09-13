@@ -34,23 +34,21 @@ impl MyShot {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R)
     where
         R: RendererTrait,
     {
         let pos = self.pos();
         if self.angle == 0 {
-            renderer.draw_sprite("myshot", &(&pos + &Vec2I::new(-2, -4)))?;
+            renderer.draw_sprite("myshot", &(&pos + &Vec2I::new(-2, -4)));
             if self.dual {
-                renderer.draw_sprite("myshot", &(&pos + &Vec2I::new(-2 + 16, -4)))?;
+                renderer.draw_sprite("myshot", &(&pos + &Vec2I::new(-2 + 16, -4)));
             }
         } else {
             assert!(!self.dual);
             renderer.draw_sprite_rot("myshot", &(&pos + &Vec2I::new(-2, -4)),
-                                     quantize_angle(self.angle, ANGLE_DIV), None)?;
+                                     quantize_angle(self.angle, ANGLE_DIV), None);
         }
-
-        Ok(())
     }
 
     pub fn dual_collbox(&self) -> Option<CollBox> {

@@ -151,38 +151,36 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
         true
     }
 
-    fn draw_main<R>(&mut self, renderer: &mut R) -> Result<(), String>
+    fn draw_main<R>(&mut self, renderer: &mut R)
     where
         R: RendererTrait,
     {
-        self.star_manager.draw(renderer)?;
+        self.star_manager.draw(renderer);
         match self.state {
             AppState::Title => {
                 renderer.set_texture_color_mod("font", 255, 255, 255);
-                renderer.draw_str("font", 10 * 8, 8 * 8, "GALANGUA")?;
+                renderer.draw_str("font", 10 * 8, 8 * 8, "GALANGUA");
 
                 if self.count & 32 == 0 {
-                    renderer.draw_str("font", 2 * 8, 25 * 8, "PRESS SPACE KEY TO START")?;
+                    renderer.draw_str("font", 2 * 8, 25 * 8, "PRESS SPACE KEY TO START");
                 }
-                draw_scores(renderer, &self.score_holder, true)?;
+                draw_scores(renderer, &self.score_holder, true);
             }
             AppState::Game => {
-                self.game_manager.as_mut().unwrap().draw(renderer)?;
-                draw_scores(renderer, &self.score_holder, (self.frame_count & 31) < 16)?;
+                self.game_manager.as_mut().unwrap().draw(renderer);
+                draw_scores(renderer, &self.score_holder, (self.frame_count & 31) < 16);
             }
             #[cfg(debug_assertions)]
             AppState::EditTraj => {
                 let game_manager = self.game_manager.as_mut().unwrap();
-                game_manager.draw(renderer)?;
+                game_manager.draw(renderer);
 
-                self.edit_traj_manager.as_mut().unwrap().draw(renderer, game_manager)?;
+                self.edit_traj_manager.as_mut().unwrap().draw(renderer, game_manager);
             }
         }
 
         renderer.set_texture_color_mod("font", 128, 128, 128);
-        renderer.draw_str("font", 23 * 8, 0 * 8, &format!("FPS{:2}", self.fps_calc.fps()))?;
-
-        Ok(())
+        renderer.draw_str("font", 23 * 8, 0 * 8, &format!("FPS{:2}", self.fps_calc.fps()));
     }
 
     fn back_to_title(&mut self) {
@@ -218,13 +216,12 @@ impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaAp
         self.pad.on_joystick_button(button_index, down);
     }
 
-    fn init(&mut self, renderer: &mut R) -> Result<(), String>
+    fn init(&mut self, renderer: &mut R)
     where
         R: RendererTrait,
     {
-        renderer.load_textures("assets", &["chr.png", "font.png"])?;
-        renderer.load_sprite_sheet("assets/chr.json")?;
-        Ok(())
+        renderer.load_textures("assets", &["chr.png", "font.png"]);
+        renderer.load_sprite_sheet("assets/chr.json");
     }
 
     fn update(&mut self) -> bool {
@@ -234,31 +231,28 @@ impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaAp
         result
     }
 
-    fn draw(&mut self, renderer: &mut R) -> Result<(), String>
+    fn draw(&mut self, renderer: &mut R)
     where
         R: RendererTrait,
     {
         renderer.set_draw_color(0, 0, 0);
         renderer.clear();
 
-        self.draw_main(renderer)?;
+        self.draw_main(renderer);
 
         self.fps_calc.update();
-
-        Ok(())
     }
 }
 
 fn draw_scores<R: RendererTrait>(
     renderer: &mut R, score_holder: &ScoreHolder, show_1up: bool
-) -> Result<(), String> {
+) {
     renderer.set_texture_color_mod("font", 255, 0, 0);
     if show_1up {
-        renderer.draw_str("font", 2 * 8, 0 * 8, "1UP")?;
+        renderer.draw_str("font", 2 * 8, 0 * 8, "1UP");
     }
-    renderer.draw_str("font", 9 * 8, 0 * 8, "HIGH SCORE")?;
+    renderer.draw_str("font", 9 * 8, 0 * 8, "HIGH SCORE");
     renderer.set_texture_color_mod("font", 255, 255, 255);
-    renderer.draw_str("font", 0 * 8, 1 * 8, &format!("{:6}0", score_holder.score / 10))?;
-    renderer.draw_str("font", 10 * 8, 1 * 8, &format!("{:6}0", score_holder.high_score / 10))?;
-    Ok(())
+    renderer.draw_str("font", 0 * 8, 1 * 8, &format!("{:6}0", score_holder.score / 10));
+    renderer.draw_str("font", 10 * 8, 1 * 8, &format!("{:6}0", score_holder.high_score / 10));
 }

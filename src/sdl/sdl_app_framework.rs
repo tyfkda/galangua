@@ -71,7 +71,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
             .map_err(|e| e.to_string())?;
         let mut renderer = SdlRenderer::new(canvas, (width, height));
 
-        self.app.init(&mut renderer)?;
+        self.app.init(&mut renderer);
 
         self.last_update_time = SystemTime::now();
         let mut skip_count = 0;
@@ -90,7 +90,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                     break 'running;
                 }
             }
-            self.app.draw(&mut renderer)?;
+            self.app.draw(&mut renderer);
             renderer.present();
 
             skip_count = self.wait_frame(Duration::from_micros(1_000_000 / FPS as u64));

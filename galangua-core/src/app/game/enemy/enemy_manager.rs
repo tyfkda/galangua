@@ -86,19 +86,17 @@ impl EnemyManager {
         self.update_shots();
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R)
     where
         R: RendererTrait,
     {
         let pat = ((self.frame_count >> 5) & 1) as usize;
         for enemy in self.enemies.iter().rev().flat_map(|x| x) {
-            enemy.draw(renderer, pat)?;
+            enemy.draw(renderer, pat);
         }
         for shot in self.shots.iter().flat_map(|x| x) {
-            shot.draw(renderer)?;
+            shot.draw(renderer);
         }
-
-        Ok(())
     }
 
     pub fn check_collision(&mut self, target: &CollBox) -> Option<FormationIndex> {

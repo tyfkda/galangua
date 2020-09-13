@@ -49,7 +49,7 @@ impl StageIndicator {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R) -> Result<(), String>
+    pub fn draw<R>(&self, renderer: &mut R)
     where
         R: RendererTrait,
     {
@@ -59,13 +59,11 @@ impl StageIndicator {
 
         for flag_info in FLAG_INFO_TABLE.iter() {
             while count >= flag_info.count {
-                renderer.draw_sprite(flag_info.sprite_name, &Vec2I::new(x, consts::HEIGHT - 16))?;
+                renderer.draw_sprite(flag_info.sprite_name, &Vec2I::new(x, consts::HEIGHT - 16));
                 x += flag_info.width as i32;
                 count -= flag_info.count;
             }
         }
-
-        Ok(())
     }
 }
 
