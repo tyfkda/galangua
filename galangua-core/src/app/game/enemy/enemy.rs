@@ -68,7 +68,6 @@ pub struct Enemy {
     traj: Option<Traj>,
     shot_wait: Option<u32>,
     update_fn: fn(enemy: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue),
-    attack_step: i32,
     count: u32,
     attack_frame_count: u32,
     target_pos: Vec2I,
@@ -96,7 +95,6 @@ impl Enemy {
             traj: None,
             shot_wait: None,
             update_fn: update_none,
-            attack_step: 0,
             count: 0,
             attack_frame_count: 0,
             target_pos: ZERO_VEC,
@@ -236,7 +234,10 @@ impl Enemy {
             EnemyState::MoveToFormation => update_move_to_formation,
             EnemyState::Assault => update_assault,
             EnemyState::Formation => update_formation,
-            EnemyState::Attack => update_attack_normal,
+            EnemyState::Attack => {
+                eprintln!("illegal state");
+                std::process::exit(1);
+            }
         };
         self.set_state_with_fn(state, update_fn);
     }
@@ -287,7 +288,6 @@ impl Enemy {
         let mut traj = Traj::new_with_vec(traj_command_vec, &ZERO_VEC, flip_x, self.formation_index);
         traj.set_pos(&self.pos);
 
-        self.attack_step = 0;
         self.count = 0;
         self.attack_frame_count = 0;
         self.traj = Some(traj);
@@ -347,17 +347,13 @@ impl Enemy {
     }
 
     fn rush_attack(&mut self) {
-        self.attack_step = 0;
-        self.count = 0;
-        self.attack_frame_count = 0;
-
         let flip_x = self.formation_index.0 >= 5;
         let table = self.vtable.rush_traj_table;
         let mut traj = Traj::new(table, &ZERO_VEC, flip_x, self.formation_index);
         traj.set_pos(&self.pos);
 
-        self.attack_step = 0;
         self.count = 0;
+        self.attack_frame_count = 0;
         self.traj = Some(traj);
 
         self.set_state_with_fn(EnemyState::Attack, update_attack_traj);
@@ -394,7 +390,6 @@ fn bee_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut dyn Acc
     let mut traj = Traj::new(&BEE_ATTACK_TABLE, &ZERO_VEC, flip_x, me.formation_index);
     traj.set_pos(&me.pos);
 
-    me.attack_step = 0;
     me.count = 0;
     me.attack_frame_count = 0;
     me.traj = Some(traj);
@@ -422,7 +417,6 @@ fn butterfly_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor: &mut d
     let mut traj = Traj::new(&BUTTERFLY_ATTACK_TABLE, &ZERO_VEC, flip_x, me.formation_index);
     traj.set_pos(&me.pos);
 
-    me.attack_step = 0;
     me.count = 0;
     me.attack_frame_count = 0;
     me.traj = Some(traj);
@@ -484,7 +478,6 @@ fn captured_fighter_set_attack(me: &mut Enemy, _capture_attack: bool, _accessor:
     let mut traj = Traj::new(&OWL_ATTACK_TABLE, &ZERO_VEC, flip_x, me.formation_index);
     traj.set_pos(&me.pos);
 
-    me.attack_step = 0;
     me.count = 0;
     me.attack_frame_count = 0;
     me.traj = Some(traj);
@@ -522,7 +515,6 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
     EnemyVtable {
         life: 2,
         set_attack: |me: &mut Enemy, capture_attack: bool, accessor: &mut dyn Accessor| {
-            me.attack_step = 0;
             me.count = 0;
             me.attack_frame_count = 0;
 
@@ -537,12 +529,23 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
                 let mut traj = Traj::new(&OWL_ATTACK_TABLE, &ZERO_VEC, flip_x, me.formation_index);
                 traj.set_pos(&me.pos);
 
-                me.attack_step = 0;
-                me.count = 0;
                 me.traj = Some(traj);
                 update_attack_traj
             } else {
                 me.capturing_state = CapturingState::Attacking;
+
+                const DLIMIT: i32 = 4 * ONE;
+                me.speed = 3 * ONE / 2;
+                me.angle = 0;
+                if me.formation_index.0 < 5 {
+                    me.vangle = -DLIMIT;
+                } else {
+                    me.vangle = DLIMIT;
+                }
+
+                let player_pos = accessor.get_raw_player_pos();
+                me.target_pos = Vec2I::new(player_pos.x, (HEIGHT - 16 - 8 - 88) * ONE);
+
                 update_attack_capture
             };
 
@@ -618,28 +621,30 @@ fn update_trajectory(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &
             }
         }
 
-        if !cont {
-            me.traj = None;
-
-            if me.state == EnemyState::Appearance &&
-                me.formation_index.1 >= Y_COUNT as u8  // Assault
-            {
-                let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-                let target_pos = [
-                    Some(*accessor.get_raw_player_pos()),
-                    accessor.get_dual_player_pos(),
-                ];
-                let count = target_pos.iter().flat_map(|x| x).count();
-                let target: &Vec2I = target_pos.iter()
-                    .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();
-
-                me.target_pos = *target;
-                me.vangle = 0;
-                me.set_state(EnemyState::Assault);
-            } else {
-                me.set_state(EnemyState::MoveToFormation);
-            }
+        if cont {
+            return;
         }
+    }
+
+    me.traj = None;
+
+    if me.state == EnemyState::Appearance &&
+        me.formation_index.1 >= Y_COUNT as u8  // Assault
+    {
+        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let target_pos = [
+            Some(*accessor.get_raw_player_pos()),
+            accessor.get_dual_player_pos(),
+        ];
+        let count = target_pos.iter().flat_map(|x| x).count();
+        let target: &Vec2I = target_pos.iter()
+            .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();
+
+        me.target_pos = *target;
+        me.vangle = 0;
+        me.set_state(EnemyState::Assault);
+    } else {
+        me.set_state(EnemyState::MoveToFormation);
     }
 }
 
@@ -679,209 +684,131 @@ fn update_formation(me: &mut Enemy, accessor: &mut dyn Accessor, _event_queue: &
     me.angle -= clamp(me.angle, -ang, ang);
 }
 
-fn update_attack_normal(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
-    me.update_attack(accessor, event_queue);
+fn update_attack_capture(me: &mut Enemy, _accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
+    const DLIMIT: i32 = 4 * ONE;
+    let dpos = &me.target_pos - &me.pos;
+    let target_angle = atan2_lut(-dpos.y, dpos.x);
+    let ang_limit = ANGLE * ONE / 2 - ANGLE * ONE * 30 / 360;
+    let target_angle = if target_angle >= 0 {
+        std::cmp::max(target_angle, ang_limit)
+    } else {
+        std::cmp::min(target_angle, -ang_limit)
+    };
+    let mut d = diff_angle(target_angle, me.angle);
+    if me.vangle > 0 && d < 0 {
+        d += ANGLE * ONE;
+    } else if me.vangle < 0 && d > 0 {
+        d -= ANGLE * ONE;
+    }
+    if d >= -DLIMIT && d < DLIMIT {
+        me.angle = target_angle;
+        me.vangle = 0;
+    }
 
-    match me.attack_step {
-        0 => {
-            me.speed = 1 * ONE;
-            me.angle = 0;
-            if me.formation_index.0 < 5 {
-                me.vangle = -4 * ONE;
-            } else {
-                me.vangle = 4 * ONE;
-            }
-            me.attack_step += 1;
-            me.count = 0;
+    if me.pos.y >= me.target_pos.y {
+        me.pos.y = me.target_pos.y;
+        me.speed = 0;
+        me.angle = ANGLE / 2 * ONE;
+        me.vangle = 0;
 
-            event_queue.push(EventType::EneShot(me.pos));
-        }
-        1 => {
-            if (me.vangle < 0 && me.angle <= -160 * ONE) ||
-                (me.vangle > 0 && me.angle >= 160 * ONE)
-            {
-                me.vangle = 0;
-                me.attack_step += 1;
-                me.count = 0;
-            }
-        }
-        2 => {
-            me.count += 1;
-            if me.count >= 10 {
-                if me.formation_index.0 < 5 {
-                    me.vangle = 1 * ONE / 4;
-                } else {
-                    me.vangle = -1 * ONE / 4;
-                }
-                me.attack_step += 1;
-                me.count = 0;
-            }
-        }
-        3 => {
-            if (me.vangle > 0 && me.angle >= -ANGLE / 2 * ONE) ||
-                (me.vangle < 0 && me.angle <= ANGLE / 2 * ONE)
-            {
-                me.vangle = 0;
-                me.attack_step += 1;
-            }
-        }
-        4 => {
-            if me.pos.y >= (HEIGHT + 8) * ONE {
-                let target_pos = accessor.get_formation_pos(&me.formation_index);
-                let offset = Vec2I::new(target_pos.x - me.pos.x, (-32 - (HEIGHT + 8)) * ONE);
-                me.warp(offset);
-                me.set_state(EnemyState::MoveToFormation);
-            }
-        }
-        _ => {}
+        me.tractor_beam = Some(TractorBeam::new(&(&me.pos + &Vec2I::new(0, 8 * ONE))));
+
+        me.update_fn = update_attack_capture_beam;
+        me.count = 0;
     }
 }
-
-fn update_attack_capture(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
-    const DLIMIT: i32 = 4 * ONE;
-    match me.attack_step {
-        0 => {
-            me.speed = 3 * ONE / 2;
-            me.angle = 0;
-            if me.formation_index.0 < 5 {
-                me.vangle = -DLIMIT;
-            } else {
-                me.vangle = DLIMIT;
-            }
-
-            let player_pos = accessor.get_raw_player_pos();
-            me.target_pos = Vec2I::new(player_pos.x, (HEIGHT - 16 - 8 - 88) * ONE);
-
-            me.attack_step += 1;
+fn update_attack_capture_beam(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    if let Some(tractor_beam) = &mut me.tractor_beam {
+        if tractor_beam.closed() {
+            me.tractor_beam = None;
+            me.speed = 5 * ONE / 2;
+            me.update_fn = update_attack_capture_go_out;
+        } else if accessor.can_player_capture() &&
+                  tractor_beam.can_capture(accessor.get_raw_player_pos())
+        {
+            event_queue.push(EventType::CapturePlayer(&me.pos + &Vec2I::new(0, 16 * ONE)));
+            tractor_beam.start_capture();
+            me.capturing_state = CapturingState::BeamTracting;
+            me.update_fn = update_attack_capture_start;
             me.count = 0;
         }
-        1 => {
-            let dpos = &me.target_pos - &me.pos;
-            let target_angle = atan2_lut(-dpos.y, dpos.x);
-            let ang_limit = ANGLE * ONE / 2 - ANGLE * ONE * 30 / 360;
-            let target_angle = if target_angle >= 0 {
-                std::cmp::max(target_angle, ang_limit)
-            } else {
-                std::cmp::min(target_angle, -ang_limit)
-            };
-            let mut d = diff_angle(target_angle, me.angle);
-            if me.vangle > 0 && d < 0 {
-                d += ANGLE * ONE;
-            } else if me.vangle < 0 && d > 0 {
-                d -= ANGLE * ONE;
-            }
-            if d >= -DLIMIT && d < DLIMIT {
-                me.angle = target_angle;
-                me.vangle = 0;
-            }
+    }
+}
+fn update_attack_capture_go_out(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    if me.pos.y >= (HEIGHT + 8) * ONE {
+        let target_pos = accessor.get_formation_pos(&me.formation_index);
+        let offset = Vec2I::new(target_pos.x - me.pos.x, (-32 - (HEIGHT + 8)) * ONE);
+        me.warp(offset);
 
-            if me.pos.y >= me.target_pos.y {
-                me.pos.y = me.target_pos.y;
-                me.speed = 0;
-                me.angle = ANGLE / 2 * ONE;
-                me.vangle = 0;
-
-                me.tractor_beam = Some(TractorBeam::new(&(&me.pos + &Vec2I::new(0, 8 * ONE))));
-
-                me.attack_step += 1;
-                me.count = 0;
-            }
+        if accessor.is_rush() {
+            me.rush_attack();
+        } else {
+            me.set_state(EnemyState::MoveToFormation);
+            me.capturing_state = CapturingState::None;
+            event_queue.push(EventType::EndCaptureAttack);
         }
-        2 => {
-            if let Some(tractor_beam) = &mut me.tractor_beam {
-                if tractor_beam.closed() {
-                    me.tractor_beam = None;
-                    me.speed = 5 * ONE / 2;
-                    me.attack_step += 1;
-                } else if accessor.can_player_capture() &&
-                          tractor_beam.can_capture(accessor.get_raw_player_pos()) {
-                    event_queue.push(EventType::CapturePlayer(&me.pos + &Vec2I::new(0, 16 * ONE)));
-                    tractor_beam.start_capture();
-                    me.capturing_state = CapturingState::BeamTracting;
-                    me.attack_step = 100;
-                    me.count = 0;
-                }
-            }
-        }
-        3 => {
-            if me.pos.y >= (HEIGHT + 8) * ONE {
-                let target_pos = accessor.get_formation_pos(&me.formation_index);
-                let offset = Vec2I::new(target_pos.x - me.pos.x, (-32 - (HEIGHT + 8)) * ONE);
-                me.warp(offset);
-
-                if accessor.is_rush() {
-                    me.rush_attack();
-                } else {
-                    me.set_state(EnemyState::MoveToFormation);
-                    me.capturing_state = CapturingState::None;
-                    event_queue.push(EventType::EndCaptureAttack);
-                }
-            }
-        }
-        // Capture sequence
-        100 => {
-            if accessor.is_player_capture_completed() {
-                me.tractor_beam.as_mut().unwrap().close_capture();
-                me.attack_step += 1;
-                me.count = 0;
-            }
-        }
-        101 => {
-            if let Some(tractor_beam) = &me.tractor_beam {
-                if tractor_beam.closed() {
-                    let fi = FormationIndex(me.formation_index.0, me.formation_index.1 - 1);
-                    event_queue.push(EventType::SpawnCapturedFighter(
-                        &me.pos + &Vec2I::new(0, 16 * ONE), fi));
-
-                    me.add_troop(fi);
-
-                    me.tractor_beam = None;
-                    me.capturing_state = CapturingState::Attacking;
-                    event_queue.push(EventType::CapturePlayerCompleted);
-
-                    me.copy_angle_to_troops = false;
-                    me.attack_step += 1;
-                    me.count = 0;
-                }
-            }
-        }
-        102 => {
-            me.count += 1;
-            if me.count >= 120 {
-                me.speed = 3 * ONE / 2;
-                me.attack_step += 1;
-            }
-        }
-        103 => {
-            if !me.update_move_to_formation(accessor) {
-                me.speed = 0;
-                me.angle = normalize_angle(me.angle);
-                me.attack_step += 1;
-            }
-        }
-        104 => {
-            let ang = ANGLE * ONE / 128;
-            me.angle -= clamp(me.angle, -ang, ang);
-
+    }
+}
+fn update_attack_capture_start(me: &mut Enemy, accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
+    if accessor.is_player_capture_completed() {
+        me.tractor_beam.as_mut().unwrap().close_capture();
+        me.update_fn = update_attack_capture_close_beam;
+        me.count = 0;
+    }
+}
+fn update_attack_capture_close_beam(me: &mut Enemy, _accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    if let Some(tractor_beam) = &me.tractor_beam {
+        if tractor_beam.closed() {
             let fi = FormationIndex(me.formation_index.0, me.formation_index.1 - 1);
-            let mut done = false;
-            if let Some(captured_fighter) = accessor.get_enemy_at_mut(&fi) {
-                let mut y = captured_fighter.pos.y;
-                y -= 1 * ONE;
-                let topy = me.pos.y - 16 * ONE;
-                if y <= topy {
-                    y = topy;
-                    done = true;
-                }
-                captured_fighter.pos.y = y;
-            }
-            if done {
-                event_queue.push(EventType::CaptureSequenceEnded);
-                me.release_troops(accessor);
-                me.set_to_formation();
-            }
+            event_queue.push(EventType::SpawnCapturedFighter(
+                &me.pos + &Vec2I::new(0, 16 * ONE), fi));
+
+            me.add_troop(fi);
+
+            me.tractor_beam = None;
+            me.capturing_state = CapturingState::Attacking;
+            event_queue.push(EventType::CapturePlayerCompleted);
+
+            me.copy_angle_to_troops = false;
+            me.update_fn = update_attack_capture_capture_done_wait;
+            me.count = 0;
         }
-        _ => {}
+    }
+}
+fn update_attack_capture_capture_done_wait(me: &mut Enemy, _accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
+    me.count += 1;
+    if me.count >= 120 {
+        me.speed = 3 * ONE / 2;
+        me.update_fn = update_attack_capture_back;
+    }
+}
+fn update_attack_capture_back(me: &mut Enemy, accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
+    if !me.update_move_to_formation(accessor) {
+        me.speed = 0;
+        me.angle = normalize_angle(me.angle);
+        me.update_fn = update_attack_capture_push_up;
+    }
+}
+fn update_attack_capture_push_up(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    let ang = ANGLE * ONE / 128;
+    me.angle -= clamp(me.angle, -ang, ang);
+
+    let fi = FormationIndex(me.formation_index.0, me.formation_index.1 - 1);
+    let mut done = false;
+    if let Some(captured_fighter) = accessor.get_enemy_at_mut(&fi) {
+        let mut y = captured_fighter.pos.y;
+        y -= 1 * ONE;
+        let topy = me.pos.y - 16 * ONE;
+        if y <= topy {
+            y = topy;
+            done = true;
+        }
+        captured_fighter.pos.y = y;
+    }
+    if done {
+        event_queue.push(EventType::CaptureSequenceEnded);
+        me.release_troops(accessor);
+        me.set_to_formation();
     }
 }
 
