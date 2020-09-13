@@ -197,8 +197,8 @@ impl Player {
     pub fn dual_collbox(&self) -> Option<CollBox> {
         if self.dual && self.state == State::Normal {
             Some(CollBox {
-                top_left: &self.pos() + &Vec2I::new(6, -6),
-                size: Vec2I::new(12, 12),
+                top_left: &self.pos() + &Vec2I::new(-4 + 16, -4),
+                size: Vec2I::new(8, 8),
             })
         } else {
             None
@@ -253,8 +253,8 @@ impl Collidable for Player {
     fn get_collbox(&self) -> Option<CollBox> {
         if self.state == State::Normal {
             Some(CollBox {
-                top_left: &self.pos() - &Vec2I::new(6, 6),
-                size: Vec2I::new(12, 12),
+                top_left: &self.pos() - &Vec2I::new(4, 4),
+                size: Vec2I::new(8, 8),
             })
         } else {
             None

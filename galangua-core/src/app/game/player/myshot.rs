@@ -53,7 +53,7 @@ impl MyShot {
         Ok(())
     }
 
-    pub fn get_collbox_for_dual(&self) -> Option<CollBox> {
+    pub fn dual_collbox(&self) -> Option<CollBox> {
         if self.dual {
             Some(CollBox {
                 top_left: &self.pos() + &Vec2I::new(-1 + 16, -4),

@@ -433,7 +433,7 @@ impl GameManager {
             let myshot = myshot_opt.as_ref().unwrap();
             let colls: [Option<CollBox>; 2] = [
                 myshot.get_collbox(),
-                myshot.get_collbox_for_dual(),
+                myshot.dual_collbox(),
             ];
             for collbox in colls.iter().flat_map(|x| x) {
                 if let Some(fi) = self.enemy_manager.check_collision(collbox) {
