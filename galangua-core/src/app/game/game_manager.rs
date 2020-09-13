@@ -25,6 +25,7 @@ enum GameState {
     Playing,
     PlayerDead,
     WaitReady,
+    WaitReady2,
     Capturing,
     Captured,
     Recapturing,
@@ -153,8 +154,18 @@ impl GameManager {
                 if self.enemy_manager.is_no_attacker() {
                     self.count += 1;
                     if self.count >= 60 {
-                        self.next_player(params);
+                        self.next_player();
                     }
+                }
+            }
+            GameState::WaitReady2 => {
+                self.count += 1;
+                if self.count >= 60 {
+                    self.player.set_shot_enable(true);
+                    self.enemy_manager.pause_attack(false);
+                    params.star_manager.set_stop(false);
+                    self.state = GameState::Playing;
+                    self.count = 0;
                 }
             }
             GameState::StageClear => {
@@ -180,7 +191,7 @@ impl GameManager {
         }
     }
 
-    fn next_player(&mut self, params: &mut Params) {
+    fn next_player(&mut self) {
         self.left_ship -= 1;
         if self.left_ship == 0 {
             self.enemy_manager.pause_attack(true);
@@ -188,9 +199,9 @@ impl GameManager {
             self.count = 0;
         } else {
             self.player.restart();
-            self.enemy_manager.pause_attack(false);
-            params.star_manager.set_stop(false);
-            self.state = GameState::Playing;
+            self.player.set_shot_enable(false);
+            self.state = GameState::WaitReady2;
+            self.count = 0;
         }
     }
 
@@ -254,8 +265,8 @@ impl GameManager {
                 renderer.set_texture_color_mod("font", 0, 255, 255);
                 renderer.draw_str("font", 10 * 8, 18 * 8, &format!("STAGE {}", self.stage + 1))?;
             }
-            GameState::WaitReady => {
-                if self.left_ship > 1 {
+            GameState::WaitReady | GameState::WaitReady2 => {
+                if self.left_ship > 1 || self.state == GameState::WaitReady2 {
                     renderer.set_texture_color_mod("font", 0, 255, 255);
                     renderer.draw_str("font", (28 - 6) / 2 * 8, 18 * 8, "READY")?;
                 }
@@ -326,9 +337,7 @@ impl GameManager {
                     self.count = 0;
                 }
                 EventType::CaptureSequenceEnded => {
-                    self.enemy_manager.pause_attack(false);
-                    self.state = GameState::Playing;
-                    self.next_player(params);
+                    self.next_player();
                 }
                 EventType::SpawnCapturedFighter(pos, formation_index) => {
                     self.enemy_manager.spawn_captured_fighter(&pos, &formation_index);

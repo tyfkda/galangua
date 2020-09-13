@@ -29,6 +29,7 @@ pub struct Player {
     angle: i32,
     capture_pos: Vec2I,
     recaptured_fighter: Option<RecapturedFighter>,
+    shot_enable: bool,
 }
 
 impl Player {
@@ -40,12 +41,17 @@ impl Player {
             angle: 0,
             capture_pos: ZERO_VEC,
             recaptured_fighter: None,
+            shot_enable: true,
         }
     }
 
     pub fn restart(&mut self) {
         self.state = State::Normal;
         self.pos = &Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE;
+    }
+
+    pub fn set_shot_enable(&mut self, value: bool) {
+        self.shot_enable = value;
     }
 
     pub fn update<A: Accessor>(&mut self, pad: &Pad, accessor: &A, event_queue: &mut EventQueue) {
@@ -126,7 +132,7 @@ impl Player {
     }
 
     fn fire_bullet(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
-        if pad.is_trigger(PadBit::A) {
+        if self.shot_enable && pad.is_trigger(PadBit::A) {
             let pos = &self.pos + &Vec2I::new(0, 2 * ONE);
             event_queue.push(EventType::MyShot(pos, self.dual, self.angle));
         }
