@@ -9,9 +9,6 @@ bitflags! {
         const U      = 0b00000100;
         const D      = 0b00001000;
         const A      = 0b00010000;
-        const B      = 0b00100000;
-        const CANCEL = 0b01000000;
-        const START  = 0b10000000;
     }
 }
 
@@ -76,13 +73,8 @@ impl Pad {
         }
     }
 
-    pub fn on_joystick_button(&mut self, button_index: u8, down: bool) {
-        let bit;
-        match button_index {
-            0 => bit = PadBit::A,
-            1 => bit = PadBit::B,
-            _ => { return; }
-        }
+    pub fn on_joystick_button(&mut self, _button_index: u8, down: bool) {
+        let bit = PadBit::A;
         if down {
             self.joy |= bit;
         } else {
@@ -98,8 +90,6 @@ fn get_key_bit(key: VKey) -> PadBit {
         VKey::Up => PadBit::U,
         VKey::Down => PadBit::D,
         VKey::Space => PadBit::A,
-        VKey::Escape => PadBit::CANCEL,
-        VKey::Return => PadBit::START,
         _ => PadBit::empty(),
     }
 }

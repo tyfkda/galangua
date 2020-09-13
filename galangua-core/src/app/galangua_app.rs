@@ -72,7 +72,7 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
     }
 
     fn update_main(&mut self) -> bool {
-        if self.pad.is_trigger(PadBit::CANCEL) {
+        if self.pressed_key == Some(VKey::Escape) {
             if self.state != AppState::Title {
                 self.back_to_title();
             } else {
@@ -82,7 +82,7 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
 
         #[cfg(debug_assertions)]
         {
-            if self.pad.is_trigger(PadBit::START) {
+            if self.pressed_key == Some(VKey::Return) {
                 self.paused = !self.paused;
             }
             if self.paused && self.pressed_key != Some(VKey::S) {
