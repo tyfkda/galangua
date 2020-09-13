@@ -63,6 +63,7 @@ impl EnemyManager {
         self.appearance_manager.restart(stage, captured_fighter);
         self.formation.restart();
         self.attack_manager.restart(stage);
+        self.shot_paused_count = 0;
         self.stage_state = StageState::APPEARANCE;
         self.frame_count = 0;
     }
