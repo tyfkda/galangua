@@ -436,13 +436,16 @@ impl GameManager {
                 myshot.get_collbox(),
                 myshot.dual_collbox(),
             ];
+            let mut hit = false;
             for collbox in colls.iter().flat_map(|x| x) {
                 if let Some(fi) = self.enemy_manager.check_collision(collbox) {
                     self.enemy_manager.set_damage_to_enemy(
                         &fi, power, accessor, &mut self.event_queue);
-                    *myshot_opt = None;
-                    break;
+                    hit = true;
                 }
+            }
+            if hit {
+                *myshot_opt = None;
             }
         }
     }
