@@ -163,16 +163,16 @@ impl Traj {
                 if self.flip_x {
                     dest_angle = -dest_angle;
                 }
-                let distance = 2.0 * std::f64::consts::PI * (radius as f64) / (ONE as f64);  // Circumference of radius [dot].
-                let frame = distance * (ONE as f64) / (self.speed as f64);  // Frame count according to speed [frame].
-                let dangle = (2.0 * std::f64::consts::PI) / frame;  // Angle which should be modified in one frame [rad].
-                let vangle = dangle * (((ANGLE * ONE) as f64) / (2.0 * std::f64::consts::PI));  // [ANGLE * ONE]
+                let distance = 2.0 * std::f32::consts::PI * (radius as f32) / (ONE as f32);  // Circumference of radius [dot].
+                let frame = distance * (ONE as f32) / (self.speed as f32);  // Frame count according to speed [frame].
+                let dangle = (2.0 * std::f32::consts::PI) / frame;  // Angle which should be modified in one frame [rad].
+                let vangle = dangle * (((ANGLE * ONE) as f32) / (2.0 * std::f32::consts::PI));  // [ANGLE * ONE]
                 if dest_angle > self.angle {
                     self.vangle = vangle.round() as i32;
-                    self.delay = (((dest_angle - self.angle) as f64) / vangle).round() as u32;
+                    self.delay = (((dest_angle - self.angle) as f32) / vangle).round() as u32;
                 } else {
                     self.vangle = -vangle.round() as i32;
-                    self.delay = (((self.angle - dest_angle) as f64) / vangle).round() as u32;
+                    self.delay = (((self.angle - dest_angle) as f32) / vangle).round() as u32;
                 }
                 return false;
             }

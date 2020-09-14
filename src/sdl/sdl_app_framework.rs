@@ -149,7 +149,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
             0
         } else {
             let late = now.duration_since(next_update_time).expect("");
-            let skip_count = (late.as_millis() as f64 / duration.as_millis() as f64).floor() as u32;
+            let skip_count = (late.as_millis() as f32 / duration.as_millis() as f32).floor() as u32;
             if skip_count <= FPS / MIN_FPS {
                 self.last_update_time = next_update_time + duration * skip_count;
                 skip_count

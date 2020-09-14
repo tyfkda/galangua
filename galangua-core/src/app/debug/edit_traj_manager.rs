@@ -111,7 +111,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
             let mut vec = Vec::new();
             let mut err = false;
             let mut lineno = 0;
-            let one = ONE as f64;
+            let one = ONE as f32;
             for line in reader.lines() {
                 lineno += 1;
                 if let Ok(line) = line {
@@ -123,7 +123,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                     if words.len() >= 1 {
                         match words[0] {
                             "Pos" if words.len() >= 3 => {
-                                if let (Ok(x), Ok(y)) = (&words[1].parse::<f64>(), &words[2].parse::<f64>()) {
+                                if let (Ok(x), Ok(y)) = (&words[1].parse::<f32>(), &words[2].parse::<f32>()) {
                                     let ix = (x * one).round() as i32;
                                     let iy = (y * one).round() as i32;
                                     vec.push(TrajCommand::Pos(ix, iy));
@@ -133,7 +133,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                 err = true;
                             }
                             "Speed" if words.len() >= 2 => {
-                                if let Ok(speed) = &words[1].parse::<f64>() {
+                                if let Ok(speed) = &words[1].parse::<f32>() {
                                     let ispeed = (speed * one).round() as i32;
                                     vec.push(TrajCommand::Speed(ispeed));
                                 } else {
@@ -142,7 +142,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                 }
                             }
                             "Angle" if words.len() >= 2 => {
-                                if let Ok(angle) = &words[1].parse::<f64>() {
+                                if let Ok(angle) = &words[1].parse::<f32>() {
                                     let iangle = (angle * one).round() as i32;
                                     vec.push(TrajCommand::Angle(iangle));
                                 } else {
@@ -151,7 +151,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                 }
                             }
                             "VAngle" if words.len() >= 2 => {
-                                if let Ok(vangle) = &words[1].parse::<f64>() {
+                                if let Ok(vangle) = &words[1].parse::<f32>() {
                                     let ivangle = (vangle * one).round() as i32;
                                     vec.push(TrajCommand::VAngle(ivangle));
                                 } else {
@@ -168,7 +168,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                 }
                             }
                             "DestAngle" if words.len() >= 3 => {
-                                if let (Ok(angle), Ok(radius)) = (&words[1].parse::<f64>(), &words[2].parse::<f64>()) {
+                                if let (Ok(angle), Ok(radius)) = (&words[1].parse::<f32>(), &words[2].parse::<f32>()) {
                                     let iangle = (angle * one).round() as i32;
                                     let iradius = (radius * one).round() as i32;
                                     vec.push(TrajCommand::DestAngle(iangle, iradius));
@@ -178,7 +178,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                 err = true;
                             }
                             "WaitYG" if words.len() >= 2 => {
-                                if let Ok(value) = &words[1].parse::<f64>() {
+                                if let Ok(value) = &words[1].parse::<f32>() {
                                     let ivalue = (value * one).round() as i32;
                                     vec.push(TrajCommand::WaitYG(ivalue));
                                 } else {
@@ -187,7 +187,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                 }
                             }
                             "AddPos" if words.len() >= 3 => {
-                                if let (Ok(x), Ok(y)) = (&words[1].parse::<f64>(), &words[2].parse::<f64>()) {
+                                if let (Ok(x), Ok(y)) = (&words[1].parse::<f32>(), &words[2].parse::<f32>()) {
                                     let ix = (x * one).round() as i32;
                                     let iy = (y * one).round() as i32;
                                     vec.push(TrajCommand::AddPos(ix, iy));
