@@ -253,6 +253,10 @@ fn draw_scores<R: RendererTrait>(
     }
     renderer.draw_str("font", 9 * 8, 0 * 8, "HIGH SCORE");
     renderer.set_texture_color_mod("font", 255, 255, 255);
-    renderer.draw_str("font", 0 * 8, 1 * 8, &format!("{:6}0", score_holder.score / 10));
-    renderer.draw_str("font", 10 * 8, 1 * 8, &format!("{:6}0", score_holder.high_score / 10));
+
+    const MAX_DISP_SCORE: u32 = 9999999;
+    let score = std::cmp::min(score_holder.score, MAX_DISP_SCORE);
+    renderer.draw_str("font", 0 * 8, 1 * 8, &format!("{:6}0", score / 10));
+    let high_score = std::cmp::min(score_holder.high_score, MAX_DISP_SCORE);
+    renderer.draw_str("font", 10 * 8, 1 * 8, &format!("{:6}0", high_score / 10));
 }

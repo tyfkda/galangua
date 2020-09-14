@@ -10,7 +10,7 @@ impl ScoreHolder {
     }
 
     pub fn add_score(&mut self, add: u32) {
-        self.score += add;
+        self.score = self.score.saturating_add(add);
         if self.score > self.high_score {
             self.high_score = self.score;
         }
