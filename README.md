@@ -29,6 +29,11 @@ Galangua
 
     $ cargo run
 
+#### Command-line options
+
+  * -s <scale> : Specify window scale (default: 3)
+  * -f         : Use fullscreen
+
 
 ### Browser version
 
