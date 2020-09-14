@@ -113,7 +113,7 @@ impl EnemyManager {
     pub fn set_damage_to_enemy<T: Accessor>(
         &mut self, fi: &FormationIndex, power: u32,
         accessor: &mut T, event_queue: &mut EventQueue,
-    ) -> bool {
+    ) {
         let index = calc_array_index(fi);
         if let Some(enemy) = self.enemies[index].as_mut() {
             let pos = *enemy.raw_pos();
@@ -132,9 +132,6 @@ impl EnemyManager {
                 self.enemies[index] = None;
                 self.decrement_alive_enemy();
             }
-            result.killed
-        } else {
-            false
         }
     }
 

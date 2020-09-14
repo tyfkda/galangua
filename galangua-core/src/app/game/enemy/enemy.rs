@@ -47,7 +47,6 @@ pub enum CapturingState {
 
 #[derive(Debug)]
 pub struct DamageResult {
-    pub destroyed: bool,
     pub killed: bool,
     pub point: u32,
 }
@@ -425,11 +424,11 @@ fn bee_set_damage(me: &mut Enemy, power: u32, _accessor: &mut dyn Accessor,
                   _event_queue: &mut EventQueue) -> DamageResult {
     if me.life > power {
         me.life -= power;
-        DamageResult { destroyed: false, killed: false, point: 0 }
+        DamageResult { killed: false, point: 0 }
     } else {
         me.life = 0;
         let point = (me.vtable.calc_point)(me);
-        DamageResult { destroyed: true, killed: true, point }
+        DamageResult { killed: true, point }
     }
 }
 
@@ -437,7 +436,7 @@ fn owl_set_damage(me: &mut Enemy, power: u32, accessor: &mut dyn Accessor,
                   event_queue: &mut EventQueue) -> DamageResult {
     if me.life > power {
         me.life -= power;
-        DamageResult { destroyed: false, killed: false, point: 0 }
+        DamageResult { killed: false, point: 0 }
     } else {
         let mut killed = true;
         me.life = 0;
@@ -467,7 +466,7 @@ fn owl_set_damage(me: &mut Enemy, power: u32, accessor: &mut dyn Accessor,
 
         accessor.pause_enemy_shot(OWL_DESTROY_SHOT_WAIT);
 
-        DamageResult { destroyed: true, killed, point }
+        DamageResult { killed, point }
     }
 }
 
@@ -583,12 +582,12 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
         set_damage: |me: &mut Enemy, power: u32, _accessor: &mut dyn Accessor, event_queue: &mut EventQueue| -> DamageResult {
             if me.life > power {
                 me.life -= power;
-                DamageResult { destroyed: false, killed: false, point: 0 }
+                DamageResult { killed: false, point: 0 }
             } else {
                 me.life = 0;
                 event_queue.push(EventType::CapturedFighterDestroyed);
                 let point = (me.vtable.calc_point)(me);
-                DamageResult { destroyed: true, killed: true, point }
+                DamageResult { killed: true, point }
             }
         },
     },
