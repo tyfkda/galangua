@@ -302,7 +302,8 @@ impl GameManager {
                 EventType::EarnPointEffect(point_type, pos) => {
                     self.spawn_effect(Effect::create_earned_point(point_type, &pos));
                 }
-                EventType::EnemyExplosion(pos) => {
+                EventType::EnemyExplosion(pos, angle, enemy_type) => {
+                    self.spawn_effect(Effect::create_flash_enemy(&pos, angle, enemy_type));
                     self.spawn_effect(Effect::create_enemy_explosion(&pos));
                 }
                 EventType::PlayerExplosion(pos) => {

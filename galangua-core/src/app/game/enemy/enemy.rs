@@ -113,6 +113,10 @@ impl Enemy {
         &self.pos
     }
 
+    pub fn angle(&self) -> i32 {
+        self.angle
+    }
+
     pub fn state(&self) -> EnemyState {
         self.state
     }

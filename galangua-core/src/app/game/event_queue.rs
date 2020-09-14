@@ -3,6 +3,7 @@ use std::ops::Index;
 use super::effect::EarnedPointType;
 use super::enemy::FormationIndex;
 
+use crate::app::game::enemy::EnemyType;
 use crate::framework::types::Vec2I;
 
 pub struct EventQueue {
@@ -42,7 +43,7 @@ pub enum EventType {
     AddScore(u32),
     EneShot(Vec2I),
     EarnPointEffect(EarnedPointType, Vec2I),
-    EnemyExplosion(Vec2I),
+    EnemyExplosion(Vec2I, i32, EnemyType),
     PlayerExplosion(Vec2I),
     DeadPlayer,
     StartCaptureAttack(FormationIndex),
