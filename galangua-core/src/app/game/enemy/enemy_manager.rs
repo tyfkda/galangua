@@ -100,8 +100,7 @@ impl EnemyManager {
     }
 
     pub fn check_collision(&mut self, target: &CollBox) -> Option<FormationIndex> {
-        for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
-            let enemy = enemy_opt.as_mut().unwrap();
+        for enemy in self.enemies.iter_mut().flat_map(|x| x) {
             if let Some(colbox) = enemy.get_collbox() {
                 if colbox.check_collision(target) {
                     return Some(enemy.formation_index);
