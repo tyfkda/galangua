@@ -299,7 +299,7 @@ impl GameManager {
                     self.add_score(params.score_holder.score, add);
                     params.score_holder.add_score(add);
                 }
-                EventType::EarnPoint(point_type, pos) => {
+                EventType::EarnPointEffect(point_type, pos) => {
                     self.spawn_effect(Effect::create_earned_point(point_type, &pos));
                 }
                 EventType::EnemyExplosion(pos) => {

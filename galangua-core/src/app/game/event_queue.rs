@@ -41,7 +41,7 @@ pub enum EventType {
     MyShot(Vec2I, bool, i32),
     AddScore(u32),
     EneShot(Vec2I),
-    EarnPoint(EarnedPointType, Vec2I),
+    EarnPointEffect(EarnedPointType, Vec2I),
     EnemyExplosion(Vec2I),
     PlayerExplosion(Vec2I),
     DeadPlayer,

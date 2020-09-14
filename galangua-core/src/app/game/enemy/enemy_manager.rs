@@ -131,7 +131,7 @@ impl EnemyManager {
                     _ => None,
                 };
                 if let Some(point_type) = point_type {
-                    event_queue.push(EventType::EarnPoint(point_type, pos));
+                    event_queue.push(EventType::EarnPointEffect(point_type, pos));
                 }
             }
 
