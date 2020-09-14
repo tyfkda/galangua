@@ -305,6 +305,9 @@ impl GameManager {
                 EventType::EnemyExplosion(pos) => {
                     self.spawn_effect(Effect::create_enemy_explosion(&pos));
                 }
+                EventType::PlayerExplosion(pos) => {
+                    self.spawn_effect(Effect::create_player_explosion(&pos));
+                }
                 EventType::DeadPlayer => {
                     params.star_manager.set_stop(true);
                     if self.state != GameState::Recapturing {
@@ -461,21 +464,19 @@ impl GameManager {
                 let pos = self.enemy_manager.get_enemy_at(&fi).unwrap().raw_pos().clone();
                 self.enemy_manager.set_damage_to_enemy(&fi, power, accessor, &mut self.event_queue);
 
-                self.spawn_effect(Effect::create_player_explosion(player_pos));
-
+                self.event_queue.push(EventType::PlayerExplosion(*player_pos));
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
-                    continue;
                 }
+                continue;
             }
 
             if let Some(pos) = self.enemy_manager.check_shot_collision(&collbox) {
-                self.spawn_effect(Effect::create_player_explosion(player_pos));
-
+                self.event_queue.push(EventType::PlayerExplosion(*player_pos));
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
-                    continue;
                 }
+                continue;
             }
         }
     }

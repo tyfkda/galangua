@@ -43,6 +43,7 @@ pub enum EventType {
     EneShot(Vec2I),
     EarnPoint(EarnedPointType, Vec2I),
     EnemyExplosion(Vec2I),
+    PlayerExplosion(Vec2I),
     DeadPlayer,
     StartCaptureAttack(FormationIndex),
     EndCaptureAttack,
