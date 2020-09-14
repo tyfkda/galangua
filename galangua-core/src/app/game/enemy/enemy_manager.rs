@@ -10,7 +10,7 @@ use super::formation::Formation;
 use super::{Accessor, FormationIndex};
 
 use crate::app::consts::*;
-use crate::app::game::effect::EarnedPointType;
+use crate::app::game::effect::to_earned_point_type;
 use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
@@ -123,14 +123,7 @@ impl EnemyManager {
                 event_queue.push(EventType::AddScore(result.point));
                 event_queue.push(EventType::EnemyExplosion(pos));
 
-                let point_type = match result.point {
-                    1600 => Some(EarnedPointType::Point1600),
-                    1000 => Some(EarnedPointType::Point1000),
-                    800 => Some(EarnedPointType::Point800),
-                    400 => Some(EarnedPointType::Point400),
-                    _ => None,
-                };
-                if let Some(point_type) = point_type {
+                if let Some(point_type) = to_earned_point_type(result.point) {
                     event_queue.push(EventType::EarnPointEffect(point_type, pos));
                 }
             }

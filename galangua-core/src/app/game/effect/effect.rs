@@ -97,6 +97,16 @@ pub enum EarnedPointType {
     Point400,
 }
 
+pub fn to_earned_point_type(point: u32) -> Option<EarnedPointType> {
+    match point {
+        1600 => Some(EarnedPointType::Point1600),
+        1000 => Some(EarnedPointType::Point1000),
+        800 => Some(EarnedPointType::Point800),
+        400 => Some(EarnedPointType::Point400),
+        _ => None,
+    }
+}
+
 const EARNED_POINT_FRAME: u32 = 64;
 const EARNED_POINT_SPRITE_TABLE: [[&str; 1]; 4] = [
     ["pts1600"],
