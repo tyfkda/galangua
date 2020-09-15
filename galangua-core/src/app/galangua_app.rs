@@ -11,7 +11,7 @@ use crate::util::pad::{Pad, PadBit};
 use super::debug::EditTrajManager;
 
 const KEY_HIGH_SCORE: &str = "highScore";
-const DEFAULT_HIGH_SCORE: u32 = 0;
+const DEFAULT_HIGH_SCORE: u32 = 1000;
 
 #[derive(PartialEq)]
 enum AppState {

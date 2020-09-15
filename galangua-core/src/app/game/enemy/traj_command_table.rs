@@ -38,6 +38,22 @@ counted_array!(pub const COMMAND_TABLE2: [TrajCommand; _] = [
     VAngle(0),
 ]);
 
+counted_array!(pub const COMMAND_TABLE3: [TrajCommand; _] = [
+    Pos((WIDTH / 2 + 40) * ONE, -8 * ONE),
+    Speed(3 * ONE),
+    Angle((ANGLE / 2) * ONE),
+    VAngle(0),
+    Delay(8),
+    Shot(0),
+    VAngle(2 * ONE),
+    Delay(16),
+    VAngle(0),
+    Delay(38),
+    Accelerate,
+    DestAngle((ANGLE / 8) * ONE, 25 * ONE),
+    VAngle(0),
+]);
+
 counted_array!(pub const BEE_ATTACK_TABLE: [TrajCommand; _] = [
     Speed(2 * ONE),
     Angle(0),

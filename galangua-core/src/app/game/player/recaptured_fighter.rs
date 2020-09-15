@@ -42,7 +42,7 @@ impl RecapturedFighter {
             }
             State::SlideHorz => {
                 let x = if player_living { (WIDTH / 2 + 8) * ONE } else { WIDTH / 2 * ONE };
-                let speed = 1 * ONE;
+                let speed = 2 * ONE;
                 self.pos.x += clamp(x - self.pos.x, -speed, speed);
                 if self.pos.x == x {
                     self.state = State::SlideDown;
@@ -50,7 +50,7 @@ impl RecapturedFighter {
             }
             State::SlideDown => {
                 let y = (HEIGHT - 16 - 8) * ONE;
-                let speed = 1 * ONE;
+                let speed = 2 * ONE;
                 self.pos.y += clamp(y - self.pos.y, -speed, speed);
                 if self.pos.y == y {
                     self.state = State::Done

@@ -19,5 +19,5 @@ pub trait Accessor {
     fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I;
     fn pause_enemy_shot(&mut self, wait: u32);
     fn is_rush(&self) -> bool;
-    fn get_stage_no(&self) -> u32;
+    fn get_stage_no(&self) -> u16;
 }

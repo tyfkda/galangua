@@ -1,17 +1,20 @@
+use counted_array::counted_array;
+
 use crate::app::consts;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 
-const FLAG30_WIDTH: u32 = 16;
-const FLAG20_WIDTH: u32 = 16;
-const FLAG10_WIDTH: u32 = 16;
-const FLAG5_WIDTH: u32 = 8;
-const FLAG1_WIDTH: u32 = 8;
+const FLAG50_WIDTH: u16 = 16;
+const FLAG30_WIDTH: u16 = 16;
+const FLAG20_WIDTH: u16 = 16;
+const FLAG10_WIDTH: u16 = 16;
+const FLAG5_WIDTH: u16 = 8;
+const FLAG1_WIDTH: u16 = 8;
 
 pub struct StageIndicator {
-    stage: u32,
+    stage: u16,
     wait: u32,
-    stage_disp: u32,
+    stage_disp: u16,
 }
 
 impl StageIndicator {
@@ -23,7 +26,7 @@ impl StageIndicator {
         }
     }
 
-    pub fn set_stage(&mut self, stage: u32) {
+    pub fn set_stage(&mut self, stage: u16) {
         self.stage = stage;
         self.wait = 0;
         self.stage_disp = 0;
@@ -69,19 +72,20 @@ impl StageIndicator {
 
 struct FlagInfo {
     sprite_name: &'static str,
-    count: u32,
-    width: u32,
+    count: u16,
+    width: u16,
 }
 
-const FLAG_INFO_TABLE: [FlagInfo; 5] = [
-    FlagInfo { sprite_name: "flag30", count: 30, width: FLAG30_WIDTH },
-    FlagInfo { sprite_name: "flag20", count: 20, width: FLAG20_WIDTH },
-    FlagInfo { sprite_name: "flag10", count: 10, width: FLAG10_WIDTH },
-    FlagInfo { sprite_name: "flag5", count: 5, width: FLAG5_WIDTH },
-    FlagInfo { sprite_name: "flag1", count: 1, width: FLAG1_WIDTH },
-];
+counted_array!(const FLAG_INFO_TABLE: [FlagInfo; _] = [
+    FlagInfo { sprite_name: "flag50",  count: 50,  width: FLAG50_WIDTH },
+    FlagInfo { sprite_name: "flag30",  count: 30,  width: FLAG30_WIDTH },
+    FlagInfo { sprite_name: "flag20",  count: 20,  width: FLAG20_WIDTH },
+    FlagInfo { sprite_name: "flag10",  count: 10,  width: FLAG10_WIDTH },
+    FlagInfo { sprite_name: "flag5",   count: 5,   width: FLAG5_WIDTH },
+    FlagInfo { sprite_name: "flag1",   count: 1,   width: FLAG1_WIDTH },
+]);
 
-fn calc_width(stage: u32) -> u32 {
+fn calc_width(stage: u16) -> u16 {
     let mut count = stage;
     let mut width = 0;
     for flag_info in FLAG_INFO_TABLE.iter() {

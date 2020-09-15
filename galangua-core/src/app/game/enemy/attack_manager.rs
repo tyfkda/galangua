@@ -31,7 +31,7 @@ impl AttackManager {
         }
     }
 
-    pub fn restart(&mut self, _stage: u32) {
+    pub fn restart(&mut self, _stage: u16) {
         *self = Self::new();
     }
 

@@ -52,7 +52,7 @@ pub struct GameManager {
     enemy_manager: EnemyManager,
     effects: [Option<Effect>; MAX_EFFECT_COUNT],
     event_queue: EventQueue,
-    stage: u32,
+    stage: u16,
     left_ship: u32,
     capture_state: CaptureState,
     capture_enemy_fi: FormationIndex,
@@ -171,8 +171,8 @@ impl GameManager {
             GameState::StageClear => {
                 self.count += 1;
                 if self.count >= 60 {
-                    self.stage += 1;
-                    self.stage_indicator.set_stage(self.stage + 1);
+                    self.stage = self.stage.saturating_add(1);
+                    self.stage_indicator.set_stage(std::cmp::min(self.stage, 255) + 1);
 
                     self.state = GameState::StartStage;
                     self.count = 0;
@@ -255,7 +255,8 @@ impl GameManager {
         self.stage_indicator.draw(renderer);
 
         if self.left_ship > 0 {
-            for i in 0..self.left_ship - 1 {
+            let disp_count = std::cmp::min(self.left_ship - 1, 8);
+            for i in 0..disp_count {
                 renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16));
             }
         }
@@ -388,11 +389,10 @@ impl GameManager {
     }
 
     fn add_score(&mut self, before: u32, add: u32) {
-        let ext = if before < 20_000 {
-            20_000
+        let ext = if before < EXTEND_FIRST_SCORE {
+            EXTEND_FIRST_SCORE
         } else {
-            const UNIT: u32 = 70_000;
-            (before + UNIT - 1) / UNIT * UNIT
+            (before + EXTEND_AFTER_SCORE - 1) / EXTEND_AFTER_SCORE * EXTEND_AFTER_SCORE
         };
         if before + add >= ext {
             self.extend_ship();
@@ -559,13 +559,13 @@ impl AccessorForEnemy for GameManager {
         self.state == GameState::Playing && self.enemy_manager.is_rush()
     }
 
-    fn get_stage_no(&self) -> u32 {
+    fn get_stage_no(&self) -> u16 {
         self.stage
     }
 }
 
-fn calc_ene_shot_speed(stage: u32) -> i32 {
-    const MAX_STAGE: i32 = 16;
+fn calc_ene_shot_speed(stage: u16) -> i32 {
+    const MAX_STAGE: i32 = 64;
     let per = std::cmp::min(stage as i32, MAX_STAGE) * ONE / MAX_STAGE;
     (ENE_SHOT_SPEED2 - ENE_SHOT_SPEED1) * per / ONE + ENE_SHOT_SPEED1
 }

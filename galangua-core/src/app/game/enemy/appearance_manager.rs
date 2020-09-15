@@ -39,7 +39,7 @@ impl Info {
 }
 
 pub struct AppearanceManager {
-    stage: u32,
+    stage: u16,
     paused: bool,
     wait_stationary: bool,
     wait: u32,
@@ -52,7 +52,7 @@ pub struct AppearanceManager {
 }
 
 impl AppearanceManager {
-    pub fn new(stage: u32) -> Self {
+    pub fn new(stage: u16) -> Self {
         Self {
             stage,
             paused: false,
@@ -67,7 +67,7 @@ impl AppearanceManager {
         }
     }
 
-    pub fn restart(&mut self, stage: u32, captured_fighter: Option<FormationIndex>) {
+    pub fn restart(&mut self, stage: u16, captured_fighter: Option<FormationIndex>) {
         *self = Self::new(stage);
         self.done = false;
         self.orders.clear();
@@ -159,6 +159,7 @@ impl AppearanceManager {
         let entry = &UNIT_TABLE[(self.stage as usize) % UNIT_TABLE.len()][self.unit as usize];
         let assault_count = ASSAULT_TABLE[min(self.stage as usize, ASSAULT_TABLE.len() - 1)][self.unit as usize] as usize;
 
+        let div;
         match entry.pat {
             0 => {
                 let flip = if entry.flip_x { 1 } else { 0 };
@@ -168,28 +169,7 @@ impl AppearanceManager {
                     let info = self.create_info(fi, count);
                     self.orders.push(info);
                 }
-
-                if assault_count > 0 {
-                    let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-                    let mut assault_index = 0;
-                    for i in 0..assault_count * 2 {
-                        let lr = i & 1;
-                        let n = self.orders.len() / 2;
-                        let index = rng.gen_range(0, n + 1);
-                        self.orders.push(self.orders[0]);
-                        // Shift
-                        for j in 0..(n - index) {
-                            self.orders[(n - j) * 2 + lr] = self.orders[(n - j - 1) * 2 + lr];
-                        }
-
-                        let fi = gen_assault_index(assault_index);
-                        assault_index += 1;
-                        let ins = index * 2 + lr;
-                        self.orders[ins] = self.create_info(fi, ins as u32);
-                    }
-
-                    recalc_order_time(&mut self.orders, STEP_WAIT, 2);
-                }
+                div = 2;
             }
             1 => {
                 for count in 0..8 {
@@ -197,21 +177,7 @@ impl AppearanceManager {
                     let info = self.create_info(fi, count);
                     self.orders.push(info);
                 }
-
-                if assault_count > 0 {
-                    let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-                    let mut assault_index = 0;
-                    for _i in 0..assault_count * 2 {
-                        let n = self.orders.len();
-                        let index = rng.gen_range(0, n + 1);
-                        let fi = gen_assault_index(assault_index);
-                        assault_index += 1;
-                        let info = self.create_info(fi, index as u32);
-                        self.orders.insert(index, info);
-                    }
-
-                    recalc_order_time(&mut self.orders, STEP_WAIT, 1);
-                }
+                div = 1;
             }
             2 => {
                 for count in 0..8 {
@@ -219,21 +185,7 @@ impl AppearanceManager {
                     let info = self.create_info(fi, count);
                     self.orders.push(info);
                 }
-
-                if assault_count > 0 {
-                    let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-                    let mut assault_index = 0;
-                    for _i in 0..assault_count * 2 {
-                        let n = self.orders.len();
-                        let index = rng.gen_range(0, n + 1);
-                        let fi = gen_assault_index(assault_index);
-                        assault_index += 1;
-                        let info = self.create_info(fi, index as u32);
-                        self.orders.insert(index, info);
-                    }
-
-                    recalc_order_time(&mut self.orders, STEP_WAIT, 1);
-                }
+                div = 1;
             }
             3 => {
                 let flip = if entry.flip_x { 1 } else { 0 };
@@ -243,33 +195,35 @@ impl AppearanceManager {
                     let info = self.create_info(fi, count);
                     self.orders.push(info);
                 }
-
-                if assault_count > 0 {
-                    let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-                    let mut assault_index = 0;
-                    for i in 0..assault_count * 2 {
-                        let lr = i & 1;
-                        let n = self.orders.len() / 2;
-                        let index = rng.gen_range(0, n + 1);
-                        self.orders.push(self.orders[0]);
-                        // Shift
-                        for j in 0..(n - index) {
-                            self.orders[(n - j) * 2 + lr] = self.orders[(n - j - 1) * 2 + lr];
-                        }
-
-                        let fi = gen_assault_index(assault_index);
-                        assault_index += 1;
-                        let ins = index * 2 + lr;
-                        self.orders[ins] = self.create_info(fi, ins as u32);
-                    }
-
-                    recalc_order_time(&mut self.orders, STEP_WAIT, 2);
-                }
+                div = 2;
             }
 
             _ => {
                 self.done = true;
+                div = 1;
             }
+        }
+
+        if assault_count > 0 {
+            let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+            let mut assault_index = 0;
+            for i in 0..assault_count * 2 {
+                let lr = i & 1;
+                let n = self.orders.len() / 2;
+                let index = rng.gen_range(0, n + 1);
+                self.orders.push(self.orders[lr]);
+                // Shift
+                for j in 0..(n - index) {
+                    self.orders[(n - j) * 2 + lr] = self.orders[(n - j - 1) * 2 + lr];
+                }
+
+                let fi = gen_assault_index(assault_index);
+                let ins = index * 2 + lr;
+                self.orders[ins] = self.create_info(fi, ins as u32);
+                assault_index += 1;
+            }
+
+            recalc_order_time(&mut self.orders, STEP_WAIT, div);
         }
 
         if self.unit == UNIT_COUNT - 1 {

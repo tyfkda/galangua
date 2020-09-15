@@ -18,7 +18,7 @@ use crate::framework::RendererTrait;
 use crate::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
 const MAX_ENEMY_COUNT: usize = 70;
-const MAX_SHOT_COUNT: usize = 16;
+const MAX_SHOT_COUNT: usize = 12;
 const RUSH_THRESHOLD: u32 = 5;
 
 #[derive(PartialEq)]
@@ -55,7 +55,7 @@ impl EnemyManager {
         }
     }
 
-    pub fn start_next_stage(&mut self, stage: u32, captured_fighter: Option<FormationIndex>) {
+    pub fn start_next_stage(&mut self, stage: u16, captured_fighter: Option<FormationIndex>) {
         self.enemies = array![None; MAX_ENEMY_COUNT];
         self.alive_enemy_count = 0;
         self.shots = Default::default();

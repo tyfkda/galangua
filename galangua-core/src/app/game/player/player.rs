@@ -73,7 +73,7 @@ impl Player {
             }
             State::MoveHomePos => {
                 let x = (WIDTH / 2 - 8) * ONE;
-                let speed = 1 * ONE;
+                let speed = 2 * ONE;
                 self.pos.x += clamp(x - self.pos.x, -speed, speed);
                 if self.pos.x == x {
                     if self.recaptured_fighter.as_ref().unwrap().done() {
@@ -133,7 +133,7 @@ impl Player {
 
     fn fire_bullet(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
         if self.shot_enable && pad.is_trigger(PadBit::A) {
-            let pos = &self.pos + &Vec2I::new(0, 2 * ONE);
+            let pos = &self.pos + &Vec2I::new(0, -4 * ONE);
             event_queue.push(EventType::MyShot(pos, self.dual, self.angle));
         }
     }

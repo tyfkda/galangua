@@ -47,7 +47,7 @@ counted_array!(pub(super) const UNIT_TABLE: [[UnitTableEntry; 5]; _] = [
         UnitTableEntry { pat: 2, table: &COMMAND_TABLE1, flip_x: true },
     ],
     [
-        UnitTableEntry { pat: 0, table: &COMMAND_TABLE1, flip_x: false },
+        UnitTableEntry { pat: 0, table: &COMMAND_TABLE3, flip_x: true },
         UnitTableEntry { pat: 3, table: &COMMAND_TABLE2, flip_x: false },
         UnitTableEntry { pat: 3, table: &COMMAND_TABLE2, flip_x: true },
         UnitTableEntry { pat: 3, table: &COMMAND_TABLE1, flip_x: false },
@@ -61,11 +61,11 @@ counted_array!(pub(super) const UNIT_TABLE: [[UnitTableEntry; 5]; _] = [
         UnitTableEntry { pat: 0, table: &COMMAND_TABLE1, flip_x: false },
     ],
     [
-        UnitTableEntry { pat: 0, table: &COMMAND_TABLE1, flip_x: false },
+        UnitTableEntry { pat: 0, table: &COMMAND_TABLE3, flip_x: true },
         UnitTableEntry { pat: 3, table: &COMMAND_TABLE2, flip_x: false },
         UnitTableEntry { pat: 3, table: &COMMAND_TABLE2, flip_x: true },
-        UnitTableEntry { pat: 3, table: &COMMAND_TABLE1, flip_x: false },
-        UnitTableEntry { pat: 3, table: &COMMAND_TABLE1, flip_x: true },
+        UnitTableEntry { pat: 3, table: &COMMAND_TABLE3, flip_x: false },
+        UnitTableEntry { pat: 3, table: &COMMAND_TABLE3, flip_x: true },
     ],
 ]);
 

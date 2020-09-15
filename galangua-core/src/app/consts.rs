@@ -9,3 +9,6 @@ pub const MYSHOT_SPEED: i32 = 6 * ONE;
 
 pub const ENE_SHOT_SPEED1: i32 = 25 * ONE / 10;
 pub const ENE_SHOT_SPEED2: i32 = 40 * ONE / 10;
+
+pub const EXTEND_FIRST_SCORE: u32 = 20_000;
+pub const EXTEND_AFTER_SCORE: u32 = 50_000;

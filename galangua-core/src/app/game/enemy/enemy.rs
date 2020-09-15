@@ -170,11 +170,19 @@ impl Enemy {
     }
 
     fn release_troops(&mut self, accessor: &mut dyn Accessor) {
-        for troop_opt in self.troops.iter_mut() {
-            if let Some(index) = troop_opt {
-                if let Some(enemy) = accessor.get_enemy_at_mut(index) {
-                    enemy.set_to_formation();
-                }
+        for troop_opt in self.troops.iter_mut().filter(|x| x.is_some()) {
+            let index = &troop_opt.unwrap();
+            if let Some(enemy) = accessor.get_enemy_at_mut(index) {
+                enemy.set_to_formation();
+            }
+            *troop_opt = None;
+        }
+    }
+
+    fn remove_destroyed_troops(&mut self, accessor: &mut dyn Accessor) {
+        for troop_opt in self.troops.iter_mut().filter(|x| x.is_some()) {
+            let index = &troop_opt.unwrap();
+            if accessor.get_enemy_at(index).is_none() {
                 *troop_opt = None;
             }
         }
@@ -184,9 +192,8 @@ impl Enemy {
         self.attack_frame_count += 1;
 
         let stage_no = accessor.get_stage_no();
-        let shot_count = 2 + stage_no / 4;
-        let shot_count = std::cmp::min(shot_count , 5);
-        let shot_interval = 20 - shot_count;
+        let shot_count = std::cmp::min(2 + stage_no / 8 , 5) as u32;
+        let shot_interval = 20 - shot_count * 2;
 
         if self.attack_frame_count <= shot_interval * shot_count && self.attack_frame_count % shot_interval == 0 {
             event_queue.push(EventType::EneShot(self.pos));
@@ -557,15 +564,11 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
             if me.state == EnemyState::Formation {
                 150
             } else {
-                let fi = FormationIndex(me.formation_index.0, me.formation_index.1 - 1);
+                let cap_fi = FormationIndex(me.formation_index.0, me.formation_index.1 - 1);
                 let count = me.troops.iter().flat_map(|x| x)
-                    .filter(|index| **index != fi)
+                    .filter(|index| **index != cap_fi)
                     .count();
-                match count {
-                    0 => 400,
-                    1 => 800,
-                    2 | _ => 1600,
-                }
+                (1 << count) * 400
             }
         },
         sprite_name: |me: &Enemy, pat: usize| {
@@ -779,7 +782,7 @@ fn update_attack_capture_close_beam(me: &mut Enemy, _accessor: &mut dyn Accessor
 fn update_attack_capture_capture_done_wait(me: &mut Enemy, _accessor: &mut dyn Accessor, _event_queue: &mut EventQueue) {
     me.count += 1;
     if me.count >= 120 {
-        me.speed = 3 * ONE / 2;
+        me.speed = 5 * ONE / 2;
         me.update_fn = update_attack_capture_back;
     }
 }
@@ -822,6 +825,7 @@ fn update_attack_traj(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: 
             me.disappeared = true;
         } else if accessor.is_rush() {
             // Rush mode: Continue attacking
+            me.remove_destroyed_troops(accessor);
             me.rush_attack();
         }
     }
