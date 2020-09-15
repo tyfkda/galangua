@@ -179,8 +179,11 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
             }
         }
 
-        renderer.set_texture_color_mod("font", 128, 128, 128);
-        renderer.draw_str("font", 23 * 8, 0 * 8, &format!("FPS{:2}", self.fps_calc.fps()));
+        #[cfg(debug_assertions)]
+        {
+            renderer.set_texture_color_mod("font", 128, 128, 128);
+            renderer.draw_str("font", 23 * 8, 0 * 8, &format!("FPS{:2}", self.fps_calc.fps()));
+        }
     }
 
     fn back_to_title(&mut self) {
