@@ -24,10 +24,13 @@ galangua-core = { path = "./galangua-core" }
 [dependencies.sdl2]
 version = "0.34.1"
 default-features = false
-features = ["image", "unsafe_textures"]
+features = ["image", "unsafe_textures", "mixer"]
 
 [workspace]
 members = [
     "galangua-core",
     "galangua-wasm",
+]
+exclude = [
+    "tools"
 ]

@@ -12,6 +12,7 @@ use galangua_core::app::GalanguaApp;
 use galangua_core::framework::VKey;
 
 use crate::sdl::SdlAppFramework;
+use crate::sdl::SdlAudio;
 use crate::std_timer::StdTimer;
 use crate::std_system::StdSystem;
 
@@ -43,7 +44,8 @@ pub fn main() -> Result<(), String> {
     };
 
     let timer = StdTimer::new();
-    let system = StdSystem::new();
+    let audio = SdlAudio::new(consts::CHANNEL_COUNT, consts::BASE_VOLUME);
+    let system = StdSystem::new(audio);
     let app = GalanguaApp::new(timer, system);
     let mut framework = SdlAppFramework::new(app, map_key)?;
     framework.run(APP_NAME,

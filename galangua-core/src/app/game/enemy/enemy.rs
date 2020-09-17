@@ -282,8 +282,10 @@ impl Enemy {
         }
     }
 
-    pub fn set_attack<A: Accessor>(&mut self, capture_attack: bool, accessor: &mut A) {
+    pub fn set_attack<A: Accessor>(&mut self, capture_attack: bool, accessor: &mut A, event_queue: &mut EventQueue) {
         (self.vtable.set_attack)(self, capture_attack, accessor);
+
+        event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
     }
 
     #[cfg(debug_assertions)]
@@ -416,6 +418,8 @@ fn update_bee_attack(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &
 
             me.traj = Some(traj);
             me.set_state_with_fn(EnemyState::Attack, update_attack_traj);
+
+            event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
         }
     }
 }
@@ -746,6 +750,7 @@ fn update_attack_capture_go_out(me: &mut Enemy, accessor: &mut dyn Accessor, eve
 
         if accessor.is_rush() {
             me.rush_attack();
+            event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
         } else {
             me.set_state(EnemyState::MoveToFormation);
             me.capturing_state = CapturingState::None;
@@ -827,6 +832,7 @@ fn update_attack_traj(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: 
             // Rush mode: Continue attacking
             me.remove_destroyed_troops(accessor);
             me.rush_attack();
+            event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
         }
     }
 }

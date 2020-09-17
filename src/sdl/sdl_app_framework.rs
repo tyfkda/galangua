@@ -2,6 +2,7 @@ use sdl2::event::Event;
 use sdl2::image::InitFlag;
 use sdl2::joystick::Joystick;
 use sdl2::keyboard::Keycode;
+use sdl2::mixer::{DEFAULT_CHANNELS, AUDIO_S16LSB};
 use sdl2::Sdl;
 use std::thread;
 use std::time::{Duration, SystemTime};
@@ -69,6 +70,22 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
             .present_vsync()
             .build()
             .map_err(|e| e.to_string())?;
+
+        let _audio = self.sdl_context.audio()?;
+
+        let frequency = 44_100;
+        let format = AUDIO_S16LSB; // signed 16 bit samples, in little-endian byte order
+        let channels = DEFAULT_CHANNELS; // Stereo
+        let chunk_size = 1_024;
+        sdl2::mixer::open_audio(frequency, format, channels, chunk_size)?;
+        let _mixer_context = sdl2::mixer::init(
+            sdl2::mixer::InitFlag::MP3 | sdl2::mixer::InitFlag::FLAC | sdl2::mixer::InitFlag::MOD | sdl2::mixer::InitFlag::OGG
+        )?;
+
+        // Number of mixing channels available for sound effect `Chunk`s to play
+        // simultaneously.
+        sdl2::mixer::allocate_channels(4);
+
         let mut renderer = SdlRenderer::new(canvas, (width, height));
 
         self.app.init(&mut renderer);

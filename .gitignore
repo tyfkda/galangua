@@ -16,3 +16,6 @@ Cargo.lock
 
 node_modules
 /tools/gen_sprite_sheet/package-lock.json
+/tools/gen_wav/*.ogg
+/tools/gen_wav/*.wav
+/tools/gen_wav/target/

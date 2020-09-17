@@ -11,7 +11,7 @@ use crate::app::consts::*;
 use crate::app::util::unsafe_util::peep;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
-use crate::framework::RendererTrait;
+use crate::framework::{RendererTrait, SystemTrait};
 use crate::util::pad::Pad;
 use crate::util::math::ONE;
 
@@ -116,12 +116,12 @@ impl GameManager {
         self.state == GameState::Finished
     }
 
-    pub fn update(&mut self, params: &mut Params) {
-        self.update_common(params);
+    pub fn update<S: SystemTrait>(&mut self, params: &mut Params, system: &mut S) {
+        self.update_common(params, system);
 
         match self.state {
             GameState::StartStage => {
-                self.stage_indicator.update();
+                self.stage_indicator.update(system);
                 self.count += 1;
                 if self.count >= 90 {
                     let captured_fighter = if self.capture_state == CaptureState::Captured {
@@ -205,7 +205,7 @@ impl GameManager {
         }
     }
 
-    fn update_common(&mut self, params: &mut Params) {
+    fn update_common<S: SystemTrait>(&mut self, params: &mut Params, system: &mut S) {
         {
             let accessor = unsafe { peep(self) };
             self.player.update(params.pad, accessor, &mut self.event_queue);
@@ -223,13 +223,13 @@ impl GameManager {
         }
 
         // For MyShot.
-        self.handle_event_queue(params);
+        self.handle_event_queue(params, system);
 
         //
 
         self.check_collision();
 
-        self.handle_event_queue(params);
+        self.handle_event_queue(params, system);
 
         for effect_opt in self.effects.iter_mut().filter(|x| x.is_some()) {
             let effect = effect_opt.as_mut().unwrap();
@@ -286,18 +286,20 @@ impl GameManager {
         }
     }
 
-    fn handle_event_queue(&mut self, params: &mut Params) {
+    fn handle_event_queue<S: SystemTrait>(&mut self, params: &mut Params, system: &mut S) {
         let mut i = 0;
         while i < self.event_queue.len() {
             match self.event_queue[i] {
                 EventType::MyShot(pos, dual, angle) => {
-                    self.spawn_myshot(&pos, dual, angle);
+                    if self.spawn_myshot(&pos, dual, angle) {
+                        system.play_se(CH_SHOT, SE_MYSHOT);
+                    }
                 }
                 EventType::EneShot(pos) => {
                     self.spawn_ene_shot(&pos);
                 }
                 EventType::AddScore(add) => {
-                    self.add_score(params.score_holder.score, add);
+                    self.add_score(params.score_holder.score, add, system);
                     params.score_holder.add_score(add);
                 }
                 EventType::EarnPointEffect(point_type, pos) => {
@@ -306,9 +308,11 @@ impl GameManager {
                 EventType::EnemyExplosion(pos, angle, enemy_type) => {
                     self.spawn_effect(Effect::create_flash_enemy(&pos, angle, enemy_type));
                     self.spawn_effect(Effect::create_enemy_explosion(&pos));
+                    system.play_se(CH_BOMB, SE_BOMB_ENEMY);
                 }
                 EventType::PlayerExplosion(pos) => {
                     self.spawn_effect(Effect::create_player_explosion(&pos));
+                    system.play_se(CH_BOMB, SE_BOMB_PLAYER);
                 }
                 EventType::DeadPlayer => {
                     params.star_manager.set_stop(true);
@@ -382,30 +386,37 @@ impl GameManager {
                     self.capture_state = CaptureState::NoCapture;
                     self.capture_enemy_fi = FormationIndex(0, 0);
                 }
+                EventType::PlaySe(channel, asset_path) => {
+                    system.play_se(channel, &asset_path);
+                }
             }
             i += 1;
         }
         self.event_queue.clear();
     }
 
-    fn add_score(&mut self, before: u32, add: u32) {
+    fn add_score<S: SystemTrait>(&mut self, before: u32, add: u32, system: &mut S) {
         let ext = if before < EXTEND_FIRST_SCORE {
             EXTEND_FIRST_SCORE
         } else {
             (before + EXTEND_AFTER_SCORE - 1) / EXTEND_AFTER_SCORE * EXTEND_AFTER_SCORE
         };
         if before + add >= ext {
-            self.extend_ship();
+            self.extend_ship(system);
         }
     }
 
-    fn extend_ship(&mut self) {
+    fn extend_ship<S: SystemTrait>(&mut self, system: &mut S) {
         self.left_ship += 1;
+        system.play_se(CH_JINGLE, SE_EXTEND_SHIP);
     }
 
-    fn spawn_myshot(&mut self, pos: &Vec2I, dual: bool, angle: i32) {
+    fn spawn_myshot(&mut self, pos: &Vec2I, dual: bool, angle: i32) -> bool {
         if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
             *myshot_opt = Some(MyShot::new(pos, dual, angle));
+            true
+        } else {
+            false
         }
     }
 
