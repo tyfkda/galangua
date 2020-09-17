@@ -5,6 +5,8 @@ Galangua
 
 [![screenshot](doc/ss.png)](https://tyfkda.github.io/galangua/)
 
+[Play in browser](https://tyfkda.github.io/galangua/)
+
 ### How to play (Control)
 
   * Arrow key : Move left or right
