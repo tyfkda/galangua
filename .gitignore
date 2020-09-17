@@ -19,3 +19,5 @@ node_modules
 /tools/gen_wav/*.ogg
 /tools/gen_wav/*.wav
 /tools/gen_wav/target/
+
+/docs/assets/audio/*.ogg
