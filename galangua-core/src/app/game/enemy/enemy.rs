@@ -78,7 +78,10 @@ pub struct Enemy {
 }
 
 impl Enemy {
-    pub fn new(enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32) -> Self {
+    pub fn new(
+        enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32,
+        fi: &FormationIndex,
+    ) -> Self {
         let vtable = &ENEMY_VTABLE[enemy_type as usize];
 
         Self {
@@ -90,7 +93,7 @@ impl Enemy {
             angle,
             speed,
             vangle: 0,
-            formation_index: FormationIndex(255, 255),  // Dummy
+            formation_index: *fi,
             traj: None,
             shot_wait: None,
             update_fn: update_none,
@@ -122,7 +125,6 @@ impl Enemy {
     pub fn can_capture_attack(&self) -> bool { self.enemy_type == EnemyType::Owl }
 
     pub fn formation_index(&self) -> &FormationIndex { &self.formation_index }
-    pub fn set_formation_index(&mut self, fi: &FormationIndex) { self.formation_index = *fi}
 
     pub fn update<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
         let prev_pos = self.pos;

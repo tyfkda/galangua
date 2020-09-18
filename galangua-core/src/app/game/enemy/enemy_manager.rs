@@ -177,9 +177,8 @@ impl EnemyManager {
     }
 
     pub fn spawn_captured_fighter(&mut self, pos: &Vec2I, fi: &FormationIndex) -> bool {
-        let mut enemy = Enemy::new(EnemyType::CapturedFighter, &pos, 0, 0);
+        let mut enemy = Enemy::new(EnemyType::CapturedFighter, &pos, 0, 0, fi);
         enemy.set_to_troop();
-        enemy.set_formation_index(fi);
         self.spawn(enemy)
     }
 
@@ -309,8 +308,7 @@ impl EnemyManager {
                 let index = super::appearance_table::ORDER[unit * 8 + i];
                 let enemy_type = super::appearance_table::ENEMY_TYPE_TABLE[unit * 2 + (i / 4)];
                 let pos = self.formation.pos(&index);
-                let mut enemy = Enemy::new(enemy_type, &pos, 0, 0);
-                enemy.set_formation_index(&index);
+                let mut enemy = Enemy::new(enemy_type, &pos, 0, 0, &index);
                 enemy.set_to_formation();
                 self.spawn(enemy);
             }

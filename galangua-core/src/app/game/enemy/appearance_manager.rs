@@ -120,12 +120,11 @@ impl AppearanceManager {
         let mut new_borns = Vec::new();
         while self.orders_ptr[0].time == self.time {
             let p = &self.orders_ptr[0];
-            let mut enemy = Enemy::new(p.enemy_type, &ZERO_VEC, 0, 0);
+            let mut enemy = Enemy::new(p.enemy_type, &ZERO_VEC, 0, 0, &p.fi);
 
             let mut traj = Traj::new(p.traj_table, &p.offset, p.flip_x, p.fi);
             traj.shot_enable = p.shot_enable;
             enemy.set_appearance(traj);
-            enemy.set_formation_index(&p.fi);
 
             new_borns.push(enemy);
 
