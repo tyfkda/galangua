@@ -125,7 +125,7 @@ impl AppearanceManager {
             let mut traj = Traj::new(p.traj_table, &p.offset, p.flip_x, p.fi);
             traj.shot_enable = p.shot_enable;
             enemy.set_appearance(traj);
-            enemy.formation_index = p.fi;
+            enemy.set_formation_index(&p.fi);
 
             new_borns.push(enemy);
 

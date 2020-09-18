@@ -55,13 +55,13 @@ const MAX_TROOPS: usize = 3;
 
 pub struct Enemy {
     vtable: &'static EnemyVtable,
-    pub(super) enemy_type: EnemyType,
+    enemy_type: EnemyType,
     state: EnemyState,
     pos: Vec2I,
     angle: i32,
     speed: i32,
     vangle: i32,
-    pub formation_index: FormationIndex,
+    formation_index: FormationIndex,
 
     life: u32,
     traj: Option<Traj>,
@@ -120,6 +120,11 @@ impl Enemy {
     fn is_ghost(&self) -> bool {
         self.life == 0
     }
+
+    pub fn can_capture_attack(&self) -> bool { self.enemy_type == EnemyType::Owl }
+
+    pub fn formation_index(&self) -> &FormationIndex { &self.formation_index }
+    pub fn set_formation_index(&mut self, fi: &FormationIndex) { self.formation_index = *fi}
 
     pub fn update<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
         let prev_pos = self.pos;

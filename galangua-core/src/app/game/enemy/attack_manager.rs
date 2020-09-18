@@ -3,7 +3,7 @@ use rand::seq::SliceRandom;
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
-use super::enemy::{EnemyState, EnemyType};
+use super::enemy::{EnemyState};
 use super::formation::{X_COUNT, Y_COUNT};
 use super::{Accessor, FormationIndex};
 use crate::app::game::{CaptureState, EventQueue, EventType};
@@ -101,7 +101,7 @@ impl AttackManager {
                 accessor.get_enemy_at_mut(&fi).unwrap()
             };
 
-            let capture_attack = enemy.enemy_type == EnemyType::Owl &&
+            let capture_attack = enemy.can_capture_attack() &&
                 (self.cycle / 3) & 1 != 0 &&
                 accessor.capture_state() == CaptureState::NoCapture &&
                 !accessor.is_player_dual();

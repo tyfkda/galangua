@@ -102,7 +102,7 @@ impl EnemyManager {
         for enemy in self.enemies.iter_mut().flat_map(|x| x) {
             if let Some(colbox) = enemy.get_collbox() {
                 if colbox.check_collision(target) {
-                    return Some(enemy.formation_index);
+                    return Some(*enemy.formation_index());
                 }
             }
         }
@@ -165,7 +165,7 @@ impl EnemyManager {
     }
 
     fn spawn(&mut self, enemy: Enemy) -> bool {
-        let index = calc_array_index(&enemy.formation_index);
+        let index = calc_array_index(enemy.formation_index());
         let slot = &mut self.enemies[index];
         if slot.is_none() {
             *slot = Some(enemy);
@@ -176,16 +176,16 @@ impl EnemyManager {
         }
     }
 
-    pub fn spawn_captured_fighter(&mut self, pos: &Vec2I, formation_index: &FormationIndex) -> bool {
+    pub fn spawn_captured_fighter(&mut self, pos: &Vec2I, fi: &FormationIndex) -> bool {
         let mut enemy = Enemy::new(EnemyType::CapturedFighter, &pos, 0, 0);
         enemy.set_to_troop();
-        enemy.formation_index = *formation_index;
+        enemy.set_formation_index(fi);
         self.spawn(enemy)
     }
 
     pub fn remove_enemy(&mut self, formation_index: &FormationIndex) -> bool {
         if let Some(slot) = self.enemies.iter_mut().filter(|x| x.is_some())
-            .find(|x| x.as_ref().unwrap().formation_index == *formation_index)
+            .find(|x| *x.as_ref().unwrap().formation_index() == *formation_index)
         {
             *slot = None;
             self.decrement_alive_enemy();
@@ -310,7 +310,7 @@ impl EnemyManager {
                 let enemy_type = super::appearance_table::ENEMY_TYPE_TABLE[unit * 2 + (i / 4)];
                 let pos = self.formation.pos(&index);
                 let mut enemy = Enemy::new(enemy_type, &pos, 0, 0);
-                enemy.formation_index = index;
+                enemy.set_formation_index(&index);
                 enemy.set_to_formation();
                 self.spawn(enemy);
             }
