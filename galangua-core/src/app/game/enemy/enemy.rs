@@ -714,9 +714,8 @@ impl EnemyBase {
             }
         }
     }
-}
 
-impl Collidable for EnemyBase {
+    //impl Collidable for EnemyBase
     fn get_collbox(&self) -> Option<CollBox> {
         if !self.is_ghost() {
             Some(CollBox {
@@ -727,9 +726,8 @@ impl Collidable for EnemyBase {
             None
         }
     }
-}
 
-impl Enemy for EnemyBase {
+    //impl Enemy for EnemyBase
     fn pos(&self) -> &Vec2I { &self.pos }
     fn set_pos(&mut self, pos: &Vec2I) { self.pos = *pos; }
 
@@ -882,19 +880,84 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
 
 ////////////////////////////////////////////////
 
+pub struct Zako {
+    enemy_base: EnemyBase,
+}
+
+impl Zako {
+    pub fn new(
+        enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32,
+        fi: &FormationIndex,
+    ) -> Self {
+        Self {
+            enemy_base: EnemyBase::new(enemy_type, pos, angle, speed, fi),
+        }
+    }
+}
+
+impl Collidable for Zako {
+    fn get_collbox(&self) -> Option<CollBox> { self.enemy_base.get_collbox() }
+}
+
+impl Enemy for Zako {
+    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+        self.enemy_base.update(accessor, event_queue);
+    }
+    fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize) {
+        self.enemy_base.draw(renderer, pat);
+    }
+
+    fn pos(&self) -> &Vec2I { self.enemy_base.pos() }
+    fn set_pos(&mut self, pos: &Vec2I) { self.enemy_base.set_pos(pos); }
+
+    fn is_formation(&self) -> bool { self.enemy_base.is_formation() }
+    fn is_disappeared(&self) -> bool { self.enemy_base.is_disappeared() }
+
+    fn can_capture_attack(&self) -> bool { self.enemy_base.can_capture_attack() }
+    fn is_captured_fighter(&self) -> bool { self.enemy_base.is_captured_fighter() }
+    fn formation_index(&self) -> &FormationIndex { self.enemy_base.formation_index() }
+
+    fn set_damage(
+        &mut self, power: u32, accessor: &mut dyn Accessor, event_queue: &mut EventQueue,
+    ) -> DamageResult {
+        self.enemy_base.set_damage(power, accessor, event_queue)
+    }
+
+    fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) -> bool {
+        self.enemy_base.update_troop(add, angle_opt)
+    }
+
+    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+        self.enemy_base.set_attack(capture_attack, accessor, event_queue);
+    }
+    fn set_to_troop(&mut self) {
+        self.enemy_base.set_to_troop();
+    }
+    fn set_to_formation(&mut self) {
+        self.enemy_base.set_to_formation();
+    }
+
+    #[cfg(debug_assertions)]
+    fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
+        self.enemy_base.set_table_attack(traj_command_vec, flip_x);
+    }
+}
+
+////////////////////////////////////////////////
+
 pub fn create_enemy(
     enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32,
     fi: &FormationIndex,
 ) -> Box<dyn Enemy> {
-    Box::new(EnemyBase::new(enemy_type, pos, angle, speed, fi))
+    Box::new(Zako::new(enemy_type, pos, angle, speed, fi))
 }
 
 pub fn create_appearance_enemy(
     enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32,
     fi: &FormationIndex, traj: Traj,
 ) -> Box<dyn Enemy> {
-    let mut enemy = EnemyBase::new(enemy_type, pos, angle, speed, fi);
-    enemy.traj = Some(traj);
-    enemy.set_state(EnemyState::Appearance);
+    let mut enemy = Zako::new(enemy_type, pos, angle, speed, fi);
+    enemy.enemy_base.traj = Some(traj);
+    enemy.enemy_base.set_state(EnemyState::Appearance);
     Box::new(enemy)
 }
