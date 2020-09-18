@@ -14,7 +14,7 @@ use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
 use crate::util::math::{
-    atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, quantize_angle, round_up, square,
+    atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, quantize_angle, round_vec, square,
     ANGLE, ONE, ONE_BIT};
 
 const OWL_DESTROY_SHOT_WAIT: u32 = 3 * 60;
@@ -105,11 +105,7 @@ impl Enemy {
         }
     }
 
-    pub fn pos(&self) -> Vec2I {
-        round_up(&self.pos)
-    }
-
-    pub fn raw_pos(&self) -> &Vec2I {
+    pub fn pos(&self) -> &Vec2I {
         &self.pos
     }
 
@@ -211,7 +207,7 @@ impl Enemy {
 
         let sprite = (self.vtable.sprite_name)(self, pat);
         let angle = quantize_angle(self.angle, ANGLE_DIV);
-        let pos = self.pos();
+        let pos = round_vec(&self.pos);
         renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None);
 
         if let Some(tractor_beam) = &self.tractor_beam {
@@ -374,7 +370,7 @@ impl Collidable for Enemy {
     fn get_collbox(&self) -> Option<CollBox> {
         if !self.is_ghost() {
             Some(CollBox {
-                top_left: &self.pos() - &Vec2I::new(6, 6),
+                top_left: &round_vec(&self.pos) - &Vec2I::new(6, 6),
                 size: Vec2I::new(12, 12),
             })
         } else {
@@ -555,7 +551,7 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
                     me.vangle = DLIMIT;
                 }
 
-                let player_pos = accessor.get_raw_player_pos();
+                let player_pos = accessor.get_player_pos();
                 me.target_pos = Vec2I::new(player_pos.x, (HEIGHT - 16 - 8 - 88) * ONE);
 
                 update_attack_capture
@@ -641,7 +637,7 @@ fn update_trajectory(me: &mut Enemy, accessor: &mut dyn Accessor, event_queue: &
     {
         let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
         let target_pos = [
-            Some(*accessor.get_raw_player_pos()),
+            Some(*accessor.get_player_pos()),
             accessor.get_dual_player_pos(),
         ];
         let count = target_pos.iter().flat_map(|x| x).count();
@@ -732,7 +728,7 @@ fn update_attack_capture_beam(me: &mut Enemy, accessor: &mut dyn Accessor, event
             me.speed = 5 * ONE / 2;
             me.update_fn = update_attack_capture_go_out;
         } else if accessor.can_player_capture() &&
-                  tractor_beam.can_capture(accessor.get_raw_player_pos())
+                  tractor_beam.can_capture(accessor.get_player_pos())
         {
             event_queue.push(EventType::CapturePlayer(&me.pos + &Vec2I::new(0, 16 * ONE)));
             tractor_beam.start_capture();

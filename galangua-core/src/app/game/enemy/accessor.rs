@@ -6,7 +6,7 @@ use crate::app::game::CaptureState;
 use crate::framework::types::Vec2I;
 
 pub trait Accessor {
-    fn get_raw_player_pos(&self) -> &Vec2I;
+    fn get_player_pos(&self) -> &Vec2I;
     fn get_dual_player_pos(&self) -> Option<Vec2I>;
     fn is_player_dual(&self) -> bool;
     fn can_player_capture(&self) -> bool;

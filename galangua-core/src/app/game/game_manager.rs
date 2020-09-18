@@ -354,7 +354,7 @@ impl GameManager {
                     if let Some(captured_fighter) = self.enemy_manager.get_enemy_at(
                         &captured_fighter_index)
                     {
-                        let pos = captured_fighter.raw_pos();
+                        let pos = captured_fighter.pos();
                         self.player.start_recapture_effect(&pos);
                         self.enemy_manager.remove_enemy(&captured_fighter_index);
                         self.enemy_manager.pause_attack(true);
@@ -422,7 +422,7 @@ impl GameManager {
 
     fn spawn_ene_shot(&mut self, pos: &Vec2I) {
         let player_pos = [
-            Some(*self.player.raw_pos()),
+            Some(*self.player.pos()),
             self.player.dual_pos(),
         ];
         let speed = calc_ene_shot_speed(self.stage);
@@ -469,14 +469,14 @@ impl GameManager {
 
         let collbox_opts: [Option<(CollBox, Vec2I)>; 2] = [
             self.player.dual_collbox().map(|c| (c, self.player.dual_pos().unwrap())),
-            self.player.get_collbox().map(|c| (c, *self.player.raw_pos())),
+            self.player.get_collbox().map(|c| (c, *self.player.pos())),
         ];
 
         for (collbox, player_pos) in collbox_opts.iter().flat_map(|x| x) {
             let power = 100;
             let accessor = unsafe { peep(self) };
             if let Some(fi) = self.enemy_manager.check_collision(collbox) {
-                let pos = self.enemy_manager.get_enemy_at(&fi).unwrap().raw_pos().clone();
+                let pos = self.enemy_manager.get_enemy_at(&fi).unwrap().pos().clone();
                 self.enemy_manager.set_damage_to_enemy(&fi, power, accessor, &mut self.event_queue);
 
                 self.event_queue.push(EventType::PlayerExplosion(*player_pos));
@@ -510,8 +510,8 @@ impl AccessorForPlayer for GameManager {
 }
 
 impl AccessorForEnemy for GameManager {
-    fn get_raw_player_pos(&self) -> &Vec2I {
-        self.player.raw_pos()
+    fn get_player_pos(&self) -> &Vec2I {
+        self.player.pos()
     }
 
     fn get_dual_player_pos(&self) -> Option<Vec2I> {

@@ -2,7 +2,7 @@ use crate::app::consts::*;
 use crate::app::game::{EventQueue, EventType};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::{clamp, quantize_angle, round_up, ANGLE, ONE};
+use crate::util::math::{clamp, quantize_angle, round_vec, ANGLE, ONE};
 
 use super::Accessor;
 
@@ -64,7 +64,7 @@ impl RecapturedFighter {
     where
         R: RendererTrait,
     {
-        let pos = round_up(&self.pos);
+        let pos = round_vec(&self.pos);
         match self.state {
             State::Rotate => {
                 let angle = quantize_angle(self.angle, ANGLE_DIV);

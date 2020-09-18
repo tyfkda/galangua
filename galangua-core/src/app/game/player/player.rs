@@ -3,7 +3,7 @@ use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
-use crate::util::math::{clamp, quantize_angle, round_up, ANGLE, ONE};
+use crate::util::math::{clamp, quantize_angle, round_vec, ANGLE, ONE};
 use crate::util::pad::{Pad, PadBit};
 
 use super::recaptured_fighter::RecapturedFighter;
@@ -144,20 +144,20 @@ impl Player {
     {
         match self.state {
             State::Normal | State::EscapeCapturing | State::MoveHomePos => {
-                let pos = self.pos();
+                let pos = round_vec(&self.pos);
                 renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8, -8)));
                 if self.dual {
                     renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8 + 16, -8)));
                 }
             }
             State::Capturing => {
-                let pos = self.pos();
+                let pos = round_vec(&self.pos);
                 let angle = quantize_angle(self.angle, ANGLE_DIV);
                 //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)));
                 renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None);
             }
             State::Captured => {
-                let pos = self.pos();
+                let pos = round_vec(&self.pos);
                 renderer.draw_sprite("rustacean_captured", &(&pos + &Vec2I::new(-8, -8)));
             }
             State::CaptureCompleted | State::Dead => {}
@@ -172,11 +172,7 @@ impl Player {
         self.state == State::Normal
     }
 
-    fn pos(&self) -> Vec2I {
-        round_up(&self.pos)
-    }
-
-    pub fn raw_pos(&self) -> &Vec2I {
+    pub fn pos(&self) -> &Vec2I {
         &self.pos
     }
 
@@ -195,7 +191,7 @@ impl Player {
     pub fn dual_collbox(&self) -> Option<CollBox> {
         if self.dual && self.state == State::Normal {
             Some(CollBox {
-                top_left: &self.pos() + &Vec2I::new(-4 + 16, -4),
+                top_left: &round_vec(&self.pos) + &Vec2I::new(-4 + 16, -4),
                 size: Vec2I::new(8, 8),
             })
         } else {
@@ -251,7 +247,7 @@ impl Collidable for Player {
     fn get_collbox(&self) -> Option<CollBox> {
         if self.state == State::Normal {
             Some(CollBox {
-                top_left: &self.pos() - &Vec2I::new(4, 4),
+                top_left: &round_vec(&self.pos) - &Vec2I::new(4, 4),
                 size: Vec2I::new(8, 8),
             })
         } else {

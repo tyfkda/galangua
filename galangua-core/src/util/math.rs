@@ -173,7 +173,7 @@ pub const fn round_up_i32(v: i32) -> i32 {
     (v + ONE / 2) >> ONE_BIT
 }
 
-pub fn round_up(v: &Vec2I) -> Vec2I {
+pub fn round_vec(v: &Vec2I) -> Vec2I {
     Vec2I::new(round_up_i32(v.x), round_up_i32(v.y))
 }
 

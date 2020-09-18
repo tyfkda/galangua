@@ -98,7 +98,7 @@ impl EditTrajManager {
             let enemy_manager = game_manager.enemy_manager_mut();
             if let Some(enemy) = enemy_manager.get_enemy_at_mut(&self.fi) {
                 if self.from_top {
-                    let pos = *enemy.raw_pos();
+                    let pos = *enemy.pos();
                     enemy.set_pos(&Vec2I::new(pos.x, -16 * ONE));
                 }
                 enemy.set_table_attack(traj_command_vec, flip_x);

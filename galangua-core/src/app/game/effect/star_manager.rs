@@ -5,7 +5,7 @@ use rand_xoshiro::Xoshiro128Plus;
 use crate::app::consts;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::{round_up, ONE};
+use crate::util::math::{round_vec, ONE};
 
 const STAR_COUNT: usize = 256;
 
@@ -84,7 +84,7 @@ impl StarManager {
             let g = (star.c >> 8) & 0xff;
             let b =  star.c       & 0xff;
             renderer.set_draw_color(r as u8, g as u8, b as u8);
-            let pos = round_up(&star.pos);
+            let pos = round_vec(&star.pos);
             renderer.fill_rect(Some([&pos, &Vec2I::new(1, 1)]));
         }
     }

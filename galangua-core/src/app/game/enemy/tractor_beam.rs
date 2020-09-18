@@ -1,6 +1,6 @@
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::{round_up, ONE};
+use crate::util::math::{round_vec, ONE};
 
 const SPRITE_NAMES: [&str; 29] = [
     "beam00", "beam01", "beam02", "beam03", "beam04", "beam05",
@@ -83,7 +83,7 @@ impl TractorBeam {
     where
         R: RendererTrait,
     {
-        let pos = self.pos();
+        let pos = round_vec(&self.pos);
 
         let n = (self.size_count / ONE) as usize;
         let tex_name = "chr";
@@ -94,10 +94,6 @@ impl TractorBeam {
             renderer.draw_sprite(SPRITE_NAMES[i], &(&pos + &Vec2I::new(0, Y_OFFSET_TABLE[i])));
         }
         renderer.set_texture_color_mod(tex_name, 255, 255, 255);
-    }
-
-    pub fn pos(&self) -> Vec2I {
-        round_up(&self.pos)
     }
 
     pub fn closed(&self) -> bool {

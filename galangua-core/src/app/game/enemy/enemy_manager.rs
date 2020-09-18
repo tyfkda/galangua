@@ -9,7 +9,6 @@ use super::enemy::{Enemy, EnemyType};
 use super::formation::Formation;
 use super::{Accessor, FormationIndex};
 
-use crate::app::consts::*;
 use crate::app::game::effect::to_earned_point_type;
 use crate::app::game::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
@@ -116,7 +115,7 @@ impl EnemyManager {
     ) {
         let index = calc_array_index(fi);
         if let Some(enemy) = self.enemies[index].as_mut() {
-            let pos = *enemy.raw_pos();
+            let pos = *enemy.pos();
             let result = enemy.set_damage(power, accessor, event_queue);
 
             if result.point > 0 {
@@ -139,7 +138,7 @@ impl EnemyManager {
             let shot = shot_opt.as_mut().unwrap();
             if let Some(colbox) = shot.get_collbox() {
                 if colbox.check_collision(target) {
-                    let pos = *shot.raw_pos();
+                    let pos = *shot.pos();
                     *shot_opt = None;
                     return Some(pos);
                 }
@@ -227,8 +226,7 @@ impl EnemyManager {
     fn update_shots(&mut self) {
         for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
             let shot = shot_opt.as_mut().unwrap();
-            shot.update();
-            if out_of_screen(&shot.pos()) {
+            if !shot.update() {
                 *shot_opt = None;
             }
         }
@@ -318,11 +316,6 @@ impl EnemyManager {
             }
         }
     }
-}
-
-fn out_of_screen(pos: &Vec2I) -> bool {
-    pos.x < -16 || pos.x > WIDTH + 16
-        || pos.y < -16 || pos.y > HEIGHT + 16
 }
 
 fn calc_array_index(fi: &FormationIndex) -> usize {

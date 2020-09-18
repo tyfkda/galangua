@@ -2,7 +2,7 @@ use crate::app::consts::*;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::util::math::{calc_velocity, quantize_angle, round_up, ONE};
+use crate::util::math::{calc_velocity, quantize_angle, round_vec, ONE};
 
 pub struct MyShot {
     pos: Vec2I,
@@ -38,7 +38,7 @@ impl MyShot {
     where
         R: RendererTrait,
     {
-        let pos = self.pos();
+        let pos = round_vec(&self.pos);
         if self.angle == 0 {
             renderer.draw_sprite("myshot", &(&pos + &Vec2I::new(-2, -4)));
             if self.dual {
@@ -54,23 +54,19 @@ impl MyShot {
     pub fn dual_collbox(&self) -> Option<CollBox> {
         if self.dual {
             Some(CollBox {
-                top_left: &self.pos() + &Vec2I::new(-1 + 16, -4),
+                top_left: &round_vec(&self.pos) + &Vec2I::new(-1 + 16, -4),
                 size: Vec2I::new(1, 8),
             })
         } else {
             None
         }
     }
-
-    fn pos(&self) -> Vec2I {
-        round_up(&self.pos)
-    }
 }
 
 impl Collidable for MyShot {
     fn get_collbox(&self) -> Option<CollBox> {
         Some(CollBox {
-            top_left: &self.pos() - &Vec2I::new(1, 4),
+            top_left: &round_vec(&self.pos) - &Vec2I::new(1, 4),
             size: Vec2I::new(1, 8),
         })
     }
