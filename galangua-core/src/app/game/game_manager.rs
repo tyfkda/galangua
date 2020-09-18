@@ -546,15 +546,15 @@ impl AccessorForEnemy for GameManager {
         }
     }
 
-    fn get_enemies(&self) -> &[Option<Enemy>] {
+    fn get_enemies(&self) -> &[Option<Box<dyn Enemy>>] {
         self.enemy_manager.get_enemies()
     }
 
-    fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {
+    fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>> {
         self.enemy_manager.get_enemy_at(formation_index)
     }
 
-    fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy> {
+    fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Box<dyn Enemy>> {
         self.enemy_manager.get_enemy_at_mut(formation_index)
     }
 

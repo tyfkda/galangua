@@ -67,7 +67,35 @@ pub struct DamageResult {
 
 const MAX_TROOPS: usize = 3;
 
-pub struct Enemy {
+pub trait Enemy : Collidable {
+    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue);
+    fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize);
+
+    fn pos(&self) -> &Vec2I;
+    fn set_pos(&mut self, pos: &Vec2I);
+
+    fn is_formation(&self) -> bool;
+    fn is_disappeared(&self) -> bool;
+
+    fn can_capture_attack(&self) -> bool;
+    fn is_captured_fighter(&self) -> bool;
+    fn formation_index(&self) -> &FormationIndex;
+
+    fn set_damage(
+        &mut self, power: u32, accessor: &mut dyn Accessor, event_queue: &mut EventQueue,
+    ) -> DamageResult;
+
+    fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>);
+
+    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor, event_queue: &mut EventQueue);
+    fn set_to_troop(&mut self);
+    fn set_to_formation(&mut self);
+
+    #[cfg(debug_assertions)]
+    fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool);
+}
+
+pub struct EnemyBase {
     vtable: &'static EnemyVtable,
     enemy_type: EnemyType,
     state: EnemyState,
@@ -90,7 +118,7 @@ pub struct Enemy {
     disappeared: bool,
 }
 
-impl Enemy {
+impl EnemyBase {
     pub fn new(
         enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32,
         fi: &FormationIndex,
@@ -120,45 +148,9 @@ impl Enemy {
         }
     }
 
-    pub fn pos(&self) -> &Vec2I {
-        &self.pos
-    }
+    fn is_ghost(&self) -> bool { self.life == 0 }
 
-    pub fn is_formation(&self) -> bool { self.state == EnemyState::Formation }
-
-    pub fn is_disappeared(&self) -> bool {
-        self.disappeared
-    }
-
-    fn is_ghost(&self) -> bool {
-        self.life == 0
-    }
-
-    pub fn can_capture_attack(&self) -> bool { self.enemy_type == EnemyType::Owl }
-
-    pub fn formation_index(&self) -> &FormationIndex { &self.formation_index }
-
-    pub fn update<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
-        let prev_pos = self.pos;
-
-        self.dispatch_update(accessor, event_queue);
-
-        self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
-        self.angle += self.vangle;
-
-        let angle_opt = if self.copy_angle_to_troops { Some(self.angle) } else { None };
-        self.update_troops(&(&self.pos - &prev_pos), angle_opt, accessor);
-
-        if let Some(tractor_beam) = &mut self.tractor_beam {
-            tractor_beam.update();
-        }
-
-        if self.is_ghost() && !self.disappeared && !self.live_troops(accessor) {
-            self.disappeared = true;
-        }
-    }
-
-    fn update_troops<A: Accessor>(&mut self, add: &Vec2I, angle_opt: Option<i32>, accessor: &mut A) {
+    fn update_troops(&mut self, add: &Vec2I, angle_opt: Option<i32>, accessor: &mut dyn Accessor) {
         for troop_opt in self.troops.iter_mut() {
             if let Some(formation_index) = troop_opt {
                 if let Some(troop) = accessor.get_enemy_at_mut(formation_index) {
@@ -170,15 +162,7 @@ impl Enemy {
         }
     }
 
-    fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) -> bool {
-        self.pos += *add;
-        if let Some(angle) = angle_opt {
-            self.angle = angle;
-        }
-        true
-    }
-
-    fn release_troops<A: Accessor>(&mut self, accessor: &mut A) {
+    fn release_troops(&mut self, accessor: &mut dyn Accessor) {
         for troop_opt in self.troops.iter_mut().filter(|x| x.is_some()) {
             let index = &troop_opt.unwrap();
             if let Some(enemy) = accessor.get_enemy_at_mut(index) {
@@ -188,7 +172,7 @@ impl Enemy {
         }
     }
 
-    fn remove_destroyed_troops<A: Accessor>(&mut self, accessor: &mut A) {
+    fn remove_destroyed_troops(&mut self, accessor: &mut dyn Accessor) {
         for troop_opt in self.troops.iter_mut().filter(|x| x.is_some()) {
             let index = &troop_opt.unwrap();
             if accessor.get_enemy_at(index).is_none() {
@@ -197,7 +181,7 @@ impl Enemy {
         }
     }
 
-    pub fn update_attack<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
+    pub fn update_attack(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         self.attack_frame_count += 1;
 
         let stage_no = accessor.get_stage_no();
@@ -208,70 +192,23 @@ impl Enemy {
             event_queue.push(EventType::EneShot(self.pos));
             for troop_fi in self.troops.iter().flat_map(|x| x) {
                 if let Some(enemy) = accessor.get_enemy_at(troop_fi) {
-                    event_queue.push(EventType::EneShot(enemy.pos));
+                    event_queue.push(EventType::EneShot(*enemy.pos()));
                 }
             }
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R, pat: usize)
-    where
-        R: RendererTrait,
-    {
-        if self.is_ghost() {
-            return;
-        }
-
-        let sprite = match self.enemy_type {
-            EnemyType::Bee => { BEE_SPRITE_NAMES[pat] }
-            EnemyType::Butterfly => { BUTTERFLY_SPRITE_NAMES[pat] }
-            EnemyType::Owl => {
-                let pat = if self.life <= 1 { pat + 2 } else { pat };
-                OWL_SPRITE_NAMES[pat as usize]
-            }
-            EnemyType::CapturedFighter => { "rustacean_captured" }
-        };
-
-        let angle = quantize_angle(self.angle, ANGLE_DIV);
-        let pos = round_vec(&self.pos);
-        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None);
-
-        if let Some(tractor_beam) = &self.tractor_beam {
-            tractor_beam.draw(renderer);
-        }
-    }
-
-    pub fn set_damage<A: Accessor>(
-        &mut self, power: u32, accessor: &mut A, event_queue: &mut EventQueue,
-    ) -> DamageResult {
-        let result = match self.enemy_type {
-            EnemyType::Bee | EnemyType::Butterfly => { self.bee_set_damage(power) }
-            EnemyType::Owl => { self.owl_set_damage(power, accessor, event_queue) }
-            EnemyType::CapturedFighter => { self.captured_fighter_set_damage(power, event_queue) }
-        };
-
-        if result.point > 0 {
-            event_queue.push(EventType::EnemyExplosion(self.pos, self.angle, self.enemy_type));
-        }
-        result
-    }
-
-    fn live_troops<A: Accessor>(&self, accessor: &A) -> bool {
+    fn live_troops(&self, accessor: &dyn Accessor) -> bool {
         self.troops.iter().flat_map(|x| x)
             .filter_map(|index| accessor.get_enemy_at(index))
-            .any(|enemy| enemy.enemy_type != EnemyType::CapturedFighter)
+            .any(|enemy| !enemy.is_captured_fighter())
     }
 
     fn set_state(&mut self, state: EnemyState) {
         self.state = state;
     }
 
-    pub fn set_appearance(&mut self, traj: Traj) {
-        self.traj = Some(traj);
-        self.set_state(EnemyState::Appearance);
-    }
-
-    fn move_to_formation<A: Accessor>(&mut self, accessor: &A) -> bool {
+    fn move_to_formation(&mut self, accessor: &dyn Accessor) -> bool {
         let target = accessor.get_formation_pos(&self.formation_index);
         let diff = &target - &self.pos;
         let sq_distance = square(diff.x >> (ONE_BIT / 2)) + square(diff.y >> (ONE_BIT / 2));
@@ -290,34 +227,7 @@ impl Enemy {
         }
     }
 
-    pub fn set_attack<A: Accessor>(&mut self, capture_attack: bool, accessor: &mut A, event_queue: &mut EventQueue) {
-        match self.enemy_type {
-            EnemyType::Bee => { self.set_bee_attack(); }
-            EnemyType::Butterfly => { self.set_butterfly_attack(); }
-            EnemyType::Owl => { self.set_owl_attack(capture_attack, accessor); }
-            EnemyType::CapturedFighter => { self.set_captured_fighter_attack(); }
-        }
-
-        event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
-    }
-
-    #[cfg(debug_assertions)]
-    pub fn set_pos(&mut self, pos: &Vec2I) {
-        self.pos = *pos;
-    }
-
-    #[cfg(debug_assertions)]
-    pub fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
-        let mut traj = Traj::new_with_vec(traj_command_vec, &ZERO_VEC, flip_x, self.formation_index);
-        traj.set_pos(&self.pos);
-
-        self.count = 0;
-        self.attack_frame_count = 0;
-        self.traj = Some(traj);
-        self.set_state(EnemyState::Attack(AttackPhase::Traj));
-    }
-
-    fn choose_troops<A: Accessor>(&mut self, accessor: &mut A) {
+    fn choose_troops(&mut self, accessor: &mut dyn Accessor) {
         let base = &self.formation_index;
         let indices = [
             FormationIndex(base.0 - 1, base.1 + 1),
@@ -326,7 +236,7 @@ impl Enemy {
         ];
         for index in indices.iter() {
             if let Some(enemy) = accessor.get_enemy_at_mut(index) {
-                if enemy.state == EnemyState::Formation {
+                if enemy.is_formation() {
                     self.add_troop(*index);
                 }
             }
@@ -345,23 +255,6 @@ impl Enemy {
         } else {
             false
         }
-    }
-
-    pub fn set_to_troop(&mut self) {
-        self.set_state(EnemyState::Troop);
-    }
-
-    pub(super) fn set_to_formation(&mut self) {
-        self.speed = 0;
-        self.angle = normalize_angle(self.angle);
-        self.vangle = 0;
-        self.copy_angle_to_troops = true;
-
-        if self.is_ghost() {
-            self.disappeared = true;
-        }
-
-        self.set_state(EnemyState::Formation);
     }
 
     fn warp(&mut self, offset: Vec2I) {
@@ -417,7 +310,7 @@ impl Enemy {
         self.set_state(EnemyState::Attack(AttackPhase::Traj));
     }
 
-    fn set_owl_attack<A: Accessor>(&mut self, capture_attack: bool, accessor: &mut A) {
+    fn set_owl_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) {
         self.count = 0;
         self.attack_frame_count = 0;
 
@@ -468,8 +361,8 @@ impl Enemy {
         }
     }
 
-    fn owl_set_damage<A: Accessor>(
-        &mut self, power: u32, accessor: &mut A, event_queue: &mut EventQueue,
+    fn owl_set_damage(
+        &mut self, power: u32, accessor: &mut dyn Accessor, event_queue: &mut EventQueue,
     ) -> DamageResult {
         if self.life > power {
             self.life -= power;
@@ -546,7 +439,7 @@ impl Enemy {
 
     //// Update
 
-    fn dispatch_update<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
+    fn dispatch_update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         match self.state {
             EnemyState::None | EnemyState::Troop => {}
             EnemyState::Appearance => { self.update_trajectory(accessor, event_queue); }
@@ -570,7 +463,7 @@ impl Enemy {
         }
     }
 
-    fn update_trajectory<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
+    fn update_trajectory(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         if let Some(traj) = &mut self.traj {
             let cont = traj.update(accessor);
 
@@ -618,7 +511,7 @@ impl Enemy {
         }
     }
 
-    fn update_move_to_formation<A: Accessor>(&mut self, accessor: &mut A) {
+    fn update_move_to_formation(&mut self, accessor: &mut dyn Accessor) {
         if !self.move_to_formation(accessor) {
             self.release_troops(accessor);
             self.set_to_formation();
@@ -651,14 +544,14 @@ impl Enemy {
         }
     }
 
-    fn update_formation<A: Accessor>(&mut self, accessor: &mut A) {
+    fn update_formation(&mut self, accessor: &mut dyn Accessor) {
         self.pos = accessor.get_formation_pos(&self.formation_index);
 
         let ang = ANGLE * ONE / 128;
         self.angle -= clamp(self.angle, -ang, ang);
     }
 
-    fn update_bee_attack<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
+    fn update_bee_attack(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         self.update_attack(accessor, event_queue);
         self.update_trajectory(accessor, event_queue);
 
@@ -709,7 +602,7 @@ impl Enemy {
             self.count = 0;
         }
     }
-    fn update_attack_capture_beam<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
+    fn update_attack_capture_beam(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         if let Some(tractor_beam) = &mut self.tractor_beam {
             if tractor_beam.closed() {
                 self.tractor_beam = None;
@@ -726,7 +619,7 @@ impl Enemy {
             }
         }
     }
-    fn update_attack_capture_go_out<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
+    fn update_attack_capture_go_out(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         if self.pos.y >= (HEIGHT + 8) * ONE {
             let target_pos = accessor.get_formation_pos(&self.formation_index);
             let offset = Vec2I::new(target_pos.x - self.pos.x, (-32 - (HEIGHT + 8)) * ONE);
@@ -742,7 +635,7 @@ impl Enemy {
             }
         }
     }
-    fn update_attack_capture_start<A: Accessor>(&mut self, accessor: &mut A) {
+    fn update_attack_capture_start(&mut self, accessor: &mut dyn Accessor) {
         if accessor.is_player_capture_completed() {
             self.tractor_beam.as_mut().unwrap().close_capture();
             self.set_state(EnemyState::Attack(AttackPhase::CaptureCloseBeam));
@@ -775,28 +668,28 @@ impl Enemy {
             self.set_state(EnemyState::Attack(AttackPhase::CaptureDoneBack));
         }
     }
-    fn update_attack_capture_back<A: Accessor>(&mut self, accessor: &mut A) {
+    fn update_attack_capture_back(&mut self, accessor: &mut dyn Accessor) {
         if !self.move_to_formation(accessor) {
             self.speed = 0;
             self.angle = normalize_angle(self.angle);
             self.set_state(EnemyState::Attack(AttackPhase::CaptureDonePushUp));
         }
     }
-    fn update_attack_capture_push_up<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
+    fn update_attack_capture_push_up(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         let ang = ANGLE * ONE / 128;
         self.angle -= clamp(self.angle, -ang, ang);
 
         let fi = FormationIndex(self.formation_index.0, self.formation_index.1 - 1);
         let mut done = false;
         if let Some(captured_fighter) = accessor.get_enemy_at_mut(&fi) {
-            let mut y = captured_fighter.pos.y;
-            y -= 1 * ONE;
+            let mut pos = *captured_fighter.pos();
+            pos.y -= 1 * ONE;
             let topy = self.pos.y - 16 * ONE;
-            if y <= topy {
-                y = topy;
+            if pos.y <= topy {
+                pos.y = topy;
                 done = true;
             }
-            captured_fighter.pos.y = y;
+            captured_fighter.set_pos(&pos);
         }
         if done {
             event_queue.push(EventType::CaptureSequenceEnded);
@@ -805,7 +698,7 @@ impl Enemy {
         }
     }
 
-    fn update_attack_traj<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
+    fn update_attack_traj(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         self.update_attack(accessor, event_queue);
         self.update_trajectory(accessor, event_queue);
 
@@ -823,7 +716,7 @@ impl Enemy {
     }
 }
 
-impl Collidable for Enemy {
+impl Collidable for EnemyBase {
     fn get_collbox(&self) -> Option<CollBox> {
         if !self.is_ghost() {
             Some(CollBox {
@@ -833,6 +726,123 @@ impl Collidable for Enemy {
         } else {
             None
         }
+    }
+}
+
+impl Enemy for EnemyBase {
+    fn pos(&self) -> &Vec2I { &self.pos }
+    fn set_pos(&mut self, pos: &Vec2I) { self.pos = *pos; }
+
+    fn is_formation(&self) -> bool { self.state == EnemyState::Formation }
+    fn is_disappeared(&self) -> bool { self.disappeared }
+
+    fn can_capture_attack(&self) -> bool { self.enemy_type == EnemyType::Owl }
+    fn is_captured_fighter(&self) -> bool { self.enemy_type == EnemyType::CapturedFighter }
+    fn formation_index(&self) -> &FormationIndex { &self.formation_index }
+
+    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+        let prev_pos = self.pos;
+
+        self.dispatch_update(accessor, event_queue);
+
+        self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
+        self.angle += self.vangle;
+
+        let angle_opt = if self.copy_angle_to_troops { Some(self.angle) } else { None };
+        self.update_troops(&(&self.pos - &prev_pos), angle_opt, accessor);
+
+        if let Some(tractor_beam) = &mut self.tractor_beam {
+            tractor_beam.update();
+        }
+
+        if self.is_ghost() && !self.disappeared && !self.live_troops(accessor) {
+            self.disappeared = true;
+        }
+    }
+
+    fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) {
+        self.pos += *add;
+        if let Some(angle) = angle_opt {
+            self.angle = angle;
+        }
+    }
+
+    fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize) {
+        if self.is_ghost() {
+            return;
+        }
+
+        let sprite = match self.enemy_type {
+            EnemyType::Bee => { BEE_SPRITE_NAMES[pat] }
+            EnemyType::Butterfly => { BUTTERFLY_SPRITE_NAMES[pat] }
+            EnemyType::Owl => {
+                let pat = if self.life <= 1 { pat + 2 } else { pat };
+                OWL_SPRITE_NAMES[pat as usize]
+            }
+            EnemyType::CapturedFighter => { "rustacean_captured" }
+        };
+
+        let angle = quantize_angle(self.angle, ANGLE_DIV);
+        let pos = round_vec(&self.pos);
+        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None);
+
+        if let Some(tractor_beam) = &self.tractor_beam {
+            tractor_beam.draw(renderer);
+        }
+    }
+
+    fn set_damage(
+        &mut self, power: u32, accessor: &mut dyn Accessor, event_queue: &mut EventQueue,
+    ) -> DamageResult {
+        let result = match self.enemy_type {
+            EnemyType::Bee | EnemyType::Butterfly => { self.bee_set_damage(power) }
+            EnemyType::Owl => { self.owl_set_damage(power, accessor, event_queue) }
+            EnemyType::CapturedFighter => { self.captured_fighter_set_damage(power, event_queue) }
+        };
+
+        if result.point > 0 {
+            event_queue.push(EventType::EnemyExplosion(self.pos, self.angle, self.enemy_type));
+        }
+        result
+    }
+
+    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+        match self.enemy_type {
+            EnemyType::Bee => { self.set_bee_attack(); }
+            EnemyType::Butterfly => { self.set_butterfly_attack(); }
+            EnemyType::Owl => { self.set_owl_attack(capture_attack, accessor); }
+            EnemyType::CapturedFighter => { self.set_captured_fighter_attack(); }
+        }
+
+        event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+    }
+
+    fn set_to_troop(&mut self) {
+        self.set_state(EnemyState::Troop);
+    }
+
+    fn set_to_formation(&mut self) {
+        self.speed = 0;
+        self.angle = normalize_angle(self.angle);
+        self.vangle = 0;
+        self.copy_angle_to_troops = true;
+
+        if self.is_ghost() {
+            self.disappeared = true;
+        }
+
+        self.set_state(EnemyState::Formation);
+    }
+
+    #[cfg(debug_assertions)]
+    fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
+        let mut traj = Traj::new_with_vec(traj_command_vec, &ZERO_VEC, flip_x, self.formation_index);
+        traj.set_pos(&self.pos);
+
+        self.count = 0;
+        self.attack_frame_count = 0;
+        self.traj = Some(traj);
+        self.set_state(EnemyState::Attack(AttackPhase::Traj));
     }
 }
 
@@ -869,3 +879,22 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
         rush_traj_table: &OWL_RUSH_ATTACK_TABLE,
     },
 ];
+
+////////////////////////////////////////////////
+
+pub fn create_enemy(
+    enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32,
+    fi: &FormationIndex,
+) -> Box<dyn Enemy> {
+    Box::new(EnemyBase::new(enemy_type, pos, angle, speed, fi))
+}
+
+pub fn create_appearance_enemy(
+    enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32,
+    fi: &FormationIndex, traj: Traj,
+) -> Box<dyn Enemy> {
+    let mut enemy = EnemyBase::new(enemy_type, pos, angle, speed, fi);
+    enemy.traj = Some(traj);
+    enemy.set_state(EnemyState::Appearance);
+    Box::new(enemy)
+}

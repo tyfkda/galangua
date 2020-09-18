@@ -4,7 +4,7 @@ use rand_xoshiro::Xoshiro128Plus;
 use std::cmp::min;
 
 use super::appearance_table::*;
-use super::enemy::{Enemy, EnemyType};
+use super::enemy::{create_appearance_enemy, Enemy, EnemyType};
 use super::traj::Traj;
 use super::traj_command::TrajCommand;
 use super::FormationIndex;
@@ -78,7 +78,7 @@ impl AppearanceManager {
         self.paused = value;
     }
 
-    pub fn update(&mut self, enemies: &[Option<Enemy>]) -> Option<Vec<Enemy>> {
+    pub fn update(&mut self, enemies: &[Option<Box<dyn Enemy>>]) -> Option<Vec<Box<dyn Enemy>>> {
         if self.done {
             return None;
         }
@@ -86,7 +86,7 @@ impl AppearanceManager {
         self.update_main(enemies)
     }
 
-    fn update_main(&mut self, enemies: &[Option<Enemy>]) -> Option<Vec<Enemy>> {
+    fn update_main(&mut self, enemies: &[Option<Box<dyn Enemy>>]) -> Option<Vec<Box<dyn Enemy>>> {
         if self.wait > 0 {
             self.wait -= 1;
             return None;
@@ -117,15 +117,13 @@ impl AppearanceManager {
             return None
         }
 
-        let mut new_borns = Vec::new();
+        let mut new_borns: Vec<Box<dyn Enemy>> = Vec::new();
         while self.orders_ptr[0].time == self.time {
             let p = &self.orders_ptr[0];
-            let mut enemy = Enemy::new(p.enemy_type, &ZERO_VEC, 0, 0, &p.fi);
-
             let mut traj = Traj::new(p.traj_table, &p.offset, p.flip_x, p.fi);
             traj.shot_enable = p.shot_enable;
-            enemy.set_appearance(traj);
 
+            let enemy = create_appearance_enemy(p.enemy_type, &ZERO_VEC, 0, 0, &p.fi, traj);
             new_borns.push(enemy);
 
             self.orders_ptr = &self.orders_ptr[1..];
@@ -286,7 +284,7 @@ impl AppearanceManager {
         }
     }
 
-    fn is_stationary(&self, enemies: &[Option<Enemy>]) -> bool {
+    fn is_stationary(&self, enemies: &[Option<Box<dyn Enemy>>]) -> bool {
         enemies.iter().flat_map(|x| x).all(|x| x.is_formation())
     }
 }
