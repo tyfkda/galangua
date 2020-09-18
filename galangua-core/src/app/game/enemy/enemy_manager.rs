@@ -121,8 +121,6 @@ impl EnemyManager {
 
             if result.point > 0 {
                 event_queue.push(EventType::AddScore(result.point));
-                let angle = enemy.angle();
-                event_queue.push(EventType::EnemyExplosion(pos, angle, enemy.enemy_type));
 
                 if let Some(point_type) = to_earned_point_type(result.point) {
                     event_queue.push(EventType::EarnPointEffect(point_type, pos));

@@ -113,10 +113,6 @@ impl Enemy {
         &self.pos
     }
 
-    pub fn angle(&self) -> i32 {
-        self.angle
-    }
-
     pub fn state(&self) -> EnemyState {
         self.state
     }
@@ -226,7 +222,11 @@ impl Enemy {
     pub fn set_damage<A: Accessor>(
         &mut self, power: u32, accessor: &mut A, event_queue: &mut EventQueue,
     ) -> DamageResult {
-        (self.vtable.set_damage)(self, power, accessor, event_queue)
+        let result = (self.vtable.set_damage)(self, power, accessor, event_queue);
+        if result.point > 0 {
+            event_queue.push(EventType::EnemyExplosion(self.pos, self.angle, self.enemy_type));
+        }
+        result
     }
 
     fn live_troops(&self, accessor: &dyn Accessor) -> bool {
