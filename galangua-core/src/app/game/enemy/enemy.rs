@@ -109,9 +109,7 @@ impl Enemy {
         &self.pos
     }
 
-    pub fn state(&self) -> EnemyState {
-        self.state
-    }
+    pub fn is_formation(&self) -> bool { self.state == EnemyState::Formation }
 
     pub fn is_disappeared(&self) -> bool {
         self.disappeared

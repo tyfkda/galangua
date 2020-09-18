@@ -4,7 +4,7 @@ use rand_xoshiro::Xoshiro128Plus;
 use std::cmp::min;
 
 use super::appearance_table::*;
-use super::enemy::{Enemy, EnemyState, EnemyType};
+use super::enemy::{Enemy, EnemyType};
 use super::traj::Traj;
 use super::traj_command::TrajCommand;
 use super::FormationIndex;
@@ -288,7 +288,7 @@ impl AppearanceManager {
     }
 
     fn is_stationary(&self, enemies: &[Option<Enemy>]) -> bool {
-        enemies.iter().flat_map(|x| x).all(|x| x.state() == EnemyState::Formation)
+        enemies.iter().flat_map(|x| x).all(|x| x.is_formation())
     }
 }
 
