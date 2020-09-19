@@ -25,31 +25,6 @@ pub enum EnemyType {
     CapturedFighter,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum AttackPhase {
-    BeeAttack,
-    Traj,
-    Capture,
-    CaptureBeam,
-    NoCaptureGoOut,
-    CaptureStart,
-    CaptureCloseBeam,
-    CaptureDoneWait,
-    CaptureDoneBack,
-    CaptureDonePushUp,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum EnemyState {
-    None,
-    Appearance,
-    MoveToFormation,
-    Assault(u32),
-    Formation,
-    Attack(AttackPhase),
-    Troop,
-}
-
 #[derive(Debug)]
 pub struct DamageResult {
     pub killed: bool,
@@ -86,7 +61,6 @@ pub trait Enemy : Collidable {
 pub struct EnemyBase {
     vtable: &'static EnemyVtable,
     enemy_type: EnemyType,
-    state: EnemyState,
     pos: Vec2I,
     angle: i32,
     speed: i32,
@@ -111,7 +85,6 @@ impl EnemyBase {
         Self {
             vtable,
             enemy_type,
-            state: EnemyState::None,
             pos: *pos,
             angle,
             speed,
@@ -139,10 +112,6 @@ impl EnemyBase {
         } else {
             false
         }
-    }
-
-    fn set_state(&mut self, state: EnemyState) {
-        self.state = state;
     }
 
     fn move_to_formation(&mut self, accessor: &dyn Accessor) -> bool {
@@ -272,8 +241,6 @@ impl EnemyBase {
     fn pos(&self) -> &Vec2I { &self.pos }
     fn set_pos(&mut self, pos: &Vec2I) { self.pos = *pos; }
 
-    fn is_formation(&self) -> bool { self.state == EnemyState::Formation }
-
     fn is_captured_fighter(&self) -> bool { self.enemy_type == EnemyType::CapturedFighter }
     fn formation_index(&self) -> &FormationIndex { &self.formation_index }
 
@@ -298,7 +265,6 @@ impl EnemyBase {
         self.count = 0;
         self.attack_frame_count = 0;
         self.traj = Some(traj);
-        self.set_state(EnemyState::Attack(AttackPhase::Traj));
     }
 }
 
@@ -333,8 +299,26 @@ const ENEMY_VTABLE: [EnemyVtable; 4] = [
 
 ////////////////////////////////////////////////
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ZakoAttackPhase {
+    BeeAttack,
+    Traj,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ZakoState {
+    None,
+    Appearance,
+    MoveToFormation,
+    Assault(u32),
+    Formation,
+    Attack(ZakoAttackPhase),
+    Troop,
+}
+
 pub struct Zako {
     enemy_base: EnemyBase,
+    state: ZakoState,
 }
 
 impl Zako {
@@ -344,39 +328,43 @@ impl Zako {
     ) -> Self {
         Self {
             enemy_base: EnemyBase::new(enemy_type, pos, angle, speed, fi),
+            state: ZakoState::None,
         }
+    }
+
+    fn set_state(&mut self, state: ZakoState) {
+        self.state = state;
     }
 
     //// update
 
     fn dispatch_update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
-        match self.enemy_base.state {
-            EnemyState::None | EnemyState::Troop => {}
-            EnemyState::Appearance => {
+        match self.state {
+            ZakoState::None | ZakoState::Troop => {}
+            ZakoState::Appearance => {
                 if !self.enemy_base.update_trajectory(accessor, event_queue) {
                     if self.enemy_base.formation_index.1 >= Y_COUNT as u8 {  // Assault
                         self.enemy_base.set_assault(accessor);
-                        self.enemy_base.set_state(EnemyState::Assault(0));
+                        self.set_state(ZakoState::Assault(0));
                     } else {
-                        self.enemy_base.set_state(EnemyState::MoveToFormation);
+                        self.set_state(ZakoState::MoveToFormation);
                     }
                 }
             }
-            EnemyState::MoveToFormation => {
+            ZakoState::MoveToFormation => {
                 if !self.enemy_base.move_to_formation(accessor) {
                     self.set_to_formation();
                 }
             }
-            EnemyState::Assault(phase) => {
+            ZakoState::Assault(phase) => {
                 let phase = self.enemy_base.update_assault(phase);
-                self.enemy_base.set_state(EnemyState::Assault(phase));
+                self.set_state(ZakoState::Assault(phase));
             }
-            EnemyState::Formation => { self.enemy_base.update_formation(accessor); }
-            EnemyState::Attack(phase) => {
+            ZakoState::Formation => { self.enemy_base.update_formation(accessor); }
+            ZakoState::Attack(phase) => {
                 match phase {
-                    AttackPhase::BeeAttack => { self.update_bee_attack(accessor, event_queue) }
-                    AttackPhase::Traj => { self.update_attack_traj(accessor, event_queue); }
-                    _ => { panic!("Illgal"); }
+                    ZakoAttackPhase::BeeAttack => { self.update_bee_attack(accessor, event_queue) }
+                    ZakoAttackPhase::Traj => { self.update_attack_traj(accessor, event_queue); }
                 }
             }
         }
@@ -391,11 +379,11 @@ impl Zako {
                 traj.set_pos(&self.enemy_base.pos);
 
                 self.enemy_base.traj = Some(traj);
-                self.enemy_base.set_state(EnemyState::Attack(AttackPhase::Traj));
+                self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
 
                 event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
             } else {
-                self.enemy_base.set_state(EnemyState::MoveToFormation);
+                self.set_state(ZakoState::MoveToFormation);
             }
         }
     }
@@ -410,7 +398,7 @@ impl Zako {
                 self.enemy_base.rush_attack();
                 event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
             } else {
-                self.enemy_base.set_state(EnemyState::MoveToFormation);
+                self.set_state(ZakoState::MoveToFormation);
             }
         }
     }
@@ -425,7 +413,7 @@ impl Zako {
         self.enemy_base.count = 0;
         self.enemy_base.attack_frame_count = 0;
         self.enemy_base.traj = Some(traj);
-        self.enemy_base.set_state(EnemyState::Attack(AttackPhase::BeeAttack));
+        self.set_state(ZakoState::Attack(ZakoAttackPhase::BeeAttack));
     }
 
     fn set_butterfly_attack(&mut self) {
@@ -436,7 +424,7 @@ impl Zako {
         self.enemy_base.count = 0;
         self.enemy_base.attack_frame_count = 0;
         self.enemy_base.traj = Some(traj);
-        self.enemy_base.set_state(EnemyState::Attack(AttackPhase::Traj));
+        self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
     }
 
     fn set_captured_fighter_attack(&mut self) {
@@ -447,7 +435,7 @@ impl Zako {
         self.enemy_base.count = 0;
         self.enemy_base.attack_frame_count = 0;
         self.enemy_base.traj = Some(traj);
-        self.enemy_base.set_state(EnemyState::Attack(AttackPhase::Traj));
+        self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
     }
 
     //// set_damage
@@ -509,7 +497,7 @@ impl Enemy for Zako {
     fn pos(&self) -> &Vec2I { self.enemy_base.pos() }
     fn set_pos(&mut self, pos: &Vec2I) { self.enemy_base.set_pos(pos); }
 
-    fn is_formation(&self) -> bool { self.enemy_base.is_formation() }
+    fn is_formation(&self) -> bool { self.state == ZakoState::Formation }
 
     fn can_capture_attack(&self) -> bool { false }
     fn is_captured_fighter(&self) -> bool { self.enemy_base.is_captured_fighter() }
@@ -542,16 +530,17 @@ impl Enemy for Zako {
     }
 
     fn set_to_troop(&mut self) {
-        self.enemy_base.set_state(EnemyState::Troop);
+        self.set_state(ZakoState::Troop);
     }
     fn set_to_formation(&mut self) {
         self.enemy_base.set_to_formation();
-        self.enemy_base.set_state(EnemyState::Formation);
+        self.set_state(ZakoState::Formation);
     }
 
     #[cfg(debug_assertions)]
     fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
         self.enemy_base.set_table_attack(traj_command_vec, flip_x);
+        self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
     }
 }
 
@@ -559,6 +548,29 @@ impl Enemy for Zako {
 
 const MAX_TROOPS: usize = 3;
 const OWL_DESTROY_SHOT_WAIT: u32 = 3 * 60;
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum OwlAttackPhase {
+    Traj,
+    Capture,
+    CaptureBeam,
+    NoCaptureGoOut,
+    CaptureStart,
+    CaptureCloseBeam,
+    CaptureDoneWait,
+    CaptureDoneBack,
+    CaptureDonePushUp,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum OwlState {
+    None,
+    Appearance,
+    MoveToFormation,
+    Assault(u32),
+    Formation,
+    Attack(OwlAttackPhase),
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CapturingState {
@@ -569,6 +581,7 @@ pub enum CapturingState {
 
 pub struct Owl {
     enemy_base: EnemyBase,
+    state: OwlState,
     life: u32,
     tractor_beam: Option<TractorBeam>,
     capturing_state: CapturingState,
@@ -583,6 +596,7 @@ impl Owl {
     ) -> Self {
         Owl {
             enemy_base: EnemyBase::new(EnemyType::Owl, pos, angle, speed, fi),
+            state: OwlState::None,
             life: 2,
             tractor_beam: None,
             capturing_state: CapturingState::None,
@@ -591,8 +605,12 @@ impl Owl {
         }
     }
 
+    fn set_state(&mut self, state: OwlState) {
+        self.state = state;
+    }
+
     fn calc_point(&self) -> u32 {
-        if self.enemy_base.state == EnemyState::Formation {
+        if self.is_formation() {
             150
         } else {
             let cap_fi = FormationIndex(self.enemy_base.formation_index.0, self.enemy_base.formation_index.1 - 1);
@@ -671,42 +689,41 @@ impl Owl {
     }
 
     fn dispatch_update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
-        match self.enemy_base.state {
-            EnemyState::None | EnemyState::Troop => {}
-            EnemyState::Appearance => {
+        match self.state {
+            OwlState::None => {}
+            OwlState::Appearance => {
                 if !self.enemy_base.update_trajectory(accessor, event_queue) {
                     if self.enemy_base.formation_index.1 >= Y_COUNT as u8 {  // Assault
                         self.enemy_base.set_assault(accessor);
-                        self.enemy_base.set_state(EnemyState::Assault(0));
+                        self.set_state(OwlState::Assault(0));
                     } else {
-                        self.enemy_base.set_state(EnemyState::MoveToFormation);
+                        self.set_state(OwlState::MoveToFormation);
                     }
                 }
             }
-            EnemyState::MoveToFormation => {
+            OwlState::MoveToFormation => {
                 if !self.enemy_base.move_to_formation(accessor) {
                     self.capturing_state = CapturingState::None;
                     self.release_troops(accessor);
                     self.set_to_formation();
                 }
             }
-            EnemyState::Assault(phase) => {
+            OwlState::Assault(phase) => {
                 let phase = self.enemy_base.update_assault(phase);
-                self.enemy_base.set_state(EnemyState::Assault(phase));
+                self.set_state(OwlState::Assault(phase));
             }
-            EnemyState::Formation => { self.enemy_base.update_formation(accessor); }
-            EnemyState::Attack(phase) => {
+            OwlState::Formation => { self.enemy_base.update_formation(accessor); }
+            OwlState::Attack(phase) => {
                 match phase {
-                    AttackPhase::Traj => { self.update_attack_traj(accessor, event_queue); }
-                    AttackPhase::Capture => { self.update_attack_capture(); }
-                    AttackPhase::CaptureBeam => { self.update_attack_capture_beam(accessor, event_queue); }
-                    AttackPhase::NoCaptureGoOut => { self.update_attack_capture_go_out(accessor, event_queue); }
-                    AttackPhase::CaptureStart => { self.update_attack_capture_start(accessor); }
-                    AttackPhase::CaptureCloseBeam => { self.update_attack_capture_close_beam(event_queue); }
-                    AttackPhase::CaptureDoneWait => { self.update_attack_capture_done_wait(); }
-                    AttackPhase::CaptureDoneBack => { self.update_attack_capture_back(accessor); }
-                    AttackPhase::CaptureDonePushUp => { self.update_attack_capture_push_up(accessor, event_queue); }
-                    _ => { panic!("Illgal"); }
+                    OwlAttackPhase::Traj => { self.update_attack_traj(accessor, event_queue); }
+                    OwlAttackPhase::Capture => { self.update_attack_capture(); }
+                    OwlAttackPhase::CaptureBeam => { self.update_attack_capture_beam(accessor, event_queue); }
+                    OwlAttackPhase::NoCaptureGoOut => { self.update_attack_capture_go_out(accessor, event_queue); }
+                    OwlAttackPhase::CaptureStart => { self.update_attack_capture_start(accessor); }
+                    OwlAttackPhase::CaptureCloseBeam => { self.update_attack_capture_close_beam(event_queue); }
+                    OwlAttackPhase::CaptureDoneWait => { self.update_attack_capture_done_wait(); }
+                    OwlAttackPhase::CaptureDoneBack => { self.update_attack_capture_back(accessor); }
+                    OwlAttackPhase::CaptureDonePushUp => { self.update_attack_capture_push_up(accessor, event_queue); }
                 }
             }
         }
@@ -741,7 +758,7 @@ impl Owl {
 
             self.tractor_beam = Some(TractorBeam::new(&(&self.enemy_base.pos + &Vec2I::new(0, 8 * ONE))));
 
-            self.enemy_base.set_state(EnemyState::Attack(AttackPhase::CaptureBeam));
+            self.set_state(OwlState::Attack(OwlAttackPhase::CaptureBeam));
             self.enemy_base.count = 0;
         }
     }
@@ -750,14 +767,14 @@ impl Owl {
             if tractor_beam.closed() {
                 self.tractor_beam = None;
                 self.enemy_base.speed = 5 * ONE / 2;
-                self.enemy_base.set_state(EnemyState::Attack(AttackPhase::NoCaptureGoOut));
+                self.set_state(OwlState::Attack(OwlAttackPhase::NoCaptureGoOut));
             } else if accessor.can_player_capture() &&
                       tractor_beam.can_capture(accessor.get_player_pos())
             {
                 event_queue.push(EventType::CapturePlayer(&self.enemy_base.pos + &Vec2I::new(0, 16 * ONE)));
                 tractor_beam.start_capture();
                 self.capturing_state = CapturingState::BeamTracting;
-                self.enemy_base.set_state(EnemyState::Attack(AttackPhase::CaptureStart));
+                self.set_state(OwlState::Attack(OwlAttackPhase::CaptureStart));
                 self.enemy_base.count = 0;
             }
         }
@@ -772,7 +789,7 @@ impl Owl {
                 self.rush_attack();
                 event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
             } else {
-                self.enemy_base.set_state(EnemyState::MoveToFormation);
+                self.set_state(OwlState::MoveToFormation);
                 self.capturing_state = CapturingState::None;
                 event_queue.push(EventType::EndCaptureAttack);
             }
@@ -781,7 +798,7 @@ impl Owl {
     fn update_attack_capture_start(&mut self, accessor: &mut dyn Accessor) {
         if accessor.is_player_capture_completed() {
             self.tractor_beam.as_mut().unwrap().close_capture();
-            self.enemy_base.set_state(EnemyState::Attack(AttackPhase::CaptureCloseBeam));
+            self.set_state(OwlState::Attack(OwlAttackPhase::CaptureCloseBeam));
             self.enemy_base.count = 0;
         }
     }
@@ -799,7 +816,7 @@ impl Owl {
                 event_queue.push(EventType::CapturePlayerCompleted);
 
                 self.copy_angle_to_troops = false;
-                self.enemy_base.set_state(EnemyState::Attack(AttackPhase::CaptureDoneWait));
+                self.set_state(OwlState::Attack(OwlAttackPhase::CaptureDoneWait));
                 self.enemy_base.count = 0;
             }
         }
@@ -808,14 +825,14 @@ impl Owl {
         self.enemy_base.count += 1;
         if self.enemy_base.count >= 120 {
             self.enemy_base.speed = 5 * ONE / 2;
-            self.enemy_base.set_state(EnemyState::Attack(AttackPhase::CaptureDoneBack));
+            self.set_state(OwlState::Attack(OwlAttackPhase::CaptureDoneBack));
         }
     }
     fn update_attack_capture_back(&mut self, accessor: &mut dyn Accessor) {
         if !self.enemy_base.move_to_formation(accessor) {
             self.enemy_base.speed = 0;
             self.enemy_base.angle = normalize_angle(self.enemy_base.angle);
-            self.enemy_base.set_state(EnemyState::Attack(AttackPhase::CaptureDonePushUp));
+            self.set_state(OwlState::Attack(OwlAttackPhase::CaptureDonePushUp));
         }
     }
     fn update_attack_capture_push_up(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
@@ -850,7 +867,7 @@ impl Owl {
                 self.rush_attack();
                 event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
             } else {
-                self.enemy_base.set_state(EnemyState::MoveToFormation);
+                self.set_state(OwlState::MoveToFormation);
             }
         }
     }
@@ -908,7 +925,7 @@ impl Owl {
 
     fn rush_attack(&mut self) {
         self.enemy_base.rush_attack();
-        self.enemy_base.set_state(EnemyState::Attack(AttackPhase::Traj));
+        self.set_state(OwlState::Attack(OwlAttackPhase::Traj));
     }
 }
 
@@ -964,7 +981,7 @@ impl Enemy for Owl {
     fn pos(&self) -> &Vec2I { self.enemy_base.pos() }
     fn set_pos(&mut self, pos: &Vec2I) { self.enemy_base.set_pos(pos); }
 
-    fn is_formation(&self) -> bool { self.enemy_base.is_formation() }
+    fn is_formation(&self) -> bool { self.state == OwlState::Formation }
 
     fn can_capture_attack(&self) -> bool { true }
     fn is_captured_fighter(&self) -> bool { false }
@@ -998,7 +1015,7 @@ impl Enemy for Owl {
             traj.set_pos(&self.enemy_base.pos);
 
             self.enemy_base.traj = Some(traj);
-            AttackPhase::Traj
+            OwlAttackPhase::Traj
         } else {
             self.capturing_state = CapturingState::Attacking;
 
@@ -1014,10 +1031,10 @@ impl Enemy for Owl {
             let player_pos = accessor.get_player_pos();
             self.enemy_base.target_pos = Vec2I::new(player_pos.x, (HEIGHT - 16 - 8 - 88) * ONE);
 
-            AttackPhase::Capture
+            OwlAttackPhase::Capture
         };
 
-        self.enemy_base.set_state(EnemyState::Attack(phase));
+        self.set_state(OwlState::Attack(phase));
 
         event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
     }
@@ -1027,7 +1044,7 @@ impl Enemy for Owl {
     }
     fn set_to_formation(&mut self) {
         self.enemy_base.set_to_formation();
-        self.enemy_base.set_state(EnemyState::Formation);
+        self.set_state(OwlState::Formation);
         if self.life == 0 {
             self.enemy_base.disappeared = true;
         }
@@ -1036,6 +1053,7 @@ impl Enemy for Owl {
     #[cfg(debug_assertions)]
     fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
         self.enemy_base.set_table_attack(traj_command_vec, flip_x);
+        self.set_state(OwlState::Attack(OwlAttackPhase::Traj));
     }
 }
 
@@ -1059,13 +1077,13 @@ pub fn create_appearance_enemy(
         EnemyType::Owl => {
             let mut owl = Owl::new(pos, angle, speed, fi);
             owl.enemy_base.traj = Some(traj);
-            owl.enemy_base.set_state(EnemyState::Appearance);
+            owl.set_state(OwlState::Appearance);
             Box::new(owl)
         }
         _ => {
             let mut zako = Zako::new(enemy_type, pos, angle, speed, fi);
             zako.enemy_base.traj = Some(traj);
-            zako.enemy_base.set_state(EnemyState::Appearance);
+            zako.set_state(ZakoState::Appearance);
             Box::new(zako)
         }
     }
