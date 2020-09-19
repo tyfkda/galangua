@@ -183,23 +183,6 @@ impl EnemyBase {
 
     //// Update
 
-    fn dispatch_update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
-        match self.state {
-            EnemyState::None | EnemyState::Troop => {}
-            EnemyState::Appearance => { self.update_trajectory(accessor, event_queue); }
-            EnemyState::MoveToFormation => { self.update_move_to_formation(accessor); }
-            EnemyState::Assault(phase) => { self.update_assault(phase); }
-            EnemyState::Formation => { self.update_formation(accessor); }
-            EnemyState::Attack(phase) => {
-                match phase {
-                    AttackPhase::BeeAttack => { self.update_bee_attack(accessor, event_queue) }
-                    AttackPhase::Traj => { self.update_attack_traj(accessor, event_queue); }
-                    _ => { panic!("Illgal"); }
-                }
-            }
-        }
-    }
-
     fn update_trajectory(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
         if let Some(traj) = &mut self.traj {
             let cont = traj.update(accessor);
@@ -338,33 +321,11 @@ impl EnemyBase {
     fn is_captured_fighter(&self) -> bool { self.enemy_type == EnemyType::CapturedFighter }
     fn formation_index(&self) -> &FormationIndex { &self.formation_index }
 
-    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool {
-        self.dispatch_update(accessor, event_queue);
-
-        self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
-        self.angle += self.vangle;
-
-        !self.disappeared
-    }
-
     fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) {
         self.pos += *add;
         if let Some(angle) = angle_opt {
             self.angle = angle;
         }
-    }
-
-    fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize) {
-        let sprite = match self.enemy_type {
-            EnemyType::Bee => { BEE_SPRITE_NAMES[pat] }
-            EnemyType::Butterfly => { BUTTERFLY_SPRITE_NAMES[pat] }
-            EnemyType::CapturedFighter => { "rustacean_captured" }
-            _ => { panic!("Illegal"); }
-        };
-
-        let angle = quantize_angle(self.angle, ANGLE_DIV);
-        let pos = round_vec(&self.pos);
-        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None);
     }
 
     fn set_to_troop(&mut self) {
@@ -433,6 +394,25 @@ impl Zako {
     ) -> Self {
         Self {
             enemy_base: EnemyBase::new(enemy_type, pos, angle, speed, fi),
+        }
+    }
+
+    //// update
+
+    fn dispatch_update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+        match self.enemy_base.state {
+            EnemyState::None | EnemyState::Troop => {}
+            EnemyState::Appearance => { self.enemy_base.update_trajectory(accessor, event_queue); }
+            EnemyState::MoveToFormation => { self.enemy_base.update_move_to_formation(accessor); }
+            EnemyState::Assault(phase) => { self.enemy_base.update_assault(phase); }
+            EnemyState::Formation => { self.enemy_base.update_formation(accessor); }
+            EnemyState::Attack(phase) => {
+                match phase {
+                    AttackPhase::BeeAttack => { self.enemy_base.update_bee_attack(accessor, event_queue) }
+                    AttackPhase::Traj => { self.enemy_base.update_attack_traj(accessor, event_queue); }
+                    _ => { panic!("Illgal"); }
+                }
+            }
         }
     }
 
@@ -506,10 +486,25 @@ impl Collidable for Zako {
 
 impl Enemy for Zako {
     fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool {
-        self.enemy_base.update(accessor, event_queue)
+        self.dispatch_update(accessor, event_queue);
+
+        self.enemy_base.pos += calc_velocity(self.enemy_base.angle + self.enemy_base.vangle / 2, self.enemy_base.speed);
+        self.enemy_base.angle += self.enemy_base.vangle;
+
+        !self.enemy_base.disappeared
     }
+
     fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize) {
-        self.enemy_base.draw(renderer, pat);
+        let sprite = match self.enemy_base.enemy_type {
+            EnemyType::Bee => { BEE_SPRITE_NAMES[pat] }
+            EnemyType::Butterfly => { BUTTERFLY_SPRITE_NAMES[pat] }
+            EnemyType::CapturedFighter => { "rustacean_captured" }
+            _ => { panic!("Illegal"); }
+        };
+
+        let angle = quantize_angle(self.enemy_base.angle, ANGLE_DIV);
+        let pos = round_vec(&self.enemy_base.pos);
+        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None);
     }
 
     fn pos(&self) -> &Vec2I { self.enemy_base.pos() }
@@ -532,8 +527,8 @@ impl Enemy for Zako {
         }
     }
 
-    fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) -> bool {
-        self.enemy_base.update_troop(add, angle_opt)
+    fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) {
+        self.enemy_base.update_troop(add, angle_opt);
     }
 
     fn set_attack(&mut self, _capture_attack: bool, _accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
@@ -967,8 +962,8 @@ impl Enemy for Owl {
         self.owl_set_damage(power, accessor, event_queue)
     }
 
-    fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) -> bool {
-        self.enemy_base.update_troop(add, angle_opt)
+    fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) {
+        self.enemy_base.update_troop(add, angle_opt);
     }
 
     fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
