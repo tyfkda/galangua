@@ -2,7 +2,7 @@
 
 use super::{Enemy, FormationIndex};
 
-use crate::app::game::CaptureState;
+use crate::app::game::manager::CaptureState;
 use crate::framework::types::Vec2I;
 
 pub trait Accessor {

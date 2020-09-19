@@ -1,13 +1,13 @@
 use super::enemy::{Enemy};
 use super::enemy_base::{EnemyBase, EnemyInfo};
-use super::formation::Y_COUNT;
 use super::traj::Traj;
 use super::traj_command::TrajCommand;
 use super::traj_command_table::*;
 use super::{Accessor, DamageResult, EnemyType, FormationIndex};
 
 use crate::app::consts::*;
-use crate::app::game::{EventQueue, EventType};
+use crate::app::game::manager::formation::Y_COUNT;
+use crate::app::game::manager::{EventQueue, EventType};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;

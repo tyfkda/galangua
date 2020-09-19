@@ -18,7 +18,7 @@ pub struct Traj {
     offset: Vec2I,
     flip_x: bool,
     fi: FormationIndex,
-    pub(super) shot_enable: bool,
+    pub shot_enable: bool,
 
     command_table: &'static [TrajCommand],
     delay: u32,

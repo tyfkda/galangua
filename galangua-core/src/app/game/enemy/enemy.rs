@@ -3,8 +3,8 @@ use super::traj::Traj;
 use super::zako::{Zako, ZakoState};
 use super::{Accessor, DamageResult, EnemyType, FormationIndex};
 
+use crate::app::game::manager::{EventQueue};
 use crate::app::util::{Collidable};
-use crate::app::game::{EventQueue};
 use crate::framework::types::{Vec2I};
 use crate::framework::RendererTrait;
 

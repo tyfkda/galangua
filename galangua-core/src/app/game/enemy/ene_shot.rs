@@ -5,8 +5,8 @@ use crate::framework::RendererTrait;
 use crate::util::math::{round_vec, ONE};
 
 pub struct EneShot {
-    pub pos: Vec2I,
-    pub vel: Vec2I,
+    pos: Vec2I,
+    vel: Vec2I,
 }
 
 impl EneShot {

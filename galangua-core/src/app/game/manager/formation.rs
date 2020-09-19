@@ -1,13 +1,13 @@
 use lazy_static::lazy_static;
 
-use super::FormationIndex;
-
 use crate::app::consts::*;
+use crate::app::game::enemy::FormationIndex;
 use crate::framework::types::Vec2I;
 use crate::util::math::ONE;
 
-pub(super) const X_COUNT: usize = 10;
-pub(super) const Y_COUNT: usize = 6;
+pub const X_COUNT: usize = 10;
+pub const Y_COUNT: usize = 6;
+
 const BASE_Y: i32 = 24;
 
 lazy_static! {

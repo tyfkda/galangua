@@ -1,13 +1,12 @@
-use super::effect::{Effect, StageIndicator, StarManager};
-use super::enemy::Accessor as AccessorForEnemy;
-use super::enemy::{Enemy, EnemyManager, FormationIndex};
-use super::event_queue::{EventQueue, EventType};
-use super::player::Accessor as AccessorForPlayer;
-use super::player::{MyShot, Player};
 use super::score_holder::ScoreHolder;
-use super::CaptureState;
+use super::{CaptureState, EnemyManager, EventQueue, EventType};
 
 use crate::app::consts::*;
+use crate::app::game::effect::{Effect, StageIndicator, StarManager};
+use crate::app::game::enemy::Accessor as AccessorForEnemy;
+use crate::app::game::enemy::{Enemy, FormationIndex};
+use crate::app::game::player::Accessor as AccessorForPlayer;
+use crate::app::game::player::{MyShot, Player};
 use crate::app::util::unsafe_util::peep;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;

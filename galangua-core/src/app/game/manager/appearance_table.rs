@@ -1,8 +1,8 @@
 use counted_array::counted_array;
 
-use super::traj_command::TrajCommand;
-use super::traj_command_table::*;
-use super::{EnemyType, FormationIndex};
+use crate::app::game::enemy::traj_command::TrajCommand;
+use crate::app::game::enemy::traj_command_table::*;
+use crate::app::game::enemy::{EnemyType, FormationIndex};
 
 const fn pos(x: u8, y: u8) -> FormationIndex { FormationIndex(x, y) }
 

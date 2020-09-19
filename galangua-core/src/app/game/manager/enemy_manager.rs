@@ -4,13 +4,13 @@ use rand_xoshiro::Xoshiro128Plus;
 
 use super::appearance_manager::AppearanceManager;
 use super::attack_manager::AttackManager;
-use super::ene_shot::EneShot;
-use super::enemy::{create_enemy, Enemy};
 use super::formation::Formation;
-use super::{Accessor, EnemyType, FormationIndex};
+use super::{EventQueue, EventType};
 
 use crate::app::game::effect::to_earned_point_type;
-use crate::app::game::{EventQueue, EventType};
+use crate::app::game::enemy::ene_shot::EneShot;
+use crate::app::game::enemy::enemy::{create_enemy, Enemy};
+use crate::app::game::enemy::{Accessor, EnemyType, FormationIndex};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;

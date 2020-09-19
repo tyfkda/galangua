@@ -6,7 +6,7 @@ use super::traj_command::TrajCommand;
 use super::{Accessor, FormationIndex};
 
 use crate::app::consts::*;
-use crate::app::game::{EventQueue, EventType};
+use crate::app::game::manager::{EventQueue, EventType};
 use crate::app::util::{CollBox};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{

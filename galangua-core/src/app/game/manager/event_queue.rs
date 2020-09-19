@@ -1,9 +1,7 @@
 use std::ops::Index;
 
-use super::effect::EarnedPointType;
-use super::enemy::FormationIndex;
-
-use crate::app::game::enemy::EnemyType;
+use crate::app::game::effect::EarnedPointType;
+use crate::app::game::enemy::{EnemyType, FormationIndex};
 use crate::framework::types::Vec2I;
 
 pub struct EventQueue {
