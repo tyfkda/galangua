@@ -57,14 +57,13 @@ pub struct DamageResult {
 }
 
 pub trait Enemy : Collidable {
-    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue);
+    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool;
     fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize);
 
     fn pos(&self) -> &Vec2I;
     fn set_pos(&mut self, pos: &Vec2I);
 
     fn is_formation(&self) -> bool;
-    fn is_disappeared(&self) -> bool;
 
     fn can_capture_attack(&self) -> bool;
     fn is_captured_fighter(&self) -> bool;
@@ -335,16 +334,17 @@ impl EnemyBase {
     fn set_pos(&mut self, pos: &Vec2I) { self.pos = *pos; }
 
     fn is_formation(&self) -> bool { self.state == EnemyState::Formation }
-    fn is_disappeared(&self) -> bool { self.disappeared }
 
     fn is_captured_fighter(&self) -> bool { self.enemy_type == EnemyType::CapturedFighter }
     fn formation_index(&self) -> &FormationIndex { &self.formation_index }
 
-    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool {
         self.dispatch_update(accessor, event_queue);
 
         self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
+
+        !self.disappeared
     }
 
     fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) {
@@ -505,8 +505,8 @@ impl Collidable for Zako {
 }
 
 impl Enemy for Zako {
-    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
-        self.enemy_base.update(accessor, event_queue);
+    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool {
+        self.enemy_base.update(accessor, event_queue)
     }
     fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize) {
         self.enemy_base.draw(renderer, pat);
@@ -516,7 +516,6 @@ impl Enemy for Zako {
     fn set_pos(&mut self, pos: &Vec2I) { self.enemy_base.set_pos(pos); }
 
     fn is_formation(&self) -> bool { self.enemy_base.is_formation() }
-    fn is_disappeared(&self) -> bool { self.enemy_base.is_disappeared() }
 
     fn can_capture_attack(&self) -> bool { false }
     fn is_captured_fighter(&self) -> bool { self.enemy_base.is_captured_fighter() }
@@ -915,7 +914,7 @@ impl Collidable for Owl {
 }
 
 impl Enemy for Owl {
-    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool {
         let prev_pos = self.enemy_base.pos;
 
         self.dispatch_update(accessor, event_queue);
@@ -933,6 +932,7 @@ impl Enemy for Owl {
         if self.life == 0 && !self.enemy_base.disappeared && !self.live_troops(accessor) {
             self.enemy_base.disappeared = true;
         }
+        !self.enemy_base.disappeared
     }
 
     fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize) {
@@ -956,7 +956,6 @@ impl Enemy for Owl {
     fn set_pos(&mut self, pos: &Vec2I) { self.enemy_base.set_pos(pos); }
 
     fn is_formation(&self) -> bool { self.enemy_base.is_formation() }
-    fn is_disappeared(&self) -> bool { self.enemy_base.is_disappeared() }
 
     fn can_capture_attack(&self) -> bool { true }
     fn is_captured_fighter(&self) -> bool { false }

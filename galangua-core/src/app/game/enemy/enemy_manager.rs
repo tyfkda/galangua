@@ -206,8 +206,7 @@ impl EnemyManager {
         //for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
         for i in 0..self.enemies.len() {
             if let Some(enemy) = self.enemies[i].as_mut() {
-                enemy.update(accessor, event_queue);
-                if enemy.is_disappeared() {
+                if !enemy.update(accessor, event_queue) {
                     self.enemies[i] = None;
                     self.decrement_alive_enemy();
                 }
