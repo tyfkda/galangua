@@ -4,10 +4,10 @@ use rand_xoshiro::Xoshiro128Plus;
 use std::cmp::min;
 
 use super::appearance_table::*;
-use super::enemy::{create_appearance_enemy, Enemy, EnemyType};
+use super::enemy::{create_appearance_enemy, Enemy};
 use super::traj::Traj;
 use super::traj_command::TrajCommand;
-use super::FormationIndex;
+use super::{EnemyType, FormationIndex};
 
 use crate::app::util::unsafe_util::extend_lifetime;
 use crate::framework::types::{Vec2I, ZERO_VEC};

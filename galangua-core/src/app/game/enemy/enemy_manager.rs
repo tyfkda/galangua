@@ -5,9 +5,9 @@ use rand_xoshiro::Xoshiro128Plus;
 use super::appearance_manager::AppearanceManager;
 use super::attack_manager::AttackManager;
 use super::ene_shot::EneShot;
-use super::enemy::{create_enemy, Enemy, EnemyType};
+use super::enemy::{create_enemy, Enemy};
 use super::formation::Formation;
-use super::{Accessor, FormationIndex};
+use super::{Accessor, EnemyType, FormationIndex};
 
 use crate::app::game::effect::to_earned_point_type;
 use crate::app::game::{EventQueue, EventType};

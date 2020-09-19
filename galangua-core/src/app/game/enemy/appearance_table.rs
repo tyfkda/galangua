@@ -1,9 +1,8 @@
 use counted_array::counted_array;
 
-use super::enemy::EnemyType;
 use super::traj_command::TrajCommand;
 use super::traj_command_table::*;
-use super::FormationIndex;
+use super::{EnemyType, FormationIndex};
 
 const fn pos(x: u8, y: u8) -> FormationIndex { FormationIndex(x, y) }
 
