@@ -309,7 +309,6 @@ pub enum ZakoState {
 }
 
 pub struct Zako {
-    vtable: &'static EnemyVtable,
     enemy_type: EnemyType,
     info: EnemyInfo,
     base: EnemyBase,
@@ -321,10 +320,7 @@ impl Zako {
         enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32,
         fi: &FormationIndex,
     ) -> Self {
-        let vtable = &ENEMY_VTABLE[enemy_type as usize];
-
         Self {
-            vtable,
             enemy_type,
             info: EnemyInfo::new(*pos, angle, speed, fi),
             base: EnemyBase::new(),
@@ -395,7 +391,7 @@ impl Zako {
                 self.base.disappeared = true;
             } else if accessor.is_rush() {
                 // Rush mode: Continue attacking
-                let table = self.vtable.rush_traj_table;
+                let table = ENEMY_VTABLE[self.enemy_type as usize].rush_traj_table;
                 self.base.rush_attack(&mut self.info, table);
                 event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
             } else {
