@@ -1,7 +1,7 @@
 use super::game::effect::StarManager;
-use super::game::game_manager::GameManager;
-use super::game::game_manager::Params as GameManagerParams;
-use super::game::score_holder::ScoreHolder;
+use super::game::manager::game_manager::GameManager;
+use super::game::manager::game_manager::Params as GameManagerParams;
+use super::game::manager::score_holder::ScoreHolder;
 
 use crate::framework::{AppTrait, RendererTrait, SystemTrait, VKey};
 use crate::util::fps_calc::{FpsCalc, TimerTrait};

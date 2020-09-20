@@ -1,19 +1,18 @@
-use super::effect::{Effect, StageIndicator, StarManager};
-use super::enemy::Accessor as AccessorForEnemy;
-use super::enemy::{Enemy, EnemyManager, FormationIndex};
-use super::event_queue::{EventQueue, EventType};
-use super::player::Accessor as AccessorForPlayer;
-use super::player::{MyShot, Player};
 use super::score_holder::ScoreHolder;
-use super::CaptureState;
+use super::{CaptureState, EnemyManager, EventQueue, EventType};
 
 use crate::app::consts::*;
+use crate::app::game::effect::{Effect, StageIndicator, StarManager};
+use crate::app::game::enemy::Accessor as AccessorForEnemy;
+use crate::app::game::enemy::{Enemy, FormationIndex};
+use crate::app::game::player::Accessor as AccessorForPlayer;
+use crate::app::game::player::{MyShot, Player};
 use crate::app::util::unsafe_util::peep;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::{RendererTrait, SystemTrait};
-use crate::util::pad::Pad;
 use crate::util::math::ONE;
+use crate::util::pad::Pad;
 
 const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;
@@ -535,7 +534,7 @@ impl AccessorForEnemy for GameManager {
     }
 
     fn capture_state(&self) -> CaptureState {
-        return self.capture_state
+        self.capture_state
     }
 
     fn captured_fighter_index(&self) -> Option<FormationIndex> {
@@ -546,15 +545,15 @@ impl AccessorForEnemy for GameManager {
         }
     }
 
-    fn get_enemies(&self) -> &[Option<Enemy>] {
+    fn get_enemies(&self) -> &[Option<Box<dyn Enemy>>] {
         self.enemy_manager.get_enemies()
     }
 
-    fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {
+    fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>> {
         self.enemy_manager.get_enemy_at(formation_index)
     }
 
-    fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy> {
+    fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Box<dyn Enemy>> {
         self.enemy_manager.get_enemy_at_mut(formation_index)
     }
 

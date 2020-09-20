@@ -2,7 +2,7 @@ use sdl2::event::Event;
 use sdl2::image::InitFlag;
 use sdl2::joystick::Joystick;
 use sdl2::keyboard::Keycode;
-use sdl2::mixer::{DEFAULT_CHANNELS, AUDIO_S16LSB};
+use sdl2::mixer::{AUDIO_S16LSB, DEFAULT_CHANNELS};
 use sdl2::Sdl;
 use std::thread;
 use std::time::{Duration, SystemTime};

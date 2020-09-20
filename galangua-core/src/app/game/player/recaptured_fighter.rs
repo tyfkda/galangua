@@ -1,5 +1,5 @@
 use crate::app::consts::*;
-use crate::app::game::{EventQueue, EventType};
+use crate::app::game::manager::{EventQueue, EventType};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{clamp, quantize_angle, round_vec, ANGLE, ONE};

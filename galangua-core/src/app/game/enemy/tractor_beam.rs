@@ -79,10 +79,7 @@ impl TractorBeam {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw(&self, renderer: &mut dyn RendererTrait) {
         let pos = round_vec(&self.pos);
 
         let n = (self.size_count / ONE) as usize;
@@ -118,7 +115,7 @@ impl TractorBeam {
     }
 }
 
-fn set_hsv_color<R: RendererTrait>(renderer: &mut R, tex_name: &str, h: u32, s: u8, v: u8) {
+fn set_hsv_color(renderer: &mut dyn RendererTrait, tex_name: &str, h: u32, s: u8, v: u8) {
     let (r, g, b) = hsv(h, s, v);
     renderer.set_texture_color_mod(tex_name, r, g, b);
 }

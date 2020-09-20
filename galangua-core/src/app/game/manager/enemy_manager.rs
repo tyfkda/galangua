@@ -4,13 +4,13 @@ use rand_xoshiro::Xoshiro128Plus;
 
 use super::appearance_manager::AppearanceManager;
 use super::attack_manager::AttackManager;
-use super::ene_shot::EneShot;
-use super::enemy::{Enemy, EnemyType};
 use super::formation::Formation;
-use super::{Accessor, FormationIndex};
+use super::{EventQueue, EventType};
 
 use crate::app::game::effect::to_earned_point_type;
-use crate::app::game::{EventQueue, EventType};
+use crate::app::game::enemy::ene_shot::EneShot;
+use crate::app::game::enemy::enemy::{create_enemy, Enemy};
+use crate::app::game::enemy::{Accessor, EnemyType, FormationIndex};
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
@@ -28,7 +28,7 @@ enum StageState {
 }
 
 pub struct EnemyManager {
-    enemies: [Option<Enemy>; MAX_ENEMY_COUNT],
+    enemies: [Option<Box<dyn Enemy>>; MAX_ENEMY_COUNT],
     alive_enemy_count: u32,
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
     shot_paused_count: u32,
@@ -164,7 +164,7 @@ impl EnemyManager {
         }
     }
 
-    fn spawn(&mut self, enemy: Enemy) -> bool {
+    fn spawn(&mut self, enemy: Box<dyn Enemy>) -> bool {
         let index = calc_array_index(enemy.formation_index());
         let slot = &mut self.enemies[index];
         if slot.is_none() {
@@ -177,7 +177,7 @@ impl EnemyManager {
     }
 
     pub fn spawn_captured_fighter(&mut self, pos: &Vec2I, fi: &FormationIndex) -> bool {
-        let mut enemy = Enemy::new(EnemyType::CapturedFighter, &pos, 0, 0, fi);
+        let mut enemy = create_enemy(EnemyType::CapturedFighter, &pos, 0, 0, fi);
         enemy.set_to_troop();
         self.spawn(enemy)
     }
@@ -206,8 +206,7 @@ impl EnemyManager {
         //for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
         for i in 0..self.enemies.len() {
             if let Some(enemy) = self.enemies[i].as_mut() {
-                enemy.update(accessor, event_queue);
-                if enemy.is_disappeared() {
+                if !enemy.update(accessor, event_queue) {
                     self.enemies[i] = None;
                     self.decrement_alive_enemy();
                 }
@@ -265,16 +264,16 @@ impl EnemyManager {
         self.attack_manager.is_no_attacker()
     }
 
-    pub fn get_enemies(&self) -> &[Option<Enemy>] {
+    pub fn get_enemies(&self) -> &[Option<Box<dyn Enemy>>] {
         &self.enemies
     }
 
-    pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {
+    pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>> {
         let index = calc_array_index(formation_index);
         self.enemies[index].as_ref()
     }
 
-    pub fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Enemy> {
+    pub fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Box<dyn Enemy>> {
         let index = calc_array_index(formation_index);
         self.enemies[index].as_mut()
     }
@@ -308,7 +307,7 @@ impl EnemyManager {
                 let index = super::appearance_table::ORDER[unit * 8 + i];
                 let enemy_type = super::appearance_table::ENEMY_TYPE_TABLE[unit * 2 + (i / 4)];
                 let pos = self.formation.pos(&index);
-                let mut enemy = Enemy::new(enemy_type, &pos, 0, 0, &index);
+                let mut enemy = create_enemy(enemy_type, &pos, 0, 0, &index);
                 enemy.set_to_formation();
                 self.spawn(enemy);
             }

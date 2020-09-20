@@ -4,8 +4,9 @@ use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
 use super::formation::{X_COUNT, Y_COUNT};
-use super::{Accessor, FormationIndex};
-use crate::app::game::{CaptureState, EventQueue, EventType};
+use super::{CaptureState, EventQueue, EventType};
+
+use crate::app::game::enemy::{Accessor, FormationIndex};
 use crate::app::util::unsafe_util::peep;
 
 const MAX_ATTACKER_COUNT: usize = 3;
