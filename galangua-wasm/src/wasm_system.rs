@@ -7,20 +7,18 @@ extern "C" {
     fn play_se(channel: u32, filename: &str);
 }
 
-pub struct WasmSystem<F, G>
-where
+pub struct WasmSystem<
     F: Fn(&str) -> Option<JsValue>,
-    G: Fn(&str, JsValue),
-{
+    G: Fn(&str, JsValue)
+> {
     get_item: F,
     set_item: G,
 }
 
-impl<F, G> WasmSystem<F, G>
-where
+impl<
     F: Fn(&str) -> Option<JsValue>,
-    G: Fn(&str, JsValue),
-{
+    G: Fn(&str, JsValue)
+> WasmSystem<F, G> {
     pub fn new(get_item: F, set_item: G) -> Self {
         WasmSystem {
             get_item,
@@ -29,11 +27,10 @@ where
     }
 }
 
-impl<F, G> SystemTrait for WasmSystem<F, G>
-where
+impl<
     F: Fn(&str) -> Option<JsValue>,
-    G: Fn(&str, JsValue),
-{
+    G: Fn(&str, JsValue)
+> SystemTrait for WasmSystem<F, G> {
     fn get_u32(&self, key: &str) -> Option<u32> {
         if let Some(value) = (self.get_item)(key) {
             if let Some(string) = value.as_string() {

@@ -12,10 +12,9 @@ impl<T> ResourceManager<T> {
         }
     }
 
-    pub fn load<F>(&mut self, base_path: &str, filenames: &[&str], loader: F) -> Result<(), String>
-    where
-        F: Fn(&str) -> Result<T, String>,
-    {
+    pub fn load<F: Fn(&str) -> Result<T, String>>(
+        &mut self, base_path: &str, filenames: &[&str], loader: F,
+    ) -> Result<(), String> {
         for filename in filenames {
             let resource = loader(&format!("{}/{}", base_path, filename))?;
             let key = Path::new(filename).file_stem().unwrap().to_str().unwrap();

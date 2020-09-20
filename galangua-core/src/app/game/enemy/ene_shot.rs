@@ -26,10 +26,7 @@ impl EneShot {
         !out_of_screen(&self.pos)
     }
 
-    pub fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         let pos = round_vec(&self.pos);
         renderer.draw_sprite("ene_shot", &(&pos + &Vec2I::new(-2, -4)));
     }

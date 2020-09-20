@@ -138,10 +138,7 @@ impl Player {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         match self.state {
             State::Normal | State::EscapeCapturing | State::MoveHomePos => {
                 let pos = round_vec(&self.pos);

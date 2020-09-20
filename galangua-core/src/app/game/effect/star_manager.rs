@@ -71,10 +71,7 @@ impl StarManager {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         for star in self.stars.iter() {
             if (self.frame_count + star.t) & 31 < 16 {
                 continue;

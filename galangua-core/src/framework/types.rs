@@ -12,10 +12,7 @@ impl<T> Vector2D<T> {
     }
 }
 
-impl<T> Add for &Vector2D<T>
-where
-    T: Add<Output = T> + Copy,
-{
+impl<T: Add<Output = T> + Copy> Add for &Vector2D<T> {
     type Output = Vector2D<T>;
     fn add(self, other: Self) -> Self::Output {
         Self::Output { x: self.x + other.x, y: self.y + other.y }
@@ -23,50 +20,35 @@ where
 }
 
 // TODO: Accept reference in RHS
-impl<T> AddAssign for Vector2D<T>
-where
-    T: AddAssign,
-{
+impl<T: AddAssign> AddAssign for Vector2D<T> {
     fn add_assign(&mut self, other: Self) {
         self.x += other.x;
         self.y += other.y;
     }
 }
 
-impl<T> Sub for &Vector2D<T>
-where
-    T: Sub<Output = T> + Copy,
-{
+impl<T: Sub<Output = T> + Copy> Sub for &Vector2D<T> {
     type Output = Vector2D<T>;
     fn sub(self, other: Self) -> Self::Output {
         Self::Output { x: self.x - other.x, y: self.y - other.y }
     }
 }
 
-impl<Scalar> Mul<Scalar> for &Vector2D<Scalar>
-where
-    Scalar: Mul<Output = Scalar> + Copy,
-{
-    type Output = Vector2D<Scalar>;
-    fn mul(self, rhs: Scalar) -> Self::Output {
+impl<T: Mul<Output = T> + Copy> Mul<T> for &Vector2D<T> {
+    type Output = Vector2D<T>;
+    fn mul(self, rhs: T) -> Self::Output {
         Self::Output { x: self.x * rhs, y: self.y * rhs }
     }
 }
 
-impl<Scalar> Div<Scalar> for &Vector2D<Scalar>
-where
-    Scalar: Div<Output = Scalar> + Copy,
-{
-    type Output = Vector2D<Scalar>;
-    fn div(self, rhs: Scalar) -> Self::Output {
+impl<T: Div<Output = T> + Copy> Div<T> for &Vector2D<T> {
+    type Output = Vector2D<T>;
+    fn div(self, rhs: T) -> Self::Output {
         Self::Output { x: self.x / rhs, y: self.y / rhs }
     }
 }
 
-impl<T> Neg for &Vector2D<T>
-where
-    T: Neg<Output = T> + Copy,
-{
+impl<T: Neg<Output = T> + Copy> Neg for &Vector2D<T> {
     type Output = Vector2D<T>;
     fn neg(self) -> Self::Output {
         Self::Output { x: -self.x, y: -self.y }

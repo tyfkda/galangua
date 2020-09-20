@@ -152,10 +152,7 @@ pub fn quantize_angle(angle: i32, div: i32) -> u8 {
     (a * ANGLE / div) as u8
 }
 
-pub fn clamp<T>(value: T, min: T, max: T) -> T
-where
-    T: Copy + PartialOrd,
-{
+pub fn clamp<T: Copy + PartialOrd>(value: T, min: T, max: T) -> T {
     if value < min {
         min
     } else if value > max {

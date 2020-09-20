@@ -54,10 +54,7 @@ impl StageIndicator {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         let width = calc_width(self.stage);
         let mut x = WIDTH - width as i32;
         let mut count = self.stage_disp;

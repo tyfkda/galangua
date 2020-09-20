@@ -85,10 +85,7 @@ impl EnemyManager {
         self.update_shots();
     }
 
-    pub fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         let pat = ((self.frame_count >> 5) & 1) as usize;
         for enemy in self.enemies.iter().rev().flat_map(|x| x) {
             enemy.draw(renderer, pat);

@@ -60,10 +60,7 @@ impl Effect {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         match self {
             Effect::SequentialSpriteAnime(x) => x.draw(renderer),
             Effect::RotSprite(x) => x.draw(renderer),
@@ -109,10 +106,7 @@ impl SequentialSpriteAnime {
         self.frame < self.sprites.len() as u32
     }
 
-    pub fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         if self.delay >= 0 {
             return;
         }
@@ -148,10 +142,7 @@ impl RotSprite {
         self.count <= self.duration
     }
 
-    pub fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         renderer.draw_sprite_rot(self.sprite_name, &self.pos, self.angle, None);
     }
 }

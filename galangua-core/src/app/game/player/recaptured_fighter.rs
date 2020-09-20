@@ -58,10 +58,7 @@ impl RecapturedFighter {
         }
     }
 
-    pub(super) fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub(super) fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         let pos = round_vec(&self.pos);
         match self.state {
             State::Rotate => {

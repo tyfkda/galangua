@@ -34,10 +34,7 @@ impl MyShot {
         }
     }
 
-    pub fn draw<R>(&self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         let pos = round_vec(&self.pos);
         if self.angle == 0 {
             renderer.draw_sprite("myshot", &(&pos + &Vec2I::new(-2, -4)));

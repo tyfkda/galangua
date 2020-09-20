@@ -240,10 +240,7 @@ impl GameManager {
         }
     }
 
-    pub fn draw<R>(&mut self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    pub fn draw<R: RendererTrait>(&mut self, renderer: &mut R) {
         self.player.draw(renderer);
         self.enemy_manager.draw(renderer);
         for myshot in self.myshots.iter().flat_map(|x| x) {

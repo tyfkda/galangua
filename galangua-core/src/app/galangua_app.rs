@@ -151,10 +151,7 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
         true
     }
 
-    fn draw_main<R>(&mut self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    fn draw_main<R: RendererTrait>(&mut self, renderer: &mut R) {
         self.star_manager.draw(renderer);
         match self.state {
             AppState::Title => {
@@ -219,10 +216,7 @@ impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaAp
         self.pad.on_joystick_button(button_index, down);
     }
 
-    fn init(&mut self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    fn init(&mut self, renderer: &mut R) {
         renderer.load_textures("assets", &["chr.png", "font.png"]);
         renderer.load_sprite_sheet("assets/chr.json");
     }
@@ -234,10 +228,7 @@ impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaAp
         result
     }
 
-    fn draw(&mut self, renderer: &mut R)
-    where
-        R: RendererTrait,
-    {
+    fn draw(&mut self, renderer: &mut R) {
         renderer.set_draw_color(0, 0, 0);
         renderer.clear();
 
