@@ -240,8 +240,8 @@ mod tests {
     }
 
     #[test]
-    fn test_round_up() {
-        assert_eq!(Vec2I::new(6, 6), round_up(&Vec2I::new(5 * 256 + 128, 6 * 256 + 127)));
-        assert_eq!(Vec2I::new(-10, -10), round_up(&Vec2I::new(-11 * 256 + 128, -10 * 256 + 127)));
+    fn test_round_vec() {
+        assert_eq!(Vec2I::new(6, 6), round_vec(&Vec2I::new(5 * 256 + 128, 6 * 256 + 127)));
+        assert_eq!(Vec2I::new(-10, -10), round_vec(&Vec2I::new(-11 * 256 + 128, -10 * 256 + 127)));
     }
 }
