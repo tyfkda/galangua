@@ -1,7 +1,7 @@
-use sdl2::mixer::{Music, MAX_VOLUME};
+use sdl2::mixer::{Chunk, MAX_VOLUME};
 
 pub struct SdlAudio {
-    channels: Vec<Option<Music<'static>>>,
+    channels: Vec<Option<Chunk>>,
     base_volume: i32,
 }
 
@@ -19,12 +19,12 @@ impl SdlAudio {
     pub fn play_se(&mut self, channel: u32, filename: &str) {
         if channel < self.channels.len() as u32 {
             let path = format!("{}.ogg", filename);
-            let music = Music::from_file(path)
+            let mut chunk = Chunk::from_file(path)
                 .expect("play_se: No music flile");
-            Music::set_volume(self.base_volume);
-            music.play(1)
+            chunk.set_volume(self.base_volume);
+            sdl2::mixer::Channel::all().play(&chunk, 0)
                 .expect("Play music failed");
-            self.channels[channel as usize] = Some(music);
+            self.channels[channel as usize] = Some(chunk);
         }
     }
 }
