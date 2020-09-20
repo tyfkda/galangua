@@ -7,7 +7,7 @@ use lazy_static::lazy_static;
 use sdl2::keyboard::Keycode;
 use std::collections::HashMap;
 
-use galangua_core::app::consts;
+use galangua_core::app::consts::*;
 use galangua_core::app::GalanguaApp;
 use galangua_core::framework::VKey;
 
@@ -44,12 +44,12 @@ pub fn main() -> Result<(), String> {
     };
 
     let timer = StdTimer::new();
-    let audio = SdlAudio::new(consts::CHANNEL_COUNT, consts::BASE_VOLUME);
+    let audio = SdlAudio::new(CHANNEL_COUNT, BASE_VOLUME);
     let system = StdSystem::new(audio);
     let app = GalanguaApp::new(timer, system);
     let mut framework = SdlAppFramework::new(app, map_key)?;
     framework.run(APP_NAME,
-                  consts::WIDTH as u32, consts::HEIGHT as u32, scale, fullscreen)
+                  WIDTH as u32, HEIGHT as u32, scale, fullscreen)
 }
 
 counted_array!(const KEY_MAP_TABLE: [(Keycode, VKey); _] = [
