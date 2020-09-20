@@ -263,7 +263,7 @@ impl Owl {
 
             if accessor.is_rush() {
                 self.rush_attack();
-                accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+                accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
             } else {
                 self.set_state(OwlState::MoveToFormation);
                 self.capturing_state = CapturingState::None;
@@ -341,7 +341,7 @@ impl Owl {
                 // Rush mode: Continue attacking
                 self.remove_destroyed_troops(accessor);
                 self.rush_attack();
-                accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+                accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
             } else {
                 self.set_state(OwlState::MoveToFormation);
             }
@@ -512,7 +512,7 @@ impl Enemy for Owl {
 
         self.set_state(OwlState::Attack(phase));
 
-        accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+        accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
     }
 
     fn set_to_troop(&mut self) {

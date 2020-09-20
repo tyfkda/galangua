@@ -18,7 +18,8 @@ pub const BASE_VOLUME: f32 = 1.0 / 4.0;
 pub const CHANNEL_COUNT: u32 = 3;
 pub const CH_SHOT: u32 = 0;
 pub const CH_BOMB: u32 = 0;
-pub const CH_JINGLE: u32 = 1;
+pub const CH_ATTACK: u32 = 1;
+pub const CH_JINGLE: u32 = 2;
 
 pub const SE_COUNT_STAGE: &str = "assets/audio/se_get_1";
 pub const SE_MYSHOT: &str = "assets/audio/se_pyuun";

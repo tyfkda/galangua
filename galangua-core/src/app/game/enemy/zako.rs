@@ -126,7 +126,7 @@ impl Zako {
                 self.base.traj = Some(traj);
                 self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
 
-                accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+                accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
             } else {
                 self.set_state(ZakoState::MoveToFormation);
             }
@@ -142,7 +142,7 @@ impl Zako {
                 // Rush mode: Continue attacking
                 let table = VTABLE[self.enemy_type as usize].rush_traj_table;
                 self.base.rush_attack(&mut self.info, table);
-                accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+                accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
             } else {
                 self.set_state(ZakoState::MoveToFormation);
             }
@@ -271,7 +271,7 @@ impl Enemy for Zako {
             _ => { panic!("Illgal"); }
         }
 
-        accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+        accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
     }
 
     fn set_to_troop(&mut self) {
