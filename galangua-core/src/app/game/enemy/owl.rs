@@ -1,4 +1,4 @@
-use super::enemy::{Enemy};
+use super::enemy::Enemy;
 use super::enemy_base::{EnemyBase, EnemyInfo};
 use super::tractor_beam::TractorBeam;
 use super::traj::Traj;
@@ -474,7 +474,9 @@ impl Enemy for Owl {
         self.info.update_troop(add, angle_opt);
     }
 
-    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    fn set_attack(
+        &mut self, capture_attack: bool, accessor: &mut dyn Accessor, event_queue: &mut EventQueue,
+    ) {
         self.base.count = 0;
         self.base.attack_frame_count = 0;
         self.copy_angle_to_troops = true;

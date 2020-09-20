@@ -7,11 +7,11 @@ use super::{Accessor, FormationIndex};
 
 use crate::app::consts::*;
 use crate::app::game::manager::{EventQueue, EventType};
-use crate::app::util::{CollBox};
+use crate::app::util::CollBox;
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{
-    atan2_lut, clamp, diff_angle, normalize_angle, round_vec, square,
-    ANGLE, ONE, ONE_BIT};
+    atan2_lut, clamp, diff_angle, normalize_angle, round_vec, square, ANGLE, ONE, ONE_BIT,
+};
 
 pub struct EnemyInfo {
     pub(super) pos: Vec2I,
@@ -84,10 +84,12 @@ impl EnemyBase {
         self.attack_frame_count += 1;
 
         let stage_no = accessor.get_stage_no();
-        let shot_count = std::cmp::min(2 + stage_no / 8 , 5) as u32;
+        let shot_count = std::cmp::min(2 + stage_no / 8, 5) as u32;
         let shot_interval = 20 - shot_count * 2;
 
-        if self.attack_frame_count <= shot_interval * shot_count && self.attack_frame_count % shot_interval == 0 {
+        if self.attack_frame_count <= shot_interval * shot_count
+            && self.attack_frame_count % shot_interval == 0
+        {
             event_queue.push(EventType::EneShot(info.pos));
             true
         } else {

@@ -1,4 +1,4 @@
-use super::enemy::{Enemy};
+use super::enemy::Enemy;
 use super::enemy_base::{EnemyBase, EnemyInfo};
 use super::traj::Traj;
 use super::traj_command::TrajCommand;
@@ -119,7 +119,8 @@ impl Zako {
         if !self.base.update_trajectory(&mut self.info, accessor, event_queue) {
             if accessor.is_rush() {
                 let flip_x = self.info.formation_index.0 >= 5;
-                let mut traj = Traj::new(&BEE_ATTACK_RUSH_CONT_TABLE, &ZERO_VEC, flip_x, self.info.formation_index);
+                let mut traj = Traj::new(&BEE_ATTACK_RUSH_CONT_TABLE, &ZERO_VEC, flip_x,
+                                         self.info.formation_index);
                 traj.set_pos(&self.info.pos);
 
                 self.base.traj = Some(traj);
@@ -163,7 +164,8 @@ impl Zako {
 
     fn set_butterfly_attack(&mut self) {
         let flip_x = self.info.formation_index.0 >= 5;
-        let mut traj = Traj::new(&BUTTERFLY_ATTACK_TABLE, &ZERO_VEC, flip_x, self.info.formation_index);
+        let mut traj = Traj::new(&BUTTERFLY_ATTACK_TABLE, &ZERO_VEC, flip_x,
+                                 self.info.formation_index);
         traj.set_pos(&self.info.pos);
 
         self.base.count = 0;
@@ -263,7 +265,9 @@ impl Enemy for Zako {
         self.info.update_troop(add, angle_opt);
     }
 
-    fn set_attack(&mut self, _capture_attack: bool, _accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    fn set_attack(
+        &mut self, _capture_attack: bool, _accessor: &mut dyn Accessor, event_queue: &mut EventQueue
+    ) {
         match self.enemy_type {
             EnemyType::Bee => { self.set_bee_attack(); }
             EnemyType::Butterfly => { self.set_butterfly_attack(); }

@@ -1,6 +1,6 @@
 mod sdl;
-mod std_timer;
 mod std_system;
+mod std_timer;
 
 use counted_array::counted_array;
 use lazy_static::lazy_static;
@@ -13,8 +13,8 @@ use galangua_core::framework::VKey;
 
 use crate::sdl::SdlAppFramework;
 use crate::sdl::SdlAudio;
-use crate::std_timer::StdTimer;
 use crate::std_system::StdSystem;
+use crate::std_timer::StdTimer;
 
 const APP_NAME: &str = "Galangua";
 

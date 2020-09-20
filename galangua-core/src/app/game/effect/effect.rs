@@ -9,7 +9,6 @@ pub enum Effect {
     RotSprite(RotSprite),
 }
 
-
 const FLASH_ENEMY_SPRITE_NAMES: [&str; 4] = [
     "gopher_flash",
     "dman_flash",

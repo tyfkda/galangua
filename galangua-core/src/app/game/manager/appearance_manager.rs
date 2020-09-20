@@ -5,11 +5,11 @@ use std::cmp::min;
 
 use super::appearance_table::*;
 
-use crate::app::util::unsafe_util::extend_lifetime;
 use crate::app::game::enemy::enemy::{create_appearance_enemy, Enemy};
 use crate::app::game::enemy::traj::Traj;
 use crate::app::game::enemy::traj_command::TrajCommand;
 use crate::app::game::enemy::{EnemyType, FormationIndex};
+use crate::app::util::unsafe_util::extend_lifetime;
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::ONE;
 
@@ -114,7 +114,7 @@ impl AppearanceManager {
         }
 
         if self.orders.is_empty() || self.orders_ptr[0].time < self.time {
-            return None
+            return None;
         }
 
         let mut new_borns: Vec<Box<dyn Enemy>> = Vec::new();
@@ -154,7 +154,8 @@ impl AppearanceManager {
     fn create_orders(&mut self) {
         let base = self.unit * 8;
         let entry = &UNIT_TABLE[(self.stage as usize) % UNIT_TABLE.len()][self.unit as usize];
-        let assault_count = ASSAULT_TABLE[min(self.stage as usize, ASSAULT_TABLE.len() - 1)][self.unit as usize] as usize;
+        let assault_count = ASSAULT_TABLE[min(self.stage as usize, ASSAULT_TABLE.len() - 1)]
+            [self.unit as usize] as usize;
 
         let div;
         match entry.pat {

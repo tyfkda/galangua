@@ -3,15 +3,15 @@ use super::traj::Traj;
 use super::zako::{Zako, ZakoState};
 use super::{Accessor, DamageResult, EnemyType, FormationIndex};
 
-use crate::app::game::manager::{EventQueue};
-use crate::app::util::{Collidable};
-use crate::framework::types::{Vec2I};
+use crate::app::game::manager::EventQueue;
+use crate::app::util::Collidable;
+use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 
 #[cfg(debug_assertions)]
 use super::traj_command::TrajCommand;
 
-pub trait Enemy : Collidable {
+pub trait Enemy: Collidable {
     fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool;
     fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize);
 
@@ -30,7 +30,8 @@ pub trait Enemy : Collidable {
 
     fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>);
 
-    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor, event_queue: &mut EventQueue);
+    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor,
+                  event_queue: &mut EventQueue);
     fn set_to_troop(&mut self);
     fn set_to_formation(&mut self);
 
@@ -45,8 +46,8 @@ pub fn create_enemy(
     fi: &FormationIndex,
 ) -> Box<dyn Enemy> {
     match enemy_type {
-        EnemyType::Owl => { Box::new(Owl::new(pos, angle, speed, fi)) }
-        _ => { Box::new(Zako::new(enemy_type, pos, angle, speed, fi)) }
+        EnemyType::Owl => Box::new(Owl::new(pos, angle, speed, fi)),
+        _ => Box::new(Zako::new(enemy_type, pos, angle, speed, fi)),
     }
 }
 

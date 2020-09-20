@@ -11,8 +11,8 @@ use crate::app::util::unsafe_util::peep;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::{RendererTrait, SystemTrait};
-use crate::util::pad::Pad;
 use crate::util::math::ONE;
+use crate::util::pad::Pad;
 
 const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;
@@ -534,7 +534,7 @@ impl AccessorForEnemy for GameManager {
     }
 
     fn capture_state(&self) -> CaptureState {
-        return self.capture_state
+        self.capture_state
     }
 
     fn captured_fighter_index(&self) -> Option<FormationIndex> {
