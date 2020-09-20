@@ -10,7 +10,7 @@ use crate::app::game::manager::EventType;
 use crate::app::util::CollBox;
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{
-    atan2_lut, clamp, diff_angle, normalize_angle, round_vec, square, ANGLE, ONE, ONE_BIT,
+    atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, round_vec, square, ANGLE, ONE, ONE_BIT,
 };
 
 pub struct EnemyInfo {
@@ -30,6 +30,11 @@ impl EnemyInfo {
             vangle: 0,
             formation_index: *fi,
         }
+    }
+
+    pub(super) fn forward(&mut self) {
+        self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
+        self.angle += self.vangle;
     }
 
     pub(super) fn warp(&mut self, offset: Vec2I) {

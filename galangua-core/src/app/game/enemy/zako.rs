@@ -11,7 +11,7 @@ use crate::app::game::manager::EventType;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
-use crate::util::math::{calc_velocity, quantize_angle, round_vec};
+use crate::util::math::{quantize_angle, round_vec};
 
 const BEE_SPRITE_NAMES: [&str; 2] = ["gopher1", "gopher2"];
 const BUTTERFLY_SPRITE_NAMES: [&str; 2] = ["dman1", "dman2"];
@@ -221,10 +221,7 @@ impl Collidable for Zako {
 impl Enemy for Zako {
     fn update(&mut self, accessor: &mut dyn Accessor) -> bool {
         self.dispatch_update(accessor);
-
-        self.info.pos += calc_velocity(self.info.angle + self.info.vangle / 2, self.info.speed);
-        self.info.angle += self.info.vangle;
-
+        self.info.forward();
         !self.base.disappeared
     }
 

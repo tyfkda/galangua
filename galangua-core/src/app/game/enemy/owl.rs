@@ -12,7 +12,7 @@ use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
 use crate::util::math::{
-    atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, quantize_angle, round_vec,
+    atan2_lut, clamp, diff_angle, normalize_angle, quantize_angle, round_vec,
     ANGLE, ONE};
 
 #[cfg(debug_assertions)]
@@ -424,9 +424,7 @@ impl Enemy for Owl {
         let prev_pos = self.info.pos;
 
         self.dispatch_update(accessor);
-
-        self.info.pos += calc_velocity(self.info.angle + self.info.vangle / 2, self.info.speed);
-        self.info.angle += self.info.vangle;
+        self.info.forward();
 
         let angle_opt = if self.copy_angle_to_troops { Some(self.info.angle) } else { None };
         self.update_troops(&(&self.info.pos - &prev_pos), angle_opt, accessor);
