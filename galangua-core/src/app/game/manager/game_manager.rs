@@ -469,18 +469,16 @@ impl GameManager {
         for (collbox, player_pos) in collbox_opts.iter().flat_map(|x| x) {
             let power = 100;
             let accessor = unsafe { peep(self) };
-            if let Some(fi) = self.enemy_manager.check_collision(collbox) {
+
+            let hit = if let Some(fi) = self.enemy_manager.check_collision(collbox) {
                 let pos = self.enemy_manager.get_enemy_at(&fi).unwrap().pos().clone();
                 self.enemy_manager.set_damage_to_enemy(&fi, power, accessor);
+                Some(pos)
+            } else {
+                self.enemy_manager.check_shot_collision(&collbox)
+            };
 
-                self.event_queue.push(EventType::PlayerExplosion(*player_pos));
-                if self.player.crash(&pos) {
-                    self.event_queue.push(EventType::DeadPlayer);
-                }
-                continue;
-            }
-
-            if let Some(pos) = self.enemy_manager.check_shot_collision(&collbox) {
+            if let Some(pos) = hit {
                 self.event_queue.push(EventType::PlayerExplosion(*player_pos));
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
