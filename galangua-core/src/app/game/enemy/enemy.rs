@@ -3,7 +3,6 @@ use super::traj::Traj;
 use super::zako::{Zako, ZakoState};
 use super::{Accessor, DamageResult, EnemyType, FormationIndex};
 
-use crate::app::game::manager::EventQueue;
 use crate::app::util::Collidable;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
@@ -12,7 +11,7 @@ use crate::framework::RendererTrait;
 use super::traj_command::TrajCommand;
 
 pub trait Enemy: Collidable {
-    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool;
+    fn update(&mut self, accessor: &mut dyn Accessor) -> bool;
     fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize);
 
     fn pos(&self) -> &Vec2I;
@@ -24,14 +23,11 @@ pub trait Enemy: Collidable {
     fn is_captured_fighter(&self) -> bool;
     fn formation_index(&self) -> &FormationIndex;
 
-    fn set_damage(
-        &mut self, power: u32, accessor: &mut dyn Accessor, event_queue: &mut EventQueue,
-    ) -> DamageResult;
+    fn set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult;
 
     fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>);
 
-    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor,
-                  event_queue: &mut EventQueue);
+    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor);
     fn set_to_troop(&mut self);
     fn set_to_formation(&mut self);
 

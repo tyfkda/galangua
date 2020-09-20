@@ -1,5 +1,5 @@
 use crate::app::consts::*;
-use crate::app::game::manager::{EventQueue, EventType};
+use crate::app::game::manager::EventType;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{clamp, quantize_angle, round_vec, ANGLE, ONE};
@@ -29,15 +29,13 @@ impl RecapturedFighter {
         }
     }
 
-    pub(super) fn update<A: Accessor>(
-        &mut self, player_living: bool, accessor: &A, event_queue: &mut EventQueue,
-    ) {
+    pub(super) fn update<A: Accessor>(&mut self, player_living: bool, accessor: &mut A) {
         match self.state {
             State::Rotate => {
                 self.angle += ANGLE * ONE / ANGLE_DIV;
                 if self.angle >= ANGLE * ONE * 4 && accessor.is_no_attacker() {
                     self.state = State::SlideHorz;
-                    event_queue.push(EventType::MovePlayerHomePos);
+                    accessor.push_event(EventType::MovePlayerHomePos);
                 }
             }
             State::SlideHorz => {

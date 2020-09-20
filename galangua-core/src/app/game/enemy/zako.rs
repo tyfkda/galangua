@@ -7,7 +7,7 @@ use super::{Accessor, DamageResult, EnemyType, FormationIndex};
 
 use crate::app::consts::*;
 use crate::app::game::manager::formation::Y_COUNT;
-use crate::app::game::manager::{EventQueue, EventType};
+use crate::app::game::manager::EventType;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
@@ -82,11 +82,11 @@ impl Zako {
 
     //// update
 
-    fn dispatch_update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    fn dispatch_update(&mut self, accessor: &mut dyn Accessor) {
         match self.state {
             ZakoState::None | ZakoState::Troop => {}
             ZakoState::Appearance => {
-                if !self.base.update_trajectory(&mut self.info, accessor, event_queue) {
+                if !self.base.update_trajectory(&mut self.info, accessor) {
                     if self.info.formation_index.1 >= Y_COUNT as u8 {  // Assault
                         self.base.set_assault(&mut self.info, accessor);
                         self.set_state(ZakoState::Assault(0));
@@ -107,16 +107,16 @@ impl Zako {
             ZakoState::Formation => { self.info.update_formation(accessor); }
             ZakoState::Attack(phase) => {
                 match phase {
-                    ZakoAttackPhase::BeeAttack => { self.update_bee_attack(accessor, event_queue) }
-                    ZakoAttackPhase::Traj => { self.update_attack_traj(accessor, event_queue); }
+                    ZakoAttackPhase::BeeAttack => { self.update_bee_attack(accessor) }
+                    ZakoAttackPhase::Traj => { self.update_attack_traj(accessor); }
                 }
             }
         }
     }
 
-    fn update_bee_attack(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
-        self.base.update_attack(&self.info, accessor, event_queue);
-        if !self.base.update_trajectory(&mut self.info, accessor, event_queue) {
+    fn update_bee_attack(&mut self, accessor: &mut dyn Accessor) {
+        self.base.update_attack(&self.info, accessor);
+        if !self.base.update_trajectory(&mut self.info, accessor) {
             if accessor.is_rush() {
                 let flip_x = self.info.formation_index.0 >= 5;
                 let mut traj = Traj::new(&BEE_ATTACK_RUSH_CONT_TABLE, &ZERO_VEC, flip_x,
@@ -126,23 +126,23 @@ impl Zako {
                 self.base.traj = Some(traj);
                 self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
 
-                event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+                accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
             } else {
                 self.set_state(ZakoState::MoveToFormation);
             }
         }
     }
 
-    fn update_attack_traj(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
-        self.base.update_attack(&self.info, accessor, event_queue);
-        if !self.base.update_trajectory(&mut self.info, accessor, event_queue) {
+    fn update_attack_traj(&mut self, accessor: &mut dyn Accessor) {
+        self.base.update_attack(&self.info, accessor);
+        if !self.base.update_trajectory(&mut self.info, accessor) {
             if self.enemy_type == EnemyType::CapturedFighter {
                 self.base.disappeared = true;
             } else if accessor.is_rush() {
                 // Rush mode: Continue attacking
                 let table = VTABLE[self.enemy_type as usize].rush_traj_table;
                 self.base.rush_attack(&mut self.info, table);
-                event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+                accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
             } else {
                 self.set_state(ZakoState::MoveToFormation);
             }
@@ -192,8 +192,8 @@ impl Zako {
         DamageResult { killed: true, point }
     }
 
-    fn captured_fighter_set_damage(&mut self, event_queue: &mut EventQueue) -> DamageResult {
-        event_queue.push(EventType::CapturedFighterDestroyed);
+    fn captured_fighter_set_damage(&mut self, accessor: &mut dyn Accessor) -> DamageResult {
+        accessor.push_event(EventType::CapturedFighterDestroyed);
         let point = self.calc_point();
         DamageResult { killed: true, point }
     }
@@ -219,8 +219,8 @@ impl Collidable for Zako {
 }
 
 impl Enemy for Zako {
-    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool {
-        self.dispatch_update(accessor, event_queue);
+    fn update(&mut self, accessor: &mut dyn Accessor) -> bool {
+        self.dispatch_update(accessor);
 
         self.info.pos += calc_velocity(self.info.angle + self.info.vangle / 2, self.info.speed);
         self.info.angle += self.info.vangle;
@@ -250,13 +250,11 @@ impl Enemy for Zako {
     fn is_captured_fighter(&self) -> bool { self.enemy_type == EnemyType::CapturedFighter }
     fn formation_index(&self) -> &FormationIndex { &self.info.formation_index }
 
-    fn set_damage(
-        &mut self, _power: u32, _accessor: &mut dyn Accessor, event_queue: &mut EventQueue,
-    ) -> DamageResult {
-        event_queue.push(EventType::EnemyExplosion(self.info.pos, self.info.angle, self.enemy_type));
+    fn set_damage(&mut self, _power: u32, accessor: &mut dyn Accessor) -> DamageResult {
+        accessor.push_event(EventType::EnemyExplosion(self.info.pos, self.info.angle, self.enemy_type));
         match self.enemy_type {
             EnemyType::Bee | EnemyType::Butterfly => { self.bee_set_damage() }
-            EnemyType::CapturedFighter => { self.captured_fighter_set_damage(event_queue) }
+            EnemyType::CapturedFighter => { self.captured_fighter_set_damage(accessor) }
             _ => { panic!("Illegal"); }
         }
     }
@@ -265,9 +263,7 @@ impl Enemy for Zako {
         self.info.update_troop(add, angle_opt);
     }
 
-    fn set_attack(
-        &mut self, _capture_attack: bool, _accessor: &mut dyn Accessor, event_queue: &mut EventQueue
-    ) {
+    fn set_attack(&mut self, _capture_attack: bool, accessor: &mut dyn Accessor) {
         match self.enemy_type {
             EnemyType::Bee => { self.set_bee_attack(); }
             EnemyType::Butterfly => { self.set_butterfly_attack(); }
@@ -275,7 +271,7 @@ impl Enemy for Zako {
             _ => { panic!("Illgal"); }
         }
 
-        event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+        accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
     }
 
     fn set_to_troop(&mut self) {

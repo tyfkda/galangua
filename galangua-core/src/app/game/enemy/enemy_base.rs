@@ -6,7 +6,7 @@ use super::traj_command::TrajCommand;
 use super::{Accessor, FormationIndex};
 
 use crate::app::consts::*;
-use crate::app::game::manager::{EventQueue, EventType};
+use crate::app::game::manager::EventType;
 use crate::app::util::CollBox;
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{
@@ -80,7 +80,7 @@ impl EnemyBase {
         }
     }
 
-    pub fn update_attack(&mut self, info: &EnemyInfo, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool {
+    pub fn update_attack(&mut self, info: &EnemyInfo, accessor: &mut dyn Accessor) -> bool {
         self.attack_frame_count += 1;
 
         let stage_no = accessor.get_stage_no();
@@ -90,7 +90,7 @@ impl EnemyBase {
         if self.attack_frame_count <= shot_interval * shot_count
             && self.attack_frame_count % shot_interval == 0
         {
-            event_queue.push(EventType::EneShot(info.pos));
+            accessor.push_event(EventType::EneShot(info.pos));
             true
         } else {
             false
@@ -141,7 +141,7 @@ impl EnemyBase {
 
     //// Update
 
-    pub(super) fn update_trajectory(&mut self, info: &mut EnemyInfo, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool {
+    pub(super) fn update_trajectory(&mut self, info: &mut EnemyInfo, accessor: &mut dyn Accessor) -> bool {
         if let Some(traj) = &mut self.traj {
             let cont = traj.update(accessor);
 
@@ -157,7 +157,7 @@ impl EnemyBase {
                 if wait > 0 {
                     self.shot_wait = Some(wait - 1);
                 } else {
-                    event_queue.push(EventType::EneShot(info.pos));
+                    accessor.push_event(EventType::EneShot(info.pos));
                     self.shot_wait = None;
                 }
             }

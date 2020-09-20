@@ -1,5 +1,5 @@
 use crate::app::consts::*;
-use crate::app::game::manager::{EventQueue, EventType};
+use crate::app::game::manager::EventType;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
@@ -54,13 +54,13 @@ impl Player {
         self.shot_enable = value;
     }
 
-    pub fn update<A: Accessor>(&mut self, pad: &Pad, accessor: &A, event_queue: &mut EventQueue) {
+    pub fn update<A: Accessor>(&mut self, pad: &Pad, accessor: &mut A) {
         match self.state {
             State::Normal => {
-                self.update_normal(pad, event_queue);
+                self.update_normal(pad, accessor);
             }
             State::Capturing => {
-                self.update_capture(pad, event_queue);
+                self.update_capture(pad, accessor);
             }
             State::EscapeCapturing => {
                 const D: i32 = 1 * ONE;
@@ -68,7 +68,7 @@ impl Player {
                 if self.pos.y >= Y_POSITION * ONE {
                     self.pos.y = Y_POSITION * ONE;
                     self.state = State::Normal;
-                    event_queue.push(EventType::EscapeEnded);
+                    accessor.push_event(EventType::EscapeEnded);
                 }
             }
             State::MoveHomePos => {
@@ -80,7 +80,7 @@ impl Player {
                         self.dual = true;
                         self.state = State::Normal;
                         self.recaptured_fighter = None;
-                        event_queue.push(EventType::RecaptureEnded);
+                        accessor.push_event(EventType::RecaptureEnded);
                     }
                 }
             }
@@ -88,17 +88,17 @@ impl Player {
         }
 
         if let Some(recaptured_fighter) = &mut self.recaptured_fighter {
-            recaptured_fighter.update(self.state != State::Dead, accessor, event_queue);
+            recaptured_fighter.update(self.state != State::Dead, accessor);
             if self.state == State::Dead && recaptured_fighter.done() {
                 self.pos.x = WIDTH / 2 * ONE;
                 self.state = State::Normal;
                 self.recaptured_fighter = None;
-                event_queue.push(EventType::RecaptureEnded);
+                accessor.push_event(EventType::RecaptureEnded);
             }
         }
     }
 
-    pub fn update_normal(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
+    pub fn update_normal<A: Accessor>(&mut self, pad: &Pad, accessor: &mut A) {
         if pad.is_pressed(PadBit::L) {
             self.pos.x -= PLAYER_SPEED;
             let left = 8 * ONE;
@@ -113,17 +113,17 @@ impl Player {
                 self.pos.x = right;
             }
         }
-        self.fire_bullet(pad, event_queue);
+        self.fire_bullet(pad, accessor);
     }
 
-    pub fn update_capture(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
+    pub fn update_capture<A: Accessor>(&mut self, pad: &Pad, accessor: &mut A) {
         const D: i32 = 1 * ONE;
         let d = &self.capture_pos - &self.pos;
         self.pos.x += clamp(d.x, -D, D);
         self.pos.y += clamp(d.y, -D, D);
         self.angle += ANGLE * ONE / ANGLE_DIV;
 
-        self.fire_bullet(pad, event_queue);
+        self.fire_bullet(pad, accessor);
 
         if d.x == 0 && d.y == 0 {
             self.state = State::Captured;
@@ -131,10 +131,10 @@ impl Player {
         }
     }
 
-    fn fire_bullet(&mut self, pad: &Pad, event_queue: &mut EventQueue) {
+    fn fire_bullet<A: Accessor>(&mut self, pad: &Pad, accessor: &mut A) {
         if self.shot_enable && pad.is_trigger(PadBit::A) {
             let pos = &self.pos + &Vec2I::new(0, -4 * ONE);
-            event_queue.push(EventType::MyShot(pos, self.dual, self.angle));
+            accessor.push_event(EventType::MyShot(pos, self.dual, self.angle));
         }
     }
 

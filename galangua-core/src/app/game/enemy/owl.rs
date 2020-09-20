@@ -7,7 +7,7 @@ use super::{Accessor, DamageResult, EnemyType, FormationIndex};
 
 use crate::app::consts::*;
 use crate::app::game::manager::formation::Y_COUNT;
-use crate::app::game::manager::{EventQueue, EventType};
+use crate::app::game::manager::EventType;
 use crate::app::util::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
@@ -164,11 +164,11 @@ impl Owl {
         }
     }
 
-    fn dispatch_update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    fn dispatch_update(&mut self, accessor: &mut dyn Accessor) {
         match self.state {
             OwlState::None => {}
             OwlState::Appearance => {
-                if !self.base.update_trajectory(&mut self.info, accessor, event_queue) {
+                if !self.base.update_trajectory(&mut self.info, accessor) {
                     if self.info.formation_index.1 >= Y_COUNT as u8 {  // Assault
                         self.base.set_assault(&mut self.info, accessor);
                         self.set_state(OwlState::Assault(0));
@@ -191,15 +191,15 @@ impl Owl {
             OwlState::Formation => { self.info.update_formation(accessor); }
             OwlState::Attack(phase) => {
                 match phase {
-                    OwlAttackPhase::Traj => { self.update_attack_traj(accessor, event_queue); }
+                    OwlAttackPhase::Traj => { self.update_attack_traj(accessor); }
                     OwlAttackPhase::Capture => { self.update_attack_capture(); }
-                    OwlAttackPhase::CaptureBeam => { self.update_attack_capture_beam(accessor, event_queue); }
-                    OwlAttackPhase::NoCaptureGoOut => { self.update_attack_capture_go_out(accessor, event_queue); }
+                    OwlAttackPhase::CaptureBeam => { self.update_attack_capture_beam(accessor); }
+                    OwlAttackPhase::NoCaptureGoOut => { self.update_attack_capture_go_out(accessor); }
                     OwlAttackPhase::CaptureStart => { self.update_attack_capture_start(accessor); }
-                    OwlAttackPhase::CaptureCloseBeam => { self.update_attack_capture_close_beam(event_queue); }
+                    OwlAttackPhase::CaptureCloseBeam => { self.update_attack_capture_close_beam(accessor); }
                     OwlAttackPhase::CaptureDoneWait => { self.update_attack_capture_done_wait(); }
                     OwlAttackPhase::CaptureDoneBack => { self.update_attack_capture_back(accessor); }
-                    OwlAttackPhase::CaptureDonePushUp => { self.update_attack_capture_push_up(accessor, event_queue); }
+                    OwlAttackPhase::CaptureDonePushUp => { self.update_attack_capture_push_up(accessor); }
                 }
             }
         }
@@ -238,7 +238,7 @@ impl Owl {
             self.base.count = 0;
         }
     }
-    fn update_attack_capture_beam(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    fn update_attack_capture_beam(&mut self, accessor: &mut dyn Accessor) {
         if let Some(tractor_beam) = &mut self.tractor_beam {
             if tractor_beam.closed() {
                 self.tractor_beam = None;
@@ -247,7 +247,7 @@ impl Owl {
             } else if accessor.can_player_capture() &&
                       tractor_beam.can_capture(accessor.get_player_pos())
             {
-                event_queue.push(EventType::CapturePlayer(&self.info.pos + &Vec2I::new(0, 16 * ONE)));
+                accessor.push_event(EventType::CapturePlayer(&self.info.pos + &Vec2I::new(0, 16 * ONE)));
                 tractor_beam.start_capture();
                 self.capturing_state = CapturingState::BeamTracting;
                 self.set_state(OwlState::Attack(OwlAttackPhase::CaptureStart));
@@ -255,7 +255,7 @@ impl Owl {
             }
         }
     }
-    fn update_attack_capture_go_out(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    fn update_attack_capture_go_out(&mut self, accessor: &mut dyn Accessor) {
         if self.info.pos.y >= (HEIGHT + 8) * ONE {
             let target_pos = accessor.get_formation_pos(&self.info.formation_index);
             let offset = Vec2I::new(target_pos.x - self.info.pos.x, (-32 - (HEIGHT + 8)) * ONE);
@@ -263,11 +263,11 @@ impl Owl {
 
             if accessor.is_rush() {
                 self.rush_attack();
-                event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+                accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
             } else {
                 self.set_state(OwlState::MoveToFormation);
                 self.capturing_state = CapturingState::None;
-                event_queue.push(EventType::EndCaptureAttack);
+                accessor.push_event(EventType::EndCaptureAttack);
             }
         }
     }
@@ -278,18 +278,18 @@ impl Owl {
             self.base.count = 0;
         }
     }
-    fn update_attack_capture_close_beam(&mut self, event_queue: &mut EventQueue) {
+    fn update_attack_capture_close_beam(&mut self, accessor: &mut dyn Accessor) {
         if let Some(tractor_beam) = &self.tractor_beam {
             if tractor_beam.closed() {
                 let fi = FormationIndex(self.info.formation_index.0, self.info.formation_index.1 - 1);
-                event_queue.push(EventType::SpawnCapturedFighter(
+                accessor.push_event(EventType::SpawnCapturedFighter(
                     &self.info.pos + &Vec2I::new(0, 16 * ONE), fi));
 
                 self.add_troop(fi);
 
                 self.tractor_beam = None;
                 self.capturing_state = CapturingState::None;
-                event_queue.push(EventType::CapturePlayerCompleted);
+                accessor.push_event(EventType::CapturePlayerCompleted);
 
                 self.copy_angle_to_troops = false;
                 self.set_state(OwlState::Attack(OwlAttackPhase::CaptureDoneWait));
@@ -311,7 +311,7 @@ impl Owl {
             self.set_state(OwlState::Attack(OwlAttackPhase::CaptureDonePushUp));
         }
     }
-    fn update_attack_capture_push_up(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
+    fn update_attack_capture_push_up(&mut self, accessor: &mut dyn Accessor) {
         let ang = ANGLE * ONE / 128;
         self.info.angle -= clamp(self.info.angle, -ang, ang);
 
@@ -328,39 +328,42 @@ impl Owl {
             captured_fighter.set_pos(&pos);
         }
         if done {
-            event_queue.push(EventType::CaptureSequenceEnded);
+            accessor.push_event(EventType::CaptureSequenceEnded);
             self.release_troops(accessor);
             self.set_to_formation();
         }
     }
 
-    fn update_attack_traj(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
-        self.update_attack(accessor, event_queue);
-        if !self.base.update_trajectory(&mut self.info, accessor, event_queue) {
+    fn update_attack_traj(&mut self, accessor: &mut dyn Accessor) {
+        self.update_attack(accessor);
+        if !self.base.update_trajectory(&mut self.info, accessor) {
             if accessor.is_rush() {
                 // Rush mode: Continue attacking
                 self.remove_destroyed_troops(accessor);
                 self.rush_attack();
-                event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+                accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
             } else {
                 self.set_state(OwlState::MoveToFormation);
             }
         }
     }
 
-    fn update_attack(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) {
-        if self.base.update_attack(&mut self.info, accessor, event_queue) {
+    fn update_attack(&mut self, accessor: &mut dyn Accessor) {
+        if self.base.update_attack(&mut self.info, accessor) {
             for troop_fi in self.troops.iter().flat_map(|x| x) {
-                if let Some(enemy) = accessor.get_enemy_at(troop_fi) {
-                    event_queue.push(EventType::EneShot(*enemy.pos()));
+                let pos_opt = if let Some(troop) = accessor.get_enemy_at(troop_fi) {
+                    Some(*troop.pos())
+                } else {
+                    None
+                };
+                if let Some(pos) = pos_opt {
+                    accessor.push_event(EventType::EneShot(pos));
                 }
             }
         }
     }
 
-    fn owl_set_damage(
-        &mut self, power: u32, accessor: &mut dyn Accessor, event_queue: &mut EventQueue,
-    ) -> DamageResult {
+    fn owl_set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult {
         if self.life > power {
             self.life -= power;
             DamageResult { killed: false, point: 0 }
@@ -379,21 +382,21 @@ impl Owl {
                     if self.troops.iter().flat_map(|x| x)
                         .find(|index| **index == fi).is_some()
                     {
-                        event_queue.push(EventType::RecapturePlayer(fi));
+                        accessor.push_event(EventType::RecapturePlayer(fi));
                     }
                 }
                 CapturingState::Attacking => {
-                    event_queue.push(EventType::EndCaptureAttack);
+                    accessor.push_event(EventType::EndCaptureAttack);
                 }
                 CapturingState::BeamTracting => {
-                    event_queue.push(EventType::EscapeCapturing);
+                    accessor.push_event(EventType::EscapeCapturing);
                 }
             }
             self.capturing_state = CapturingState::None;
 
             accessor.pause_enemy_shot(OWL_DESTROY_SHOT_WAIT);
 
-            event_queue.push(EventType::EnemyExplosion(self.info.pos, self.info.angle, EnemyType::Owl));
+            accessor.push_event(EventType::EnemyExplosion(self.info.pos, self.info.angle, EnemyType::Owl));
 
             DamageResult { killed, point }
         }
@@ -417,10 +420,10 @@ impl Collidable for Owl {
 }
 
 impl Enemy for Owl {
-    fn update(&mut self, accessor: &mut dyn Accessor, event_queue: &mut EventQueue) -> bool {
+    fn update(&mut self, accessor: &mut dyn Accessor) -> bool {
         let prev_pos = self.info.pos;
 
-        self.dispatch_update(accessor, event_queue);
+        self.dispatch_update(accessor);
 
         self.info.pos += calc_velocity(self.info.angle + self.info.vangle / 2, self.info.speed);
         self.info.angle += self.info.vangle;
@@ -464,19 +467,15 @@ impl Enemy for Owl {
     fn is_captured_fighter(&self) -> bool { false }
     fn formation_index(&self) -> &FormationIndex { &self.info.formation_index }
 
-    fn set_damage(
-        &mut self, power: u32, accessor: &mut dyn Accessor, event_queue: &mut EventQueue,
-    ) -> DamageResult {
-        self.owl_set_damage(power, accessor, event_queue)
+    fn set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult {
+        self.owl_set_damage(power, accessor)
     }
 
     fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) {
         self.info.update_troop(add, angle_opt);
     }
 
-    fn set_attack(
-        &mut self, capture_attack: bool, accessor: &mut dyn Accessor, event_queue: &mut EventQueue,
-    ) {
+    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) {
         self.base.count = 0;
         self.base.attack_frame_count = 0;
         self.copy_angle_to_troops = true;
@@ -515,7 +514,7 @@ impl Enemy for Owl {
 
         self.set_state(OwlState::Attack(phase));
 
-        event_queue.push(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
+        accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_ATTACK_START));
     }
 
     fn set_to_troop(&mut self) {

@@ -4,7 +4,7 @@ use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
 use super::formation::{X_COUNT, Y_COUNT};
-use super::{CaptureState, EventQueue, EventType};
+use super::{CaptureState, EventType};
 
 use crate::app::game::enemy::{Accessor, FormationIndex};
 use crate::app::util::unsafe_util::peep;
@@ -47,7 +47,7 @@ impl AttackManager {
         self.attackers.iter().all(|x| x.is_none())
     }
 
-    pub fn update<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) {
+    pub fn update<A: Accessor>(&mut self, accessor: &mut A) {
         self.check_liveness(accessor);
 
         if self.wait > 0 {
@@ -60,10 +60,10 @@ impl AttackManager {
         }
 
         if let Some(slot_index) = self.attackers.iter().position(|x| x.is_none()) {
-            if let Some((formation_index, capture_attack)) = self.pick_attacker(accessor, event_queue) {
+            if let Some((formation_index, capture_attack)) = self.pick_attacker(accessor) {
                 self.attackers[slot_index] = Some(formation_index);
                 if capture_attack {
-                    event_queue.push(EventType::StartCaptureAttack(formation_index));
+                    accessor.push_event(EventType::StartCaptureAttack(formation_index));
                 }
             }
             self.wait = WAIT;
@@ -84,7 +84,7 @@ impl AttackManager {
         }
     }
 
-    fn pick_attacker<A: Accessor>(&mut self, accessor: &mut A, event_queue: &mut EventQueue) -> Option<(FormationIndex, bool)> {
+    fn pick_attacker<A: Accessor>(&mut self, accessor: &mut A) -> Option<(FormationIndex, bool)> {
         let candidates = self.enum_sides(accessor);
         let fi = match self.cycle % 3 {
             2 => {
@@ -105,7 +105,7 @@ impl AttackManager {
                 (self.cycle / 3) & 1 != 0 &&
                 accessor.capture_state() == CaptureState::NoCapture &&
                 !accessor.is_player_dual();
-            enemy.set_attack(capture_attack, accessor, event_queue);
+            enemy.set_attack(capture_attack, accessor);
 
             Some((fi, capture_attack))
         } else {

@@ -2,7 +2,7 @@
 
 use super::{Enemy, FormationIndex};
 
-use crate::app::game::manager::CaptureState;
+use crate::app::game::manager::{CaptureState, EventType};
 use crate::framework::types::Vec2I;
 
 pub trait Accessor {
@@ -20,4 +20,6 @@ pub trait Accessor {
     fn pause_enemy_shot(&mut self, wait: u32);
     fn is_rush(&self) -> bool;
     fn get_stage_no(&self) -> u16;
+
+    fn push_event(&mut self, event: EventType);
 }

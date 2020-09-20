@@ -1,7 +1,7 @@
 use crate::app::game::enemy::traj_command::TrajCommand;
 use crate::app::game::enemy::FormationIndex;
 use crate::app::game::manager::game_manager::GameManager;
-use crate::app::game::manager::EventQueue;
+use crate::app::game::manager::event_queue::EventQueue;
 use crate::app::util::unsafe_util::peep;
 use crate::framework::types::Vec2I;
 use crate::framework::{RendererTrait, VKey};
@@ -88,7 +88,7 @@ impl EditTrajManager {
         let accessor = unsafe { peep(game_manager) };
         let enemy_manager = game_manager.enemy_manager_mut();
         if let Some(enemy) = enemy_manager.get_enemy_at_mut(&self.fi) {
-            enemy.set_attack(capture_attack, accessor, &mut self.event_queue);
+            enemy.set_attack(capture_attack, accessor);
         }
     }
 

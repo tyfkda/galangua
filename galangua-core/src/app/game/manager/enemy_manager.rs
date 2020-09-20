@@ -5,7 +5,7 @@ use rand_xoshiro::Xoshiro128Plus;
 use super::appearance_manager::AppearanceManager;
 use super::attack_manager::AttackManager;
 use super::formation::Formation;
-use super::{EventQueue, EventType};
+use super::EventType;
 
 use crate::app::game::effect::to_earned_point_type;
 use crate::app::game::enemy::ene_shot::EneShot;
@@ -72,7 +72,7 @@ impl EnemyManager {
             self.shots.iter().all(|x| x.is_none())
     }
 
-    pub fn update<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
+    pub fn update<T: Accessor>(&mut self, accessor: &mut T) {
         self.frame_count = self.frame_count.wrapping_add(1);
         if self.shot_paused_count > 0 {
             self.shot_paused_count -= 1;
@@ -80,8 +80,8 @@ impl EnemyManager {
 
         self.update_appearance();
         self.update_formation();
-        self.update_attackers(accessor, event_queue);
-        self.update_enemies(accessor, event_queue);
+        self.update_attackers(accessor);
+        self.update_enemies(accessor);
         self.update_shots();
     }
 
@@ -110,19 +110,18 @@ impl EnemyManager {
     }
 
     pub fn set_damage_to_enemy<T: Accessor>(
-        &mut self, fi: &FormationIndex, power: u32,
-        accessor: &mut T, event_queue: &mut EventQueue,
+        &mut self, fi: &FormationIndex, power: u32, accessor: &mut T,
     ) {
         let index = calc_array_index(fi);
         if let Some(enemy) = self.enemies[index].as_mut() {
             let pos = *enemy.pos();
-            let result = enemy.set_damage(power, accessor, event_queue);
+            let result = enemy.set_damage(power, accessor);
 
             if result.point > 0 {
-                event_queue.push(EventType::AddScore(result.point));
+                accessor.push_event(EventType::AddScore(result.point));
 
                 if let Some(point_type) = to_earned_point_type(result.point) {
-                    event_queue.push(EventType::EarnPointEffect(point_type, pos));
+                    accessor.push_event(EventType::EarnPointEffect(point_type, pos));
                 }
             }
 
@@ -198,15 +197,15 @@ impl EnemyManager {
         self.formation.update();
     }
 
-    fn update_attackers<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
-        self.attack_manager.update(accessor, event_queue);
+    fn update_attackers<T: Accessor>(&mut self, accessor: &mut T) {
+        self.attack_manager.update(accessor);
     }
 
-    fn update_enemies<T: Accessor>(&mut self, accessor: &mut T, event_queue: &mut EventQueue) {
+    fn update_enemies<T: Accessor>(&mut self, accessor: &mut T) {
         //for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
         for i in 0..self.enemies.len() {
             if let Some(enemy) = self.enemies[i].as_mut() {
-                if !enemy.update(accessor, event_queue) {
+                if !enemy.update(accessor) {
                     self.enemies[i] = None;
                     self.decrement_alive_enemy();
                 }

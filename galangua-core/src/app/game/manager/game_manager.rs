@@ -1,5 +1,7 @@
 use super::score_holder::ScoreHolder;
-use super::{CaptureState, EnemyManager, EventQueue, EventType};
+use super::enemy_manager::EnemyManager;
+use super::event_queue::EventQueue;
+use super::{CaptureState, EventType};
 
 use crate::app::consts::*;
 use crate::app::game::effect::{Effect, StageIndicator, StarManager};
@@ -207,7 +209,7 @@ impl GameManager {
     fn update_common<S: SystemTrait>(&mut self, params: &mut Params, system: &mut S) {
         {
             let accessor = unsafe { peep(self) };
-            self.player.update(params.pad, accessor, &mut self.event_queue);
+            self.player.update(params.pad, accessor);
             for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
                 let myshot = myshot_opt.as_mut().unwrap();
                 if !myshot.update() {
@@ -218,7 +220,7 @@ impl GameManager {
 
         {
             let accessor = unsafe { peep(self) };
-            self.enemy_manager.update(accessor, &mut self.event_queue);
+            self.enemy_manager.update(accessor);
         }
 
         // For MyShot.
@@ -451,7 +453,7 @@ impl GameManager {
             for collbox in colls.iter().flat_map(|x| x) {
                 if let Some(fi) = self.enemy_manager.check_collision(collbox) {
                     self.enemy_manager.set_damage_to_enemy(
-                        &fi, power, accessor, &mut self.event_queue);
+                        &fi, power, accessor);
                     hit = true;
                 }
             }
@@ -476,7 +478,7 @@ impl GameManager {
             let accessor = unsafe { peep(self) };
             if let Some(fi) = self.enemy_manager.check_collision(collbox) {
                 let pos = self.enemy_manager.get_enemy_at(&fi).unwrap().pos().clone();
-                self.enemy_manager.set_damage_to_enemy(&fi, power, accessor, &mut self.event_queue);
+                self.enemy_manager.set_damage_to_enemy(&fi, power, accessor);
 
                 self.event_queue.push(EventType::PlayerExplosion(*player_pos));
                 if self.player.crash(&pos) {
@@ -505,6 +507,10 @@ impl GameManager {
 impl AccessorForPlayer for GameManager {
     fn is_no_attacker(&self) -> bool {
         self.enemy_manager.is_no_attacker()
+    }
+
+    fn push_event(&mut self, event: EventType) {
+        self.event_queue.push(event);
     }
 }
 
@@ -571,6 +577,10 @@ impl AccessorForEnemy for GameManager {
 
     fn get_stage_no(&self) -> u16 {
         self.stage
+    }
+
+    fn push_event(&mut self, event: EventType) {
+        self.event_queue.push(event);
     }
 }
 
