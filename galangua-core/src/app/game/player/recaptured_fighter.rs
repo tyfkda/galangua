@@ -63,7 +63,6 @@ impl RecapturedFighter {
         match self.state {
             State::Rotate => {
                 let angle = quantize_angle(self.angle, ANGLE_DIV);
-                //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)));
                 renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None);
             }
             _ => {

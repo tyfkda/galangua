@@ -150,7 +150,6 @@ impl Player {
             State::Capturing => {
                 let pos = round_vec(&self.pos);
                 let angle = quantize_angle(self.angle, ANGLE_DIV);
-                //renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, Some(Vec2I::new(7, 10)));
                 renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None);
             }
             State::Captured => {
