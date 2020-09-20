@@ -259,7 +259,7 @@ impl Owl {
         if self.info.pos.y >= (HEIGHT + 8) * ONE {
             let target_pos = accessor.get_formation_pos(&self.info.formation_index);
             let offset = Vec2I::new(target_pos.x - self.info.pos.x, (-32 - (HEIGHT + 8)) * ONE);
-            self.info.warp(offset);
+            self.info.pos += offset;
 
             if accessor.is_rush() {
                 self.rush_attack();
@@ -469,8 +469,8 @@ impl Enemy for Owl {
         self.owl_set_damage(power, accessor)
     }
 
-    fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) {
-        self.info.update_troop(add, angle_opt);
+    fn update_troop(&mut self, _add: &Vec2I, _angle_opt: Option<i32>) {
+        panic!("Illegal");
     }
 
     fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) {

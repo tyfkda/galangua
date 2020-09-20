@@ -37,17 +37,6 @@ impl EnemyInfo {
         self.angle += self.vangle;
     }
 
-    pub(super) fn warp(&mut self, offset: Vec2I) {
-        self.pos += offset;
-    }
-
-    pub(super) fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) {
-        self.pos += *add;
-        if let Some(angle) = angle_opt {
-            self.angle = angle;
-        }
-    }
-
     pub(super) fn update_formation(&mut self, accessor: &mut dyn Accessor) {
         self.pos = accessor.get_formation_pos(&self.formation_index);
 
