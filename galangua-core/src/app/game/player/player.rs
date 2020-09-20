@@ -164,10 +164,6 @@ impl Player {
         }
     }
 
-    pub fn active(&self) -> bool {
-        self.state == State::Normal
-    }
-
     pub fn pos(&self) -> &Vec2I {
         &self.pos
     }

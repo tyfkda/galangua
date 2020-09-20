@@ -10,7 +10,7 @@ use crate::app::game::enemy::{Enemy, FormationIndex};
 use crate::app::game::player::Accessor as AccessorForPlayer;
 use crate::app::game::player::{MyShot, Player};
 use crate::app::util::unsafe_util::peep;
-use crate::app::util::{CollBox, Collidable};
+use crate::app::util::Collidable;
 use crate::framework::types::Vec2I;
 use crate::framework::{RendererTrait, SystemTrait};
 use crate::util::math::ONE;
@@ -442,7 +442,7 @@ impl GameManager {
         let accessor = unsafe { peep(self) };
         for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
             let myshot = myshot_opt.as_ref().unwrap();
-            let colls: [Option<CollBox>; 2] = [
+            let colls = [
                 myshot.get_collbox(),
                 myshot.dual_collbox(),
             ];
@@ -461,11 +461,7 @@ impl GameManager {
     }
 
     fn check_collision_player_enemy(&mut self) {
-        if !self.player.active() {
-            return;
-        }
-
-        let collbox_opts: [Option<(CollBox, Vec2I)>; 2] = [
+        let collbox_opts = [
             self.player.dual_collbox().map(|c| (c, self.player.dual_pos().unwrap())),
             self.player.get_collbox().map(|c| (c, *self.player.pos())),
         ];
