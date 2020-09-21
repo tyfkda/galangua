@@ -16,4 +16,5 @@ pub enum CaptureState {
     Capturing,
     Captured,
     Recapturing,
+    Dual,
 }

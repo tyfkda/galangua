@@ -87,6 +87,7 @@ impl GameManager {
         self.stage = 0;
         self.stage_indicator.set_stage(self.stage + 1);
         self.left_ship = DEFAULT_LEFT_SHIP;
+        self.capture_state = CaptureState::NoCapture;
 
         self.event_queue.clear();
         self.player = Player::new();
@@ -363,9 +364,9 @@ impl GameManager {
                 EventType::MovePlayerHomePos => {
                     self.player.start_move_home_pos();
                 }
-                EventType::RecaptureEnded => {
+                EventType::RecaptureEnded(dual) => {
                     self.enemy_manager.pause_attack(false);
-                    self.capture_state = CaptureState::NoCapture;
+                    self.capture_state = if dual { CaptureState::Dual } else { CaptureState::NoCapture };
                     self.capture_enemy_fi = FormationIndex(0, 0);
                     params.star_manager.set_stop(false);
                     self.state = GameState::Playing;
@@ -482,6 +483,10 @@ impl GameManager {
                 self.event_queue.push(EventType::PlayerExplosion(*player_pos));
                 if self.player.crash(&pos) {
                     self.event_queue.push(EventType::DeadPlayer);
+                } else {
+                    // Must be one of dual fighter crashed.
+                    assert!(self.capture_state == CaptureState::Dual);
+                    self.capture_state = CaptureState::NoCapture;
                 }
                 continue;
             }
@@ -514,10 +519,6 @@ impl AccessorForEnemy for GameManager {
         self.player.dual_pos()
     }
 
-    fn is_player_dual(&self) -> bool {
-        self.player.is_dual()
-    }
-
     fn can_player_capture(&self) -> bool {
         #[cfg(debug_assertions)]
         if self.state == GameState::EditTraj {
@@ -535,10 +536,13 @@ impl AccessorForEnemy for GameManager {
     }
 
     fn captured_fighter_index(&self) -> Option<FormationIndex> {
-        if self.capture_state == CaptureState::NoCapture {
-            None
-        } else {
-            Some(FormationIndex(self.capture_enemy_fi.0, self.capture_enemy_fi.1 - 1))
+        match self.capture_state {
+            CaptureState::NoCapture | CaptureState::Recapturing | CaptureState::Dual => {
+                None
+            }
+            _ => {
+                Some(FormationIndex(self.capture_enemy_fi.0, self.capture_enemy_fi.1 - 1))
+            }
         }
     }
 

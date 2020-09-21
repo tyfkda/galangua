@@ -103,8 +103,7 @@ impl AttackManager {
 
             let capture_attack = enemy.can_capture_attack() &&
                 (self.cycle / 3) & 1 != 0 &&
-                accessor.capture_state() == CaptureState::NoCapture &&
-                !accessor.is_player_dual();
+                accessor.capture_state() == CaptureState::NoCapture;
             enemy.set_attack(capture_attack, accessor);
 
             Some((fi, capture_attack))

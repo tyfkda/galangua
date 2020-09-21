@@ -80,7 +80,7 @@ impl Player {
                         self.dual = true;
                         self.state = State::Normal;
                         self.recaptured_fighter = None;
-                        accessor.push_event(EventType::RecaptureEnded);
+                        accessor.push_event(EventType::RecaptureEnded(true));
                     }
                 }
             }
@@ -93,7 +93,7 @@ impl Player {
                 self.pos.x = WIDTH / 2 * ONE;
                 self.state = State::Normal;
                 self.recaptured_fighter = None;
-                accessor.push_event(EventType::RecaptureEnded);
+                accessor.push_event(EventType::RecaptureEnded(false));
             }
         }
     }
@@ -174,10 +174,6 @@ impl Player {
         } else {
             None
         }
-    }
-
-    pub fn is_dual(&self) -> bool {
-        self.dual
     }
 
     pub fn dual_collbox(&self) -> Option<CollBox> {
