@@ -16,6 +16,7 @@ pub struct StageIndicator {
     stage: u16,
     wait: u32,
     stage_disp: u16,
+    width: u16,
 }
 
 impl StageIndicator {
@@ -24,6 +25,7 @@ impl StageIndicator {
             stage: 0,
             wait: 0,
             stage_disp: 0,
+            width: 0,
         }
     }
 
@@ -31,6 +33,7 @@ impl StageIndicator {
         self.stage = stage;
         self.wait = 0;
         self.stage_disp = 0;
+        self.width = calc_width(stage);
     }
 
     pub fn update<S: SystemTrait>(&mut self, system: &mut S) {
@@ -55,10 +58,8 @@ impl StageIndicator {
     }
 
     pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
-        let width = calc_width(self.stage);
-        let mut x = WIDTH - width as i32;
+        let mut x = WIDTH - self.width as i32;
         let mut count = self.stage_disp;
-
         for flag_info in FLAG_INFO_TABLE.iter() {
             while count >= flag_info.count {
                 renderer.draw_sprite(flag_info.sprite_name, &Vec2I::new(x, HEIGHT - 16));
@@ -85,11 +86,7 @@ counted_array!(const FLAG_INFO_TABLE: [FlagInfo; _] = [
 ]);
 
 fn calc_width(stage: u16) -> u16 {
-    let mut count = stage;
-    let mut width = 0;
-    for flag_info in FLAG_INFO_TABLE.iter() {
-        width += (count / flag_info.count) * flag_info.width;
-        count %= flag_info.count;
-    }
-    return width;
+    FLAG_INFO_TABLE.iter().fold((0, stage), |(w, s), info| {
+        (w + (s / info.count) * info.width, s % info.count)
+    }).0
 }
