@@ -84,7 +84,7 @@ const renderer = WasmRenderer.new(CANVAS_ID)
 const framework = WasmAppFramework.new(
   renderer,
   function get_now() {
-    return Date.now()
+    return performance.now()
   },
   function get_item(key) {
     return localStorage.getItem(key)
