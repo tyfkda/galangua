@@ -208,21 +208,10 @@ impl GameManager {
     }
 
     fn update_common<S: SystemTrait>(&mut self, params: &mut Params, system: &mut S) {
-        {
-            let accessor = unsafe { peep(self) };
-            self.player.update(params.pad, accessor);
-            for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
-                let myshot = myshot_opt.as_mut().unwrap();
-                if !myshot.update() {
-                    *myshot_opt = None;
-                }
-            }
-        }
-
-        {
-            let accessor = unsafe { peep(self) };
-            self.enemy_manager.update(accessor);
-        }
+        self.update_player(params);
+        self.update_myshot();
+        self.update_enemies();
+        self.update_effects();
 
         // For MyShot.
         self.handle_event_queue(params, system);
@@ -232,7 +221,28 @@ impl GameManager {
         self.check_collision();
 
         self.handle_event_queue(params, system);
+    }
 
+    fn update_player(&mut self, params: &mut Params) {
+        let accessor = unsafe { peep(self) };
+        self.player.update(params.pad, accessor);
+    }
+
+    fn update_myshot(&mut self) {
+        for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
+            let myshot = myshot_opt.as_mut().unwrap();
+            if !myshot.update() {
+                *myshot_opt = None;
+            }
+        }
+    }
+
+    fn update_enemies(&mut self) {
+        let accessor = unsafe { peep(self) };
+        self.enemy_manager.update(accessor);
+    }
+
+    fn update_effects(&mut self) {
         for effect_opt in self.effects.iter_mut().filter(|x| x.is_some()) {
             let effect = effect_opt.as_mut().unwrap();
             if !effect.update() {
