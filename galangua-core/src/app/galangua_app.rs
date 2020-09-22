@@ -25,7 +25,6 @@ enum AppState {
 pub struct GalanguaApp<T: TimerTrait, S: SystemTrait> {
     system: S,
     state: AppState,
-    count: u32,
     pad: Pad,
     pressed_key: Option<VKey>,
     fps_calc: FpsCalc<T>,
@@ -54,7 +53,6 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
         Self {
             system,
             state: AppState::Title,
-            count: 0,
             pad: Pad::new(),
             pressed_key: None,
             fps_calc: FpsCalc::new(timer),
@@ -94,16 +92,9 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
 
         match self.state {
             AppState::Title => {
-                self.count = self.count.wrapping_add(1);
-
+                self.frame_count = self.frame_count.wrapping_add(1);
                 if self.pad.is_trigger(PadBit::A) {
-                    let mut game_manager = GameManager::new();
-                    game_manager.restart();
-                    self.game_manager = Some(game_manager);
-                    self.prev_high_score = self.score_holder.high_score;
-                    self.score_holder.reset_score();
-                    self.state = AppState::Game;
-                    self.frame_count = 0;
+                    self.start_game();
                 }
 
                 #[cfg(debug_assertions)]
@@ -117,7 +108,7 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
                 }
             }
             AppState::Game => {
-                self.frame_count += 1;
+                self.frame_count = self.frame_count.wrapping_add(1);
                 let mut params = GameManagerParams {
                     star_manager: &mut self.star_manager,
                     pad: &self.pad,
@@ -158,7 +149,7 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
                 renderer.set_texture_color_mod("font", 255, 255, 255);
                 renderer.draw_str("font", 10 * 8, 8 * 8, "GALANGUA");
 
-                if self.count & 32 == 0 {
+                if self.frame_count & 32 == 0 {
                     renderer.draw_str("font", 2 * 8, 25 * 8, "PRESS SPACE KEY TO START");
                 }
                 draw_scores(renderer, &self.score_holder, true);
@@ -183,7 +174,17 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
         }
     }
 
+    fn start_game(&mut self) {
+        self.game_manager = Some(GameManager::new());
+        self.prev_high_score = self.score_holder.high_score;
+        self.score_holder.reset_score();
+
+        self.state = AppState::Game;
+        self.frame_count = 0;
+    }
+
     fn back_to_title(&mut self) {
+        self.game_manager = None;
         self.star_manager.set_stop(false);
 
         if self.score_holder.high_score > self.prev_high_score {
@@ -191,8 +192,7 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
         }
 
         self.state = AppState::Title;
-        self.count = 0;
-        self.game_manager = None;
+        self.frame_count = 0;
     }
 
     fn on_high_score_updated(&mut self) {

@@ -61,18 +61,22 @@ pub struct GameManager {
 
 impl GameManager {
     pub fn new() -> Self {
+        let stage = 0;
+        let mut stage_indicator = StageIndicator::new();
+        stage_indicator.set_stage(stage + 1);
+
         Self {
-            state: GameState::Playing,
+            state: GameState::StartStage,
             count: 0,
-            stage_indicator: StageIndicator::new(),
+            stage_indicator,
             player: Player::new(),
             myshots: Default::default(),
             enemy_manager: EnemyManager::new(),
             event_queue: EventQueue::new(),
             effects: Default::default(),
 
-            stage: 0,
-            left_ship: 0,
+            stage,
+            left_ship: DEFAULT_LEFT_SHIP,
             capture_state: CaptureState::NoCapture,
             capture_enemy_fi: FormationIndex(0, 0),
         }
@@ -81,22 +85,6 @@ impl GameManager {
     #[cfg(debug_assertions)]
     pub fn enemy_manager_mut(&mut self) -> &mut EnemyManager {
         &mut self.enemy_manager
-    }
-
-    pub fn restart(&mut self) {
-        self.stage = 0;
-        self.stage_indicator.set_stage(self.stage + 1);
-        self.left_ship = DEFAULT_LEFT_SHIP;
-        self.capture_state = CaptureState::NoCapture;
-
-        self.event_queue.clear();
-        self.player = Player::new();
-
-        self.myshots = Default::default();
-        self.effects = Default::default();
-
-        self.state = GameState::StartStage;
-        self.count = 0;
     }
 
     #[cfg(debug_assertions)]
