@@ -100,17 +100,36 @@ document.addEventListener('keyup', (event) => {
   framework.on_key(event.code, false)
 })
 
-function loop() {
-  framework.update()
-  framework.draw()
-  requestAnimationFrame(loop)
-}
+const loop = (function() {
+  const target_fps = 60
+  const ticks = 1000 / target_fps
+  const max_skip = 5
+  const margin = ticks / 8
+
+  let prev = performance.now()
+  return function loop() {
+    const now = performance.now()
+    let n = Math.floor((now - prev + margin) / ticks)
+    if (n > 0) {
+      if (n <= max_skip) {
+        prev += n * ticks
+      } else {
+        n = max_skip
+        prev = now
+      }
+      for (let i = 0; i < n; ++i)
+        framework.update()
+      framework.draw()
+    }
+    requestAnimationFrame(loop)
+  }
+})()
 
 const cover = createCoverScreen('Loading...')
 audioManager.createContext(CHANNEL_COUNT)
 audioManager.loadAllAudios(AUDIO_ASSETS)
   .then(() => {
-    cover.innerText = 'Galangua\n\nTouch to start'      
+    cover.innerText = 'Galangua\n\nTouch to start'
 
     const onClick = () => {
       audioManager.playSe(0, ENALBE_AUDIO)
