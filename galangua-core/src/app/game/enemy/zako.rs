@@ -39,13 +39,13 @@ const VTABLE: [Vtable; 4] = [
     },
 ];
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub(super) enum ZakoAttackPhase {
     BeeAttack,
     Traj,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub(super) enum ZakoState {
     None,
     Appearance,

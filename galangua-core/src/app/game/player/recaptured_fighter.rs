@@ -6,7 +6,7 @@ use crate::util::math::{clamp, quantize_angle, round_vec, ANGLE, ONE};
 
 use super::Accessor;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 enum State {
     Rotate,
     SlideHorz,

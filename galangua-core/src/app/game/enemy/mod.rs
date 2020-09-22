@@ -12,10 +12,10 @@ mod zako;
 pub use self::accessor::Accessor;
 pub use self::enemy::Enemy;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct FormationIndex(pub u8, pub u8);  // x, y
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum EnemyType {
     Bee,
     Butterfly,
@@ -23,7 +23,6 @@ pub enum EnemyType {
     CapturedFighter,
 }
 
-#[derive(Debug)]
 pub struct DamageResult {
     pub killed: bool,
     pub point: u32,

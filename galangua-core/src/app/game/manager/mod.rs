@@ -9,7 +9,7 @@ pub mod score_holder;
 
 pub use self::event_queue::EventType;
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum CaptureState {
     NoCapture,
     CaptureAttacking,

@@ -35,7 +35,7 @@ impl Index<usize> for EventQueue {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone)]
 pub enum EventType {
     MyShot(Vec2I, bool, i32),
     AddScore(u32),

@@ -17,7 +17,7 @@ const ASSAULT_FORMATION_Y: u8 = 6;
 const UNIT_COUNT: u32 = 5;
 const STEP_WAIT: u32 = 16 / 3;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone)]
 struct Info {
     time: u32,
     enemy_type: EnemyType,
@@ -209,10 +209,10 @@ impl AppearanceManager {
                 let lr = i & 1;
                 let n = self.orders.len() / 2;
                 let index = rng.gen_range(0, n + 1);
-                self.orders.push(self.orders[lr]);
+                self.orders.push(self.orders[lr].clone());
                 // Shift
                 for j in 0..(n - index) {
-                    self.orders[(n - j) * 2 + lr] = self.orders[(n - j - 1) * 2 + lr];
+                    self.orders[(n - j) * 2 + lr] = self.orders[(n - j - 1) * 2 + lr].clone();
                 }
 
                 let fi = gen_assault_index(assault_index);

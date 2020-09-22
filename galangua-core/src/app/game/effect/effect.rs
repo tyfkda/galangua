@@ -149,7 +149,7 @@ impl RotSprite {
 
 //
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub enum EarnedPointType {
     Point1600,
     Point1000,

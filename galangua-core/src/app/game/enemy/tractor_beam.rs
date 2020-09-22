@@ -18,7 +18,7 @@ const Y_OFFSET_TABLE: [i32; 29] = [
     65, 68, 70, 73, 76,
 ];
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 enum State {
     Opening,
     Full,
@@ -27,7 +27,6 @@ enum State {
     Capturing,
 }
 
-#[derive(Debug)]
 pub struct TractorBeam {
     pos: Vec2I,
     state: State,

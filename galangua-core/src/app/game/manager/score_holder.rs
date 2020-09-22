@@ -1,4 +1,4 @@
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ScoreHolder {
     pub score: u32,
     pub high_score: u32,

@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum TrajCommand {
     Pos(i32, i32),
     Speed(i32),

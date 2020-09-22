@@ -23,7 +23,7 @@ const OWL_DESTROY_SHOT_WAIT: u32 = 3 * 60;
 
 const OWL_SPRITE_NAMES: [&str; 4] = ["cpp11", "cpp12", "cpp21", "cpp22"];
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub(super) enum OwlAttackPhase {
     Traj,
     Capture,
@@ -36,7 +36,7 @@ pub(super) enum OwlAttackPhase {
     CaptureDonePushUp,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub(super) enum OwlState {
     None,
     Appearance,
@@ -46,7 +46,7 @@ pub(super) enum OwlState {
     Attack(OwlAttackPhase),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 enum CapturingState {
     None,
     Attacking,

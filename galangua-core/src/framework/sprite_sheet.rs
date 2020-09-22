@@ -2,7 +2,7 @@ use regex::Regex;
 use serde_json::Value;
 use std::collections::HashMap;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone)]
 pub struct Rect {
     pub x: i32,
     pub y: i32,
@@ -10,19 +10,19 @@ pub struct Rect {
     pub h: u32,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone)]
 pub struct Size {
     pub w: u32,
     pub h: u32,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Trimmed {
     pub sprite_source_size: Rect,
     pub source_size: Size,
 }
 
-#[derive(Debug)]
+#[derive(Clone)]
 pub struct SpriteSheet {
     pub texture: String,
     pub frame: Rect,
