@@ -42,13 +42,9 @@ pub struct GalanguaApp<T: TimerTrait, S: SystemTrait> {
 
 impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
     pub fn new(timer: T, system: S) -> Self {
-        let high_score = system.get_u32(&KEY_HIGH_SCORE).or(Some(DEFAULT_HIGH_SCORE)).unwrap();
-
-        let star_manager = StarManager::new();
-        let score_holder = ScoreHolder {
-            score: 0,
-            high_score: high_score,
-        };
+        let high_score = system.get_u32(&KEY_HIGH_SCORE)
+                .or(Some(DEFAULT_HIGH_SCORE))
+                .unwrap();
 
         Self {
             system,
@@ -57,9 +53,9 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
             pressed_key: None,
             fps_calc: FpsCalc::new(timer),
             game_manager: None,
-            star_manager,
+            star_manager: StarManager::new(),
             frame_count: 0,
-            score_holder,
+            score_holder: ScoreHolder::new(high_score),
             prev_high_score: 0,
 
             #[cfg(debug_assertions)]

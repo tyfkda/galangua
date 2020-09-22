@@ -5,6 +5,13 @@ pub struct ScoreHolder {
 }
 
 impl ScoreHolder {
+    pub fn new(high_score: u32) -> Self {
+        Self {
+            score: 0,
+            high_score,
+        }
+    }
+
     pub fn reset_score(&mut self) {
         self.score = 0;
     }
