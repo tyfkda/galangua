@@ -4,6 +4,7 @@ use sdl2::joystick::Joystick;
 use sdl2::keyboard::Keycode;
 use sdl2::mixer::{AUDIO_S16LSB, DEFAULT_CHANNELS};
 use sdl2::Sdl;
+use std::marker::PhantomData;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
@@ -16,7 +17,8 @@ type MapKeyFunc = fn(Keycode) -> Option<VKey>;
 const FPS: u32 = 60;
 const MIN_FPS: u32 = 15;
 
-pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
+pub struct SdlAppFramework<'a, App: AppTrait<SdlRenderer<'a>>> {
+    phantom: PhantomData<&'a App>,
     sdl_context: Sdl,
     last_update_time: SystemTime,
 
@@ -27,11 +29,12 @@ pub struct SdlAppFramework<App: AppTrait<SdlRenderer>> {
     fast_forward: bool,
 }
 
-impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
+impl<'a, App: AppTrait<SdlRenderer<'a>>> SdlAppFramework<'a, App> {
     pub fn new(app: App, map_key: MapKeyFunc) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
 
         Ok(Self {
+            phantom: PhantomData,
             sdl_context,
             last_update_time: SystemTime::now(),
             app,

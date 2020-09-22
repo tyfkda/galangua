@@ -9,14 +9,14 @@ use galangua_common::framework::RendererTrait;
 
 use super::sdl_texture_manager::SdlTextureManager;
 
-pub struct SdlRenderer {
+pub struct SdlRenderer<'a> {
     canvas: WindowCanvas,
-    texture_manager: SdlTextureManager,
+    texture_manager: SdlTextureManager<'a>,
     sprite_sheet: SpriteSheet,
     tex_color_map: HashMap<String, (u8, u8, u8)>,
 }
 
-impl SdlRenderer {
+impl<'a> SdlRenderer<'a> {
     pub fn new(mut canvas: WindowCanvas, logical_size: (u32, u32)) -> Self {
         canvas.set_logical_size(logical_size.0, logical_size.1)
             .expect("set_logical_size failed");
@@ -34,7 +34,7 @@ impl SdlRenderer {
     }
 }
 
-impl RendererTrait for SdlRenderer {
+impl<'a> RendererTrait for SdlRenderer<'a> {
     fn load_textures(&mut self, base_path: &str, filenames: &[&str]) {
         self.texture_manager.load(&mut self.canvas, base_path, filenames)
             .expect("load_textures failed");
