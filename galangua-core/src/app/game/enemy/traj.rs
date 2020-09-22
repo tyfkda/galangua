@@ -44,7 +44,7 @@ impl Traj {
             fi,
             shot_enable: true,
 
-            command_table: command_table,
+            command_table,
             delay: 0,
             wait_pred: None,
             shot: None,

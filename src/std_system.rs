@@ -44,16 +44,14 @@ impl SystemTrait for StdSystem {
 fn load_map(filename: &str) -> HashMap<String, Value> {
     if std::path::Path::new(filename).exists() {
         match std::fs::read_to_string(filename) {
-            Ok(text) => {
-                match serde_json::from_str::<HashMap<String, Value>>(&text) {
-                    Ok(deserialized) => {
-                        return deserialized;
-                    }
-                    Err(err) => {
-                        eprintln!("{}", err);
-                    }
+            Ok(text) => match serde_json::from_str::<HashMap<String, Value>>(&text) {
+                Ok(deserialized) => {
+                    return deserialized;
                 }
-            }
+                Err(err) => {
+                    eprintln!("{}", err);
+                }
+            },
             Err(err) => {
                 eprintln!("{}", err);
             }

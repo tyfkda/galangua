@@ -227,9 +227,9 @@ impl Enemy for Zako {
 
     fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize) {
         let sprite = match self.enemy_type {
-            EnemyType::Bee => { BEE_SPRITE_NAMES[pat] }
-            EnemyType::Butterfly => { BUTTERFLY_SPRITE_NAMES[pat] }
-            EnemyType::CapturedFighter => { "rustacean_captured" }
+            EnemyType::Bee => BEE_SPRITE_NAMES[pat],
+            EnemyType::Butterfly => BUTTERFLY_SPRITE_NAMES[pat],
+            EnemyType::CapturedFighter => "rustacean_captured",
             _ => { panic!("Illegal"); }
         };
 
@@ -248,10 +248,11 @@ impl Enemy for Zako {
     fn formation_index(&self) -> &FormationIndex { &self.info.formation_index }
 
     fn set_damage(&mut self, _power: u32, accessor: &mut dyn Accessor) -> DamageResult {
-        accessor.push_event(EventType::EnemyExplosion(self.info.pos, self.info.angle, self.enemy_type));
+        accessor.push_event(EventType::EnemyExplosion(
+            self.info.pos, self.info.angle, self.enemy_type));
         match self.enemy_type {
-            EnemyType::Bee | EnemyType::Butterfly => { self.bee_set_damage() }
-            EnemyType::CapturedFighter => { self.captured_fighter_set_damage(accessor) }
+            EnemyType::Bee | EnemyType::Butterfly => self.bee_set_damage(),
+            EnemyType::CapturedFighter => self.captured_fighter_set_damage(accessor),
             _ => { panic!("Illegal"); }
         }
     }
@@ -265,9 +266,9 @@ impl Enemy for Zako {
 
     fn set_attack(&mut self, _capture_attack: bool, accessor: &mut dyn Accessor) {
         match self.enemy_type {
-            EnemyType::Bee => { self.set_bee_attack(); }
-            EnemyType::Butterfly => { self.set_butterfly_attack(); }
-            EnemyType::CapturedFighter => { self.set_captured_fighter_attack(); }
+            EnemyType::Bee => self.set_bee_attack(),
+            EnemyType::Butterfly => self.set_butterfly_attack(),
+            EnemyType::CapturedFighter => self.set_captured_fighter_attack(),
             _ => { panic!("Illgal"); }
         }
 

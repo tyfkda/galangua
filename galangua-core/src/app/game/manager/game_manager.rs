@@ -1,6 +1,6 @@
-use super::score_holder::ScoreHolder;
 use super::enemy_manager::EnemyManager;
 use super::event_queue::EventQueue;
+use super::score_holder::ScoreHolder;
 use super::{CaptureState, EventType};
 
 use crate::app::consts::*;

@@ -14,7 +14,8 @@ pub trait Accessor {
     fn captured_fighter_index(&self) -> Option<FormationIndex>;
     fn get_enemies(&self) -> &[Option<Box<dyn Enemy>>];
     fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>>;
-    fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Box<dyn Enemy>>;
+    fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex)
+        -> Option<&mut Box<dyn Enemy>>;
     fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I;
     fn pause_enemy_shot(&mut self, wait: u32);
     fn is_rush(&self) -> bool;

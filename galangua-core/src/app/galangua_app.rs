@@ -234,9 +234,7 @@ impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaAp
     }
 }
 
-fn draw_scores<R: RendererTrait>(
-    renderer: &mut R, score_holder: &ScoreHolder, show_1up: bool
-) {
+fn draw_scores<R: RendererTrait>(renderer: &mut R, score_holder: &ScoreHolder, show_1up: bool) {
     renderer.set_texture_color_mod("font", 255, 0, 0);
     if show_1up {
         renderer.draw_str("font", 2 * 8, 0 * 8, "1UP");

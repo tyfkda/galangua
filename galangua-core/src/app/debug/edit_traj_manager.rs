@@ -1,7 +1,7 @@
 use crate::app::game::enemy::traj_command::TrajCommand;
 use crate::app::game::enemy::FormationIndex;
-use crate::app::game::manager::game_manager::GameManager;
 use crate::app::game::manager::event_queue::EventQueue;
+use crate::app::game::manager::game_manager::GameManager;
 use crate::app::util::unsafe_util::peep;
 use crate::framework::types::Vec2I;
 use crate::framework::{RendererTrait, VKey};
