@@ -1,6 +1,6 @@
 [package]
 name = "galangua-wasm"
-version = "0.1.0"
+version = "0.9.1"
 authors = ["tyfkda <tyfkda@gmail.com>"]
 edition = "2018"
 
