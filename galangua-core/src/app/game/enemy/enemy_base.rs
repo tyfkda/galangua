@@ -33,7 +33,7 @@ impl EnemyInfo {
     }
 
     pub(super) fn forward(&mut self) {
-        self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
+        self.pos += &calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
     }
 

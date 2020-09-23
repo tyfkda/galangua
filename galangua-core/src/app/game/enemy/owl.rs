@@ -259,7 +259,7 @@ impl Owl {
         if self.info.pos.y >= (HEIGHT + 8) * ONE {
             let target_pos = accessor.get_formation_pos(&self.info.formation_index);
             let offset = Vec2I::new(target_pos.x - self.info.pos.x, (-32 - (HEIGHT + 8)) * ONE);
-            self.info.pos += offset;
+            self.info.pos += &offset;
 
             if accessor.is_rush() {
                 self.rush_attack();

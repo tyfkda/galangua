@@ -95,7 +95,7 @@ impl Traj {
     pub fn update(&mut self, accessor: &dyn Accessor) -> bool {
         self.handle_command(accessor);
 
-        self.pos += calc_velocity(self.angle + self.vangle / 2, self.speed);
+        self.pos += &calc_velocity(self.angle + self.vangle / 2, self.speed);
         self.angle += self.vangle;
 
         !self.command_table.is_empty() || self.delay > 0

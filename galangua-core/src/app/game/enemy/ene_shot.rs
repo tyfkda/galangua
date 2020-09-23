@@ -22,7 +22,7 @@ impl EneShot {
     }
 
     pub fn update(&mut self) -> bool {
-        self.pos += self.vel;
+        self.pos += &self.vel;
         !out_of_screen(&self.pos)
     }
 

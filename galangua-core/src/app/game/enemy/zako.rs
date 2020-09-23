@@ -258,7 +258,7 @@ impl Enemy for Zako {
     }
 
     fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>) {
-        self.info.pos += *add;
+        self.info.pos += add;
         if let Some(angle) = angle_opt {
             self.info.angle = angle;
         }

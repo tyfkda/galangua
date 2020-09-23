@@ -29,7 +29,7 @@ impl MyShot {
             let left = -margin * ONE;
             let right = (WIDTH + margin) * ONE;
             let bottom = (HEIGHT + margin) * ONE;
-            self.pos += calc_velocity(self.angle, MYSHOT_SPEED);
+            self.pos += &calc_velocity(self.angle, MYSHOT_SPEED);
             self.pos.y > top && self.pos.x > left && self.pos.x < right && self.pos.y < bottom
         }
     }
