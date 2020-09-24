@@ -91,7 +91,8 @@ impl RendererTrait for WasmRenderer {
         wasm_bindgen_futures::spawn_local(async move {
             match request(filename).await {
                 Ok(text) => {
-                    let loaded = load_sprite_sheet(&text);
+                    let loaded = load_sprite_sheet(&text)
+                        .expect("illegal sprite sheet format");
                     sprite_sheet.replace(loaded);
                 }
                 Err(error) => {

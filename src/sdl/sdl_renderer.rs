@@ -40,8 +40,9 @@ impl RendererTrait for SdlRenderer {
 
     fn load_sprite_sheet(&mut self, filename: &str) {
         let text = std::fs::read_to_string(filename)
-            .expect("load_sprite_sheet failed");
-        self.sprite_sheet = load_sprite_sheet(&text);
+            .expect("load sprite sheet failed");
+        self.sprite_sheet = load_sprite_sheet(&text)
+            .expect("illegal sprite sheet format");
     }
 
     fn clear(&mut self) {
