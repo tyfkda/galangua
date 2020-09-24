@@ -10,7 +10,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{HtmlCanvasElement, HtmlImageElement, Request, RequestInit, RequestMode, Response};
 
-use galangua_core::framework::sprite_sheet::{load_sprite_sheet, Sheet};
+use galangua_core::framework::sprite_sheet::{load_sprite_sheet, SpriteSheet};
 use galangua_core::framework::types::Vec2I;
 use galangua_core::framework::RendererTrait;
 
@@ -19,7 +19,7 @@ pub struct WasmRenderer {
     canvas: HtmlCanvasElement,
     context: web_sys::CanvasRenderingContext2d,
     images: Rc<RefCell<HashMap<String, HtmlImageElement>>>,
-    sprite_sheet: Rc<RefCell<HashMap<String, Sheet>>>,
+    sprite_sheet: Rc<RefCell<SpriteSheet>>,
 }
 
 #[wasm_bindgen]
@@ -44,7 +44,7 @@ impl WasmRenderer {
             canvas,
             context,
             images: Rc::new(RefCell::new(HashMap::new())),
-            sprite_sheet: Rc::new(RefCell::new(HashMap::new())),
+            sprite_sheet: Rc::new(RefCell::new(SpriteSheet::empty())),
         }
     }
 }
@@ -134,7 +134,7 @@ impl RendererTrait for WasmRenderer {
         let sheet = sprite_sheet.get(sprite_name)
             .expect("No sprite_sheet");
         let image = self.images.borrow();
-        if let Some(image) = image.get(&sheet.texture_name) {
+        if let Some(image) = image.get(&sprite_sheet.texture_name) {
             let mut pos = *pos;
             if let Some(trimmed) = &sheet.trimmed {
                 pos.x += trimmed.sprite_source_size.x;
@@ -156,7 +156,7 @@ impl RendererTrait for WasmRenderer {
         let sheet = sprite_sheet.get(sprite_name)
             .expect("No sprite_sheet");
         let image = self.images.borrow();
-        if let Some(image) = image.get(&sheet.texture_name) {
+        if let Some(image) = image.get(&sprite_sheet.texture_name) {
             let mut pos = *pos;
             if let Some(trimmed) = &sheet.trimmed {
                 pos.x += trimmed.sprite_source_size.x;

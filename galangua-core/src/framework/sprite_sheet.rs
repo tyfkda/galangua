@@ -3,8 +3,13 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 #[derive(Clone)]
-pub struct Sheet {
+pub struct SpriteSheet {
     pub texture_name: String,
+    pub sheets: HashMap<String, Sheet>,
+}
+
+#[derive(Clone)]
+pub struct Sheet {
     pub frame: Rect,
     pub rotated: bool,
     pub trimmed: Option<Trimmed>,
@@ -30,7 +35,20 @@ pub struct Trimmed {
     pub source_size: Size,
 }
 
-pub fn load_sprite_sheet(text: &str) -> Option<HashMap<String, Sheet>> {
+impl SpriteSheet {
+    pub fn empty() -> Self {
+        SpriteSheet {
+            texture_name: String::from(""),
+            sheets: HashMap::new(),
+        }
+    }
+
+    pub fn get(&self, key: &str) -> Option<&Sheet> {
+        self.sheets.get(key)
+    }
+}
+
+pub fn load_sprite_sheet(text: &str) -> Option<SpriteSheet> {
     let deserialized_opt = serde_json::from_str(text);
     if let Err(_err) = deserialized_opt {
         return None;
@@ -42,13 +60,16 @@ pub fn load_sprite_sheet(text: &str) -> Option<HashMap<String, Sheet>> {
 
     let mut sheets = HashMap::new();
     for (key, frame) in deserialized["frames"].as_object()? {
-        let sheet = convert_sheet(frame, texture_name.clone())?;
+        let sheet = convert_sheet(frame)?;
         sheets.insert(get_mainname(key), sheet);
     }
-    Some(sheets)
+    Some(SpriteSheet {
+        texture_name,
+        sheets,
+    })
 }
 
-fn convert_sheet(sheet: &Value, texture_name: String) -> Option<Sheet> {
+fn convert_sheet(sheet: &Value) -> Option<Sheet> {
     let frame = convert_rect(&sheet["frame"])?;
     let rotated = sheet["rotated"].as_bool()?;
     let trimmed = if sheet["trimmed"].as_bool() == Some(true) {
@@ -60,7 +81,6 @@ fn convert_sheet(sheet: &Value, texture_name: String) -> Option<Sheet> {
     };
 
     Some(Sheet {
-        texture_name,
         frame,
         rotated,
         trimmed,
