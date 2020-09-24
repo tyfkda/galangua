@@ -3,6 +3,14 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 #[derive(Clone)]
+pub struct Sheet {
+    pub texture_name: String,
+    pub frame: Rect,
+    pub rotated: bool,
+    pub trimmed: Option<Trimmed>,
+}
+
+#[derive(Clone)]
 pub struct Rect {
     pub x: i32,
     pub y: i32,
@@ -22,42 +30,38 @@ pub struct Trimmed {
     pub source_size: Size,
 }
 
-#[derive(Clone)]
-pub struct SpriteSheet {
-    pub texture: String,
-    pub frame: Rect,
-    pub rotated: bool,
-    pub trimmed: Option<Trimmed>,
-}
-
-pub fn load_sprite_sheet(text: &str) -> HashMap<String, SpriteSheet> {
+pub fn load_sprite_sheet(text: &str) -> HashMap<String, Sheet> {
     let deserialized: Value = serde_json::from_str(text).expect("illegal json");
 
-    let mut m = HashMap::new();
+    let texture_name = get_mainname(
+        deserialized["meta"]["image"].as_str().unwrap());
 
-    for (key, sheet) in deserialized["frames"].as_object().expect("frames") {
-        let frame = &sheet["frame"];
-
-        let rect = convert_rect(frame);
-        let rotated = sheet["rotated"].as_bool().unwrap();
-        let mut trimmed = None;
-        if sheet["trimmed"].as_bool() == Some(true) {
-            let sprite_source_size = convert_rect(&sheet["spriteSourceSize"]);
-            let source_size = convert_size(&sheet["sourceSize"]);
-            trimmed = Some(Trimmed { sprite_source_size, source_size });
-        }
-
-        let texture = deserialized["meta"]["image"].as_str().unwrap();
-        m.insert(get_mainname(key),
-                 SpriteSheet {
-                     texture: get_mainname(texture),
-                     frame: rect,
-                     rotated,
-                     trimmed,
-                 });
+    let mut sheets = HashMap::new();
+    for (key, frame) in deserialized["frames"].as_object().expect("frames") {
+        sheets.insert(
+            get_mainname(key),
+            convert_sheet(frame, texture_name.clone()));
     }
+    sheets
+}
 
-    m
+fn convert_sheet(sheet: &Value, texture_name: String) -> Sheet {
+    let frame = convert_rect(&sheet["frame"]);
+    let rotated = sheet["rotated"].as_bool().unwrap();
+    let trimmed = if sheet["trimmed"].as_bool() == Some(true) {
+        let sprite_source_size = convert_rect(&sheet["spriteSourceSize"]);
+        let source_size = convert_size(&sheet["sourceSize"]);
+        Some(Trimmed { sprite_source_size, source_size })
+    } else {
+        None
+    };
+
+    Sheet {
+        texture_name,
+        frame,
+        rotated,
+        trimmed,
+    }
 }
 
 fn convert_rect(value: &Value) -> Rect {

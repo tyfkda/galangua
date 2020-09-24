@@ -3,7 +3,7 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::WindowCanvas;
 use std::collections::HashMap;
 
-use galangua_core::framework::sprite_sheet::{load_sprite_sheet, SpriteSheet};
+use galangua_core::framework::sprite_sheet::{load_sprite_sheet, Sheet};
 use galangua_core::framework::types::Vec2I;
 use galangua_core::framework::RendererTrait;
 
@@ -12,7 +12,7 @@ use super::sdl_texture_manager::SdlTextureManager;
 pub struct SdlRenderer {
     canvas: WindowCanvas,
     texture_manager: SdlTextureManager,
-    sprite_sheet: HashMap<String, SpriteSheet>,
+    sprite_sheet: HashMap<String, Sheet>,
 }
 
 impl SdlRenderer {
@@ -81,7 +81,7 @@ impl RendererTrait for SdlRenderer {
             pos.y += trimmed.sprite_source_size.y;
         }
 
-        let texture = self.texture_manager.get(&sheet.texture)
+        let texture = self.texture_manager.get(&sheet.texture_name)
             .expect("No texture");
         self.canvas.copy(&texture,
                          Some(Rect::new(sheet.frame.x, sheet.frame.y,
@@ -102,7 +102,7 @@ impl RendererTrait for SdlRenderer {
             pos.y += trimmed.sprite_source_size.y;
         }
 
-        let texture = self.texture_manager.get(&sheet.texture)
+        let texture = self.texture_manager.get(&sheet.texture_name)
             .expect("No texture");
         let center = center.map(|v| Point::new(v.x, v.y));
         self.canvas.copy_ex(&texture,
