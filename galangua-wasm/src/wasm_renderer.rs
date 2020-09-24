@@ -10,7 +10,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{HtmlCanvasElement, HtmlImageElement, Request, RequestInit, RequestMode, Response};
 
-use galangua_core::framework::sprite_sheet::{load_sprite_sheet, SpriteSheet};
+use galangua_core::framework::sprite_sheet::SpriteSheet;
 use galangua_core::framework::types::Vec2I;
 use galangua_core::framework::RendererTrait;
 
@@ -91,7 +91,7 @@ impl RendererTrait for WasmRenderer {
         wasm_bindgen_futures::spawn_local(async move {
             match request(filename).await {
                 Ok(text) => {
-                    let loaded = load_sprite_sheet(&text)
+                    let loaded = SpriteSheet::load(&text)
                         .expect("illegal sprite sheet format");
                     sprite_sheet.replace(loaded);
                 }

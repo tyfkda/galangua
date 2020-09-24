@@ -2,7 +2,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::WindowCanvas;
 
-use galangua_core::framework::sprite_sheet::{load_sprite_sheet, SpriteSheet};
+use galangua_core::framework::sprite_sheet::SpriteSheet;
 use galangua_core::framework::types::Vec2I;
 use galangua_core::framework::RendererTrait;
 
@@ -40,7 +40,7 @@ impl RendererTrait for SdlRenderer {
     fn load_sprite_sheet(&mut self, filename: &str) {
         let text = std::fs::read_to_string(filename)
             .expect("load sprite sheet failed");
-        self.sprite_sheet = load_sprite_sheet(&text)
+        self.sprite_sheet = SpriteSheet::load(&text)
             .expect("illegal sprite sheet format");
     }
 

@@ -43,30 +43,30 @@ impl SpriteSheet {
         }
     }
 
+    pub fn load(text: &str) -> Option<Self> {
+        let deserialized_opt = serde_json::from_str(text);
+        if let Err(_err) = deserialized_opt {
+            return None;
+        }
+        let deserialized: Value = deserialized_opt.unwrap();
+
+        let texture_name = get_mainname(
+            deserialized["meta"]["image"].as_str()?);
+
+        let mut sheets = HashMap::new();
+        for (key, frame) in deserialized["frames"].as_object()? {
+            let sheet = convert_sheet(frame)?;
+            sheets.insert(get_mainname(key), sheet);
+        }
+        Some(Self {
+            texture_name,
+            sheets,
+        })
+    }
+
     pub fn get(&self, key: &str) -> Option<&Sheet> {
         self.sheets.get(key)
     }
-}
-
-pub fn load_sprite_sheet(text: &str) -> Option<SpriteSheet> {
-    let deserialized_opt = serde_json::from_str(text);
-    if let Err(_err) = deserialized_opt {
-        return None;
-    }
-    let deserialized: Value = deserialized_opt.unwrap();
-
-    let texture_name = get_mainname(
-        deserialized["meta"]["image"].as_str()?);
-
-    let mut sheets = HashMap::new();
-    for (key, frame) in deserialized["frames"].as_object()? {
-        let sheet = convert_sheet(frame)?;
-        sheets.insert(get_mainname(key), sheet);
-    }
-    Some(SpriteSheet {
-        texture_name,
-        sheets,
-    })
 }
 
 fn convert_sheet(sheet: &Value) -> Option<Sheet> {
