@@ -125,8 +125,6 @@ impl Zako {
 
                 self.base.traj = Some(traj);
                 self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
-
-                accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
             } else {
                 self.set_state(ZakoState::MoveToFormation);
             }
