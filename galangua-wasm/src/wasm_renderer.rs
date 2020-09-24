@@ -44,7 +44,7 @@ impl WasmRenderer {
             canvas,
             context,
             images: Rc::new(RefCell::new(HashMap::new())),
-            sprite_sheet: Rc::new(RefCell::new(SpriteSheet::empty())),
+            sprite_sheet: Rc::new(RefCell::new(SpriteSheet::new())),
         }
     }
 }
@@ -91,9 +91,7 @@ impl RendererTrait for WasmRenderer {
         wasm_bindgen_futures::spawn_local(async move {
             match request(filename).await {
                 Ok(text) => {
-                    let loaded = SpriteSheet::load(&text)
-                        .expect("illegal sprite sheet format");
-                    sprite_sheet.replace(loaded);
+                    sprite_sheet.borrow_mut().load_sprite_sheet(&text);
                 }
                 Err(error) => {
                     web_sys::console::error_1(&format!("error: {}", &error).into());
@@ -131,10 +129,10 @@ impl RendererTrait for WasmRenderer {
 
     fn draw_sprite(&mut self, sprite_name: &str, pos: &Vec2I) {
         let sprite_sheet = self.sprite_sheet.borrow();
-        let sheet = sprite_sheet.get(sprite_name)
+        let (sheet, tex_name) = sprite_sheet.get(sprite_name)
             .expect("No sprite_sheet");
         let image = self.images.borrow();
-        if let Some(image) = image.get(&sprite_sheet.texture_name) {
+        if let Some(image) = image.get(tex_name) {
             let mut pos = *pos;
             if let Some(trimmed) = &sheet.trimmed {
                 pos.x += trimmed.sprite_source_size.x;
@@ -153,10 +151,10 @@ impl RendererTrait for WasmRenderer {
     fn draw_sprite_rot(&mut self, sprite_name: &str, pos: &Vec2I, angle: u8,
                        center: Option<&Vec2I>) {
         let sprite_sheet = self.sprite_sheet.borrow();
-        let sheet = sprite_sheet.get(sprite_name)
+        let (sheet, tex_name) = sprite_sheet.get(sprite_name)
             .expect("No sprite_sheet");
         let image = self.images.borrow();
-        if let Some(image) = image.get(&sprite_sheet.texture_name) {
+        if let Some(image) = image.get(tex_name) {
             let mut pos = *pos;
             if let Some(trimmed) = &sheet.trimmed {
                 pos.x += trimmed.sprite_source_size.x;

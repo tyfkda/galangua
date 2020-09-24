@@ -22,7 +22,7 @@ impl SdlRenderer {
         Self {
             canvas,
             texture_manager: SdlTextureManager::new(),
-            sprite_sheet: SpriteSheet::empty(),
+            sprite_sheet: SpriteSheet::new(),
         }
     }
 
@@ -40,8 +40,7 @@ impl RendererTrait for SdlRenderer {
     fn load_sprite_sheet(&mut self, filename: &str) {
         let text = std::fs::read_to_string(filename)
             .expect("load sprite sheet failed");
-        self.sprite_sheet = SpriteSheet::load(&text)
-            .expect("illegal sprite sheet format");
+        self.sprite_sheet.load_sprite_sheet(&text);
     }
 
     fn clear(&mut self) {
@@ -73,7 +72,7 @@ impl RendererTrait for SdlRenderer {
     }
 
     fn draw_sprite(&mut self, sprite_name: &str, pos: &Vec2I) {
-        let sheet = self.sprite_sheet.get(sprite_name)
+        let (sheet, tex_name) = self.sprite_sheet.get(sprite_name)
             .expect("No sprite");
         let mut pos = *pos;
         if let Some(trimmed) = &sheet.trimmed {
@@ -81,7 +80,7 @@ impl RendererTrait for SdlRenderer {
             pos.y += trimmed.sprite_source_size.y;
         }
 
-        let texture = self.texture_manager.get(&self.sprite_sheet.texture_name)
+        let texture = self.texture_manager.get(tex_name)
             .expect("No texture");
         self.canvas.copy(&texture,
                          Some(Rect::new(sheet.frame.x, sheet.frame.y,
@@ -94,7 +93,7 @@ impl RendererTrait for SdlRenderer {
 
     fn draw_sprite_rot(&mut self, sprite_name: &str, pos: &Vec2I, angle: u8,
                        center: Option<&Vec2I>) {
-        let sheet = self.sprite_sheet.get(sprite_name)
+        let (sheet, tex_name) = self.sprite_sheet.get(sprite_name)
             .expect("No sprite");
         let mut pos = *pos;
         if let Some(trimmed) = &sheet.trimmed {
@@ -102,7 +101,7 @@ impl RendererTrait for SdlRenderer {
             pos.y += trimmed.sprite_source_size.y;
         }
 
-        let texture = self.texture_manager.get(&self.sprite_sheet.texture_name)
+        let texture = self.texture_manager.get(tex_name)
             .expect("No texture");
         let center = center.map(|v| Point::new(v.x, v.y));
         self.canvas.copy_ex(&texture,

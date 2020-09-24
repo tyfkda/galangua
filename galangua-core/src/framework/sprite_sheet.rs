@@ -1,11 +1,45 @@
 use regex::Regex;
 use serde_json::Value;
 use std::collections::HashMap;
+use std::rc::Rc;
+
+pub struct SpriteSheet {
+    sprite_sheets: Vec<Rc<SpriteSheet1>>,
+    sheet_map: HashMap<String, Rc<SpriteSheet1>>,
+}
+
+impl SpriteSheet {
+    pub fn new() -> Self {
+        Self {
+            sprite_sheets: Vec::new(),
+            sheet_map: HashMap::new(),
+        }
+    }
+
+    pub fn load_sprite_sheet(&mut self, text: &str) -> bool {
+        if let Some(sprite_sheet) =  SpriteSheet1::load(text) {
+            let sprite_sheet = Rc::new(sprite_sheet);
+            self.sprite_sheets.push(sprite_sheet.clone());
+            for (key, _sheet) in sprite_sheet.as_ref().sheets.iter() {
+                self.sheet_map.insert(key.clone(), sprite_sheet.clone());
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn get(&self, key: &str) -> Option<(&Sheet, &str)> {
+        self.sheet_map.get(key)
+            .map(|ss| ss.get(key).map(|sheet| (sheet, ss.texture_name.as_str())))
+            .flatten()
+    }
+}
 
 #[derive(Clone)]
-pub struct SpriteSheet {
-    pub texture_name: String,
-    pub sheets: HashMap<String, Sheet>,
+struct SpriteSheet1 {
+    texture_name: String,
+    sheets: HashMap<String, Sheet>,
 }
 
 #[derive(Clone)]
@@ -35,14 +69,7 @@ pub struct Trimmed {
     pub source_size: Size,
 }
 
-impl SpriteSheet {
-    pub fn empty() -> Self {
-        SpriteSheet {
-            texture_name: String::from(""),
-            sheets: HashMap::new(),
-        }
-    }
-
+impl SpriteSheet1 {
     pub fn load(text: &str) -> Option<Self> {
         let deserialized_opt = serde_json::from_str(text);
         if let Err(_err) = deserialized_opt {
