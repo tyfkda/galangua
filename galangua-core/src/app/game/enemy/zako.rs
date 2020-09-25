@@ -187,13 +187,13 @@ impl Zako {
 
     fn bee_set_damage(&mut self) -> DamageResult {
         let point = self.calc_point();
-        DamageResult { killed: true, point }
+        DamageResult { point, keep_alive_as_ghost: false }
     }
 
     fn captured_fighter_set_damage(&mut self, accessor: &mut dyn Accessor) -> DamageResult {
         accessor.push_event(EventType::CapturedFighterDestroyed);
         let point = self.calc_point();
-        DamageResult { killed: true, point }
+        DamageResult { point, keep_alive_as_ghost: false }
     }
 
     fn calc_point(&self) -> u32 {

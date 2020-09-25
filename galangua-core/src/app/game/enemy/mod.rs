@@ -24,6 +24,6 @@ pub enum EnemyType {
 }
 
 pub struct DamageResult {
-    pub killed: bool,
-    pub point: u32,
+    pub point: u32, // > 0 : destroyed.
+    pub keep_alive_as_ghost: bool,
 }

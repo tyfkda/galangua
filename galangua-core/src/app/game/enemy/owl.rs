@@ -363,13 +363,10 @@ impl Owl {
     fn owl_set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult {
         if self.life > power {
             self.life -= power;
-            DamageResult { killed: false, point: 0 }
+            DamageResult { point: 0, keep_alive_as_ghost: false }
         } else {
-            let mut killed = true;
             self.life = 0;
-            if self.live_troops(accessor) {
-                killed = false;  // Keep alive as a ghost.
-            }
+            let keep_alive_as_ghost = self.live_troops(accessor);  // To keep moving troops.
             let point = self.calc_point();
 
             // Release capturing.
@@ -397,7 +394,7 @@ impl Owl {
 
             accessor.push_event(EventType::EnemyExplosion(self.info.pos, self.info.angle, EnemyType::Owl));
 
-            DamageResult { killed, point }
+            DamageResult { point, keep_alive_as_ghost }
         }
     }
 

@@ -117,11 +117,11 @@ impl EnemyManager {
                 if let Some(point_type) = to_earned_point_type(result.point) {
                     accessor.push_event(EventType::EarnPointEffect(point_type, pos));
                 }
-            }
 
-            if result.killed {
-                self.enemies[index] = None;
-                self.decrement_alive_enemy();
+                if !result.keep_alive_as_ghost {
+                    self.enemies[index] = None;
+                    self.decrement_alive_enemy();
+                }
             }
         }
     }
