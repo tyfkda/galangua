@@ -95,46 +95,44 @@ impl EnemyManager {
         }
     }
 
-    pub fn check_collision(&mut self, target: &CollBox) -> Option<FormationIndex> {
-        self.enemies.iter().flat_map(|x| x)
-            .find_map(|enemy|
-                enemy.get_collbox().map(|colbox| (colbox, enemy))
-                    .filter(|(colbox, _enemy)| colbox.check_collision(target))
-                    .map(|(_colbox, enemy)| *enemy.formation_index()))
-    }
+    pub fn check_collision<A: Accessor>(
+        &mut self, target: &CollBox, power: u32, accessor: &mut A,
+    ) -> bool {
+        for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
+            let enemy = enemy_opt.as_mut().unwrap();
+            if let Some(collbox) = enemy.get_collbox() {
+                if collbox.check_collision(target) {
+                    let pos = *enemy.pos();
+                    let result = enemy.set_damage(power, accessor);
+                    if result.point > 0 {
+                        accessor.push_event(EventType::AddScore(result.point));
 
-    pub fn set_damage_to_enemy<T: Accessor>(
-        &mut self, fi: &FormationIndex, power: u32, accessor: &mut T,
-    ) {
-        let index = calc_array_index(fi);
-        if let Some(enemy) = self.enemies[index].as_mut() {
-            let pos = *enemy.pos();
-            let result = enemy.set_damage(power, accessor);
+                        if let Some(point_type) = to_earned_point_type(result.point) {
+                            accessor.push_event(EventType::EarnPointEffect(point_type, pos));
+                        }
 
-            if result.point > 0 {
-                accessor.push_event(EventType::AddScore(result.point));
-
-                if let Some(point_type) = to_earned_point_type(result.point) {
-                    accessor.push_event(EventType::EarnPointEffect(point_type, pos));
-                }
-
-                if !result.keep_alive_as_ghost {
-                    self.enemies[index] = None;
-                    self.decrement_alive_enemy();
+                        if !result.keep_alive_as_ghost {
+                            *enemy_opt = None;
+                            self.decrement_alive_enemy();
+                        }
+                    }
+                    return true;
                 }
             }
         }
+        false
     }
 
-    pub fn check_shot_collision(&mut self, target: &CollBox) -> Option<Vec2I> {
-        self.shots.iter_mut().filter(|x| x.is_some())
-            .find_map(|shot_opt| {
-                shot_opt.as_mut().unwrap().get_collbox()
-                    .filter(|colbox| colbox.check_collision(target))
-                    .map(|_colbox| {
-                        *shot_opt.take().unwrap().pos()
-                    })
-            })
+    pub fn check_shot_collision(&mut self, target: &CollBox) -> bool {
+        for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
+            if let Some(collbox) = shot_opt.as_mut().unwrap().get_collbox() {
+                if collbox.check_collision(target) {
+                    *shot_opt = None;
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     fn update_appearance(&mut self) {

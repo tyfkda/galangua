@@ -445,9 +445,7 @@ impl GameManager {
             ];
             let mut hit = false;
             for collbox in colls.iter().flat_map(|x| x) {
-                if let Some(fi) = self.enemy_manager.check_collision(collbox) {
-                    self.enemy_manager.set_damage_to_enemy(
-                        &fi, power, accessor);
+                if self.enemy_manager.check_collision(collbox, power, accessor) {
                     hit = true;
                 }
             }
@@ -464,12 +462,9 @@ impl GameManager {
             let dual = i != 0;
             let collbox = if dual { self.player.dual_collbox() } else { self.player.get_collbox() };
             if let Some(collbox) = collbox {
-                let hit = if let Some(fi) = self.enemy_manager.check_collision(&collbox) {
-                    self.enemy_manager.set_damage_to_enemy(&fi, power, accessor);
-                    true
-                } else {
-                    self.enemy_manager.check_shot_collision(&collbox).is_some()
-                };
+                let hit = self.enemy_manager.check_collision(
+                            &collbox, power, accessor) ||
+                    self.enemy_manager.check_shot_collision(&collbox);
 
                 if hit {
                     let player_pos = if dual { self.player.dual_pos().unwrap() } else { *self.player.pos() };
