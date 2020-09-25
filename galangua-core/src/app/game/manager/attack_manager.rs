@@ -100,12 +100,12 @@ impl AttackManager {
                 accessor.get_enemy_at_mut(&fi).unwrap()
             };
 
-            let capture_attack = enemy.can_capture_attack() &&
+            let capture_attack =
                 (self.cycle / 3) & 1 != 0 &&
                 accessor.capture_state() == CaptureState::NoCapture;
-            enemy.set_attack(capture_attack, accessor);
+            let capture_attacked = enemy.set_attack(capture_attack, accessor);
 
-            (fi, capture_attack)
+            (fi, capture_attacked)
         })
     }
 

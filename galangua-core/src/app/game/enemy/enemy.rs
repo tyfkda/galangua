@@ -20,7 +20,6 @@ pub trait Enemy: Collidable {
 
     fn is_formation(&self) -> bool;
 
-    fn can_capture_attack(&self) -> bool;
     fn is_captured_fighter(&self) -> bool;
     fn formation_index(&self) -> &FormationIndex;
 
@@ -28,7 +27,7 @@ pub trait Enemy: Collidable {
 
     fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>);
 
-    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor);
+    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) -> bool;
     fn set_to_troop(&mut self);
     fn set_to_formation(&mut self);
 

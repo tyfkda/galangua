@@ -461,7 +461,6 @@ impl Enemy for Owl {
 
     fn is_formation(&self) -> bool { self.state == OwlState::Formation }
 
-    fn can_capture_attack(&self) -> bool { true }
     fn is_captured_fighter(&self) -> bool { false }
     fn formation_index(&self) -> &FormationIndex { &self.info.formation_index }
 
@@ -473,7 +472,7 @@ impl Enemy for Owl {
         panic!("Illegal");
     }
 
-    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) {
+    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) -> bool {
         self.base.count = 0;
         self.base.attack_frame_count = 0;
         self.copy_angle_to_troops = true;
@@ -513,6 +512,8 @@ impl Enemy for Owl {
         self.set_state(OwlState::Attack(phase));
 
         accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+
+        capture_attack
     }
 
     fn set_to_troop(&mut self) {

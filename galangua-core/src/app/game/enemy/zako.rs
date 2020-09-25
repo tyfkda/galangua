@@ -242,7 +242,6 @@ impl Enemy for Zako {
 
     fn is_formation(&self) -> bool { self.state == ZakoState::Formation }
 
-    fn can_capture_attack(&self) -> bool { false }
     fn is_captured_fighter(&self) -> bool { self.enemy_type == EnemyType::CapturedFighter }
     fn formation_index(&self) -> &FormationIndex { &self.info.formation_index }
 
@@ -263,7 +262,7 @@ impl Enemy for Zako {
         }
     }
 
-    fn set_attack(&mut self, _capture_attack: bool, accessor: &mut dyn Accessor) {
+    fn set_attack(&mut self, _capture_attack: bool, accessor: &mut dyn Accessor) -> bool {
         match self.enemy_type {
             EnemyType::Bee => self.set_bee_attack(),
             EnemyType::Butterfly => self.set_butterfly_attack(),
@@ -272,6 +271,8 @@ impl Enemy for Zako {
         }
 
         accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+
+        false
     }
 
     fn set_to_troop(&mut self) {
