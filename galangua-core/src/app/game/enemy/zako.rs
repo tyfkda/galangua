@@ -147,9 +147,9 @@ impl Zako {
         }
     }
 
-    //// set_attack
+    //// start_attack
 
-    fn set_bee_attack(&mut self) {
+    fn start_bee_attack(&mut self) {
         let flip_x = self.info.formation_index.0 >= 5;
         let mut traj = Traj::new(&BEE_ATTACK_TABLE, &ZERO_VEC, flip_x, self.info.formation_index);
         traj.set_pos(&self.info.pos);
@@ -160,7 +160,7 @@ impl Zako {
         self.set_state(ZakoState::Attack(ZakoAttackType::BeeAttack));
     }
 
-    fn set_butterfly_attack(&mut self) {
+    fn start_butterfly_attack(&mut self) {
         let flip_x = self.info.formation_index.0 >= 5;
         let mut traj = Traj::new(&BUTTERFLY_ATTACK_TABLE, &ZERO_VEC, flip_x,
                                  self.info.formation_index);
@@ -172,7 +172,7 @@ impl Zako {
         self.set_state(ZakoState::Attack(ZakoAttackType::Traj));
     }
 
-    fn set_captured_fighter_attack(&mut self) {
+    fn start_captured_fighter_attack(&mut self) {
         let flip_x = self.info.formation_index.0 >= 5;
         let mut traj = Traj::new(&OWL_ATTACK_TABLE, &ZERO_VEC, flip_x, self.info.formation_index);
         traj.set_pos(&self.info.pos);
@@ -262,11 +262,11 @@ impl Enemy for Zako {
         }
     }
 
-    fn set_attack(&mut self, _capture_attack: bool, accessor: &mut dyn Accessor) -> bool {
+    fn start_attack(&mut self, _capture_attack: bool, accessor: &mut dyn Accessor) -> bool {
         match self.enemy_type {
-            EnemyType::Bee => self.set_bee_attack(),
-            EnemyType::Butterfly => self.set_butterfly_attack(),
-            EnemyType::CapturedFighter => self.set_captured_fighter_attack(),
+            EnemyType::Bee => self.start_bee_attack(),
+            EnemyType::Butterfly => self.start_butterfly_attack(),
+            EnemyType::CapturedFighter => self.start_captured_fighter_attack(),
             _ => { panic!("Illgal"); }
         }
 

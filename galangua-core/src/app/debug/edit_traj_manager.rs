@@ -47,10 +47,10 @@ impl EditTrajManager {
             self.set_traj_attack(game_manager, self.no, self.flip_x);
         }
         if pressed_key == Some(VKey::Num2) {
-            self.set_attack(game_manager, false);
+            self.start_attack(game_manager, false);
         }
         if pressed_key == Some(VKey::Num3) {
-            self.set_attack(game_manager, true);
+            self.start_attack(game_manager, true);
         }
         if pressed_key == Some(VKey::Num9) && self.no > 0 {
             self.no -= 1;
@@ -84,11 +84,11 @@ impl EditTrajManager {
         renderer.draw_str("font", 0 * 8, 3 * 8, &format!("T)OP={}", self.from_top.to_string().to_uppercase()));
     }
 
-    fn set_attack(&mut self, game_manager: &mut GameManager, capture_attack: bool) {
+    fn start_attack(&mut self, game_manager: &mut GameManager, capture_attack: bool) {
         let accessor = unsafe { peep(game_manager) };
         let enemy_manager = game_manager.enemy_manager_mut();
         if let Some(enemy) = enemy_manager.get_enemy_at_mut(&self.fi) {
-            enemy.set_attack(capture_attack, accessor);
+            enemy.start_attack(capture_attack, accessor);
         }
     }
 

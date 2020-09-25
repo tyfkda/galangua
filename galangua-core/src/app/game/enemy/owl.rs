@@ -469,7 +469,7 @@ impl Enemy for Owl {
         panic!("Illegal");
     }
 
-    fn set_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) -> bool {
+    fn start_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) -> bool {
         self.base.count = 0;
         self.base.attack_frame_count = 0;
         self.copy_angle_to_troops = true;

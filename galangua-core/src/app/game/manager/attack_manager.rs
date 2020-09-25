@@ -103,7 +103,7 @@ impl AttackManager {
             let capture_attack =
                 (self.cycle / 3) & 1 != 0 &&
                 accessor.capture_state() == CaptureState::NoCapture;
-            let capture_attacked = enemy.set_attack(capture_attack, accessor);
+            let capture_attacked = enemy.start_attack(capture_attack, accessor);
 
             (fi, capture_attacked)
         })
