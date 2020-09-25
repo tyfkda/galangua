@@ -458,33 +458,31 @@ impl GameManager {
     }
 
     fn check_collision_player_enemy(&mut self) {
-        let collbox_opts = [
-            self.player.dual_collbox().map(|c| (c, self.player.dual_pos().unwrap())),
-            self.player.get_collbox().map(|c| (c, *self.player.pos())),
-        ];
-
-        for (collbox, player_pos) in collbox_opts.iter().flat_map(|x| x) {
-            let power = 100;
-            let accessor = unsafe { peep(self) };
-
-            let hit = if let Some(fi) = self.enemy_manager.check_collision(collbox) {
-                let pos = self.enemy_manager.get_enemy_at(&fi).unwrap().pos().clone();
-                self.enemy_manager.set_damage_to_enemy(&fi, power, accessor);
-                Some(pos)
-            } else {
-                self.enemy_manager.check_shot_collision(&collbox)
-            };
-
-            if let Some(pos) = hit {
-                self.event_queue.push(EventType::PlayerExplosion(*player_pos));
-                if self.player.crash(&pos) {
-                    self.event_queue.push(EventType::DeadPlayer);
+        let power = 100;
+        let accessor = unsafe { peep(self) };
+        for i in 0..2 {
+            let dual = i != 0;
+            let collbox = if dual { self.player.dual_collbox() } else { self.player.get_collbox() };
+            if let Some(collbox) = collbox {
+                let hit = if let Some(fi) = self.enemy_manager.check_collision(&collbox) {
+                    self.enemy_manager.set_damage_to_enemy(&fi, power, accessor);
+                    true
                 } else {
-                    // Must be one of dual fighter crashed.
-                    assert!(self.capture_state == CaptureState::Dual);
-                    self.capture_state = CaptureState::NoCapture;
+                    self.enemy_manager.check_shot_collision(&collbox).is_some()
+                };
+
+                if hit {
+                    let player_pos = if dual { self.player.dual_pos().unwrap() } else { *self.player.pos() };
+                    self.event_queue.push(EventType::PlayerExplosion(player_pos));
+                    if self.player.crash(dual) {
+                        self.event_queue.push(EventType::DeadPlayer);
+                        break;
+                    } else {
+                        // Must be one of dual fighter crashed.
+                        assert!(self.capture_state == CaptureState::Dual);
+                        self.capture_state = CaptureState::NoCapture;
+                    }
                 }
-                continue;
             }
         }
     }

@@ -185,15 +185,16 @@ impl Player {
         }
     }
 
-    pub fn crash(&mut self, pos: &Vec2I) -> bool {
+    pub fn crash(&mut self, dual: bool) -> bool {
         if self.dual {
-            if pos.x < self.pos.x + (16 / 2 * ONE) {
+            if !dual {
                 // Abandan left ship.
                 self.pos.x += 16 * ONE;
             }
             self.dual = false;
             false
         } else {
+            assert!(!dual);
             self.state = State::Dead;
             true
         }
