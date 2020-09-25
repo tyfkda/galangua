@@ -32,12 +32,9 @@ impl<
     G: Fn(&str, JsValue)
 > SystemTrait for WasmSystem<F, G> {
     fn get_u32(&self, key: &str) -> Option<u32> {
-        if let Some(value) = (self.get_item)(key) {
-            if let Some(string) = value.as_string() {
-                return string.parse().ok();
-            }
-        }
-        None
+        (self.get_item)(key)
+            .map(|value| value.as_string()).flatten()
+            .map(|string| string.parse().ok()).flatten()
     }
 
     fn set_u32(&mut self, key: &str, value: u32) {

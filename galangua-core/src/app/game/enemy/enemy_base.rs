@@ -7,7 +7,7 @@ use super::{Accessor, FormationIndex};
 
 use crate::app::consts::*;
 use crate::app::game::manager::EventType;
-use crate::app::util::CollBox;
+use crate::app::util::collision::CollBox;
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{
     atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, round_vec, square, ANGLE, ONE, ONE_BIT,
@@ -81,8 +81,8 @@ impl EnemyBase {
         let shot_count = std::cmp::min(2 + stage_no / 8, 5) as u32;
         let shot_interval = 20 - shot_count * 2;
 
-        if self.attack_frame_count <= shot_interval * shot_count
-            && self.attack_frame_count % shot_interval == 0
+        if self.attack_frame_count <= shot_interval * shot_count &&
+            self.attack_frame_count % shot_interval == 0
         {
             accessor.push_event(EventType::EneShot(info.pos));
             true
@@ -140,7 +140,7 @@ impl EnemyBase {
             let cont = traj.update(accessor);
 
             info.pos = traj.pos();
-            info.angle = traj.angle();
+            info.angle = traj.angle;
             info.speed = traj.speed;
             info.vangle = traj.vangle;
             if let Some(wait) = traj.is_shot() {
@@ -159,9 +159,8 @@ impl EnemyBase {
             if cont {
                 return true;
             }
+            self.traj = None;
         }
-
-        self.traj = None;
         false
     }
 

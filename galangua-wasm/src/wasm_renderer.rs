@@ -133,11 +133,7 @@ impl RendererTrait for WasmRenderer {
             .expect("No sprite_sheet");
         let image = self.images.borrow();
         if let Some(image) = image.get(tex_name) {
-            let mut pos = *pos;
-            if let Some(trimmed) = &sheet.trimmed {
-                pos.x += trimmed.sprite_source_size.x;
-                pos.y += trimmed.sprite_source_size.y;
-            }
+            let pos = sheet.trim_pos(pos);
 
             self.context
                 .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
@@ -155,11 +151,7 @@ impl RendererTrait for WasmRenderer {
             .expect("No sprite_sheet");
         let image = self.images.borrow();
         if let Some(image) = image.get(tex_name) {
-            let mut pos = *pos;
-            if let Some(trimmed) = &sheet.trimmed {
-                pos.x += trimmed.sprite_source_size.x;
-                pos.y += trimmed.sprite_source_size.y;
-            }
+            let pos = sheet.trim_pos(pos);
             let center = center.map_or_else(
                 || Vec2I::new(sheet.frame.w as i32 / 2, sheet.frame.h as i32 / 2),
                 |v| *v);

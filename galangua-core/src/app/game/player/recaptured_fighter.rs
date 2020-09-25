@@ -6,6 +6,8 @@ use crate::util::math::{clamp, quantize_angle, round_vec, ANGLE, ONE};
 
 use super::Accessor;
 
+const SPRITE_NAME: &str = "rustacean";
+
 #[derive(Clone, Copy, PartialEq)]
 enum State {
     Rotate,
@@ -21,37 +23,38 @@ pub(super) struct RecapturedFighter {
 }
 
 impl RecapturedFighter {
-    pub(super) fn new(pos: &Vec2I) -> Self {
+    pub(super) fn new(pos: &Vec2I, angle: i32) -> Self {
         Self {
             pos: *pos,
             state: State::Rotate,
-            angle: 0,
+            angle: angle & (ANGLE * ONE - 1),
         }
     }
 
     pub(super) fn update<A: Accessor>(&mut self, player_living: bool, accessor: &mut A) {
+        const DANGLE: i32 = ANGLE * ONE / ANGLE_DIV;
+        const SPEED: i32 = 2 * ONE;
+        const TARGET_Y: i32 = (HEIGHT - 16 - 8) * ONE;
         match self.state {
             State::Rotate => {
-                self.angle += ANGLE * ONE / ANGLE_DIV;
+                self.angle += DANGLE;
                 if self.angle >= ANGLE * ONE * 4 && accessor.is_no_attacker() {
                     self.state = State::SlideHorz;
+                    self.angle = 0;
                     accessor.push_event(EventType::MovePlayerHomePos);
                 }
             }
             State::SlideHorz => {
                 let x = if player_living { (WIDTH / 2 + 8) * ONE } else { WIDTH / 2 * ONE };
-                let speed = 2 * ONE;
-                self.pos.x += clamp(x - self.pos.x, -speed, speed);
+                self.pos.x += clamp(x - self.pos.x, -SPEED, SPEED);
                 if self.pos.x == x {
                     self.state = State::SlideDown;
                 }
             }
             State::SlideDown => {
-                let y = (HEIGHT - 16 - 8) * ONE;
-                let speed = 2 * ONE;
-                self.pos.y += clamp(y - self.pos.y, -speed, speed);
-                if self.pos.y == y {
-                    self.state = State::Done
+                self.pos.y += clamp(TARGET_Y - self.pos.y, -SPEED, SPEED);
+                if self.pos.y == TARGET_Y {
+                    self.state = State::Done;
                 }
             }
             State::Done => {}
@@ -63,10 +66,10 @@ impl RecapturedFighter {
         match self.state {
             State::Rotate => {
                 let angle = quantize_angle(self.angle, ANGLE_DIV);
-                renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None);
+                renderer.draw_sprite_rot(SPRITE_NAME, &(&pos + &Vec2I::new(-8, -8)), angle, None);
             }
             _ => {
-                renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8, -8)));
+                renderer.draw_sprite(SPRITE_NAME, &(&pos + &Vec2I::new(-8, -8)));
             }
         }
     }

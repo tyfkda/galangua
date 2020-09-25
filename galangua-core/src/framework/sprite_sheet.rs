@@ -3,6 +3,8 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use super::types::Vec2I;
+
 pub struct SpriteSheet {
     sprite_sheets: Vec<Rc<SpriteSheet1>>,
     sheet_map: HashMap<String, Rc<SpriteSheet1>>,
@@ -17,7 +19,7 @@ impl SpriteSheet {
     }
 
     pub fn load_sprite_sheet(&mut self, text: &str) -> bool {
-        if let Some(sprite_sheet) =  SpriteSheet1::load(text) {
+        if let Some(sprite_sheet) = SpriteSheet1::load(text) {
             let sprite_sheet = Rc::new(sprite_sheet);
             self.sprite_sheets.push(sprite_sheet.clone());
             for (key, _sheet) in sprite_sheet.as_ref().sheets.iter() {
@@ -130,9 +132,15 @@ fn convert_size(value: &Value) -> Option<Size> {
 
 fn get_mainname(filename: &str) -> String {
     let re = Regex::new(r"^(.*)\.\w+").unwrap();
-    if let Some(caps) = re.captures(filename) {
-        caps.get(1).unwrap().as_str().to_string()
-    } else {
-        filename.to_string()
+    re.captures(filename).map_or_else(
+        || filename.to_string(),
+        |caps| caps.get(1).unwrap().as_str().to_string())
+}
+
+impl Sheet {
+    pub fn trim_pos(&self, pos: &Vec2I) -> Vec2I {
+        self.trimmed.as_ref().map_or_else(
+            || *pos,
+            |trimmed| pos + &Vec2I::new(trimmed.sprite_source_size.x, trimmed.sprite_source_size.y))
     }
 }

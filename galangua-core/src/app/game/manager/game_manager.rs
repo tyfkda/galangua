@@ -9,8 +9,8 @@ use crate::app::game::enemy::Accessor as AccessorForEnemy;
 use crate::app::game::enemy::{Enemy, FormationIndex};
 use crate::app::game::player::Accessor as AccessorForPlayer;
 use crate::app::game::player::{MyShot, Player};
+use crate::app::util::collision::Collidable;
 use crate::app::util::unsafe_util::peep;
-use crate::app::util::Collidable;
 use crate::framework::types::Vec2I;
 use crate::framework::{RendererTrait, SystemTrait};
 use crate::util::math::ONE;
@@ -197,7 +197,7 @@ impl GameManager {
 
     fn update_common<S: SystemTrait>(&mut self, params: &mut Params, system: &mut S) {
         self.update_player(params);
-        self.update_myshot();
+        self.update_myshots();
         self.update_enemies();
         self.update_effects();
 
@@ -216,7 +216,7 @@ impl GameManager {
         self.player.update(params.pad, accessor);
     }
 
-    fn update_myshot(&mut self) {
+    fn update_myshots(&mut self) {
         for myshot_opt in self.myshots.iter_mut().filter(|x| x.is_some()) {
             let myshot = myshot_opt.as_mut().unwrap();
             if !myshot.update() {
@@ -347,13 +347,11 @@ impl GameManager {
                 EventType::SpawnCapturedFighter(pos, formation_index) => {
                     self.enemy_manager.spawn_captured_fighter(&pos, &formation_index);
                 }
-                EventType::RecapturePlayer(captured_fighter_index) => {
-                    if let Some(captured_fighter) = self.enemy_manager.get_enemy_at(
-                        &captured_fighter_index)
-                    {
+                EventType::RecapturePlayer(fi, angle) => {
+                    if let Some(captured_fighter) = self.enemy_manager.get_enemy_at(&fi) {
                         let pos = captured_fighter.pos();
-                        self.player.start_recapture_effect(&pos);
-                        self.enemy_manager.remove_enemy(&captured_fighter_index);
+                        self.player.start_recapture_effect(&pos, angle);
+                        self.enemy_manager.remove_enemy(&fi);
                         self.enemy_manager.pause_attack(true);
                         self.state = GameState::Recapturing;
                         self.capture_state = CaptureState::Recapturing;

@@ -11,7 +11,7 @@ use crate::app::game::effect::to_earned_point_type;
 use crate::app::game::enemy::ene_shot::EneShot;
 use crate::app::game::enemy::enemy::{create_enemy, Enemy};
 use crate::app::game::enemy::{Accessor, EnemyType, FormationIndex};
-use crate::app::util::{CollBox, Collidable};
+use crate::app::util::collision::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
@@ -96,14 +96,11 @@ impl EnemyManager {
     }
 
     pub fn check_collision(&mut self, target: &CollBox) -> Option<FormationIndex> {
-        for enemy in self.enemies.iter_mut().flat_map(|x| x) {
-            if let Some(colbox) = enemy.get_collbox() {
-                if colbox.check_collision(target) {
-                    return Some(*enemy.formation_index());
-                }
-            }
-        }
-        return None;
+        self.enemies.iter().flat_map(|x| x)
+            .find_map(|enemy|
+                enemy.get_collbox().map(|colbox| (colbox, enemy))
+                    .filter(|(colbox, _enemy)| colbox.check_collision(target))
+                    .map(|(_colbox, enemy)| *enemy.formation_index()))
     }
 
     pub fn set_damage_to_enemy<T: Accessor>(
@@ -130,17 +127,14 @@ impl EnemyManager {
     }
 
     pub fn check_shot_collision(&mut self, target: &CollBox) -> Option<Vec2I> {
-        for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
-            let shot = shot_opt.as_mut().unwrap();
-            if let Some(colbox) = shot.get_collbox() {
-                if colbox.check_collision(target) {
-                    let pos = *shot.pos();
-                    *shot_opt = None;
-                    return Some(pos);
-                }
-            }
-        }
-        return None;
+        self.shots.iter_mut().filter(|x| x.is_some())
+            .find_map(|shot_opt| {
+                shot_opt.as_mut().unwrap().get_collbox()
+                    .filter(|colbox| colbox.check_collision(target))
+                    .map(|_colbox| {
+                        *shot_opt.take().unwrap().pos()
+                    })
+            })
     }
 
     fn update_appearance(&mut self) {

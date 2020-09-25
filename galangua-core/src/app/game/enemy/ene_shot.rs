@@ -1,5 +1,5 @@
 use crate::app::consts::*;
-use crate::app::util::{CollBox, Collidable};
+use crate::app::util::collision::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{round_vec, ONE};
@@ -43,6 +43,6 @@ impl Collidable for EneShot {
 }
 
 fn out_of_screen(pos: &Vec2I) -> bool {
-    pos.x < -16 * ONE || pos.x > (WIDTH + 16) * ONE
-        || pos.y < -16 * ONE || pos.y > (HEIGHT + 16) * ONE
+    pos.x < -16 * ONE || pos.x > (WIDTH + 16) * ONE ||
+        pos.y < -16 * ONE || pos.y > (HEIGHT + 16) * ONE
 }

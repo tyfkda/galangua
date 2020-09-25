@@ -4,23 +4,23 @@ use crate::app::game::enemy::traj_command::TrajCommand;
 use crate::app::game::enemy::traj_command_table::*;
 use crate::app::game::enemy::{EnemyType, FormationIndex};
 
-const fn pos(x: u8, y: u8) -> FormationIndex { FormationIndex(x, y) }
+const fn p(x: u8, y: u8) -> FormationIndex { FormationIndex(x, y) }
 
 pub(super) const ORDER: [FormationIndex; 40] = [
-    pos(4, 2), pos(5, 2), pos(4, 3), pos(5, 3),
-    pos(4, 4), pos(5, 4), pos(4, 5), pos(5, 5),
+    p(4, 2), p(5, 2), p(4, 3), p(5, 3),
+    p(4, 4), p(5, 4), p(4, 5), p(5, 5),
 
-    pos(3, 1), pos(4, 1), pos(5, 1), pos(6, 1),
-    pos(3, 2), pos(6, 2), pos(3, 3), pos(6, 3),
+    p(3, 1), p(4, 1), p(5, 1), p(6, 1),
+    p(3, 2), p(6, 2), p(3, 3), p(6, 3),
 
-    pos(8, 2), pos(7, 2), pos(8, 3), pos(7, 3),
-    pos(1, 2), pos(2, 2), pos(1, 3), pos(2, 3),
+    p(8, 2), p(7, 2), p(8, 3), p(7, 3),
+    p(1, 2), p(2, 2), p(1, 3), p(2, 3),
 
-    pos(7, 4), pos(6, 4), pos(7, 5), pos(6, 5),
-    pos(3, 4), pos(2, 4), pos(3, 5), pos(2, 5),
+    p(7, 4), p(6, 4), p(7, 5), p(6, 5),
+    p(3, 4), p(2, 4), p(3, 5), p(2, 5),
 
-    pos(9, 4), pos(8, 4), pos(9, 5), pos(8, 5),
-    pos(0, 4), pos(1, 4), pos(0, 5), pos(1, 5),
+    p(9, 4), p(8, 4), p(9, 5), p(8, 5),
+    p(0, 4), p(1, 4), p(0, 5), p(1, 5),
 ];
 
 pub(super) const ENEMY_TYPE_TABLE: [EnemyType; 2 * 5] = [

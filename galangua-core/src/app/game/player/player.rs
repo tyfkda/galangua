@@ -1,15 +1,17 @@
 use crate::app::consts::*;
 use crate::app::game::manager::EventType;
-use crate::app::util::{CollBox, Collidable};
+use crate::app::util::collision::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
-use crate::util::math::{clamp, quantize_angle, round_vec, ANGLE, ONE};
+use crate::util::math::{calc_velocity, clamp, quantize_angle, round_vec, ANGLE, ONE};
 use crate::util::pad::{Pad, PadBit};
 
 use super::recaptured_fighter::RecapturedFighter;
 use super::Accessor;
 
 const Y_POSITION: i32 = HEIGHT - 16 - 8;
+const SPRITE_NAME: &str = "rustacean";
+const SPRITE_NAME_CAPTURED: &str = "rustacean_captured";
 
 #[derive(PartialEq)]
 enum State {
@@ -56,12 +58,8 @@ impl Player {
 
     pub fn update<A: Accessor>(&mut self, pad: &Pad, accessor: &mut A) {
         match self.state {
-            State::Normal => {
-                self.update_normal(pad, accessor);
-            }
-            State::Capturing => {
-                self.update_capture(pad, accessor);
-            }
+            State::Normal => self.update_normal(pad, accessor),
+            State::Capturing => self.update_capture(pad, accessor),
             State::EscapeCapturing => {
                 const D: i32 = 1 * ONE;
                 self.pos.y += D;
@@ -133,7 +131,7 @@ impl Player {
 
     fn fire_bullet<A: Accessor>(&mut self, pad: &Pad, accessor: &mut A) {
         if self.shot_enable && pad.is_trigger(PadBit::A) {
-            let pos = &self.pos + &Vec2I::new(0, -4 * ONE);
+            let pos = &self.pos + &calc_velocity(self.angle, 4 * ONE);
             accessor.push_event(EventType::MyShot(pos, self.dual, self.angle));
         }
     }
@@ -142,19 +140,19 @@ impl Player {
         match self.state {
             State::Normal | State::EscapeCapturing | State::MoveHomePos => {
                 let pos = round_vec(&self.pos);
-                renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8, -8)));
+                renderer.draw_sprite(SPRITE_NAME, &(&pos + &Vec2I::new(-8, -8)));
                 if self.dual {
-                    renderer.draw_sprite("rustacean", &(&pos + &Vec2I::new(-8 + 16, -8)));
+                    renderer.draw_sprite(SPRITE_NAME, &(&pos + &Vec2I::new(-8 + 16, -8)));
                 }
             }
             State::Capturing => {
                 let pos = round_vec(&self.pos);
                 let angle = quantize_angle(self.angle, ANGLE_DIV);
-                renderer.draw_sprite_rot("rustacean", &(&pos + &Vec2I::new(-8, -8)), angle, None);
+                renderer.draw_sprite_rot(SPRITE_NAME, &(&pos + &Vec2I::new(-8, -8)), angle, None);
             }
             State::Captured => {
                 let pos = round_vec(&self.pos);
-                renderer.draw_sprite("rustacean_captured", &(&pos + &Vec2I::new(-8, -8)));
+                renderer.draw_sprite(SPRITE_NAME_CAPTURED, &(&pos + &Vec2I::new(-8, -8)));
             }
             State::CaptureCompleted | State::Dead => {}
         }
@@ -220,8 +218,8 @@ impl Player {
         self.angle = 0;
     }
 
-    pub fn start_recapture_effect(&mut self, pos: &Vec2I) {
-        self.recaptured_fighter = Some(RecapturedFighter::new(pos));
+    pub fn start_recapture_effect(&mut self, pos: &Vec2I, angle: i32) {
+        self.recaptured_fighter = Some(RecapturedFighter::new(pos, angle));
     }
 
     pub fn start_move_home_pos(&mut self) {

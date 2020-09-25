@@ -3,7 +3,7 @@ use super::traj::Traj;
 use super::zako::{Zako, ZakoState};
 use super::{Accessor, DamageResult, EnemyType, FormationIndex};
 
-use crate::app::util::Collidable;
+use crate::app::util::collision::Collidable;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 
@@ -16,6 +16,7 @@ pub trait Enemy: Collidable {
 
     fn pos(&self) -> &Vec2I;
     fn set_pos(&mut self, pos: &Vec2I);
+    fn angle(&self) -> i32;
 
     fn is_formation(&self) -> bool;
 

@@ -4,11 +4,11 @@ use crate::framework::VKey;
 
 bitflags! {
     pub struct PadBit: u32 {
-        const L      = 0b00000001;
-        const R      = 0b00000010;
-        const U      = 0b00000100;
-        const D      = 0b00001000;
-        const A      = 0b00010000;
+        const L = 0b00000001;
+        const R = 0b00000010;
+        const U = 0b00000100;
+        const D = 0b00001000;
+        const A = 0b00010000;
     }
 }
 

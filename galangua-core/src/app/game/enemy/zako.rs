@@ -8,7 +8,7 @@ use super::{Accessor, DamageResult, EnemyType, FormationIndex};
 use crate::app::consts::*;
 use crate::app::game::manager::formation::Y_COUNT;
 use crate::app::game::manager::EventType;
-use crate::app::util::{CollBox, Collidable};
+use crate::app::util::collision::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::framework::RendererTrait;
 use crate::util::math::{quantize_angle, round_vec};
@@ -40,7 +40,7 @@ const VTABLE: [Vtable; 4] = [
 ];
 
 #[derive(Clone, Copy, PartialEq)]
-pub(super) enum ZakoAttackPhase {
+pub(super) enum ZakoAttackType {
     BeeAttack,
     Traj,
 }
@@ -52,7 +52,7 @@ pub(super) enum ZakoState {
     MoveToFormation,
     Assault(u32),
     Formation,
-    Attack(ZakoAttackPhase),
+    Attack(ZakoAttackType),
     Troop,
 }
 
@@ -105,10 +105,10 @@ impl Zako {
                 self.set_state(ZakoState::Assault(phase));
             }
             ZakoState::Formation => { self.info.update_formation(accessor); }
-            ZakoState::Attack(phase) => {
-                match phase {
-                    ZakoAttackPhase::BeeAttack => { self.update_bee_attack(accessor) }
-                    ZakoAttackPhase::Traj => { self.update_attack_traj(accessor); }
+            ZakoState::Attack(t) => {
+                match t {
+                    ZakoAttackType::BeeAttack => self.update_bee_attack(accessor),
+                    ZakoAttackType::Traj => self.update_attack_traj(accessor),
                 }
             }
         }
@@ -124,7 +124,7 @@ impl Zako {
                 traj.set_pos(&self.info.pos);
 
                 self.base.traj = Some(traj);
-                self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
+                self.set_state(ZakoState::Attack(ZakoAttackType::Traj));
             } else {
                 self.set_state(ZakoState::MoveToFormation);
             }
@@ -157,7 +157,7 @@ impl Zako {
         self.base.count = 0;
         self.base.attack_frame_count = 0;
         self.base.traj = Some(traj);
-        self.set_state(ZakoState::Attack(ZakoAttackPhase::BeeAttack));
+        self.set_state(ZakoState::Attack(ZakoAttackType::BeeAttack));
     }
 
     fn set_butterfly_attack(&mut self) {
@@ -169,7 +169,7 @@ impl Zako {
         self.base.count = 0;
         self.base.attack_frame_count = 0;
         self.base.traj = Some(traj);
-        self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
+        self.set_state(ZakoState::Attack(ZakoAttackType::Traj));
     }
 
     fn set_captured_fighter_attack(&mut self) {
@@ -180,7 +180,7 @@ impl Zako {
         self.base.count = 0;
         self.base.attack_frame_count = 0;
         self.base.traj = Some(traj);
-        self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
+        self.set_state(ZakoState::Attack(ZakoAttackType::Traj));
     }
 
     //// set_damage
@@ -238,6 +238,7 @@ impl Enemy for Zako {
 
     fn pos(&self) -> &Vec2I { &self.info.pos }
     fn set_pos(&mut self, pos: &Vec2I) { self.info.pos = *pos; }
+    fn angle(&self) -> i32 { self.info.angle }
 
     fn is_formation(&self) -> bool { self.state == ZakoState::Formation }
 
@@ -284,6 +285,6 @@ impl Enemy for Zako {
     #[cfg(debug_assertions)]
     fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
         self.base.set_table_attack(&mut self.info, traj_command_vec, flip_x);
-        self.set_state(ZakoState::Attack(ZakoAttackPhase::Traj));
+        self.set_state(ZakoState::Attack(ZakoAttackType::Traj));
     }
 }

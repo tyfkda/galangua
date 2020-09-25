@@ -86,16 +86,15 @@ impl AttackManager {
 
     fn pick_attacker<A: Accessor>(&mut self, accessor: &mut A) -> Option<(FormationIndex, bool)> {
         let candidates = self.enum_sides(accessor);
-        let fi = match self.cycle % 3 {
+        match self.cycle % 3 {
             2 => {
                 self.pick_random(&candidates, &mut [1])
-                    .or_else(|| self.pick_captured_fighter(accessor))
+                    .or_else(|| self.pick_captured_fighter_as_attacker(accessor))
             }
             0 | 1 | _ => {
                 self.pick_random(&candidates, &mut [2, 3, 4, 5])
             }
-        };
-        if let Some(fi) = fi {
+        }.map(|fi| {
             let enemy = {
                 let accessor = unsafe { peep(accessor) };
                 accessor.get_enemy_at_mut(&fi).unwrap()
@@ -106,63 +105,48 @@ impl AttackManager {
                 accessor.capture_state() == CaptureState::NoCapture;
             enemy.set_attack(capture_attack, accessor);
 
-            Some((fi, capture_attack))
-        } else {
-            None
-        }
+            (fi, capture_attack)
+        })
     }
 
     fn pick_random(&mut self, candidates: &[Option<[u8; 2]>; Y_COUNT], rows: &mut [u32]) -> Option<FormationIndex> {
         let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
         rows.shuffle(&mut rng);
-        for &row in rows.iter() {
-            if let Some(pos) = candidates[row as usize] {
+        rows.iter()
+            .find_map(|&row| candidates[row as usize].map(|pos| (pos, row)))
+            .map(|(pos, row)| {
                 let index = rng.gen_range(0, 2);
-                return Some(FormationIndex(pos[index], row as u8));
-            }
-        }
-        None
+                FormationIndex(pos[index], row as u8)
+            })
     }
 
     fn enum_sides<A: Accessor>(&mut self, accessor: &mut A) -> [Option<[u8; 2]>; Y_COUNT] {
         array![|i| {
-            let left = (0..X_COUNT).find_map(|j| {
+            let is_formation = |j| -> Option<usize> {
                 let fi = FormationIndex(j as u8, i as u8);
-                if let Some(enemy) = accessor.get_enemy_at(&fi) {
-                    if enemy.is_formation() {
-                        return Some(j);
-                    }
-                }
-                None
-            });
+                accessor.get_enemy_at(&fi)
+                    .filter(|enemy| enemy.is_formation())
+                    .map(|_| j)
+            };
 
-            if let Some(l) = left {
-                let r = ((l as usize)..X_COUNT).rev().find_map(|j| {
-                    let fi = FormationIndex(j as u8, i as u8);
-                    if let Some(enemy) = accessor.get_enemy_at(&fi) {
-                        if enemy.is_formation() {
-                            return Some(j);
-                        }
-                    }
-                    None
-                }).unwrap_or(l);
-                Some([l as u8, r as u8])
-            } else {
-                None
-            }
+            (0..X_COUNT)
+                .find_map(is_formation)
+                .map(|l| {
+                    let r = ((l as usize)..X_COUNT).rev()
+                        .find_map(is_formation)
+                        .unwrap_or(l);
+                    [l as u8, r as u8]
+                })
         }; Y_COUNT]
     }
 
-    fn pick_captured_fighter<A: Accessor>(&mut self, accessor: &mut A) -> Option<FormationIndex> {
-        accessor.captured_fighter_index().and_then(|fi| {
-            if let Some(captured_fighter) = accessor.get_enemy_at(&fi) {
-                if captured_fighter.is_formation() &&
-                    accessor.get_enemy_at(&FormationIndex(fi.0, fi.1 + 1)).is_none()
-                {
-                    return Some(fi);
-                }
-            }
-            None
-        })
+    fn pick_captured_fighter_as_attacker<A: Accessor>(&mut self, accessor: &mut A) -> Option<FormationIndex> {
+        accessor.captured_fighter_index()
+            .and_then(|fi| accessor.get_enemy_at(&fi)
+                .map(|c| (c, fi)))  // TODO: use Option.zip.
+            .filter(|(cap, fi)|
+                cap.is_formation() &&
+                    accessor.get_enemy_at(&FormationIndex(fi.0, fi.1 + 1)).is_none())
+            .map(|(_cap, fi)| fi)
     }
 }

@@ -12,7 +12,7 @@ use crate::app::util::unsafe_util::extend_lifetime;
 // Trajectory
 pub struct Traj {
     pos: Vec2I,
-    angle: i32,
+    pub angle: i32,
     pub speed: i32,
     pub vangle: i32,
     offset: Vec2I,
@@ -30,8 +30,9 @@ pub struct Traj {
 }
 
 impl Traj {
-    pub fn new(command_table: &'static [TrajCommand], offset: &Vec2I, flip_x: bool,
-               fi: FormationIndex,
+    pub fn new(
+        command_table: &'static [TrajCommand], offset: &Vec2I, flip_x: bool,
+        fi: FormationIndex,
     ) -> Self {
         let offset = if flip_x { Vec2I::new(-offset.x, offset.y) } else { *offset };
         Self {
@@ -55,8 +56,9 @@ impl Traj {
     }
 
     #[cfg(debug_assertions)]
-    pub fn new_with_vec(command_table_vec: Vec<TrajCommand>, offset: &Vec2I, flip_x: bool,
-                        fi: FormationIndex,
+    pub fn new_with_vec(
+        command_table_vec: Vec<TrajCommand>, offset: &Vec2I, flip_x: bool,
+        fi: FormationIndex,
     ) -> Self {
         // command_table is owned by vec, so it lives as long as self and not worry about that.
         let command_table = unsafe { extend_lifetime(&command_table_vec) };
@@ -79,17 +81,8 @@ impl Traj {
         self.pos = pos.clone();
     }
 
-    pub fn angle(&self) -> i32 {
-        self.angle
-    }
-
     pub fn is_shot(&mut self) -> Option<u32> {
-        if let Some(shot) = self.shot {
-            self.shot = None;
-            Some(shot)
-        } else {
-            None
-        }
+        self.shot.take()
     }
 
     pub fn update(&mut self, accessor: &dyn Accessor) -> bool {

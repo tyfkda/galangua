@@ -1,8 +1,10 @@
 use crate::app::consts::*;
-use crate::app::util::{CollBox, Collidable};
+use crate::app::util::collision::{CollBox, Collidable};
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{calc_velocity, quantize_angle, round_vec, ONE};
+
+const SPRITE_NAME: &str = "myshot";
 
 pub struct MyShot {
     pos: Vec2I,
@@ -20,31 +22,26 @@ impl MyShot {
     }
 
     pub fn update(&mut self) -> bool {
-        let margin = 4;
-        let top = -margin * ONE;
         if self.angle == 0 {
             self.pos.y -= MYSHOT_SPEED;
-            self.pos.y > top
         } else {
-            let left = -margin * ONE;
-            let right = (WIDTH + margin) * ONE;
-            let bottom = (HEIGHT + margin) * ONE;
             self.pos += &calc_velocity(self.angle, MYSHOT_SPEED);
-            self.pos.y > top && self.pos.x > left && self.pos.x < right && self.pos.y < bottom
         }
+        !out_of_screen(&self.pos)
     }
 
     pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         let pos = round_vec(&self.pos);
         if self.angle == 0 {
-            renderer.draw_sprite("myshot", &(&pos + &Vec2I::new(-2, -4)));
+            renderer.draw_sprite(SPRITE_NAME, &(&pos + &Vec2I::new(-2, -4)));
             if self.dual {
-                renderer.draw_sprite("myshot", &(&pos + &Vec2I::new(-2 + 16, -4)));
+                renderer.draw_sprite(SPRITE_NAME, &(&pos + &Vec2I::new(-2 + 16, -4)));
             }
         } else {
             assert!(!self.dual);
-            renderer.draw_sprite_rot("myshot", &(&pos + &Vec2I::new(-2, -4)),
-                                     quantize_angle(self.angle, ANGLE_DIV), None);
+            renderer.draw_sprite_rot(
+                SPRITE_NAME, &(&pos + &Vec2I::new(-2, -4)),
+                quantize_angle(self.angle, ANGLE_DIV), None);
         }
     }
 
@@ -58,6 +55,15 @@ impl MyShot {
             None
         }
     }
+}
+
+fn out_of_screen(pos: &Vec2I) -> bool {
+    const MARGIN: i32 = 4;
+    const TOP: i32 = -MARGIN * ONE;
+    const LEFT: i32 = -MARGIN * ONE;
+    const RIGHT: i32 = (WIDTH + MARGIN) * ONE;
+    const BOTTOM: i32 = (HEIGHT + MARGIN) * ONE;
+    pos.y < TOP || pos.x < LEFT || pos.x > RIGHT || pos.y > BOTTOM
 }
 
 impl Collidable for MyShot {

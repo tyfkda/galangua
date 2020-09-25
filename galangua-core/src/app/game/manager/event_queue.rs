@@ -50,7 +50,7 @@ pub enum EventType {
     CapturePlayerCompleted,
     CaptureSequenceEnded,
     SpawnCapturedFighter(Vec2I, FormationIndex),
-    RecapturePlayer(FormationIndex),
+    RecapturePlayer(FormationIndex, i32),
     MovePlayerHomePos,
     RecaptureEnded(bool),  // dual succeeded? (false when player died during recapturing)
     EscapeCapturing,

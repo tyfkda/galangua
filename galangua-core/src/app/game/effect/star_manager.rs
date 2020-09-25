@@ -96,7 +96,7 @@ impl StarManager {
             self.scroll_vel = 0;
         } else {
             self.state = State::Normal;
-        };
+        }
     }
 }
 
@@ -113,5 +113,5 @@ fn choose_random_color<T: Rng>(rng: &mut T) -> u32 {
     let r = c % 4;
     let g = (c / 4) % 4;
     let b = c / 16;
-    return (COLOR_TABLE[r] << 16) | (COLOR_TABLE[g] << 8) | COLOR_TABLE[b];
+    (COLOR_TABLE[r] << 16) | (COLOR_TABLE[g] << 8) | COLOR_TABLE[b]
 }

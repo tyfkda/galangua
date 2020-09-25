@@ -74,11 +74,7 @@ impl RendererTrait for SdlRenderer {
     fn draw_sprite(&mut self, sprite_name: &str, pos: &Vec2I) {
         let (sheet, tex_name) = self.sprite_sheet.get(sprite_name)
             .expect("No sprite");
-        let mut pos = *pos;
-        if let Some(trimmed) = &sheet.trimmed {
-            pos.x += trimmed.sprite_source_size.x;
-            pos.y += trimmed.sprite_source_size.y;
-        }
+        let pos = sheet.trim_pos(pos);
 
         let texture = self.texture_manager.get(tex_name)
             .expect("No texture");
@@ -95,11 +91,7 @@ impl RendererTrait for SdlRenderer {
                        center: Option<&Vec2I>) {
         let (sheet, tex_name) = self.sprite_sheet.get(sprite_name)
             .expect("No sprite");
-        let mut pos = *pos;
-        if let Some(trimmed) = &sheet.trimmed {
-            pos.x += trimmed.sprite_source_size.x;
-            pos.y += trimmed.sprite_source_size.y;
-        }
+        let pos = sheet.trim_pos(pos);
 
         let texture = self.texture_manager.get(tex_name)
             .expect("No texture");

@@ -196,10 +196,7 @@ impl AppearanceManager {
                 div = 2;
             }
 
-            _ => {
-                self.done = true;
-                div = 1;
-            }
+            _ => { panic!("Illegal"); }
         }
 
         if assault_count > 0 {
