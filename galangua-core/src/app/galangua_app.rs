@@ -148,11 +148,11 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
                 if self.frame_count & 32 == 0 {
                     renderer.draw_str("font", 2 * 8, 25 * 8, "PRESS SPACE KEY TO START");
                 }
-                draw_scores(renderer, &self.score_holder, true);
+                self.score_holder.draw(renderer, true);
             }
             AppState::Game => {
                 self.game_manager.as_mut().unwrap().draw(renderer);
-                draw_scores(renderer, &self.score_holder, (self.frame_count & 31) < 16);
+                self.score_holder.draw(renderer, (self.frame_count & 31) < 16);
             }
             #[cfg(debug_assertions)]
             AppState::EditTraj => {
@@ -232,19 +232,4 @@ impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaAp
 
         self.fps_calc.update();
     }
-}
-
-fn draw_scores<R: RendererTrait>(renderer: &mut R, score_holder: &ScoreHolder, show_1up: bool) {
-    renderer.set_texture_color_mod("font", 255, 0, 0);
-    if show_1up {
-        renderer.draw_str("font", 2 * 8, 0 * 8, "1UP");
-    }
-    renderer.draw_str("font", 9 * 8, 0 * 8, "HIGH SCORE");
-    renderer.set_texture_color_mod("font", 255, 255, 255);
-
-    const MAX_DISP_SCORE: u32 = 9999999;
-    let score = std::cmp::min(score_holder.score, MAX_DISP_SCORE);
-    renderer.draw_str("font", 0 * 8, 1 * 8, &format!("{:6}0", score / 10));
-    let high_score = std::cmp::min(score_holder.high_score, MAX_DISP_SCORE);
-    renderer.draw_str("font", 10 * 8, 1 * 8, &format!("{:6}0", high_score / 10));
 }
