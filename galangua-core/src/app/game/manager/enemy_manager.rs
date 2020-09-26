@@ -20,11 +20,12 @@ const MAX_ENEMY_COUNT: usize = 70;
 const MAX_SHOT_COUNT: usize = 12;
 const RUSH_THRESHOLD: u32 = 5;
 
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 enum StageState {
     APPEARANCE,
     NORMAL,
     RUSH,
+    CLEARED,
 }
 
 pub struct EnemyManager {
@@ -68,7 +69,7 @@ impl EnemyManager {
     }
 
     pub fn all_destroyed(&self) -> bool {
-        self.appearance_manager.done && self.alive_enemy_count == 0 &&
+        self.stage_state == StageState::CLEARED &&
             self.shots.iter().all(|x| x.is_none())
     }
 
@@ -145,9 +146,7 @@ impl EnemyManager {
         if !prev_done && self.appearance_manager.done {
             self.stage_state = StageState::NORMAL;
             self.formation.done_appearance();
-            if self.alive_enemy_count <= RUSH_THRESHOLD {
-                self.stage_state = StageState::RUSH;
-            }
+            self.check_stage_state();
             self.attack_manager.set_enable(true);
         }
     }
@@ -203,8 +202,21 @@ impl EnemyManager {
 
     fn decrement_alive_enemy(&mut self) {
         self.alive_enemy_count -= 1;
-        if self.alive_enemy_count <= RUSH_THRESHOLD && self.appearance_manager.done {
-            self.stage_state = StageState::RUSH;
+        self.check_stage_state();
+    }
+
+    fn check_stage_state(&mut self) {
+        if self.stage_state == StageState::APPEARANCE {
+            return;
+        }
+
+        let new_state = match self.alive_enemy_count {
+            n if n == 0               => StageState::CLEARED,
+            n if n <= RUSH_THRESHOLD  => StageState::RUSH,
+            _                         => self.stage_state,
+        };
+        if new_state != self.stage_state {
+            self.stage_state = new_state;
         }
     }
 
