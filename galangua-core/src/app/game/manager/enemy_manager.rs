@@ -191,7 +191,6 @@ impl EnemyManager {
     }
 
     fn update_enemies<T: Accessor>(&mut self, accessor: &mut T) {
-        //for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
         for i in 0..self.enemies.len() {
             if let Some(enemy) = self.enemies[i].as_mut() {
                 if !enemy.update(accessor) {
