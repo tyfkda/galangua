@@ -170,15 +170,15 @@ impl EnemyManager {
     }
 
     pub fn remove_enemy(&mut self, formation_index: &FormationIndex) -> bool {
-        if let Some(slot) = self.enemies.iter_mut().filter(|x| x.is_some())
-            .find(|x| *x.as_ref().unwrap().formation_index() == *formation_index)
-        {
-            *slot = None;
-            self.decrement_alive_enemy();
-            true
-        } else {
-            false
+        let index = calc_array_index(formation_index);
+        let slot = &mut self.enemies[index];
+        if slot.is_none() {
+            return false;
         }
+        assert!(*slot.as_ref().unwrap().formation_index() == *formation_index);
+        *slot = None;
+        self.decrement_alive_enemy();
+        true
     }
 
     fn update_formation(&mut self) {
