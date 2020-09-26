@@ -20,7 +20,7 @@ const APP_NAME: &str = "Galangua";
 
 pub fn main() -> Result<(), String> {
     let matches = clap::App::new(APP_NAME)
-        .version("0.1.0")
+        .version("0.9.1")
         .about("2D shoot'em up game, writen in Rust.
   Move the fighter : Arrow keys (left or right)
   Shoot a bullet   : Space bar
