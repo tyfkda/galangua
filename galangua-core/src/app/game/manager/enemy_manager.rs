@@ -304,5 +304,5 @@ impl EnemyManager {
 }
 
 fn calc_array_index(fi: &FormationIndex) -> usize {
-    (fi.0 + fi.1 * 10) as usize  // Caution!
+    (fi.0 as usize) + (fi.1 as usize) * super::formation::X_COUNT
 }
