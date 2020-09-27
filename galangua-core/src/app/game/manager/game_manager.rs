@@ -1,6 +1,6 @@
-use super::enemy_manager::EnemyManager;
 use super::event_queue::EventQueue;
 use super::score_holder::ScoreHolder;
+use super::stage::stage_manager::StageManager;
 use super::{CaptureState, EventType};
 
 use crate::app::consts::*;
@@ -50,7 +50,7 @@ pub struct GameManager {
     stage_indicator: StageIndicator,
     player: Player,
     myshots: [Option<MyShot>; MYSHOT_COUNT],
-    enemy_manager: EnemyManager,
+    stage_manager: StageManager,
     effects: [Option<Effect>; MAX_EFFECT_COUNT],
     event_queue: EventQueue,
     stage: u16,
@@ -71,7 +71,7 @@ impl GameManager {
             stage_indicator,
             player: Player::new(),
             myshots: Default::default(),
-            enemy_manager: EnemyManager::new(),
+            stage_manager: StageManager::new(),
             event_queue: EventQueue::new(),
             effects: Default::default(),
 
@@ -83,8 +83,8 @@ impl GameManager {
     }
 
     #[cfg(debug_assertions)]
-    pub fn enemy_manager_mut(&mut self) -> &mut EnemyManager {
-        &mut self.enemy_manager
+    pub fn stage_manager_mut(&mut self) -> &mut StageManager {
+        &mut self.stage_manager
     }
 
     #[cfg(debug_assertions)]
@@ -92,7 +92,7 @@ impl GameManager {
         self.stage = 0;
         self.stage_indicator.set_stage(self.stage + 1);
 
-        self.enemy_manager.reset_stable();
+        self.stage_manager.reset_stable();
         self.event_queue.clear();
         self.player = Player::new();
 
@@ -119,12 +119,12 @@ impl GameManager {
                     } else {
                         None
                     };
-                    self.enemy_manager.start_next_stage(self.stage, captured_fighter);
+                    self.stage_manager.start_next_stage(self.stage, captured_fighter);
                     self.state = GameState::Playing;
                 }
             }
             GameState::Playing => {
-                if self.enemy_manager.all_destroyed() {
+                if self.stage_manager.all_destroyed() {
                     self.state = GameState::StageClear;
                     self.count = 0;
                 }
@@ -141,7 +141,7 @@ impl GameManager {
                 }
             }
             GameState::WaitReady => {
-                if self.enemy_manager.is_no_attacker() {
+                if self.stage_manager.is_no_attacker() {
                     self.count += 1;
                     if self.count >= 60 {
                         self.next_player();
@@ -152,7 +152,7 @@ impl GameManager {
                 self.count += 1;
                 if self.count >= 60 {
                     self.player.set_shot_enable(true);
-                    self.enemy_manager.pause_attack(false);
+                    self.stage_manager.pause_attack(false);
                     params.star_manager.set_stop(false);
                     self.state = GameState::Playing;
                     self.count = 0;
@@ -184,7 +184,7 @@ impl GameManager {
     fn next_player(&mut self) {
         self.left_ship -= 1;
         if self.left_ship == 0 {
-            self.enemy_manager.pause_attack(true);
+            self.stage_manager.pause_attack(true);
             self.state = GameState::GameOver;
             self.count = 0;
         } else {
@@ -227,7 +227,7 @@ impl GameManager {
 
     fn update_enemies(&mut self) {
         let accessor = unsafe { peep(self) };
-        self.enemy_manager.update(accessor);
+        self.stage_manager.update(accessor);
     }
 
     fn update_effects(&mut self) {
@@ -241,7 +241,7 @@ impl GameManager {
 
     pub fn draw<R: RendererTrait>(&mut self, renderer: &mut R) {
         self.player.draw(renderer);
-        self.enemy_manager.draw(renderer);
+        self.stage_manager.draw(renderer);
         for myshot in self.myshots.iter().flat_map(|x| x) {
             myshot.draw(renderer);
         }
@@ -313,7 +313,7 @@ impl GameManager {
                 EventType::DeadPlayer => {
                     params.star_manager.set_stop(true);
                     if self.state != GameState::Recapturing {
-                        self.enemy_manager.pause_attack(true);
+                        self.stage_manager.pause_attack(true);
                         self.state = GameState::PlayerDead;
                         self.count = 0;
                     }
@@ -328,7 +328,7 @@ impl GameManager {
                 }
                 EventType::CapturePlayer(capture_pos) => {
                     params.star_manager.set_capturing(true);
-                    self.enemy_manager.pause_attack(true);
+                    self.stage_manager.pause_attack(true);
                     self.player.start_capture(&capture_pos);
                     self.state = GameState::Capturing;
                     self.capture_state = CaptureState::Capturing;
@@ -344,14 +344,14 @@ impl GameManager {
                     self.next_player();
                 }
                 EventType::SpawnCapturedFighter(pos, formation_index) => {
-                    self.enemy_manager.spawn_captured_fighter(&pos, &formation_index);
+                    self.stage_manager.spawn_captured_fighter(&pos, &formation_index);
                 }
                 EventType::RecapturePlayer(fi, angle) => {
-                    if let Some(captured_fighter) = self.enemy_manager.get_enemy_at(&fi) {
+                    if let Some(captured_fighter) = self.stage_manager.get_enemy_at(&fi) {
                         let pos = captured_fighter.pos();
                         self.player.start_recapture_effect(&pos, angle);
-                        self.enemy_manager.remove_enemy(&fi);
-                        self.enemy_manager.pause_attack(true);
+                        self.stage_manager.remove_enemy(&fi);
+                        self.stage_manager.pause_attack(true);
                         system.play_se(CH_JINGLE, SE_RECAPTURE);
                         self.state = GameState::Recapturing;
                         self.capture_state = CaptureState::Recapturing;
@@ -361,7 +361,7 @@ impl GameManager {
                     self.player.start_move_home_pos();
                 }
                 EventType::RecaptureEnded(dual) => {
-                    self.enemy_manager.pause_attack(false);
+                    self.stage_manager.pause_attack(false);
                     self.capture_state = if dual { CaptureState::Dual } else { CaptureState::NoCapture };
                     self.capture_enemy_fi = FormationIndex(0, 0);
                     params.star_manager.set_stop(false);
@@ -374,7 +374,7 @@ impl GameManager {
                     self.player.escape_capturing();
                 }
                 EventType::EscapeEnded => {
-                    self.enemy_manager.pause_attack(false);
+                    self.stage_manager.pause_attack(false);
                     self.state = GameState::Playing;
                 }
                 EventType::CapturedFighterDestroyed => {
@@ -421,7 +421,7 @@ impl GameManager {
             self.player.dual_pos(),
         ];
         let speed = calc_ene_shot_speed(self.stage);
-        self.enemy_manager.spawn_shot(pos, &player_pos, speed);
+        self.stage_manager.spawn_shot(pos, &player_pos, speed);
     }
 
     fn check_collision(&mut self) {
@@ -445,7 +445,7 @@ impl GameManager {
             ];
             let mut hit = false;
             for collbox in colls.iter().flat_map(|x| x) {
-                if self.enemy_manager.check_collision(collbox, power, accessor) {
+                if self.stage_manager.check_collision(collbox, power, accessor) {
                     hit = true;
                 }
             }
@@ -462,9 +462,9 @@ impl GameManager {
             let dual = i != 0;
             let collbox = if dual { self.player.dual_collbox() } else { self.player.get_collbox() };
             if let Some(collbox) = collbox {
-                let hit = self.enemy_manager.check_collision(
+                let hit = self.stage_manager.check_collision(
                             &collbox, power, accessor) ||
-                    self.enemy_manager.check_shot_collision(&collbox);
+                    self.stage_manager.check_shot_collision(&collbox);
 
                 if hit {
                     let player_pos = if dual { self.player.dual_pos().unwrap() } else { *self.player.pos() };
@@ -491,7 +491,7 @@ impl GameManager {
 
 impl AccessorForPlayer for GameManager {
     fn is_no_attacker(&self) -> bool {
-        self.enemy_manager.is_no_attacker()
+        self.stage_manager.is_no_attacker()
     }
 
     fn push_event(&mut self, event: EventType) {
@@ -536,23 +536,23 @@ impl AccessorForEnemy for GameManager {
     }
 
     fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>> {
-        self.enemy_manager.get_enemy_at(formation_index)
+        self.stage_manager.get_enemy_at(formation_index)
     }
 
     fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Box<dyn Enemy>> {
-        self.enemy_manager.get_enemy_at_mut(formation_index)
+        self.stage_manager.get_enemy_at_mut(formation_index)
     }
 
     fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
-        self.enemy_manager.get_formation_pos(formation_index)
+        self.stage_manager.get_formation_pos(formation_index)
     }
 
     fn pause_enemy_shot(&mut self, wait: u32) {
-        self.enemy_manager.pause_enemy_shot(wait);
+        self.stage_manager.pause_enemy_shot(wait);
     }
 
     fn is_rush(&self) -> bool {
-        self.state == GameState::Playing && self.enemy_manager.is_rush()
+        self.state == GameState::Playing && self.stage_manager.is_rush()
     }
 
     fn get_stage_no(&self) -> u16 {

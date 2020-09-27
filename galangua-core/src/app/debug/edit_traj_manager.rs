@@ -69,8 +69,8 @@ impl EditTrajManager {
     }
 
     pub fn draw<R: RendererTrait>(&mut self, renderer: &mut R, game_manager: &mut GameManager) {
-        let enemy_manager = game_manager.enemy_manager_mut();
-        let pos = &(&enemy_manager.get_formation_pos(&self.fi) / ONE) + &Vec2I::new(-8, -8);
+        let stage_manager = game_manager.stage_manager_mut();
+        let pos = &(&stage_manager.get_formation_pos(&self.fi) / ONE) + &Vec2I::new(-8, -8);
         renderer.set_draw_color(255, 0, 255);
         renderer.fill_rect(Some([&pos, &Vec2I::new(16, 1)]));
         renderer.fill_rect(Some([&pos, &Vec2I::new(1, 16)]));
@@ -86,8 +86,8 @@ impl EditTrajManager {
 
     fn start_attack(&mut self, game_manager: &mut GameManager, capture_attack: bool) {
         let accessor = unsafe { peep(game_manager) };
-        let enemy_manager = game_manager.enemy_manager_mut();
-        if let Some(enemy) = enemy_manager.get_enemy_at_mut(&self.fi) {
+        let stage_manager = game_manager.stage_manager_mut();
+        if let Some(enemy) = stage_manager.get_enemy_at_mut(&self.fi) {
             enemy.start_attack(capture_attack, accessor);
         }
     }
@@ -95,8 +95,8 @@ impl EditTrajManager {
     fn set_traj_attack(&mut self, game_manager: &mut GameManager, no: u32, flip_x: bool) {
         let filename = format!("debug/debug_traj{}.txt", no);
         if let Some(traj_command_vec) = load_traj_command_file(&filename) {
-            let enemy_manager = game_manager.enemy_manager_mut();
-            if let Some(enemy) = enemy_manager.get_enemy_at_mut(&self.fi) {
+            let stage_manager = game_manager.stage_manager_mut();
+            if let Some(enemy) = stage_manager.get_enemy_at_mut(&self.fi) {
                 if self.from_top {
                     let pos = *enemy.pos();
                     enemy.set_pos(&Vec2I::new(pos.x, -16 * ONE));

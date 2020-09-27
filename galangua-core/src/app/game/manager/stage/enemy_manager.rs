@@ -2,43 +2,24 @@ use array_macro::*;
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
-use super::appearance_manager::AppearanceManager;
-use super::appearance_manager::Accessor as AccessorForAppearance;
-use super::attack_manager::AttackManager;
-use super::formation::Formation;
-use super::EventType;
-
 use crate::app::game::effect::to_earned_point_type;
 use crate::app::game::enemy::ene_shot::EneShot;
 use crate::app::game::enemy::enemy::{create_enemy, Enemy};
 use crate::app::game::enemy::{Accessor, EnemyType, FormationIndex};
+use crate::app::game::manager::EventType;
 use crate::app::util::collision::{CollBox, Collidable};
-use crate::app::util::unsafe_util::peep;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
 const MAX_ENEMY_COUNT: usize = 70;
 const MAX_SHOT_COUNT: usize = 12;
-const RUSH_THRESHOLD: u32 = 5;
-
-#[derive(Clone, Copy, PartialEq)]
-enum StageState {
-    APPEARANCE,
-    NORMAL,
-    RUSH,
-    CLEARED,
-}
 
 pub struct EnemyManager {
     enemies: [Option<Box<dyn Enemy>>; MAX_ENEMY_COUNT],
-    alive_enemy_count: u32,
+    pub(super) alive_enemy_count: u32,
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
     shot_paused_count: u32,
-    formation: Formation,
-    appearance_manager: AppearanceManager,
-    attack_manager: AttackManager,
-    stage_state: StageState,
     frame_count: u32,
 }
 
@@ -49,30 +30,20 @@ impl EnemyManager {
             alive_enemy_count: 0,
             shots: Default::default(),
             shot_paused_count: 0,
-            formation: Formation::new(),
-            appearance_manager: AppearanceManager::new(0),
-            attack_manager: AttackManager::new(),
-            stage_state: StageState::APPEARANCE,
             frame_count: 0,
         }
     }
 
-    pub fn start_next_stage(&mut self, stage: u16, captured_fighter: Option<FormationIndex>) {
+    pub fn start_next_stage(&mut self) {
         self.enemies = array![None; MAX_ENEMY_COUNT];
         self.alive_enemy_count = 0;
         self.shots = Default::default();
-
-        self.appearance_manager.restart(stage, captured_fighter);
-        self.formation.restart();
-        self.attack_manager.restart(stage);
         self.shot_paused_count = 0;
-        self.stage_state = StageState::APPEARANCE;
         self.frame_count = 0;
     }
 
     pub fn all_destroyed(&self) -> bool {
-        self.stage_state == StageState::CLEARED &&
-            self.shots.iter().all(|x| x.is_none())
+        self.shots.iter().all(|x| x.is_none())
     }
 
     pub fn update<T: Accessor>(&mut self, accessor: &mut T) {
@@ -81,9 +52,6 @@ impl EnemyManager {
             self.shot_paused_count -= 1;
         }
 
-        self.update_appearance();
-        self.update_formation();
-        self.update_attackers(accessor);
         self.update_enemies(accessor);
         self.update_shots();
     }
@@ -138,23 +106,7 @@ impl EnemyManager {
         false
     }
 
-    fn update_appearance(&mut self) {
-        let prev_done = self.appearance_manager.done;
-        let accessor = unsafe { peep(self) };
-        if let Some(new_borns) = self.appearance_manager.update(accessor) {
-            for enemy in new_borns {
-                self.spawn(enemy);
-            }
-        }
-        if !prev_done && self.appearance_manager.done {
-            self.stage_state = StageState::NORMAL;
-            self.formation.done_appearance();
-            self.check_stage_state();
-            self.attack_manager.set_enable(true);
-        }
-    }
-
-    fn spawn(&mut self, enemy: Box<dyn Enemy>) -> bool {
+    pub fn spawn(&mut self, enemy: Box<dyn Enemy>) -> bool {
         let index = calc_array_index(enemy.formation_index());
         let slot = &mut self.enemies[index];
         if slot.is_none() {
@@ -184,58 +136,6 @@ impl EnemyManager {
         true
     }
 
-    fn update_formation(&mut self) {
-        self.formation.update();
-    }
-
-    fn update_attackers<T: Accessor>(&mut self, accessor: &mut T) {
-        self.attack_manager.update(accessor);
-    }
-
-    fn update_enemies<T: Accessor>(&mut self, accessor: &mut T) {
-        for i in 0..self.enemies.len() {
-            if let Some(enemy) = self.enemies[i].as_mut() {
-                if !enemy.update(accessor) {
-                    self.enemies[i] = None;
-                    self.decrement_alive_enemy();
-                }
-            }
-        }
-    }
-
-    fn decrement_alive_enemy(&mut self) {
-        self.alive_enemy_count -= 1;
-        self.check_stage_state();
-    }
-
-    fn check_stage_state(&mut self) {
-        if self.stage_state == StageState::APPEARANCE {
-            return;
-        }
-
-        let new_state = match self.alive_enemy_count {
-            n if n == 0               => StageState::CLEARED,
-            n if n <= RUSH_THRESHOLD  => StageState::RUSH,
-            _                         => self.stage_state,
-        };
-        if new_state != self.stage_state {
-            self.stage_state = new_state;
-        }
-    }
-
-    fn update_shots(&mut self) {
-        for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
-            let shot = shot_opt.as_mut().unwrap();
-            if !shot.update() {
-                *shot_opt = None;
-            }
-        }
-    }
-
-    pub fn pause_enemy_shot(&mut self, wait: u32) {
-        self.shot_paused_count = wait;
-    }
-
     pub fn spawn_shot(&mut self, pos: &Vec2I, target_pos: &[Option<Vec2I>], speed: i32) {
         if self.shot_paused_count > 0 {
             return;
@@ -257,13 +157,12 @@ impl EnemyManager {
         }
     }
 
-    pub fn pause_attack(&mut self, value: bool) {
-        self.attack_manager.pause(value);
-        self.appearance_manager.pause(value);
+    pub fn pause_enemy_shot(&mut self, wait: u32) {
+        self.shot_paused_count = wait;
     }
 
-    pub fn is_no_attacker(&self) -> bool {
-        self.attack_manager.is_no_attacker()
+    pub fn is_stationary(&self) -> bool {
+        self.enemies.iter().flat_map(|x| x).all(|x| x.is_formation())
     }
 
     pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>> {
@@ -276,46 +175,34 @@ impl EnemyManager {
         self.enemies[index].as_mut()
     }
 
-    pub fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
-        self.formation.pos(formation_index)
+    fn update_enemies<T: Accessor>(&mut self, accessor: &mut T) {
+        for i in 0..self.enemies.len() {
+            if let Some(enemy) = self.enemies[i].as_mut() {
+                if !enemy.update(accessor) {
+                    self.enemies[i] = None;
+                    self.decrement_alive_enemy();
+                }
+            }
+        }
     }
 
-    pub fn is_rush(&self) -> bool {
-        self.stage_state == StageState::RUSH
+    fn update_shots(&mut self) {
+        for shot_opt in self.shots.iter_mut().filter(|x| x.is_some()) {
+            let shot = shot_opt.as_mut().unwrap();
+            if !shot.update() {
+                *shot_opt = None;
+            }
+        }
     }
 
-    // Debug
+    fn decrement_alive_enemy(&mut self) {
+        self.alive_enemy_count -= 1;
+    }
 
     #[cfg(debug_assertions)]
     pub fn reset_stable(&mut self) {
         self.enemies = array![None; MAX_ENEMY_COUNT];
         self.shots = Default::default();
-
-        let stage = 0;
-        self.appearance_manager.restart(stage, None);
-        self.appearance_manager.done = true;
-        self.formation.restart();
-        self.formation.done_appearance();
-        self.attack_manager.restart(stage);
-        self.attack_manager.set_enable(false);
-        self.stage_state = StageState::NORMAL;
-
-        for unit in 0..5 {
-            for i in 0..8 {
-                let index = super::appearance_table::ORDER[unit * 8 + i];
-                let enemy_type = super::appearance_table::ENEMY_TYPE_TABLE[unit * 2 + (i / 4)];
-                let pos = self.formation.pos(&index);
-                let mut enemy = create_enemy(enemy_type, &pos, 0, 0, &index);
-                enemy.set_to_formation();
-                self.spawn(enemy);
-            }
-        }
-    }
-}
-
-impl AccessorForAppearance for EnemyManager {
-    fn is_stationary(&self) -> bool {
-        self.enemies.iter().flat_map(|x| x).all(|x| x.is_formation())
     }
 }
 
