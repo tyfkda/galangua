@@ -6,12 +6,12 @@ use super::appearance_manager::AppearanceManager;
 use super::appearance_manager::Accessor as AccessorForAppearance;
 use super::attack_manager::AttackManager;
 use super::formation::Formation;
-use super::EventType;
 
 use crate::app::game::effect::to_earned_point_type;
 use crate::app::game::enemy::ene_shot::EneShot;
 use crate::app::game::enemy::enemy::{create_enemy, Enemy};
 use crate::app::game::enemy::{Accessor, EnemyType, FormationIndex};
+use crate::app::game::manager::EventType;
 use crate::app::util::collision::{CollBox, Collidable};
 use crate::app::util::unsafe_util::peep;
 use crate::framework::types::Vec2I;

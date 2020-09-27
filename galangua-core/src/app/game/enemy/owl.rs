@@ -6,7 +6,7 @@ use super::traj_command_table::*;
 use super::{Accessor, DamageResult, EnemyType, FormationIndex};
 
 use crate::app::consts::*;
-use crate::app::game::manager::formation::Y_COUNT;
+use crate::app::game::manager::stage::formation::Y_COUNT;
 use crate::app::game::manager::EventType;
 use crate::app::util::collision::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};

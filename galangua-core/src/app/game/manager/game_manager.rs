@@ -1,6 +1,6 @@
 use super::event_queue::EventQueue;
 use super::score_holder::ScoreHolder;
-use super::stage_manager::StageManager;
+use super::stage::stage_manager::StageManager;
 use super::{CaptureState, EventType};
 
 use crate::app::consts::*;
