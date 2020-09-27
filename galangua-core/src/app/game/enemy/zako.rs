@@ -248,6 +248,11 @@ impl Enemy for Zako {
     fn set_damage(&mut self, _power: u32, accessor: &mut dyn Accessor) -> DamageResult {
         accessor.push_event(EventType::EnemyExplosion(
             self.info.pos, self.info.angle, self.enemy_type));
+        if self.enemy_type == EnemyType::CapturedFighter {
+            accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_BOMB_CAPTURED));
+        } else {
+            accessor.push_event(EventType::PlaySe(CH_BOMB, SE_BOMB_ZAKO));
+        }
         match self.enemy_type {
             EnemyType::Bee | EnemyType::Butterfly => self.bee_set_damage(),
             EnemyType::CapturedFighter => self.captured_fighter_set_damage(accessor),

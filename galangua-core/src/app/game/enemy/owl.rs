@@ -194,7 +194,7 @@ impl Owl {
             OwlState::Attack(phase) => {
                 match phase {
                     OwlAttackPhase::Traj => self.update_attack_traj(accessor),
-                    OwlAttackPhase::Capture => self.update_attack_capture(),
+                    OwlAttackPhase::Capture => self.update_attack_capture(accessor),
                     OwlAttackPhase::CaptureBeam => self.update_attack_capture_beam(accessor),
                     OwlAttackPhase::NoCaptureGoOut => self.update_attack_capture_go_out(accessor),
                     OwlAttackPhase::CaptureStart => self.update_attack_capture_start(accessor),
@@ -207,7 +207,7 @@ impl Owl {
         }
     }
 
-    fn update_attack_capture(&mut self) {
+    fn update_attack_capture(&mut self, accessor: &mut dyn Accessor) {
         const DLIMIT: i32 = 4 * ONE;
         let dpos = &self.base.target_pos - &self.info.pos;
         let target_angle = atan2_lut(-dpos.y, dpos.x);
@@ -235,6 +235,7 @@ impl Owl {
             self.info.vangle = 0;
 
             self.tractor_beam = Some(TractorBeam::new(&(&self.info.pos + &Vec2I::new(0, 8 * ONE))));
+            accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_TRACTOR_BEAM1));
 
             self.set_state(OwlState::Attack(OwlAttackPhase::CaptureBeam));
             self.base.count = 0;
@@ -250,6 +251,7 @@ impl Owl {
                     tractor_beam.can_capture(accessor.get_player_pos())
         {
             accessor.push_event(EventType::CapturePlayer(&self.info.pos + &Vec2I::new(0, 16 * ONE)));
+            accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_TRACTOR_BEAM2));
             tractor_beam.start_capture();
             self.capturing_state = CapturingState::BeamTracting;
             self.set_state(OwlState::Attack(OwlAttackPhase::CaptureStart));
@@ -362,6 +364,7 @@ impl Owl {
 
     fn owl_set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult {
         if self.life > power {
+            accessor.push_event(EventType::PlaySe(CH_BOMB, SE_DAMAGE));
             self.life -= power;
             DamageResult { point: 0, keep_alive_as_ghost: false }
         } else {
@@ -393,6 +396,7 @@ impl Owl {
             accessor.pause_enemy_shot(OWL_DESTROY_SHOT_WAIT);
 
             accessor.push_event(EventType::EnemyExplosion(self.info.pos, self.info.angle, EnemyType::Owl));
+            accessor.push_event(EventType::PlaySe(CH_BOMB, SE_BOMB_ZAKO));
 
             DamageResult { point, keep_alive_as_ghost }
         }

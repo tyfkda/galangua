@@ -23,7 +23,12 @@ pub const CH_JINGLE: u32 = 2;
 
 pub const SE_COUNT_STAGE: &str = "assets/audio/se_get_1";
 pub const SE_MYSHOT: &str = "assets/audio/se_pyuun";
-pub const SE_BOMB_ENEMY: &str = "assets/audio/se_zugyan";
+pub const SE_DAMAGE: &str = "assets/audio/se_pow_1";
+pub const SE_BOMB_ZAKO: &str = "assets/audio/se_zugyan";
 pub const SE_BOMB_PLAYER: &str = "assets/audio/se_zugyan";
-pub const SE_EXTEND_SHIP: &str = "assets/audio/jingle_1up";
+pub const SE_BOMB_CAPTURED: &str = "assets/audio/se_gyuin";
 pub const SE_ATTACK_START: &str = "assets/audio/attack_start";
+pub const SE_TRACTOR_BEAM1: &str = "assets/audio/se_pipipi_2";
+pub const SE_TRACTOR_BEAM2: &str = "assets/audio/se_pipipi_1";
+pub const SE_EXTEND_SHIP: &str = "assets/audio/jingle_1up";
+pub const SE_RECAPTURE: &str = "assets/audio/jingle_item01";

@@ -305,7 +305,6 @@ impl GameManager {
                 EventType::EnemyExplosion(pos, angle, enemy_type) => {
                     self.spawn_effect(Effect::create_flash_enemy(&pos, angle, enemy_type));
                     self.spawn_effect(Effect::create_enemy_explosion(&pos));
-                    system.play_se(CH_BOMB, SE_BOMB_ENEMY);
                 }
                 EventType::PlayerExplosion(pos) => {
                     self.spawn_effect(Effect::create_player_explosion(&pos));
@@ -353,6 +352,7 @@ impl GameManager {
                         self.player.start_recapture_effect(&pos, angle);
                         self.enemy_manager.remove_enemy(&fi);
                         self.enemy_manager.pause_attack(true);
+                        system.play_se(CH_JINGLE, SE_RECAPTURE);
                         self.state = GameState::Recapturing;
                         self.capture_state = CaptureState::Recapturing;
                     }
