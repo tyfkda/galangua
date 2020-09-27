@@ -283,6 +283,10 @@ impl GameManager {
         }
     }
 
+    fn do_push_event(&mut self, event: EventType) {
+        self.event_queue.push(event);
+    }
+
     fn handle_event_queue<S: SystemTrait>(&mut self, params: &mut Params, system: &mut S) {
         let mut i = 0;
         while i < self.event_queue.len() {
@@ -494,9 +498,7 @@ impl AccessorForPlayer for GameManager {
         self.stage_manager.is_no_attacker()
     }
 
-    fn push_event(&mut self, event: EventType) {
-        self.event_queue.push(event);
-    }
+    fn push_event(&mut self, event: EventType) { self.do_push_event(event); }
 }
 
 impl AccessorForEnemy for GameManager {
@@ -560,9 +562,7 @@ impl AccessorForEnemy for GameManager {
         self.stage
     }
 
-    fn push_event(&mut self, event: EventType) {
-        self.event_queue.push(event);
-    }
+    fn push_event(&mut self, event: EventType) { self.do_push_event(event); }
 }
 
 fn calc_ene_shot_speed(stage: u16) -> i32 {
