@@ -8,6 +8,8 @@ use crate::framework::RendererTrait;
 use crate::util::math::{round_vec, ONE};
 
 const STAR_COUNT: usize = 256;
+const MAX_SPEED: i32 = ONE;
+const REVERSE_SPEED: i32 = -3 * ONE;
 
 #[derive(PartialEq)]
 enum State {
@@ -45,13 +47,13 @@ impl StarManager {
 
     pub fn update(&mut self) {
         self.frame_count = (self.frame_count + 1) & 63;
-        if self.state != State::Stop && self.scroll_vel < ONE {
-            self.scroll_vel = (self.scroll_vel + ONE / 32).min(ONE);
+        if self.state != State::Stop && self.scroll_vel < MAX_SPEED {
+            self.scroll_vel = (self.scroll_vel + ONE / 32).min(MAX_SPEED);
         }
 
         let capturing = self.state == State::Capturing;
         let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-        let vy = if capturing { -3 * ONE } else { self.scroll_vel };
+        let vy = if capturing { REVERSE_SPEED } else { self.scroll_vel };
         for star in self.stars.iter_mut() {
             let mut y = star.pos.y + vy;
             let mut warp = false;
@@ -109,9 +111,9 @@ struct Star {
 const COLOR_TABLE: [u32; 4] = [0, 71, 151, 222];
 
 fn choose_random_color<T: Rng>(rng: &mut T) -> u32 {
-    let c = rng.gen_range(1, 4 * 4 * 4);
-    let r = c % 4;
-    let g = (c / 4) % 4;
-    let b = c / 16;
+    let c = rng.gen_range(1, 1 << 6);  // 1 for avoid black.
+    let r =  c       & 3;
+    let g = (c >> 2) & 3;
+    let b =  c >> 4;
     (COLOR_TABLE[r] << 16) | (COLOR_TABLE[g] << 8) | COLOR_TABLE[b]
 }
