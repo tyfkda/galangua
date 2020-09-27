@@ -20,6 +20,7 @@ use super::traj_command::TrajCommand;
 
 const MAX_TROOPS: usize = 3;
 const OWL_DESTROY_SHOT_WAIT: u32 = 3 * 60;
+const LIFE: u32 = 2;
 
 const OWL_SPRITE_NAMES: [&str; 4] = ["cpp11", "cpp12", "cpp21", "cpp22"];
 
@@ -73,7 +74,7 @@ impl Owl {
             info: EnemyInfo::new(*pos, angle, speed, fi),
             base: EnemyBase::new(),
             state: OwlState::None,
-            life: 2,
+            life: LIFE,
             tractor_beam: None,
             capturing_state: CapturingState::None,
             troops: Default::default(),
@@ -97,10 +98,10 @@ impl Owl {
         }
     }
 
-    fn live_troops(&self, accessor: &dyn Accessor) -> bool {
+    fn live_troops_exist(&self, accessor: &dyn Accessor) -> bool {
         self.troops.iter().flat_map(|x| x)
             .filter_map(|index| accessor.get_enemy_at(index))
-            .any(|enemy| !enemy.is_captured_fighter())
+            .any(|_enemy| true)
     }
 
     fn add_troop(&mut self, formation_index: FormationIndex) -> bool {
@@ -369,19 +370,19 @@ impl Owl {
             DamageResult { point: 0, keep_alive_as_ghost: false }
         } else {
             self.life = 0;
-            let keep_alive_as_ghost = self.live_troops(accessor);  // To keep moving troops.
             let point = self.calc_point();
 
             // Release capturing.
             match self.capturing_state {
                 CapturingState::None => {
-                    let fi = FormationIndex(self.info.formation_index.0, self.info.formation_index.1 - 1);
-                    if self.troops.iter().flat_map(|x| x)
-                        .find(|index| **index == fi).is_some()
+                    let cap_fi = FormationIndex(self.info.formation_index.0, self.info.formation_index.1 - 1);
+                    if let Some(slot) = self.troops.iter_mut().filter(|x| x.is_some())
+                        .find(|slot| slot.unwrap() == cap_fi)
                     {
-                        let cap_fighter = accessor.get_enemy_at(&fi).unwrap();
+                        let cap_fighter = accessor.get_enemy_at(&cap_fi).unwrap();
                         let angle = cap_fighter.angle();
-                        accessor.push_event(EventType::RecapturePlayer(fi, angle));
+                        accessor.push_event(EventType::RecapturePlayer(cap_fi, angle));
+                        *slot = None;
                     }
                 }
                 CapturingState::Attacking => {
@@ -398,6 +399,7 @@ impl Owl {
             accessor.push_event(EventType::EnemyExplosion(self.info.pos, self.info.angle, EnemyType::Owl));
             accessor.push_event(EventType::PlaySe(CH_BOMB, SE_BOMB_ZAKO));
 
+            let keep_alive_as_ghost = self.live_troops_exist(accessor);  // To keep moving troops.
             DamageResult { point, keep_alive_as_ghost }
         }
     }
@@ -433,7 +435,7 @@ impl Enemy for Owl {
             tractor_beam.update();
         }
 
-        if self.life == 0 && !self.base.disappeared && !self.live_troops(accessor) {
+        if self.life == 0 && !self.base.disappeared && !self.live_troops_exist(accessor) {
             self.base.disappeared = true;
         }
         !self.base.disappeared
@@ -462,7 +464,6 @@ impl Enemy for Owl {
 
     fn is_formation(&self) -> bool { self.state == OwlState::Formation }
 
-    fn is_captured_fighter(&self) -> bool { false }
     fn formation_index(&self) -> &FormationIndex { &self.info.formation_index }
 
     fn set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult {

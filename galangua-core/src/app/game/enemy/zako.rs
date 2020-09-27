@@ -242,7 +242,6 @@ impl Enemy for Zako {
 
     fn is_formation(&self) -> bool { self.state == ZakoState::Formation }
 
-    fn is_captured_fighter(&self) -> bool { self.enemy_type == EnemyType::CapturedFighter }
     fn formation_index(&self) -> &FormationIndex { &self.info.formation_index }
 
     fn set_damage(&mut self, _power: u32, accessor: &mut dyn Accessor) -> DamageResult {

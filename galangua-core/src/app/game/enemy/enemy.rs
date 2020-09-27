@@ -20,7 +20,6 @@ pub trait Enemy: Collidable {
 
     fn is_formation(&self) -> bool;
 
-    fn is_captured_fighter(&self) -> bool;
     fn formation_index(&self) -> &FormationIndex;
 
     fn set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult;
