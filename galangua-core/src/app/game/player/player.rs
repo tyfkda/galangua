@@ -19,7 +19,6 @@ enum State {
     Dead,
     Capturing,
     Captured,
-    CaptureCompleted,
     EscapeCapturing,
     MoveHomePos,
 }
@@ -82,7 +81,7 @@ impl Player {
                     }
                 }
             }
-            State::Dead | State::Captured | State::CaptureCompleted => {}
+            State::Dead | State::Captured => {}
         }
 
         if let Some(recaptured_fighter) = &mut self.recaptured_fighter {
@@ -154,7 +153,7 @@ impl Player {
                 let pos = round_vec(&self.pos);
                 renderer.draw_sprite(SPRITE_NAME_CAPTURED, &(&pos + &Vec2I::new(-8, -8)));
             }
-            State::CaptureCompleted | State::Dead => {}
+            State::Dead => {}
         }
 
         if let Some(recaptured_fighter) = &self.recaptured_fighter {
@@ -211,7 +210,7 @@ impl Player {
     }
 
     pub fn complete_capture(&mut self) {
-        self.state = State::CaptureCompleted;
+        self.state = State::Dead;
     }
 
     pub fn escape_capturing(&mut self) {
