@@ -1,3 +1,4 @@
+use array_macro::*;
 use lazy_static::lazy_static;
 
 use crate::app::consts::*;
@@ -15,22 +16,16 @@ lazy_static! {
         let cx = WIDTH / 2;
         let w = 16;
 
-        let mut table: [i32; X_COUNT] = Default::default();
-        for j in 0..X_COUNT {
-            let x = cx - ((X_COUNT - 1) as i32) * w / 2 + (j as i32) * w;
-            table[j] = x;
-        }
-        table
+        array![|j|
+            cx - ((X_COUNT - 1) as i32) * w / 2 + (j as i32) * w
+        ; X_COUNT]
     };
     static ref BASE_Y_TABLE: [i32; Y_COUNT] = {
         let h = 16;
 
-        let mut table: [i32; Y_COUNT] = Default::default();
-        for i in 0..Y_COUNT {
-            let y = BASE_Y + (i as i32) * h;
-            table[i] = y;
-        }
-        table
+        array![|i|
+            BASE_Y + (i as i32) * h
+        ; Y_COUNT]
     };
 }
 
