@@ -535,10 +535,6 @@ impl AccessorForEnemy for GameManager {
         }
     }
 
-    fn get_enemies(&self) -> &[Option<Box<dyn Enemy>>] {
-        self.enemy_manager.get_enemies()
-    }
-
     fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>> {
         self.enemy_manager.get_enemy_at(formation_index)
     }

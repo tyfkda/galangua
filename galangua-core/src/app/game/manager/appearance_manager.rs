@@ -38,6 +38,10 @@ impl Info {
     }
 }
 
+pub trait Accessor {
+    fn is_stationary(&self) -> bool;
+}
+
 pub struct AppearanceManager {
     stage: u16,
     paused: bool,
@@ -78,15 +82,15 @@ impl AppearanceManager {
         self.paused = value;
     }
 
-    pub fn update(&mut self, enemies: &[Option<Box<dyn Enemy>>]) -> Option<Vec<Box<dyn Enemy>>> {
+    pub fn update<A: Accessor>(&mut self, accessor: &A) -> Option<Vec<Box<dyn Enemy>>> {
         if self.done {
             return None;
         }
 
-        self.update_main(enemies)
+        self.update_main(accessor)
     }
 
-    fn update_main(&mut self, enemies: &[Option<Box<dyn Enemy>>]) -> Option<Vec<Box<dyn Enemy>>> {
+    fn update_main<A: Accessor>(&mut self, accessor: &A) -> Option<Vec<Box<dyn Enemy>>> {
         if self.wait > 0 {
             self.wait -= 1;
             return None;
@@ -94,7 +98,7 @@ impl AppearanceManager {
 
         if !self.paused {
             if self.wait_stationary {
-                if !self.is_stationary(enemies) {
+                if !accessor.is_stationary() {
                     return None;
                 }
                 self.wait_stationary = false;
@@ -280,10 +284,6 @@ impl AppearanceManager {
         for i in 0..count {
             orders[nums[i as usize]].shot_enable = true;
         }
-    }
-
-    fn is_stationary(&self, enemies: &[Option<Box<dyn Enemy>>]) -> bool {
-        enemies.iter().flat_map(|x| x).all(|x| x.is_formation())
     }
 }
 

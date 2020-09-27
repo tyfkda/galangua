@@ -3,6 +3,7 @@ use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
 use super::appearance_manager::AppearanceManager;
+use super::appearance_manager::Accessor as AccessorForAppearance;
 use super::attack_manager::AttackManager;
 use super::formation::Formation;
 use super::EventType;
@@ -12,6 +13,7 @@ use crate::app::game::enemy::ene_shot::EneShot;
 use crate::app::game::enemy::enemy::{create_enemy, Enemy};
 use crate::app::game::enemy::{Accessor, EnemyType, FormationIndex};
 use crate::app::util::collision::{CollBox, Collidable};
+use crate::app::util::unsafe_util::peep;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
 use crate::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
@@ -138,7 +140,8 @@ impl EnemyManager {
 
     fn update_appearance(&mut self) {
         let prev_done = self.appearance_manager.done;
-        if let Some(new_borns) = self.appearance_manager.update(&self.enemies) {
+        let accessor = unsafe { peep(self) };
+        if let Some(new_borns) = self.appearance_manager.update(accessor) {
             for enemy in new_borns {
                 self.spawn(enemy);
             }
@@ -263,10 +266,6 @@ impl EnemyManager {
         self.attack_manager.is_no_attacker()
     }
 
-    pub fn get_enemies(&self) -> &[Option<Box<dyn Enemy>>] {
-        &self.enemies
-    }
-
     pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>> {
         let index = calc_array_index(formation_index);
         self.enemies[index].as_ref()
@@ -311,6 +310,12 @@ impl EnemyManager {
                 self.spawn(enemy);
             }
         }
+    }
+}
+
+impl AccessorForAppearance for EnemyManager {
+    fn is_stationary(&self) -> bool {
+        self.enemies.iter().flat_map(|x| x).all(|x| x.is_formation())
     }
 }
 
