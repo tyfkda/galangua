@@ -30,7 +30,7 @@ enum StageState {
     CLEARED,
 }
 
-pub struct EnemyManager {
+pub struct StageManager {
     enemies: [Option<Box<dyn Enemy>>; MAX_ENEMY_COUNT],
     alive_enemy_count: u32,
     shots: [Option<EneShot>; MAX_SHOT_COUNT],
@@ -42,9 +42,9 @@ pub struct EnemyManager {
     frame_count: u32,
 }
 
-impl EnemyManager {
+impl StageManager {
     pub fn new() -> Self {
-        Self {
+        StageManager {
             enemies: array![None; MAX_ENEMY_COUNT],
             alive_enemy_count: 0,
             shots: Default::default(),
@@ -313,7 +313,7 @@ impl EnemyManager {
     }
 }
 
-impl AccessorForAppearance for EnemyManager {
+impl AccessorForAppearance for StageManager {
     fn is_stationary(&self) -> bool {
         self.enemies.iter().flat_map(|x| x).all(|x| x.is_formation())
     }
