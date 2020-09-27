@@ -526,12 +526,13 @@ impl AccessorForEnemy for GameManager {
 
     fn captured_fighter_index(&self) -> Option<FormationIndex> {
         match self.capture_state {
-            CaptureState::NoCapture | CaptureState::Recapturing | CaptureState::Dual => {
-                None
-            }
-            _ => {
+            CaptureState::CaptureAttacking |
+            CaptureState::Capturing |
+            CaptureState::Captured =>
+            {
                 Some(FormationIndex(self.capture_enemy_fi.0, self.capture_enemy_fi.1 - 1))
             }
+            _ => { None }
         }
     }
 
