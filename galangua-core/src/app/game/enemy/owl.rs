@@ -52,6 +52,8 @@ enum CapturingState {
     None,
     Attacking,
     BeamTracting,
+    Captured,
+    Failed,
 }
 
 pub struct Owl {
@@ -270,13 +272,14 @@ impl Owl {
                 accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
             } else {
                 self.set_state(OwlState::MoveToFormation);
-                self.capturing_state = CapturingState::None;
+                self.capturing_state = CapturingState::Failed;
                 accessor.push_event(EventType::EndCaptureAttack);
             }
         }
     }
     fn update_attack_capture_start(&mut self, accessor: &mut dyn Accessor) {
         if accessor.is_player_capture_completed() {
+            self.capturing_state = CapturingState::Captured;
             self.tractor_beam.as_mut().unwrap().close_capture();
             self.set_state(OwlState::Attack(OwlAttackPhase::CaptureCloseBeam));
             self.base.count = 0;
@@ -292,7 +295,6 @@ impl Owl {
             self.add_troop(fi);
 
             self.tractor_beam = None;
-            self.capturing_state = CapturingState::None;
             accessor.push_event(EventType::CapturePlayerCompleted);
 
             self.copy_angle_to_troops = false;
@@ -311,6 +313,7 @@ impl Owl {
         if !self.base.move_to_formation(&mut self.info, accessor) {
             self.info.speed = 0;
             self.info.angle = normalize_angle(self.info.angle);
+            self.capturing_state = CapturingState::None;
             self.set_state(OwlState::Attack(OwlAttackPhase::CaptureDonePushUp));
         }
     }
@@ -385,11 +388,11 @@ impl Owl {
                         *slot = None;
                     }
                 }
-                CapturingState::Attacking => {
-                    accessor.push_event(EventType::EndCaptureAttack);
-                }
                 CapturingState::BeamTracting => {
                     accessor.push_event(EventType::EscapeCapturing);
+                }
+                CapturingState::Attacking | _ => {
+                    accessor.push_event(EventType::EndCaptureAttack);
                 }
             }
             self.capturing_state = CapturingState::None;
@@ -446,6 +449,7 @@ impl Enemy for Owl {
             return;
         }
 
+        let pat = if self.capturing_state != CapturingState::None { 1 } else { pat };
         let pat = if self.life <= 1 { pat + 2 } else { pat };
         let sprite = OWL_SPRITE_NAMES[pat as usize];
 
