@@ -4,12 +4,15 @@ use super::attack_manager::AttackManager;
 use super::enemy_manager::EnemyManager;
 use super::formation::Formation;
 
-use crate::app::game::enemy::enemy::{create_enemy, Enemy};
+use crate::app::game::enemy::enemy::Enemy;
 use crate::app::game::enemy::{Accessor, FormationIndex};
 use crate::app::util::collision::CollBox;
 use crate::app::util::unsafe_util::peep;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
+
+#[cfg(debug_assertions)]
+use crate::app::game::enemy::enemy::create_enemy;
 
 const RUSH_THRESHOLD: u32 = 5;
 
