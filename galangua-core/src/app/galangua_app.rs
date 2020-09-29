@@ -1,12 +1,12 @@
-use super::consts::*;
-use super::game::effect::StarManager;
 use super::game::manager::game_manager::GameManager;
 use super::game::manager::game_manager::Params as GameManagerParams;
-use super::game::manager::score_holder::ScoreHolder;
 
-use crate::framework::{AppTrait, RendererTrait, SystemTrait, VKey};
-use crate::util::fps_calc::{FpsCalc, TimerTrait};
-use crate::util::pad::{Pad, PadBit};
+use galangua_common::app::consts::*;
+use galangua_common::app::game::star_manager::StarManager;
+use galangua_common::app::score_holder::ScoreHolder;
+use galangua_common::framework::{AppTrait, RendererTrait, SystemTrait, VKey};
+use galangua_common::util::fps_calc::{FpsCalc, TimerTrait};
+use galangua_common::util::pad::{Pad, PadBit};
 
 #[cfg(debug_assertions)]
 use super::debug::EditTrajManager;

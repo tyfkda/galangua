@@ -2,15 +2,18 @@ use array_macro::*;
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
-use crate::app::game::effect::to_earned_point_type;
 use crate::app::game::enemy::ene_shot::EneShot;
 use crate::app::game::enemy::enemy::{create_enemy, Enemy};
-use crate::app::game::enemy::{Accessor, EnemyType, FormationIndex};
+use crate::app::game::enemy::Accessor;
 use crate::app::game::manager::EventType;
-use crate::app::util::collision::{CollBox, Collidable};
-use crate::framework::types::Vec2I;
-use crate::framework::RendererTrait;
-use crate::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
+
+use galangua_common::app::game::effect_table::to_earned_point_type;
+use galangua_common::app::game::formation_table::X_COUNT;
+use galangua_common::app::game::{EnemyType, FormationIndex};
+use galangua_common::app::util::collision::{CollBox, Collidable};
+use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::RendererTrait;
+use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
 const MAX_ENEMY_COUNT: usize = 70;
 const MAX_SHOT_COUNT: usize = 12;
@@ -207,5 +210,5 @@ impl EnemyManager {
 }
 
 fn calc_array_index(fi: &FormationIndex) -> usize {
-    (fi.0 as usize) + (fi.1 as usize) * super::formation_table::X_COUNT
+    (fi.0 as usize) + (fi.1 as usize) * X_COUNT
 }

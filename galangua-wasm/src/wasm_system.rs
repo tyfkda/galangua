@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use galangua_core::framework::SystemTrait;
+use galangua_common::framework::SystemTrait;
 
 #[wasm_bindgen]
 extern "C" {

@@ -1,8 +1,7 @@
-use super::traj_command::TrajCommand;
-use super::traj_command::TrajCommand::*;
-use super::FormationIndex;
-
 use crate::app::consts::*;
+use crate::app::game::traj_command::TrajCommand;
+use crate::app::game::traj_command::TrajCommand::*;
+use crate::app::game::FormationIndex;
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{calc_velocity, ANGLE, COS_TABLE, ONE, SIN_TABLE};
 

@@ -1,16 +1,18 @@
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
-use super::traj::Accessor as TrajAccessor;
-use super::traj::Traj;
-use super::traj_command::TrajCommand;
-use super::{Accessor, FormationIndex};
+use super::Accessor;
 
-use crate::app::consts::*;
 use crate::app::game::manager::EventType;
-use crate::app::util::collision::CollBox;
-use crate::framework::types::{Vec2I, ZERO_VEC};
-use crate::util::math::{
+
+use galangua_common::app::consts::*;
+use galangua_common::app::game::traj::Traj;
+use galangua_common::app::game::traj::Accessor as TrajAccessor;
+use galangua_common::app::game::traj_command::TrajCommand;
+use galangua_common::app::game::FormationIndex;
+use galangua_common::app::util::collision::CollBox;
+use galangua_common::framework::types::{Vec2I, ZERO_VEC};
+use galangua_common::util::math::{
     atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, round_vec, square, ANGLE, ONE, ONE_BIT,
 };
 

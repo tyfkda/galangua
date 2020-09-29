@@ -1,22 +1,24 @@
 use super::enemy::Enemy;
 use super::enemy_base::{EnemyBase, EnemyInfo};
 use super::tractor_beam::TractorBeam;
-use super::traj::Traj;
-use super::traj_command_table::*;
-use super::{Accessor, DamageResult, EnemyType, FormationIndex};
+use super::{Accessor, DamageResult};
 
-use crate::app::consts::*;
-use crate::app::game::manager::stage::formation_table::{X_COUNT, Y_COUNT};
 use crate::app::game::manager::EventType;
-use crate::app::util::collision::{CollBox, Collidable};
-use crate::framework::types::{Vec2I, ZERO_VEC};
-use crate::framework::RendererTrait;
-use crate::util::math::{
+
+use galangua_common::app::consts::*;
+use galangua_common::app::game::formation_table::{X_COUNT, Y_COUNT};
+use galangua_common::app::game::traj::Traj;
+use galangua_common::app::game::traj_command_table::*;
+use galangua_common::app::game::{EnemyType, FormationIndex};
+use galangua_common::app::util::collision::{CollBox, Collidable};
+use galangua_common::framework::types::{Vec2I, ZERO_VEC};
+use galangua_common::framework::RendererTrait;
+use galangua_common::util::math::{
     atan2_lut, clamp, diff_angle, normalize_angle, quantize_angle, round_vec,
     ANGLE, ONE};
 
 #[cfg(debug_assertions)]
-use super::traj_command::TrajCommand;
+use galangua_common::app::game::traj_command::TrajCommand;
 
 const MAX_TROOPS: usize = 3;
 const OWL_DESTROY_SHOT_WAIT: u32 = 3 * 60;

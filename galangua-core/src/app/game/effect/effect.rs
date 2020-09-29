@@ -1,20 +1,14 @@
-use crate::app::consts::*;
-use crate::app::game::enemy::EnemyType;
-use crate::framework::types::Vec2I;
-use crate::framework::RendererTrait;
-use crate::util::math::{quantize_angle, round_vec};
+use galangua_common::app::consts::*;
+use galangua_common::app::game::effect_table::*;
+use galangua_common::app::game::{EarnedPointType, EnemyType};
+use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::RendererTrait;
+use galangua_common::util::math::{quantize_angle, round_vec};
 
 pub enum Effect {
     SequentialSpriteAnime(SequentialSpriteAnime),
     RotSprite(RotSprite),
 }
-
-const FLASH_ENEMY_SPRITE_NAMES: [&str; 4] = [
-    "gopher_flash",
-    "dman_flash",
-    "cpp_flash",
-    "rustacean_flash",
-];
 
 const FLASH_ENEMY_FRAME: u32 = 2;
 
@@ -146,37 +140,3 @@ impl RotSprite {
         renderer.draw_sprite_rot(self.sprite_name, &self.pos, self.angle, None);
     }
 }
-
-//
-
-#[derive(Clone, Copy)]
-pub enum EarnedPointType {
-    Point1600,
-    Point1000,
-    Point800,
-    Point400,
-}
-
-pub fn to_earned_point_type(point: u32) -> Option<EarnedPointType> {
-    match point {
-        1600 => Some(EarnedPointType::Point1600),
-        1000 => Some(EarnedPointType::Point1000),
-        800 => Some(EarnedPointType::Point800),
-        400 => Some(EarnedPointType::Point400),
-        _ => None,
-    }
-}
-
-const EARNED_POINT_FRAME: u32 = 64;
-const EARNED_POINT_SPRITE_TABLE: [[&str; 1]; 4] = [
-    ["pts1600"],
-    ["pts1000"],
-    ["pts800"],
-    ["pts400"],
-];
-
-const ENEMY_EXPLOSION_SPRITE_TABLE: [&str; 5] = ["ene_exp1", "ene_exp2", "ene_exp3", "ene_exp4", "ene_exp5"];
-const ENEMY_EXPLOSION_FRAME: u32 = 4;
-
-const PLAYER_EXPLOSION_SPRITE_TABLE: [&str; 4] = ["pl_exp1", "pl_exp2", "pl_exp3", "pl_exp4"];
-const PLAYER_EXPLOSION_FRAME: u32 = 8;

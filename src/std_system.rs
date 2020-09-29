@@ -5,7 +5,7 @@ use std::io::Write;
 
 use super::sdl::SdlAudio;
 
-use galangua_core::framework::SystemTrait;
+use galangua_common::framework::SystemTrait;
 
 const SAVE_FILE_NAME: &str = ".savedata.json";
 

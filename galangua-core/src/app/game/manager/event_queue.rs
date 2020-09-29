@@ -1,8 +1,7 @@
 use std::ops::Index;
 
-use crate::app::game::effect::EarnedPointType;
-use crate::app::game::enemy::{EnemyType, FormationIndex};
-use crate::framework::types::Vec2I;
+use galangua_common::app::game::{EarnedPointType, EnemyType, FormationIndex};
+use galangua_common::framework::types::Vec2I;
 
 pub struct EventQueue {
     queue: Vec<EventType>,

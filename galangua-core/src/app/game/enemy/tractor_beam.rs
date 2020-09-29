@@ -1,22 +1,8 @@
-use crate::framework::types::Vec2I;
-use crate::framework::RendererTrait;
-use crate::util::math::{round_vec, ONE};
-
-const SPRITE_NAMES: [&str; 29] = [
-    "beam00", "beam01", "beam02", "beam03", "beam04", "beam05",
-    "beam06", "beam07", "beam08", "beam09", "beam10", "beam11",
-    "beam12", "beam13", "beam14", "beam15", "beam16", "beam17",
-    "beam18", "beam19", "beam20", "beam21", "beam22", "beam23",
-    "beam24", "beam25", "beam26", "beam27", "beam28",
-];
-
-const Y_OFFSET_TABLE: [i32; 29] = [
-     0,  0,  5,  9, 12, 14,
-    17, 20, 22, 25, 28, 30,
-    33, 36, 40, 41, 44, 47,
-    49, 52, 55, 57, 60, 62,
-    65, 68, 70, 73, 76,
-];
+use galangua_common::app::game::tractor_beam_table::*;
+use galangua_common::app::util::hsv;
+use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::RendererTrait;
+use galangua_common::util::math::{round_vec, ONE};
 
 #[derive(Copy, Clone, PartialEq)]
 enum State {
@@ -49,7 +35,7 @@ impl TractorBeam {
     pub fn update(&mut self) {
         self.color_count += 1;
 
-        let n = SPRITE_NAMES.len() as i32;
+        let n = TRACTOR_BEAM_SPRITE_NAMES.len() as i32;
         match self.state {
             State::Opening => {
                 self.size_count += ONE / 3;
@@ -86,11 +72,11 @@ impl TractorBeam {
             let hue = self.color_count * 64;
             let pos = &pos + &Vec2I::new(-24, 0);
             for i in 0..n {
-                let sprite_name = SPRITE_NAMES[i];
+                let sprite_name = TRACTOR_BEAM_SPRITE_NAMES[i];
                 set_hsv_color(renderer, sprite_name, hue + i as u32 * 160, 255, 255);
-                renderer.draw_sprite(sprite_name, &(&pos + &Vec2I::new(0, Y_OFFSET_TABLE[i])));
+                renderer.draw_sprite(sprite_name, &(&pos + &Vec2I::new(0, TRACTOR_BEAM_Y_OFFSET_TABLE[i])));
             }
-            renderer.set_sprite_texture_color_mod(SPRITE_NAMES[0], 255, 255, 255);
+            renderer.set_sprite_texture_color_mod(TRACTOR_BEAM_SPRITE_NAMES[0], 255, 255, 255);
         }
     }
 
@@ -119,21 +105,4 @@ impl TractorBeam {
 fn set_hsv_color(renderer: &mut dyn RendererTrait, sprite_name: &str, h: u32, s: u8, v: u8) {
     let (r, g, b) = hsv(h, s, v);
     renderer.set_sprite_texture_color_mod(sprite_name, r, g, b);
-}
-
-fn hsv(h: u32, s: u8, v: u8) -> (u8, u8, u8) {
-    let h = h % (256 * 6);
-    let t = if (h & 256) == 0 { h & 255 } else { 512 - (h & 255) };
-    let max = v;
-    let min = max - (s as u32 * max as u32 / 255) as u8;
-    let d = (max - min) as u32;
-    let c = (t * d / 256) as u8 + min;
-    match h / 256 {
-        0     => (max, c, min),
-        1     => (c, max, min),
-        2     => (min, max, c),
-        3     => (min, c, max),
-        4     => (c, min, max),
-        5 | _ => (max, min, c),
-    }
 }

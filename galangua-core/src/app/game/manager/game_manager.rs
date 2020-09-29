@@ -1,20 +1,24 @@
 use super::event_queue::EventQueue;
-use super::score_holder::ScoreHolder;
 use super::stage::stage_manager::StageManager;
-use super::{CaptureState, EventType};
+use super::EventType;
 
-use crate::app::consts::*;
-use crate::app::game::effect::{Effect, StageIndicator, StarManager};
+use crate::app::game::effect::Effect;
 use crate::app::game::enemy::Accessor as AccessorForEnemy;
-use crate::app::game::enemy::{Enemy, FormationIndex};
+use crate::app::game::enemy::Enemy;
 use crate::app::game::player::Accessor as AccessorForPlayer;
 use crate::app::game::player::{MyShot, Player};
-use crate::app::util::collision::Collidable;
 use crate::app::util::unsafe_util::peep;
-use crate::framework::types::Vec2I;
-use crate::framework::{RendererTrait, SystemTrait};
-use crate::util::math::ONE;
-use crate::util::pad::Pad;
+
+use galangua_common::app::consts::*;
+use galangua_common::app::game::stage_indicator::StageIndicator;
+use galangua_common::app::game::star_manager::StarManager;
+use galangua_common::app::game::{CaptureState, FormationIndex};
+use galangua_common::app::score_holder::ScoreHolder;
+use galangua_common::app::util::collision::Collidable;
+use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::{RendererTrait, SystemTrait};
+use galangua_common::util::math::ONE;
+use galangua_common::util::pad::Pad;
 
 const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;

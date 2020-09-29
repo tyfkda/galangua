@@ -1,11 +1,12 @@
-use crate::app::game::enemy::traj_command::TrajCommand;
-use crate::app::game::enemy::FormationIndex;
 use crate::app::game::manager::event_queue::EventQueue;
 use crate::app::game::manager::game_manager::GameManager;
 use crate::app::util::unsafe_util::peep;
-use crate::framework::types::Vec2I;
-use crate::framework::{RendererTrait, VKey};
-use crate::util::math::ONE;
+
+use galangua_common::app::game::traj_command::TrajCommand;
+use galangua_common::app::game::FormationIndex;
+use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::{RendererTrait, VKey};
+use galangua_common::util::math::ONE;
 
 use std::fs::File;
 use std::io::{prelude::*, BufReader};

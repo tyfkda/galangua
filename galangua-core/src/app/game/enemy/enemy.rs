@@ -1,14 +1,15 @@
 use super::owl::{Owl, OwlState};
-use super::traj::Traj;
 use super::zako::{Zako, ZakoState};
-use super::{Accessor, DamageResult, EnemyType, FormationIndex};
+use super::{Accessor, DamageResult};
 
-use crate::app::util::collision::Collidable;
-use crate::framework::types::Vec2I;
-use crate::framework::RendererTrait;
+use galangua_common::app::game::traj::Traj;
+use galangua_common::app::game::{EnemyType, FormationIndex};
+use galangua_common::app::util::collision::Collidable;
+use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::RendererTrait;
 
 #[cfg(debug_assertions)]
-use super::traj_command::TrajCommand;
+use galangua_common::app::game::traj_command::TrajCommand;
 
 pub trait Enemy: Collidable {
     fn update(&mut self, accessor: &mut dyn Accessor) -> bool;

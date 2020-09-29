@@ -7,7 +7,7 @@ use sdl2::Sdl;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
-use galangua_core::framework::{AppTrait, VKey};
+use galangua_common::framework::{AppTrait, VKey};
 
 use crate::sdl::sdl_renderer::SdlRenderer;
 

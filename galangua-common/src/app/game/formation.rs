@@ -1,5 +1,5 @@
 use crate::app::consts::*;
-use crate::app::game::enemy::FormationIndex;
+use crate::app::game::FormationIndex;
 use crate::framework::types::Vec2I;
 use crate::util::math::ONE;
 
