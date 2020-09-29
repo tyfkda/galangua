@@ -1,6 +1,7 @@
 use specs::prelude::*;
 
 use galangua_common::app::consts::*;
+use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{round_vec, ONE};
@@ -47,6 +48,7 @@ impl<'a> System<'a> for SysPlayerFirer {
         Entities<'a>,
         WriteStorage<'a, Pos>,
         WriteStorage<'a, MyShot>,
+        WriteStorage<'a, CollRect>,
         WriteStorage<'a, SpriteDrawable>,
     );
 
@@ -56,6 +58,7 @@ impl<'a> System<'a> for SysPlayerFirer {
              entities,
              mut pos_storage,
              mut shot_storage,
+             mut coll_rect_storage,
              mut drawable_storage) = data;
 
         let mut shot_count = 0;
@@ -78,6 +81,7 @@ impl<'a> System<'a> for SysPlayerFirer {
                 entities.build_entity()
                     .with(MyShot, &mut shot_storage)
                     .with(Pos(*pos), &mut pos_storage)
+                    .with(CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) }, &mut coll_rect_storage)
                     .with(SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)}, &mut drawable_storage)
                     .build();
                 shot_count += 1;
@@ -96,6 +100,37 @@ impl<'a> System<'a> for SysMyShotMover {
             pos.y -= MYSHOT_SPEED;
             if pos.y < 0 * ONE {
                 entities.delete(entity).unwrap();
+            }
+        }
+    }
+}
+
+pub struct SysCollCheckMyShotEnemy;
+impl<'a> System<'a> for SysCollCheckMyShotEnemy {
+    type SystemData = (
+        Entities<'a>,
+        ReadStorage<'a, Pos>,
+        ReadStorage<'a, MyShot>,
+        ReadStorage<'a, Enemy>,
+        ReadStorage<'a, CollRect>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities,
+             pos_storage,
+             shot_storage,
+             enemy_storage,
+             coll_rect_storage) = data;
+
+        for (_shot, shot_pos, shot_coll_rect, shot_entity) in (&shot_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
+            let shot_collbox = CollBox { top_left: &round_vec(&shot_pos.0) + &shot_coll_rect.offset, size: shot_coll_rect.size };
+            for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in (&enemy_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
+                let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
+                if shot_collbox.check_collision(&enemy_collbox) {
+                    entities.delete(enemy_entity).unwrap();
+                    entities.delete(shot_entity).unwrap();
+                    break;
+                }
             }
         }
     }

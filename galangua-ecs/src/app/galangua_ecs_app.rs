@@ -1,8 +1,12 @@
 use specs::prelude::*;
 
 use galangua_common::app::consts::*;
+use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};
+use galangua_common::app::game::formation_table::{BASE_X_TABLE, BASE_Y_TABLE};
+use galangua_common::app::game::EnemyType;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::{AppTrait, RendererTrait, VKey};
+use galangua_common::util::math::ONE;
 use galangua_common::util::pad::Pad;
 
 use super::components::*;
@@ -26,6 +30,7 @@ impl GalanguaEcsApp {
             .with(SysPlayerMover, "player_mover", &["pad_updater"])
             .with(SysPlayerFirer, "player_firer", &["player_mover"])
             .with(SysMyShotMover, "myshot_mover", &["player_firer"])
+            .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover"])
             .build();
         update_dispatcher.setup(&mut world);
 
@@ -34,6 +39,24 @@ impl GalanguaEcsApp {
             .with(Pos(Vec2I::new(CENTER_X, PLAYER_Y)))
             .with(SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)})
             .build();
+
+        for i in 0..ORDER.len() {
+            let fi = ORDER[i];
+            let enemy_type = ENEMY_TYPE_TABLE[i / 4];
+            let pos = &Vec2I::new(BASE_X_TABLE[fi.0 as usize], BASE_Y_TABLE[fi.1 as usize]) * ONE;
+            let sprite_name = match enemy_type {
+                EnemyType::Bee => "gopher1",
+                EnemyType::Butterfly => "dman1",
+                EnemyType::Owl => "cpp11",
+                EnemyType::CapturedFighter => "rustacean_captured",
+            };
+            world.create_entity()
+                .with(Enemy { enemy_type })
+                .with(Pos(pos))
+                .with(CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) })
+                .with(SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)})
+                .build();
+        }
 
         world.insert(Pad::default());
 
