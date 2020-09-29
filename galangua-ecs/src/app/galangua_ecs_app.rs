@@ -1,8 +1,9 @@
 use specs::prelude::*;
 
+use galangua_common::app::consts::*;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::{AppTrait, RendererTrait, VKey};
-use galangua_common::util::math::ONE;
+use galangua_common::util::pad::Pad;
 
 use super::components::*;
 use super::system::*;
@@ -18,17 +19,21 @@ impl GalanguaEcsApp {
         let mut world = World::new();
         // Components are registered automatically which used in dispatcher.
         //world.register::<Pos>();
-        //world.register::<Vel>();
         world.register::<SpriteDrawable>();
 
-        let mut update_dispatcher = DispatcherBuilder::new().with(SysMover, "sys_mover", &[]).build();
+        let mut update_dispatcher = DispatcherBuilder::new()
+            .with(SysPadUpdater, "pad_updater", &[])
+            .with(SysPlayerMover, "player_mover", &["pad_updater"])
+            .build();
         update_dispatcher.setup(&mut world);
 
         world.create_entity()
-            .with(Pos(Vec2I::new(0 * ONE, 100 * ONE)))
-            .with(Vel(Vec2I::new(1 * ONE, 0)))
-            .with(SpriteDrawable)
+            .with(Player)
+            .with(Pos(Vec2I::new(CENTER_X, PLAYER_Y)))
+            .with(SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)})
             .build();
+
+        world.insert(Pad::default());
 
         Self {
             pressed_key: None,
@@ -40,6 +45,8 @@ impl GalanguaEcsApp {
 
 impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
     fn on_key(&mut self, vkey: VKey, down: bool) {
+        let mut pad = self.world.fetch_mut::<Pad>();
+        pad.on_key(vkey, down);
         if down {
             self.pressed_key = Some(vkey);
         }

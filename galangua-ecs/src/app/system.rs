@@ -1,19 +1,38 @@
 use specs::prelude::*;
 
+use galangua_common::app::consts::*;
 use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{round_vec, ONE};
+use galangua_common::util::pad::{Pad, PadBit};
 
 use super::components::*;
 
-pub struct SysMover;
-impl<'a> System<'a> for SysMover {
-    type SystemData = (WriteStorage<'a, Pos>, ReadStorage<'a, Vel>);
+pub struct SysPadUpdater;
+impl<'a> System<'a> for SysPadUpdater {
+    type SystemData = Write<'a, Pad>;
 
-    fn run(&mut self, (mut pos_storage, vel_storage): Self::SystemData) {
-        for (pos, vel) in (&mut pos_storage, &vel_storage).join() {
-            pos.0 += &vel.0;
-            if pos.0.x > 224 * ONE {
-                pos.0.x = 0;
+    fn run(&mut self, mut pad: Self::SystemData) {
+        pad.update();
+    }
+}
+
+pub struct SysPlayerMover;
+impl<'a> System<'a> for SysPlayerMover {
+    type SystemData = (Read<'a, Pad>, ReadStorage<'a, Player>, WriteStorage<'a, Pos>);
+
+    fn run(&mut self, (pad, player_storage, mut pos_storage): Self::SystemData) {
+        for (_player, pos) in (&player_storage, &mut pos_storage).join() {
+            let mut pos = &mut pos.0;
+            if pad.is_pressed(PadBit::L) {
+                pos.x -= PLAYER_SPEED;
+            }
+            if pad.is_pressed(PadBit::R) {
+                pos.x += PLAYER_SPEED;
+            }
+            if pos.x < 8 * ONE {
+                pos.x = 8 * ONE;
+            } else if pos.x > (WIDTH - 8) * ONE {
+                pos.x = (WIDTH - 8) * ONE;
             }
         }
     }
@@ -25,9 +44,9 @@ impl<'a> System<'a> for SysDrawer<'a> {
 
     fn run(&mut self, (pos_storage, drawable_storage): Self::SystemData) {
         let renderer = &mut self.0;
-        for (pos, _drawable) in (&pos_storage, &drawable_storage).join() {
+        for (pos, drawable) in (&pos_storage, &drawable_storage).join() {
             let pos = round_vec(&pos.0);
-            renderer.draw_sprite("gopher1", &pos);
+            renderer.draw_sprite(drawable.sprite_name, &(&pos + &drawable.offset));
         }
     }
 }
