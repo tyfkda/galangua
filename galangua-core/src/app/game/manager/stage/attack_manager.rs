@@ -3,7 +3,7 @@ use rand::seq::SliceRandom;
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
-use super::formation::{X_COUNT, Y_COUNT};
+use super::formation_table::{X_COUNT, Y_COUNT};
 
 use crate::app::game::enemy::{Accessor, FormationIndex};
 use crate::app::game::manager::{CaptureState, EventType};
