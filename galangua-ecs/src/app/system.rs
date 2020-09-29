@@ -1,6 +1,7 @@
 use specs::prelude::*;
 
 use galangua_common::app::consts::*;
+use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{round_vec, ONE};
 use galangua_common::util::pad::{Pad, PadBit};
@@ -33,6 +34,68 @@ impl<'a> System<'a> for SysPlayerMover {
                 pos.x = 8 * ONE;
             } else if pos.x > (WIDTH - 8) * ONE {
                 pos.x = (WIDTH - 8) * ONE;
+            }
+        }
+    }
+}
+
+pub struct SysPlayerFirer;
+impl<'a> System<'a> for SysPlayerFirer {
+    type SystemData = (
+        Read<'a, Pad>,
+        ReadStorage<'a, Player>,
+        Entities<'a>,
+        WriteStorage<'a, Pos>,
+        WriteStorage<'a, MyShot>,
+        WriteStorage<'a, SpriteDrawable>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (pad,
+             player_storage,
+             entities,
+             mut pos_storage,
+             mut shot_storage,
+             mut drawable_storage) = data;
+
+        let mut shot_count = 0;
+        for _shot in shot_storage.join() {
+            shot_count += 1;
+        }
+
+        let shots = (&player_storage, &mut pos_storage).join()
+            .flat_map(|(_player, pos)| {
+                if pad.is_trigger(PadBit::A) {
+                    Some(pos.0.clone())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<Vec2I>>();
+
+        shots.iter().for_each(|pos| {
+            if shot_count < 2 {
+                entities.build_entity()
+                    .with(MyShot, &mut shot_storage)
+                    .with(Pos(*pos), &mut pos_storage)
+                    .with(SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)}, &mut drawable_storage)
+                    .build();
+                shot_count += 1;
+            }
+        })
+    }
+}
+
+pub struct SysMyShotMover;
+impl<'a> System<'a> for SysMyShotMover {
+    type SystemData = (ReadStorage<'a, MyShot>, WriteStorage<'a, Pos>, Entities<'a>);
+
+    fn run(&mut self, (shot_storage, mut pos_storage, entities): Self::SystemData) {
+        for (_shot, pos, entity) in (&shot_storage, &mut pos_storage, &*entities).join() {
+            let mut pos = &mut pos.0;
+            pos.y -= MYSHOT_SPEED;
+            if pos.y < 0 * ONE {
+                entities.delete(entity).unwrap();
             }
         }
     }

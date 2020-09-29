@@ -24,6 +24,8 @@ impl GalanguaEcsApp {
         let mut update_dispatcher = DispatcherBuilder::new()
             .with(SysPadUpdater, "pad_updater", &[])
             .with(SysPlayerMover, "player_mover", &["pad_updater"])
+            .with(SysPlayerFirer, "player_firer", &["player_mover"])
+            .with(SysMyShotMover, "myshot_mover", &["player_firer"])
             .build();
         update_dispatcher.setup(&mut world);
 

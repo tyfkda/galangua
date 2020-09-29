@@ -13,6 +13,11 @@ pub struct Pos(pub Vec2I);
 pub struct Player;
 
 //
+#[derive(Component, Default)]
+#[storage(NullStorage)]
+pub struct MyShot;
+
+//
 #[derive(Component)]
 #[storage(VecStorage)]
 pub struct SpriteDrawable { pub sprite_name: &'static str, pub offset: Vec2I }
