@@ -2,6 +2,7 @@ use specs::prelude::*;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::formation::Formation;
+use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
@@ -157,12 +158,24 @@ impl<'a> System<'a> for SysCollCheckMyShotEnemy {
     }
 }
 
-pub struct SysDrawer<'a>(pub &'a mut dyn RendererTrait);
-impl<'a> System<'a> for SysDrawer<'a> {
-    type SystemData = (ReadStorage<'a, Pos>, ReadStorage<'a, SpriteDrawable>);
+pub struct SysStarMover;
+impl<'a> System<'a> for SysStarMover {
+    type SystemData = Write<'a, StarManager>;
 
-    fn run(&mut self, (pos_storage, drawable_storage): Self::SystemData) {
+    fn run(&mut self, mut star_manager: Self::SystemData) {
+        star_manager.update();
+    }
+}
+
+pub struct SysDrawer<'a, R: RendererTrait>(pub &'a mut R);
+impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
+    type SystemData = (Read<'a, StarManager>, ReadStorage<'a, Pos>, ReadStorage<'a, SpriteDrawable>);
+
+    fn run(&mut self, (star_manager, pos_storage, drawable_storage): Self::SystemData) {
         let renderer = &mut self.0;
+
+        star_manager.draw(*renderer);
+
         for (pos, drawable) in (&pos_storage, &drawable_storage).join() {
             let pos = round_vec(&pos.0);
             renderer.draw_sprite(drawable.sprite_name, &(&pos + &drawable.offset));

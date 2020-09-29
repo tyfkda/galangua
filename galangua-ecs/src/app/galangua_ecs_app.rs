@@ -4,6 +4,7 @@ use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::{BASE_X_TABLE, BASE_Y_TABLE};
+use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::EnemyType;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::{AppTrait, RendererTrait, VKey};
@@ -34,6 +35,7 @@ impl GalanguaEcsApp {
             .with(SysFormationMover, "formation_mover", &[])
             .with(SysEnemyMover, "enemy_mover", &["formation_mover"])
             .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "enemy_mover"])
+            .with(SysStarMover, "star_mover", &[])
             .build();
         update_dispatcher.setup(&mut world);
 
@@ -62,6 +64,7 @@ impl GalanguaEcsApp {
         }
 
         world.insert(Pad::default());
+        world.insert(StarManager::default());
         {
             let mut formation = Formation::default();
             formation.done_appearance();
