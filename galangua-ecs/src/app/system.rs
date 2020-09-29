@@ -1,6 +1,7 @@
 use specs::prelude::*;
 
 use galangua_common::app::consts::*;
+use galangua_common::app::game::formation::Formation;
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
@@ -101,6 +102,26 @@ impl<'a> System<'a> for SysMyShotMover {
             if pos.y < 0 * ONE {
                 entities.delete(entity).unwrap();
             }
+        }
+    }
+}
+
+pub struct SysFormationMover;
+impl<'a> System<'a> for SysFormationMover {
+    type SystemData = Write<'a, Formation>;
+
+    fn run(&mut self, mut formation: Self::SystemData) {
+        formation.update();
+    }
+}
+
+pub struct SysEnemyMover;
+impl<'a> System<'a> for SysEnemyMover {
+    type SystemData = (ReadStorage<'a, Enemy>, Read<'a, Formation>, WriteStorage<'a, Pos>);
+
+    fn run(&mut self, (enemy_storage, formation, mut pos_storage): Self::SystemData) {
+        for (enemy, pos) in (&enemy_storage, &mut pos_storage).join() {
+            *pos = Pos(formation.pos(&enemy.formation_index));
         }
     }
 }

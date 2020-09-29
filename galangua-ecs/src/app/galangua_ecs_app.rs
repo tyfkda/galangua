@@ -2,6 +2,7 @@ use specs::prelude::*;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};
+use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::{BASE_X_TABLE, BASE_Y_TABLE};
 use galangua_common::app::game::EnemyType;
 use galangua_common::framework::types::Vec2I;
@@ -30,7 +31,9 @@ impl GalanguaEcsApp {
             .with(SysPlayerMover, "player_mover", &["pad_updater"])
             .with(SysPlayerFirer, "player_firer", &["player_mover"])
             .with(SysMyShotMover, "myshot_mover", &["player_firer"])
-            .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover"])
+            .with(SysFormationMover, "formation_mover", &[])
+            .with(SysEnemyMover, "enemy_mover", &["formation_mover"])
+            .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "enemy_mover"])
             .build();
         update_dispatcher.setup(&mut world);
 
@@ -51,7 +54,7 @@ impl GalanguaEcsApp {
                 EnemyType::CapturedFighter => "rustacean_captured",
             };
             world.create_entity()
-                .with(Enemy { enemy_type })
+                .with(Enemy { enemy_type, formation_index: fi })
                 .with(Pos(pos))
                 .with(CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) })
                 .with(SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)})
@@ -59,6 +62,11 @@ impl GalanguaEcsApp {
         }
 
         world.insert(Pad::default());
+        {
+            let mut formation = Formation::default();
+            formation.done_appearance();
+            world.insert(formation);
+        }
 
         Self {
             pressed_key: None,
