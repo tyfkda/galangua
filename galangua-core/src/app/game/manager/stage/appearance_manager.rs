@@ -5,7 +5,6 @@ use std::cmp::min;
 
 use super::appearance_table::*;
 
-use crate::app::game::enemy::enemy::{create_appearance_enemy, Enemy};
 use crate::app::game::enemy::traj::Traj;
 use crate::app::game::enemy::traj_command::TrajCommand;
 use crate::app::game::enemy::{EnemyType, FormationIndex};
@@ -16,6 +15,31 @@ use crate::util::math::ONE;
 const ASSAULT_FORMATION_Y: u8 = 6;
 const UNIT_COUNT: u32 = 5;
 const STEP_WAIT: u32 = 16 / 3;
+
+pub struct NewBorned {
+    pub enemy_type: EnemyType,
+    pub pos: Vec2I,
+    pub angle: i32,
+    pub speed: i32,
+    pub fi: FormationIndex,
+    pub traj: Traj,
+}
+
+impl NewBorned {
+    fn new(
+        enemy_type: EnemyType, pos: Vec2I, angle: i32, speed: i32,
+        fi: FormationIndex, traj: Traj,
+    ) -> Self {
+        Self {
+            enemy_type,
+            pos,
+            angle,
+            speed,
+            fi,
+            traj,
+            }
+    }
+}
 
 #[derive(Clone)]
 struct Info {
@@ -82,7 +106,7 @@ impl AppearanceManager {
         self.paused = value;
     }
 
-    pub fn update<A: Accessor>(&mut self, accessor: &A) -> Option<Vec<Box<dyn Enemy>>> {
+    pub fn update<A: Accessor>(&mut self, accessor: &A) -> Option<Vec<NewBorned>> {
         if self.done {
             return None;
         }
@@ -90,7 +114,7 @@ impl AppearanceManager {
         self.update_main(accessor)
     }
 
-    fn update_main<A: Accessor>(&mut self, accessor: &A) -> Option<Vec<Box<dyn Enemy>>> {
+    fn update_main<A: Accessor>(&mut self, accessor: &A) -> Option<Vec<NewBorned>> {
         if self.wait > 0 {
             self.wait -= 1;
             return None;
@@ -121,13 +145,13 @@ impl AppearanceManager {
             return None;
         }
 
-        let mut new_borns: Vec<Box<dyn Enemy>> = Vec::new();
+        let mut new_borns: Vec<NewBorned> = Vec::new();
         while self.orders_ptr[0].time == self.time {
             let p = &self.orders_ptr[0];
             let mut traj = Traj::new(p.traj_table, &p.offset, p.flip_x, p.fi);
             traj.shot_enable = p.shot_enable;
 
-            let enemy = create_appearance_enemy(p.enemy_type, &ZERO_VEC, 0, 0, &p.fi, traj);
+            let enemy = NewBorned::new(p.enemy_type, ZERO_VEC, 0, 0, p.fi, traj);
             new_borns.push(enemy);
 
             self.orders_ptr = &self.orders_ptr[1..];

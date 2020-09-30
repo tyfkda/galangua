@@ -4,7 +4,7 @@ use super::attack_manager::AttackManager;
 use super::enemy_manager::EnemyManager;
 use super::formation::Formation;
 
-use crate::app::game::enemy::enemy::Enemy;
+use crate::app::game::enemy::enemy::{create_appearance_enemy, Enemy};
 use crate::app::game::enemy::{Accessor, FormationIndex};
 use crate::app::util::collision::CollBox;
 use crate::app::util::unsafe_util::peep;
@@ -82,8 +82,11 @@ impl StageManager {
         let prev_done = self.appearance_manager.done;
         let accessor = unsafe { peep(self) };
         if let Some(new_borns) = self.appearance_manager.update(accessor) {
-            for enemy in new_borns {
-                self.enemy_manager.spawn(enemy);
+            for e in new_borns {
+                self.enemy_manager.spawn(create_appearance_enemy(
+                    e.enemy_type, &e.pos, e.angle, e.speed,
+                    &e.fi, e.traj,
+                ));
             }
         }
         if !prev_done && self.appearance_manager.done {
