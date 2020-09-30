@@ -26,7 +26,7 @@ pub trait Enemy: Collidable {
 
     fn update_troop(&mut self, add: &Vec2I, angle_opt: Option<i32>);
 
-    fn start_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) -> bool;
+    fn start_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor);
     fn set_to_troop(&mut self);
     fn set_to_formation(&mut self);
 

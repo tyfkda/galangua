@@ -266,7 +266,7 @@ impl Enemy for Zako {
         }
     }
 
-    fn start_attack(&mut self, _capture_attack: bool, accessor: &mut dyn Accessor) -> bool {
+    fn start_attack(&mut self, _capture_attack: bool, accessor: &mut dyn Accessor) {
         match self.enemy_type {
             EnemyType::Bee => self.start_bee_attack(),
             EnemyType::Butterfly => self.start_butterfly_attack(),
@@ -275,8 +275,6 @@ impl Enemy for Zako {
         }
 
         accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
-
-        false
     }
 
     fn set_to_troop(&mut self) {

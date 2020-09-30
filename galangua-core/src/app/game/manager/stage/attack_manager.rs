@@ -5,12 +5,17 @@ use rand_xoshiro::Xoshiro128Plus;
 
 use super::formation_table::{X_COUNT, Y_COUNT};
 
-use crate::app::game::enemy::{Accessor, FormationIndex};
-use crate::app::game::manager::{CaptureState, EventType};
-use crate::app::util::unsafe_util::peep;
+use crate::app::game::enemy::FormationIndex;
 
 const MAX_ATTACKER_COUNT: usize = 3;
 const WAIT: u32 = 30;
+
+pub trait Accessor {
+    fn can_capture_attack(&self) -> bool;
+    fn captured_fighter_index(&self) -> Option<FormationIndex>;
+    fn is_enemy_live_at(&self, formation_index: &FormationIndex) -> bool;
+    fn is_enemy_formation_at(&self, formation_index: &FormationIndex) -> bool;
+}
 
 pub struct AttackManager {
     enable: bool,
@@ -47,65 +52,59 @@ impl AttackManager {
         self.attackers.iter().all(|x| x.is_none())
     }
 
-    pub fn update<A: Accessor>(&mut self, accessor: &mut A) {
+    pub fn update<A: Accessor>(&mut self, accessor: &A) -> Option<(FormationIndex, bool)> {
         self.check_liveness(accessor);
 
         if self.wait > 0 {
             self.wait -= 1;
-            return;
+            return None;
         }
 
         if !self.enable || self.paused {
-            return;
+            return None;
         }
 
-        if let Some(slot_index) = self.attackers.iter().position(|x| x.is_none()) {
-            if let Some((formation_index, capture_attack)) = self.pick_attacker(accessor) {
-                self.attackers[slot_index] = Some(formation_index);
-                if capture_attack {
-                    accessor.push_event(EventType::StartCaptureAttack(formation_index));
-                }
-            }
+        let mut result: Option<(FormationIndex, bool)> = None;
+        if self.attackers.iter().any(|x| x.is_none()) {
+            result = self.pick_attacker(accessor);
             self.wait = WAIT;
             self.cycle += 1;
         }
+        result
     }
 
-    fn check_liveness<A: Accessor>(&mut self, accessor: &mut A) {
+    pub fn put_attacker(&mut self, formation_index: &FormationIndex) {
+        let slot_index = self.attackers.iter().position(|x| x.is_none()).unwrap();
+        self.attackers[slot_index] = Some(*formation_index);
+    }
+
+    fn check_liveness<A: Accessor>(&mut self, accessor: &A) {
         for attacker_opt in self.attackers.iter_mut().filter(|x| x.is_some()) {
             let formation_index = attacker_opt.as_ref().unwrap();
-            if let Some(enemy) = accessor.get_enemy_at(formation_index) {
-                if enemy.is_formation() {
-                    *attacker_opt = None;
-                }
-            } else {
+            if accessor.is_enemy_formation_at(formation_index) || !accessor.is_enemy_live_at(formation_index) {
                 *attacker_opt = None;
             }
         }
     }
 
-    fn pick_attacker<A: Accessor>(&mut self, accessor: &mut A) -> Option<(FormationIndex, bool)> {
+    fn pick_attacker<A: Accessor>(&mut self, accessor: &A) -> Option<(FormationIndex, bool)> {
         let candidates = self.enum_sides(accessor);
         match self.cycle % 3 {
             2 => {
                 self.pick_random(&candidates, &mut [1])
-                    .or_else(|| self.pick_captured_fighter_as_attacker(accessor))
+                    .map(|fi| (fi, (self.cycle / 3) & 1 != 0))
+                    .or_else(|| {
+                        self.pick_captured_fighter_as_attacker(accessor)
+                            .map(|fi| (fi, false))
+                    })
             }
             0 | 1 | _ => {
                 self.pick_random(&candidates, &mut [2, 3, 4, 5])
+                    .map(|fi| (fi, false))
             }
-        }.map(|fi| {
-            let enemy = {
-                let accessor = unsafe { peep(accessor) };
-                accessor.get_enemy_at_mut(&fi).unwrap()
-            };
-
-            let capture_attack =
-                (self.cycle / 3) & 1 != 0 &&
-                accessor.capture_state() == CaptureState::NoCapture;
-            let capture_attacked = enemy.start_attack(capture_attack, accessor);
-
-            (fi, capture_attacked)
+        }.map(|(fi, capture_attack)| {
+            let capture_attack = capture_attack && accessor.can_capture_attack();
+            (fi, capture_attack)
         })
     }
 
@@ -120,13 +119,15 @@ impl AttackManager {
             })
     }
 
-    fn enum_sides<A: Accessor>(&mut self, accessor: &mut A) -> [Option<[u8; 2]>; Y_COUNT] {
+    fn enum_sides<A: Accessor>(&mut self, accessor: &A) -> [Option<[u8; 2]>; Y_COUNT] {
         array![|i| {
             let is_formation = |j| -> Option<usize> {
                 let fi = FormationIndex(j as u8, i as u8);
-                accessor.get_enemy_at(&fi)
-                    .filter(|enemy| enemy.is_formation())
-                    .map(|_| j)
+                if accessor.is_enemy_formation_at(&fi) {
+                    Some(j)
+                } else {
+                    None
+                }
             };
 
             (0..X_COUNT)
@@ -140,13 +141,16 @@ impl AttackManager {
         }; Y_COUNT]
     }
 
-    fn pick_captured_fighter_as_attacker<A: Accessor>(&mut self, accessor: &mut A) -> Option<FormationIndex> {
+    fn pick_captured_fighter_as_attacker<A: Accessor>(&mut self, accessor: &A) -> Option<FormationIndex> {
         accessor.captured_fighter_index()
-            .and_then(|fi| accessor.get_enemy_at(&fi)
-                .map(|c| (c, fi)))  // TODO: use Option.zip.
-            .filter(|(cap, fi)|
-                cap.is_formation() &&
-                    accessor.get_enemy_at(&FormationIndex(fi.0, fi.1 + 1)).is_none())
-            .map(|(_cap, fi)| fi)
+            .and_then(|fi| {
+                if accessor.is_enemy_formation_at(&fi) &&
+                    !accessor.is_enemy_live_at(&FormationIndex(fi.0, fi.1 + 1))
+                {
+                    Some(fi)
+                } else {
+                    None
+                }
+            })
     }
 }

@@ -478,7 +478,7 @@ impl Enemy for Owl {
         panic!("Illegal");
     }
 
-    fn start_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) -> bool {
+    fn start_attack(&mut self, capture_attack: bool, accessor: &mut dyn Accessor) {
         self.base.count = 0;
         self.base.attack_frame_count = 0;
         self.copy_angle_to_troops = true;
@@ -518,8 +518,6 @@ impl Enemy for Owl {
         self.set_state(OwlState::Attack(phase));
 
         accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
-
-        capture_attack
     }
 
     fn set_to_troop(&mut self) {

@@ -1,11 +1,13 @@
 use super::appearance_manager::AppearanceManager;
 use super::appearance_manager::Accessor as AccessorForAppearance;
 use super::attack_manager::AttackManager;
+use super::attack_manager::Accessor as AttackManagerAccessor;
 use super::enemy_manager::EnemyManager;
 use super::formation::Formation;
 
 use crate::app::game::enemy::enemy::{create_appearance_enemy, Enemy};
 use crate::app::game::enemy::{Accessor, FormationIndex};
+use crate::app::game::manager::{CaptureState, EventType};
 use crate::app::util::collision::CollBox;
 use crate::app::util::unsafe_util::peep;
 use crate::framework::types::Vec2I;
@@ -109,7 +111,19 @@ impl StageManager {
     }
 
     fn update_attackers<T: Accessor>(&mut self, accessor: &mut T) {
-        self.attack_manager.update(accessor);
+        let acc = AttackManagerAccessorImpl(accessor);
+        let result = self.attack_manager.update(&acc);
+        if let Some((fi, capture_attack)) = result {
+            self.attack_manager.put_attacker(&fi);
+            let enemy = {
+                let accessor = unsafe { peep(accessor) };
+                accessor.get_enemy_at_mut(&fi).unwrap()
+            };
+            enemy.start_attack(capture_attack, accessor);
+            if capture_attack {
+                accessor.push_event(EventType::StartCaptureAttack(fi));
+            }
+        }
     }
 
     fn check_stage_state(&mut self) {
@@ -191,5 +205,19 @@ impl StageManager {
 impl AccessorForAppearance for StageManager {
     fn is_stationary(&self) -> bool {
         self.enemy_manager.is_stationary()
+    }
+}
+
+struct AttackManagerAccessorImpl<'a, A: Accessor>(&'a A);
+impl<'a, A: Accessor> AttackManagerAccessor for AttackManagerAccessorImpl<'a, A> {
+    fn can_capture_attack(&self) -> bool { self.0.capture_state() == CaptureState::NoCapture }
+    fn captured_fighter_index(&self) -> Option<FormationIndex> { self.0.captured_fighter_index() }
+    fn is_enemy_live_at(&self, formation_index: &FormationIndex) -> bool { self.0.get_enemy_at(formation_index).is_some() }
+    fn is_enemy_formation_at(&self, formation_index: &FormationIndex) -> bool {
+        if let Some(enemy) = self.0.get_enemy_at(formation_index) {
+            enemy.is_formation()
+        } else {
+            false
+        }
     }
 }
