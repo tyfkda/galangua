@@ -1,6 +1,7 @@
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
+use super::traj::Accessor as TrajAccessor;
 use super::traj::Traj;
 use super::traj_command::TrajCommand;
 use super::{Accessor, FormationIndex};
@@ -12,6 +13,16 @@ use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{
     atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, round_vec, square, ANGLE, ONE, ONE_BIT,
 };
+
+struct TrajAccessorImpl<'a> {
+    accessor: &'a dyn Accessor,
+}
+impl<'a> TrajAccessor for TrajAccessorImpl<'a> {
+    fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
+        self.accessor.get_formation_pos(formation_index)
+    }
+    fn get_stage_no(&self) -> u16 { self.accessor.get_stage_no() }
+}
 
 pub struct EnemyInfo {
     pub(super) pos: Vec2I,
@@ -137,7 +148,8 @@ impl EnemyBase {
 
     pub(super) fn update_trajectory(&mut self, info: &mut EnemyInfo, accessor: &mut dyn Accessor) -> bool {
         if let Some(traj) = &mut self.traj {
-            let cont = traj.update(accessor);
+            let traj_accessor = TrajAccessorImpl { accessor };
+            let cont = traj.update(&traj_accessor);
 
             info.pos = traj.pos();
             info.angle = traj.angle;

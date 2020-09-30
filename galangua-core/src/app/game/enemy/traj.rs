@@ -1,13 +1,15 @@
 use super::traj_command::TrajCommand;
 use super::traj_command::TrajCommand::*;
-use super::{Accessor, FormationIndex};
+use super::FormationIndex;
 
 use crate::app::consts::*;
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{calc_velocity, ANGLE, COS_TABLE, ONE, SIN_TABLE};
 
-#[cfg(debug_assertions)]
-use crate::app::util::unsafe_util::extend_lifetime;
+pub trait Accessor {
+    fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I;
+    fn get_stage_no(&self) -> u16;
+}
 
 enum WaitPred {
     WaitYG(i32),
@@ -65,7 +67,7 @@ impl Traj {
         fi: FormationIndex,
     ) -> Self {
         // command_table is owned by vec, so it lives as long as self and not worry about that.
-        let command_table = unsafe { extend_lifetime(&command_table_vec) };
+        let command_table = unsafe { std::mem::transmute::<&Vec<TrajCommand>, &'static Vec<TrajCommand>>(&command_table_vec) };
 
         let mut me = Self::new(command_table, offset, flip_x, fi);
         me.command_table_vec = Some(command_table_vec);
