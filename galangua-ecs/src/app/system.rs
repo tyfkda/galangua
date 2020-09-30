@@ -1,14 +1,16 @@
 use specs::prelude::*;
 
 use galangua_common::app::consts::*;
+use galangua_common::app::game::appearance_manager::AppearanceManager;
+use galangua_common::app::game::appearance_manager::Accessor as AppearanceManagerAccessor;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
-use galangua_common::app::game::FormationIndex;
+use galangua_common::app::game::{EnemyType, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
-use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, quantize_angle, round_vec, square, ANGLE, ONE, ONE_BIT};
+use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, quantize_angle, round_vec, square, ANGLE, ONE, ONE_BIT};
 use galangua_common::util::pad::{Pad, PadBit};
 
 use super::components::*;
@@ -128,6 +130,89 @@ impl<'a> System<'a> for SysFormationMover {
     }
 }
 
+pub struct SysAppearanceManager;
+impl<'a> System<'a> for SysAppearanceManager {
+    type SystemData = (
+        Write<'a, AppearanceManager>,
+        Entities<'a>,
+        WriteStorage<'a, Enemy>,
+        WriteStorage<'a, Zako>,
+        WriteStorage<'a, Posture>,
+        WriteStorage<'a, Speed>,
+        WriteStorage<'a, CollRect>,
+        WriteStorage<'a, SpriteDrawable>,
+        Write<'a, Formation>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (
+            mut appearance_manager,
+            entities,
+            mut enemy_storage,
+            mut zako_storage,
+            mut posture_storage,
+            mut speed_storage,
+            mut coll_rect_storage,
+            mut drawable_storage,
+            mut formation) = data;
+
+        if appearance_manager.done {
+            return;
+        }
+
+        let accessor = SysAppearanceManagerAccessor(&zako_storage);
+        let new_borns_opt = appearance_manager.update(&accessor);
+        if let Some(new_borns) = new_borns_opt {
+            for e in new_borns {
+                let sprite_name = match e.enemy_type {
+                    EnemyType::Bee => "gopher1",
+                    EnemyType::Butterfly => "dman1",
+                    EnemyType::Owl => "cpp11",
+                    EnemyType::CapturedFighter => "rustacean_captured",
+                };
+                entities.build_entity()
+                    .with(Enemy { enemy_type: e.enemy_type, formation_index: e.fi }, &mut enemy_storage)
+                    .with(Zako { state: ZakoState::Appearance, traj: Some(e.traj) }, &mut zako_storage)
+                    .with(Posture(e.pos, 0), &mut posture_storage)
+                    .with(Speed(0, 0), &mut speed_storage)
+                    .with(CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) }, &mut coll_rect_storage)
+                    .with(SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)}, &mut drawable_storage)
+                    .build();
+            }
+        }
+
+        if appearance_manager.done {
+            formation.done_appearance();
+        }
+    }
+}
+
+struct SysAppearanceManagerAccessor<'a>(&'a WriteStorage<'a, Zako>);
+impl<'a> AppearanceManagerAccessor for SysAppearanceManagerAccessor<'a> {
+    fn is_stationary(&self) -> bool {
+        let zako_storage = &self.0;
+        zako_storage.join().all(|x| x.state == ZakoState::Formation)
+    }
+}
+
+fn update_traj(zako: &mut Zako, posture: &mut Posture, speed: &mut Speed, formation: &Formation) -> bool {
+    if let Some(traj) = &mut zako.traj.as_mut() {
+        let traj_accessor = TrajAccessorImpl { formation: &formation };
+        let cont = traj.update(&traj_accessor);
+
+        posture.0 = traj.pos();
+        posture.1 = traj.angle;
+        speed.0 = traj.speed;
+        speed.1 = traj.vangle;
+        //if let Some(wait) = traj.is_shot() {
+        //    self.shot_wait = Some(wait);
+        //}
+        cont
+    } else {
+        false
+    }
+}
+
 pub struct SysZakoMover;
 impl<'a> System<'a> for SysZakoMover {
     type SystemData = (ReadStorage<'a, Enemy>, WriteStorage<'a, Zako>, Read<'a, Formation>, WriteStorage<'a, Posture>, WriteStorage<'a, Speed>);
@@ -135,6 +220,12 @@ impl<'a> System<'a> for SysZakoMover {
     fn run(&mut self, (enemy_storage, mut zako_storage, formation, mut pos_storage, mut speed_storage): Self::SystemData) {
         for (enemy, zako, posture, speed) in (&enemy_storage, &mut zako_storage, &mut pos_storage, &mut speed_storage).join() {
             match zako.state {
+                ZakoState::Appearance => {
+                    if !update_traj(zako, posture, speed, &formation) {
+                        zako.traj = None;
+                        zako.state = ZakoState::MoveToFormation;
+                    }
+                }
                 ZakoState::Formation => {
                     posture.0 = formation.pos(&enemy.formation_index);
 
@@ -142,21 +233,9 @@ impl<'a> System<'a> for SysZakoMover {
                     posture.1 -= clamp(posture.1, -ang, ang);
                 }
                 ZakoState::Attack => {
-                    if let Some(traj) = &mut zako.traj.as_mut() {
-                        let traj_accessor = TrajAccessorImpl { formation: &formation };
-                        let cont = traj.update(&traj_accessor);
-
-                        posture.0 = traj.pos();
-                        posture.1 = traj.angle;
-                        speed.0 = traj.speed;
-                        speed.1 = traj.vangle;
-                        //if let Some(wait) = traj.is_shot() {
-                        //    self.shot_wait = Some(wait);
-                        //}
-                        if !cont {
-                            zako.traj = None;
-                            zako.state = ZakoState::MoveToFormation;
-                        }
+                    if !update_traj(zako, posture, speed, &formation) {
+                        zako.traj = None;
+                        zako.state = ZakoState::MoveToFormation;
                     }
                 }
                 ZakoState::MoveToFormation => {
@@ -178,6 +257,7 @@ impl<'a> System<'a> for SysZakoMover {
                     } else {
                         *pos = target;
                         *spd = 0;
+                        *angle = normalize_angle(*angle);
                         *vangle = 0;
                         false
                     };
