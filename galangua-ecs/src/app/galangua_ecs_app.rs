@@ -4,9 +4,11 @@ use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::{BASE_X_TABLE, BASE_Y_TABLE};
+use galangua_common::app::game::traj::Traj;
+use galangua_common::app::game::traj_command_table::{BUTTERFLY_ATTACK_TABLE};
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::EnemyType;
-use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::framework::{AppTrait, RendererTrait, VKey};
 use galangua_common::util::math::ONE;
 use galangua_common::util::pad::Pad;
@@ -33,15 +35,15 @@ impl GalanguaEcsApp {
             .with(SysPlayerFirer, "player_firer", &["player_mover"])
             .with(SysMyShotMover, "myshot_mover", &["player_firer"])
             .with(SysFormationMover, "formation_mover", &[])
-            .with(SysEnemyMover, "enemy_mover", &["formation_mover"])
-            .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "enemy_mover"])
+            .with(SysZakoMover, "zako_mover", &["formation_mover"])
+            .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "zako_mover"])
             .with(SysStarMover, "star_mover", &[])
             .build();
         update_dispatcher.setup(&mut world);
 
         world.create_entity()
             .with(Player)
-            .with(Pos(Vec2I::new(CENTER_X, PLAYER_Y)))
+            .with(Posture(Vec2I::new(CENTER_X, PLAYER_Y), 0))
             .with(SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)})
             .build();
 
@@ -55,12 +57,20 @@ impl GalanguaEcsApp {
                 EnemyType::Owl => "cpp11",
                 EnemyType::CapturedFighter => "rustacean_captured",
             };
-            world.create_entity()
+            let mut builder = world.create_entity()
                 .with(Enemy { enemy_type, formation_index: fi })
-                .with(Pos(pos))
+                .with(Posture(pos, 0))
+                .with(Speed(0, 0))
                 .with(CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) })
-                .with(SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)})
-                .build();
+                .with(SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)});
+            if i == 0 {
+                let mut traj = Traj::new(&BUTTERFLY_ATTACK_TABLE, &ZERO_VEC, false, fi);
+                traj.set_pos(&pos);
+                builder = builder.with(Zako { state: ZakoState::Attack, traj: Some(traj) });
+            } else {
+                builder = builder.with(Zako { state: ZakoState::Formation, traj: None });
+            }
+            builder.build();
         }
 
         world.insert(Pad::default());

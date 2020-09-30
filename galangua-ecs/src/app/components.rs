@@ -1,12 +1,18 @@
 use specs::{prelude::*, Component};
 
 use galangua_common::app::game::{EnemyType, FormationIndex};
+use galangua_common::app::game::traj::Traj;
 use galangua_common::framework::types::Vec2I;
 
 //
-#[derive(Component)]
+#[derive(Clone, Component)]
 #[storage(VecStorage)]
-pub struct Pos(pub Vec2I);
+pub struct Posture(pub Vec2I, pub i32);
+
+//
+#[derive(Clone, Component)]
+#[storage(VecStorage)]
+pub struct Speed(pub i32, pub i32);
 
 //
 #[derive(Component)]
@@ -32,6 +38,19 @@ pub struct MyShot;
 pub struct Enemy {
     pub enemy_type: EnemyType,
     pub formation_index: FormationIndex,
+}
+
+//
+pub enum ZakoState {
+    MoveToFormation,
+    Formation,
+    Attack,
+}
+#[derive(Component)]
+#[storage(VecStorage)]
+pub struct Zako {
+    pub state: ZakoState,
+    pub traj: Option<Traj>,
 }
 
 //
