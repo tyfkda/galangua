@@ -9,6 +9,10 @@ use crate::util::math::{calc_velocity, ANGLE, COS_TABLE, ONE, SIN_TABLE};
 #[cfg(debug_assertions)]
 use crate::app::util::unsafe_util::extend_lifetime;
 
+enum WaitPred {
+    WaitYG(i32),
+}
+
 // Trajectory
 pub struct Traj {
     pos: Vec2I,
@@ -22,7 +26,7 @@ pub struct Traj {
 
     command_table: &'static [TrajCommand],
     delay: u32,
-    wait_pred: Option<Box<dyn Fn(&Vec2I) -> bool>>,
+    wait_pred: Option<WaitPred>,
     shot: Option<u32>,
 
     #[cfg(debug_assertions)]
@@ -100,8 +104,8 @@ impl Traj {
             return;
         }
         if let Some(wait_pred) = &self.wait_pred {
-            if !(wait_pred)(&self.pos) {
-                return;
+            match wait_pred {
+                WaitPred::WaitYG(y) => if self.pos.y < *y { return; },
             }
         }
 
@@ -170,7 +174,7 @@ impl Traj {
                 return false;
             }
             WaitYG(value) => {
-                self.wait_pred = Some(Box::new(move |&pos| pos.y >= value));
+                self.wait_pred = Some(WaitPred::WaitYG(value));
                 return false;
             }
             AddPos(mut x, y) => {
