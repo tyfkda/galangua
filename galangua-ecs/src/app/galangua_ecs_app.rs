@@ -35,6 +35,7 @@ impl GalanguaEcsApp {
             .with(SysAttackManager, "attack_manager", &["appearance_manager"])
             .with(SysZakoMover, "zako_mover", &["formation_mover", "appearance_manager", "attack_manager"])
             .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "zako_mover"])
+            .with(SysSequentialSpriteAnime, "sprite_anime", &[])
             .with(SysStarMover, "star_mover", &[])
             .build();
         update_dispatcher.setup(&mut world);

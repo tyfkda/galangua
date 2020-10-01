@@ -16,6 +16,7 @@ use galangua_common::util::pad::{Pad, PadBit};
 
 use crate::app::components::*;
 
+use super::system_effect::*;
 use super::system_enemy::*;
 
 pub struct SysPadUpdater;
@@ -263,19 +264,24 @@ pub struct SysCollCheckMyShotEnemy;
 impl<'a> System<'a> for SysCollCheckMyShotEnemy {
     type SystemData = (
         Entities<'a>,
-        ReadStorage<'a, Posture>,
+        WriteStorage<'a, Posture>,
         ReadStorage<'a, MyShot>,
         ReadStorage<'a, Enemy>,
         ReadStorage<'a, CollRect>,
+        WriteStorage<'a, SequentialSpriteAnime>,
+        WriteStorage<'a, SpriteDrawable>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (entities,
-             pos_storage,
+             mut pos_storage,
              shot_storage,
              enemy_storage,
-             coll_rect_storage) = data;
+             coll_rect_storage,
+             mut seqanime_storage,
+             mut sprite_storage) = data;
 
+        let mut colls: Vec<Vec2I> = Vec::new();
         for (_shot, shot_pos, shot_coll_rect, shot_entity) in (&shot_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
             let shot_collbox = CollBox { top_left: &round_vec(&shot_pos.0) + &shot_coll_rect.offset, size: shot_coll_rect.size };
             for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in (&enemy_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
@@ -283,8 +289,28 @@ impl<'a> System<'a> for SysCollCheckMyShotEnemy {
                 if shot_collbox.check_collision(&enemy_collbox) {
                     entities.delete(enemy_entity).unwrap();
                     entities.delete(shot_entity).unwrap();
+                    colls.push(enemy_pos.0.clone());
                     break;
                 }
+            }
+        }
+
+        for coll in colls.iter() {
+            create_enemy_explosion_effect(coll, &entities, &mut pos_storage, &mut seqanime_storage, &mut sprite_storage);
+        }
+    }
+}
+
+pub struct SysSequentialSpriteAnime;
+impl<'a> System<'a> for SysSequentialSpriteAnime {
+    type SystemData = (WriteStorage<'a, SequentialSpriteAnime>, WriteStorage<'a, SpriteDrawable>, Entities<'a>);
+
+    fn run(&mut self, (mut seqanime_storage, mut sprite_storage, entities): Self::SystemData) {
+        for (anime, sprite, entity) in (&mut seqanime_storage, &mut sprite_storage, &*entities).join() {
+            if let Some(sprite_name) = update_seqanime(anime) {
+                sprite.sprite_name = sprite_name;
+            } else {
+                entities.delete(entity).unwrap();
             }
         }
     }
