@@ -11,6 +11,7 @@ use galangua_common::util::pad::Pad;
 
 use super::components::*;
 use super::system::*;
+use super::system::system_player::*;
 
 pub struct GalanguaEcsApp {
     pressed_key: Option<VKey>,
@@ -42,10 +43,10 @@ impl GalanguaEcsApp {
         update_dispatcher.setup(&mut world);
 
         world.create_entity()
-            .with(Player)
+            .with(new_player())
             .with(Posture(Vec2I::new(CENTER_X, PLAYER_Y), 0))
-            .with(CollRect { offset: Vec2I::new(-4, -4), size: Vec2I::new(8, 8) })
-            .with(SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)})
+            .with(player_coll_rect())
+            .with(player_sprite())
             .build();
 
         world.insert(Pad::default());

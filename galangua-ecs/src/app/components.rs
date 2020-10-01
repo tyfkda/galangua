@@ -23,9 +23,21 @@ pub struct CollRect {
 }
 
 //
+pub enum PlayerState {
+    Normal,
+    Dead,
+    //Capturing,
+    //Captured,
+    //EscapeCapturing,
+    //MoveHomePos,
+}
+impl Default for PlayerState { fn default() -> Self { Self::Normal } }
 #[derive(Component, Default)]
-#[storage(NullStorage)]
-pub struct Player;
+#[storage(VecStorage)]
+pub struct Player {
+    pub state: PlayerState,
+    pub count: u32,
+}
 
 //
 #[derive(Component, Default)]

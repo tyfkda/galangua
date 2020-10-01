@@ -18,6 +18,7 @@ use crate::app::components::*;
 
 use super::system_effect::*;
 use super::system_enemy::*;
+use super::system_player::*;
 
 pub struct SysPadUpdater;
 impl<'a> System<'a> for SysPadUpdater {
@@ -30,22 +31,11 @@ impl<'a> System<'a> for SysPadUpdater {
 
 pub struct SysPlayerMover;
 impl<'a> System<'a> for SysPlayerMover {
-    type SystemData = (Read<'a, Pad>, ReadStorage<'a, Player>, WriteStorage<'a, Posture>);
+    type SystemData = (Read<'a, Pad>, WriteStorage<'a, Player>, WriteStorage<'a, Posture>, WriteStorage<'a, SpriteDrawable>, WriteStorage<'a, CollRect>, Entities<'a>);
 
-    fn run(&mut self, (pad, player_storage, mut pos_storage): Self::SystemData) {
-        for (_player, pos) in (&player_storage, &mut pos_storage).join() {
-            let mut pos = &mut pos.0;
-            if pad.is_pressed(PadBit::L) {
-                pos.x -= PLAYER_SPEED;
-            }
-            if pad.is_pressed(PadBit::R) {
-                pos.x += PLAYER_SPEED;
-            }
-            if pos.x < 8 * ONE {
-                pos.x = 8 * ONE;
-            } else if pos.x > (WIDTH - 8) * ONE {
-                pos.x = (WIDTH - 8) * ONE;
-            }
+    fn run(&mut self, (pad, mut player_storage, mut pos_storage, mut sprite_storage, mut coll_rect_storage, entities): Self::SystemData) {
+        for (player, mut posture, entity) in (&mut player_storage, &mut pos_storage, &*entities).join() {
+            move_player(player, entity, &pad, &mut posture, &mut sprite_storage, &mut coll_rect_storage);
         }
     }
 }
@@ -306,9 +296,9 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
     type SystemData = (
         Entities<'a>,
         WriteStorage<'a, Posture>,
-        ReadStorage<'a, Player>,
+        WriteStorage<'a, Player>,
         ReadStorage<'a, Enemy>,
-        ReadStorage<'a, CollRect>,
+        WriteStorage<'a, CollRect>,
         WriteStorage<'a, SequentialSpriteAnime>,
         WriteStorage<'a, SpriteDrawable>,
     );
@@ -316,29 +306,31 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
     fn run(&mut self, data: Self::SystemData) {
         let (entities,
              mut pos_storage,
-             player_storage,
+             mut player_storage,
              enemy_storage,
-             coll_rect_storage,
+             mut coll_rect_storage,
              mut seqanime_storage,
              mut sprite_storage) = data;
 
-        let mut colls: Vec<(Vec2I, Vec2I)> = Vec::new();
+        let mut colls: Vec<(Entity, Vec2I, Vec2I)> = Vec::new();
         for (_player, player_pos, player_coll_rect, player_entity) in (&player_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
             let player_collbox = CollBox { top_left: &round_vec(&player_pos.0) + &player_coll_rect.offset, size: player_coll_rect.size };
             for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in (&enemy_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
                 let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
                 if player_collbox.check_collision(&enemy_collbox) {
                     entities.delete(enemy_entity).unwrap();
-                    entities.delete(player_entity).unwrap();
-                    colls.push((player_pos.0.clone(), enemy_pos.0.clone()));
+                    colls.push((player_entity, player_pos.0.clone(), enemy_pos.0.clone()));
                     break;
                 }
             }
         }
 
-        for (player_pos, enemy_pos) in colls.iter() {
+        for (player_entity, player_pos, enemy_pos) in colls.iter() {
             create_player_explosion_effect(player_pos, &entities, &mut pos_storage, &mut seqanime_storage, &mut sprite_storage);
             create_enemy_explosion_effect(enemy_pos, &entities, &mut pos_storage, &mut seqanime_storage, &mut sprite_storage);
+
+            let player = player_storage.get_mut(*player_entity).unwrap();
+            crash_player(player, *player_entity, &mut sprite_storage, &mut coll_rect_storage);
         }
     }
 }
