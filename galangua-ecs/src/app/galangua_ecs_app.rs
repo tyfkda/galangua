@@ -2,6 +2,7 @@ use specs::prelude::*;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_manager::AppearanceManager;
+use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::framework::types::Vec2I;
@@ -31,7 +32,8 @@ impl GalanguaEcsApp {
             .with(SysMyShotMover, "myshot_mover", &["player_firer"])
             .with(SysFormationMover, "formation_mover", &[])
             .with(SysAppearanceManager, "appearance_manager", &[])
-            .with(SysZakoMover, "zako_mover", &["formation_mover", "appearance_manager"])
+            .with(SysAttackManager, "attack_manager", &["appearance_manager"])
+            .with(SysZakoMover, "zako_mover", &["formation_mover", "appearance_manager", "attack_manager"])
             .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "zako_mover"])
             .with(SysStarMover, "star_mover", &[])
             .build();
@@ -51,6 +53,7 @@ impl GalanguaEcsApp {
             world.insert(appearance_manager);
         }
         world.insert(Formation::default());
+        world.insert(AttackManager::default());
 
         Self {
             pressed_key: None,
