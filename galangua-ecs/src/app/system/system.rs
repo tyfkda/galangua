@@ -301,6 +301,48 @@ impl<'a> System<'a> for SysCollCheckMyShotEnemy {
     }
 }
 
+pub struct SysCollCheckPlayerEnemy;
+impl<'a> System<'a> for SysCollCheckPlayerEnemy {
+    type SystemData = (
+        Entities<'a>,
+        WriteStorage<'a, Posture>,
+        ReadStorage<'a, Player>,
+        ReadStorage<'a, Enemy>,
+        ReadStorage<'a, CollRect>,
+        WriteStorage<'a, SequentialSpriteAnime>,
+        WriteStorage<'a, SpriteDrawable>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities,
+             mut pos_storage,
+             player_storage,
+             enemy_storage,
+             coll_rect_storage,
+             mut seqanime_storage,
+             mut sprite_storage) = data;
+
+        let mut colls: Vec<(Vec2I, Vec2I)> = Vec::new();
+        for (_player, player_pos, player_coll_rect, player_entity) in (&player_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
+            let player_collbox = CollBox { top_left: &round_vec(&player_pos.0) + &player_coll_rect.offset, size: player_coll_rect.size };
+            for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in (&enemy_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
+                let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
+                if player_collbox.check_collision(&enemy_collbox) {
+                    entities.delete(enemy_entity).unwrap();
+                    entities.delete(player_entity).unwrap();
+                    colls.push((player_pos.0.clone(), enemy_pos.0.clone()));
+                    break;
+                }
+            }
+        }
+
+        for (player_pos, enemy_pos) in colls.iter() {
+            create_player_explosion_effect(player_pos, &entities, &mut pos_storage, &mut seqanime_storage, &mut sprite_storage);
+            create_enemy_explosion_effect(enemy_pos, &entities, &mut pos_storage, &mut seqanime_storage, &mut sprite_storage);
+        }
+    }
+}
+
 pub struct SysSequentialSpriteAnime;
 impl<'a> System<'a> for SysSequentialSpriteAnime {
     type SystemData = (WriteStorage<'a, SequentialSpriteAnime>, WriteStorage<'a, SpriteDrawable>, Entities<'a>);

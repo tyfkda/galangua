@@ -35,6 +35,7 @@ impl GalanguaEcsApp {
             .with(SysAttackManager, "attack_manager", &["appearance_manager"])
             .with(SysZakoMover, "zako_mover", &["formation_mover", "appearance_manager", "attack_manager"])
             .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "zako_mover"])
+            .with(SysCollCheckPlayerEnemy, "collcheck_player_enemy", &["player_mover", "zako_mover", "collcheck_myshot_enemy"])
             .with(SysSequentialSpriteAnime, "sprite_anime", &[])
             .with(SysStarMover, "star_mover", &[])
             .build();
@@ -43,6 +44,7 @@ impl GalanguaEcsApp {
         world.create_entity()
             .with(Player)
             .with(Posture(Vec2I::new(CENTER_X, PLAYER_Y), 0))
+            .with(CollRect { offset: Vec2I::new(-4, -4), size: Vec2I::new(8, 8) })
             .with(SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)})
             .build();
 
