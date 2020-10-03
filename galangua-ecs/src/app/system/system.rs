@@ -68,8 +68,8 @@ impl<'a> System<'a> for SysPlayerFirer {
         }
 
         let shots = (&player_storage, &mut pos_storage).join()
-            .flat_map(|(_player, pos)| {
-                if pad.is_trigger(PadBit::A) {
+            .flat_map(|(player, pos)| {
+                if can_player_fire(player) && pad.is_trigger(PadBit::A) {
                     Some(pos.clone())
                 } else {
                     None
@@ -252,7 +252,7 @@ impl<'a> SysAttackManagerAccessor<'a> {
     }
 }
 impl<'a> AttackManagerAccessor for SysAttackManagerAccessor<'a> {
-    fn can_capture_attack(&self) -> bool { self.1.capture_state == CaptureState::NoCapture }
+    fn can_capture_attack(&self) -> bool { self.1.can_capture_attack() }
     fn captured_fighter_index(&self) -> Option<FormationIndex> {
         match self.1.capture_state {
             CaptureState::CaptureAttacking |
@@ -309,8 +309,30 @@ impl<'a> System<'a> for SysOwlMover {
              mut tractor_beam_storage,
              mut game_info) = data;
 
-        for (enemy, owl, posture, speed) in (&mut enemy_storage, &mut owl_storage, &mut pos_storage, &mut speed_storage).join() {
-            move_owl(owl, enemy, posture, speed, &formation, &entities, &mut tractor_beam_storage, &mut game_info);
+        for (enemy, owl, posture, speed, entity) in (&mut enemy_storage, &mut owl_storage, &mut pos_storage, &mut speed_storage, &*entities).join() {
+            move_owl(owl, entity, enemy, posture, speed, &formation, &mut tractor_beam_storage, &mut game_info);
+        }
+    }
+}
+
+pub struct SysTroopsMover;
+impl<'a> System<'a> for SysTroopsMover {
+    type SystemData = (
+        WriteStorage<'a, Troops>,
+        Entities<'a>,
+        ReadStorage<'a, Owl>,
+        WriteStorage<'a, Posture>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (mut troops_storage,
+             entities,
+             owl_storage,
+             mut pos_storage) = data;
+
+        for (mut troops, entity) in (&mut troops_storage, &*entities).join() {
+            update_troops(
+                &mut troops, &entity, &owl_storage, &mut pos_storage);
         }
     }
 }
@@ -319,14 +341,38 @@ pub struct SysTractorBeamMover;
 impl<'a> System<'a> for SysTractorBeamMover {
     type SystemData = (
         WriteStorage<'a, TractorBeam>,
+        Write<'a, GameInfo>,
         Entities<'a>,
         WriteStorage<'a, Posture>,
         WriteStorage<'a, SpriteDrawable>,
+        WriteStorage<'a, Player>,
+        WriteStorage<'a, CollRect>,
+        WriteStorage<'a, Enemy>,
+        WriteStorage<'a, Zako>,
+        WriteStorage<'a, Owl>,
+        WriteStorage<'a, Speed>,
+        WriteStorage<'a, Troops>,
     );
 
-    fn run(&mut self, (mut tractor_beam_storage, entities, mut pos_storage, mut sprite_storage): Self::SystemData) {
-        for mut tractor_beam in (&mut tractor_beam_storage).join() {
-            move_tractor_beam(&mut tractor_beam, &entities, &mut pos_storage, &mut sprite_storage);
+    fn run(&mut self, data: Self::SystemData) {
+        let (mut tractor_beam_storage,
+             mut game_info,
+             entities,
+             mut pos_storage,
+             mut sprite_storage,
+             mut player_storage,
+             mut coll_rect_storage,
+             mut enemy_storage,
+             mut zako_storage,
+             mut owl_storage,
+             mut speed_storage,
+             mut troops_storage) = data;
+
+        for (tractor_beam, owl, entity) in (&mut tractor_beam_storage, &mut owl_storage, &*entities).join() {
+            move_tractor_beam(
+                tractor_beam, &mut game_info, &entities, entity, owl, &mut pos_storage,
+                &mut sprite_storage, &mut player_storage, &mut coll_rect_storage,
+                &mut enemy_storage, &mut zako_storage, &mut speed_storage, &mut troops_storage);
         }
     }
 }

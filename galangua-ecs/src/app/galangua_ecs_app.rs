@@ -37,6 +37,7 @@ impl GalanguaEcsApp {
             .with(SysAttackManager, "attack_manager", &["appearance_manager"])
             .with(SysZakoMover, "zako_mover", &["formation_mover", "appearance_manager", "attack_manager"])
             .with(SysOwlMover, "owl_mover", &["formation_mover", "appearance_manager", "attack_manager"])
+            .with(SysTroopsMover, "troops_mover", &["owl_mover"])
             .with(SysTractorBeamMover, "tractor_beam_mover", &["player_mover", "owl_mover"])
             .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "zako_mover", "owl_mover"])
             .with(SysCollCheckPlayerEnemy, "collcheck_player_enemy", &["player_mover", "zako_mover", "owl_mover", "tractor_beam_mover", "collcheck_myshot_enemy"])
