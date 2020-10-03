@@ -7,7 +7,7 @@ use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::attack_manager::Accessor as AttackManagerAccessor;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::star_manager::StarManager;
-use galangua_common::app::game::{EnemyType, FormationIndex};
+use galangua_common::app::game::{CaptureState, EnemyType, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
@@ -15,6 +15,7 @@ use galangua_common::util::math::{quantize_angle, round_vec, ONE};
 use galangua_common::util::pad::{Pad, PadBit};
 
 use crate::app::components::*;
+use crate::app::resources::*;
 
 use super::system_effect::*;
 use super::system_enemy::*;
@@ -121,6 +122,7 @@ impl<'a> System<'a> for SysAppearanceManager {
         Entities<'a>,
         WriteStorage<'a, Enemy>,
         WriteStorage<'a, Zako>,
+        WriteStorage<'a, Owl>,
         WriteStorage<'a, Posture>,
         WriteStorage<'a, Speed>,
         WriteStorage<'a, CollRect>,
@@ -135,6 +137,7 @@ impl<'a> System<'a> for SysAppearanceManager {
             entities,
             mut enemy_storage,
             mut zako_storage,
+            mut owl_storage,
             mut posture_storage,
             mut speed_storage,
             mut coll_rect_storage,
@@ -156,14 +159,18 @@ impl<'a> System<'a> for SysAppearanceManager {
                     EnemyType::Owl => "cpp11",
                     EnemyType::CapturedFighter => "rustacean_captured",
                 };
-                entities.build_entity()
-                    .with(Enemy { enemy_type: e.enemy_type, formation_index: e.fi }, &mut enemy_storage)
-                    .with(Zako { state: ZakoState::Appearance, traj: Some(e.traj) }, &mut zako_storage)
+                let mut builder = entities.build_entity()
+                    .with(Enemy { enemy_type: e.enemy_type, formation_index: e.fi, is_formation: false }, &mut enemy_storage)
                     .with(Posture(e.pos, 0), &mut posture_storage)
                     .with(Speed(0, 0), &mut speed_storage)
                     .with(CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) }, &mut coll_rect_storage)
-                    .with(SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)}, &mut drawable_storage)
-                    .build();
+                    .with(SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)}, &mut drawable_storage);
+                builder = if e.enemy_type != EnemyType::Owl {
+                    builder.with(Zako { state: ZakoState::Appearance, traj: Some(e.traj) }, &mut zako_storage)
+                } else {
+                    builder.with(create_owl(e.traj), &mut owl_storage)
+                };
+                builder.build();
             }
         }
 
@@ -188,51 +195,80 @@ impl<'a> System<'a> for SysAttackManager {
         Write<'a, AttackManager>,
         WriteStorage<'a, Enemy>,
         WriteStorage<'a, Zako>,
-        ReadStorage<'a, Posture>,
+        WriteStorage<'a, Owl>,
+        WriteStorage<'a, Posture>,
+        WriteStorage<'a, Speed>,
+        ReadStorage<'a, Player>,
+        Write<'a, GameInfo>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (mut attack_manager,
              mut enemy_storage,
              mut zako_storage,
-             posture_storage) = data;
+             mut owl_storage,
+             mut posture_storage,
+             mut speed_storage,
+             player_storage,
+             mut game_info) = data;
 
         let result = {
-            let accessor = SysAttackManagerAccessor(&enemy_storage, &zako_storage);
+            let accessor = SysAttackManagerAccessor(&enemy_storage, &game_info);
             attack_manager.update(&accessor)
         };
         if let Some((fi, capture_attack)) = result {
-            (&mut enemy_storage, &mut zako_storage, &posture_storage).join()
+            let get_player_pos = || {
+                for (_player, posture) in (&player_storage, &posture_storage).join() {
+                    return Some(posture.0.clone());
+                }
+                None
+            };
+
+            let player_pos = get_player_pos().unwrap();
+            (&mut enemy_storage, (&mut zako_storage).maybe(), (&mut owl_storage).maybe(), &mut posture_storage, &mut speed_storage).join()
                 .filter(|(enemy, ..)| enemy.formation_index == fi)
-                .for_each(|(enemy, zako, posture)| {
-                    zako_start_attack(zako, &enemy, &posture, capture_attack);
+                .for_each(|(mut enemy, zako_opt, owl_opt, mut posture, mut speed)| {
+                    if let Some(zako) = zako_opt {
+                        zako_start_attack(zako, &mut enemy, &posture);
+                    }
+                    if let Some(owl) = owl_opt {
+                        owl_start_attack(owl, &mut enemy, &mut posture, capture_attack, &mut speed, &player_pos);
+                        if capture_attack {
+                            game_info.capture_state = CaptureState::CaptureAttacking;
+                            game_info.capture_enemy_fi = fi;
+                        }
+                    }
                     attack_manager.put_attacker(&fi);
                 });
         }
     }
 }
 
-struct SysAttackManagerAccessor<'a>(&'a WriteStorage<'a, Enemy>, &'a WriteStorage<'a, Zako>);
+struct SysAttackManagerAccessor<'a>(&'a WriteStorage<'a, Enemy>, &'a GameInfo);
 impl<'a> SysAttackManagerAccessor<'a> {
     fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&'a Enemy> {
         self.0.join()
             .find(|enemy| enemy.formation_index == *formation_index)
     }
-    fn get_zako_at(&self, formation_index: &FormationIndex) -> Option<&'a Zako> {
-        (self.0, self.1).join()
-            .find(|(enemy, _zako)| enemy.formation_index == *formation_index)
-            .map(|(_enemy, zako)| zako)
-    }
 }
 impl<'a> AttackManagerAccessor for SysAttackManagerAccessor<'a> {
-    fn can_capture_attack(&self) -> bool { true }
-    fn captured_fighter_index(&self) -> Option<FormationIndex> { None }
+    fn can_capture_attack(&self) -> bool { self.1.capture_state == CaptureState::NoCapture }
+    fn captured_fighter_index(&self) -> Option<FormationIndex> {
+        match self.1.capture_state {
+            CaptureState::CaptureAttacking |
+            CaptureState::Capturing |
+            CaptureState::Captured => {
+                Some(FormationIndex(self.1.capture_enemy_fi.0, self.1.capture_enemy_fi.1 - 1))
+            }
+            _ => { None }
+        }
+    }
     fn is_enemy_live_at(&self, formation_index: &FormationIndex) -> bool {
         self.get_enemy_at(formation_index).is_some()
     }
     fn is_enemy_formation_at(&self, formation_index: &FormationIndex) -> bool {
-        if let Some(zako) = self.get_zako_at(formation_index) {
-            zako.state == ZakoState::Formation
+        if let Some(enemy) = self.get_enemy_at(formation_index) {
+            enemy.is_formation
         } else {
             false
         }
@@ -241,11 +277,56 @@ impl<'a> AttackManagerAccessor for SysAttackManagerAccessor<'a> {
 
 pub struct SysZakoMover;
 impl<'a> System<'a> for SysZakoMover {
-    type SystemData = (ReadStorage<'a, Enemy>, WriteStorage<'a, Zako>, Read<'a, Formation>, WriteStorage<'a, Posture>, WriteStorage<'a, Speed>);
+    type SystemData = (WriteStorage<'a, Enemy>, WriteStorage<'a, Zako>, Read<'a, Formation>, WriteStorage<'a, Posture>, WriteStorage<'a, Speed>);
 
-    fn run(&mut self, (enemy_storage, mut zako_storage, formation, mut pos_storage, mut speed_storage): Self::SystemData) {
-        for (enemy, zako, posture, vel) in (&enemy_storage, &mut zako_storage, &mut pos_storage, &mut speed_storage).join() {
-            move_zako(zako, enemy, posture, vel, &formation);
+    fn run(&mut self, (mut enemy_storage, mut zako_storage, formation, mut pos_storage, mut speed_storage): Self::SystemData) {
+        for (enemy, zako, posture, speed) in (&mut enemy_storage, &mut zako_storage, &mut pos_storage, &mut speed_storage).join() {
+            move_zako(zako, enemy, posture, speed, &formation);
+        }
+    }
+}
+
+pub struct SysOwlMover;
+impl<'a> System<'a> for SysOwlMover {
+    type SystemData = (
+        WriteStorage<'a, Enemy>,
+        WriteStorage<'a, Owl>,
+        Read<'a, Formation>,
+        WriteStorage<'a, Posture>,
+        WriteStorage<'a, Speed>,
+        Entities<'a>,
+        WriteStorage<'a, TractorBeam>,
+        Write<'a, GameInfo>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (mut enemy_storage,
+             mut owl_storage,
+             formation,
+             mut pos_storage,
+             mut speed_storage,
+             entities,
+             mut tractor_beam_storage,
+             mut game_info) = data;
+
+        for (enemy, owl, posture, speed) in (&mut enemy_storage, &mut owl_storage, &mut pos_storage, &mut speed_storage).join() {
+            move_owl(owl, enemy, posture, speed, &formation, &entities, &mut tractor_beam_storage, &mut game_info);
+        }
+    }
+}
+
+pub struct SysTractorBeamMover;
+impl<'a> System<'a> for SysTractorBeamMover {
+    type SystemData = (
+        WriteStorage<'a, TractorBeam>,
+        Entities<'a>,
+        WriteStorage<'a, Posture>,
+        WriteStorage<'a, SpriteDrawable>,
+    );
+
+    fn run(&mut self, (mut tractor_beam_storage, entities, mut pos_storage, mut sprite_storage): Self::SystemData) {
+        for mut tractor_beam in (&mut tractor_beam_storage).join() {
+            move_tractor_beam(&mut tractor_beam, &entities, &mut pos_storage, &mut sprite_storage);
         }
     }
 }

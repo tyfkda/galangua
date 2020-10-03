@@ -10,6 +10,7 @@ use galangua_common::framework::{AppTrait, RendererTrait, VKey};
 use galangua_common::util::pad::Pad;
 
 use super::components::*;
+use super::resources::*;
 use super::system::*;
 use super::system::system_player::*;
 
@@ -35,8 +36,10 @@ impl GalanguaEcsApp {
             .with(SysAppearanceManager, "appearance_manager", &[])
             .with(SysAttackManager, "attack_manager", &["appearance_manager"])
             .with(SysZakoMover, "zako_mover", &["formation_mover", "appearance_manager", "attack_manager"])
-            .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "zako_mover"])
-            .with(SysCollCheckPlayerEnemy, "collcheck_player_enemy", &["player_mover", "zako_mover", "collcheck_myshot_enemy"])
+            .with(SysOwlMover, "owl_mover", &["formation_mover", "appearance_manager", "attack_manager"])
+            .with(SysTractorBeamMover, "tractor_beam_mover", &["player_mover", "owl_mover"])
+            .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "zako_mover", "owl_mover"])
+            .with(SysCollCheckPlayerEnemy, "collcheck_player_enemy", &["player_mover", "zako_mover", "owl_mover", "tractor_beam_mover", "collcheck_myshot_enemy"])
             .with(SysSequentialSpriteAnime, "sprite_anime", &[])
             .with(SysStarMover, "star_mover", &[])
             .build();
@@ -58,6 +61,7 @@ impl GalanguaEcsApp {
         }
         world.insert(Formation::default());
         world.insert(AttackManager::default());
+        world.insert(GameInfo::new());
 
         Self {
             pressed_key: None,

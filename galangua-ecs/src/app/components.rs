@@ -50,6 +50,7 @@ pub struct MyShot;
 pub struct Enemy {
     pub enemy_type: EnemyType,
     pub formation_index: FormationIndex,
+    pub is_formation: bool,
 }
 
 //
@@ -65,6 +66,64 @@ pub enum ZakoState {
 pub struct Zako {
     pub state: ZakoState,
     pub traj: Option<Traj>,
+}
+
+//
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum OwlCaptureAttackPhase {
+    Capture,
+    CaptureBeam,
+    NoCaptureGoOut,
+    CaptureStart,
+    CaptureCloseBeam,
+    CaptureDoneWait,
+    CaptureDoneBack,
+    CaptureDonePushUp,
+}
+#[derive(PartialEq)]
+pub enum OwlState {
+    Appearance,
+    MoveToFormation,
+    Formation,
+    TrajAttack,
+    CaptureAttack(OwlCaptureAttackPhase),
+}
+pub enum OwlCapturingState {
+    None,
+    Attacking,
+    BeamTracting,
+    Captured,
+    Failed,
+}
+#[derive(Component)]
+#[storage(VecStorage)]
+pub struct Owl {
+    pub state: OwlState,
+    pub traj: Option<Traj>,
+    pub capturing_state: OwlCapturingState,
+    pub target_pos: Vec2I,
+    pub tractor_beam: Option<Entity>,
+}
+
+//
+pub const TRACTOR_BEAM_SPRITE_COUNT: usize = 29;
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum TractorBeamState {
+    Opening,
+    Full,
+    Closing,
+    Closed,
+    Capturing,
+}
+#[derive(Component)]
+#[storage(VecStorage)]
+pub struct TractorBeam {
+    pub pos: Vec2I,
+    pub state: TractorBeamState,
+    pub count: u32,
+    pub color_count: u32,
+    pub size_count: i32,
+    pub beam_sprites: [Option<Entity>; TRACTOR_BEAM_SPRITE_COUNT],
 }
 
 //
