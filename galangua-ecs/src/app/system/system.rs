@@ -20,6 +20,7 @@ use crate::app::resources::*;
 use super::system_effect::*;
 use super::system_enemy::*;
 use super::system_player::*;
+use super::system_owl::*;
 
 pub struct SysPadUpdater;
 impl<'a> System<'a> for SysPadUpdater {
