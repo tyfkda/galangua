@@ -114,6 +114,11 @@ pub fn zako_start_attack(zako: &mut Zako, enemy: &mut Enemy, posture: &Posture) 
     enemy.is_formation = false;
 }
 
+pub fn set_zako_to_troop(zako: &mut Zako, enemy: &mut Enemy) {
+    zako.state = ZakoState::Troop;
+    enemy.is_formation = false;
+}
+
 //
 
 struct TrajAccessorImpl<'a> {

@@ -193,23 +193,27 @@ impl<'a> AppearanceManagerAccessor for SysAppearanceManagerAccessor<'a> {
 pub struct SysAttackManager;
 impl<'a> System<'a> for SysAttackManager {
     type SystemData = (
+        Entities<'a>,
         Write<'a, AttackManager>,
         WriteStorage<'a, Enemy>,
         WriteStorage<'a, Zako>,
         WriteStorage<'a, Owl>,
         WriteStorage<'a, Posture>,
         WriteStorage<'a, Speed>,
+        WriteStorage<'a, Troops>,
         ReadStorage<'a, Player>,
         Write<'a, GameInfo>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut attack_manager,
+        let (entities,
+             mut attack_manager,
              mut enemy_storage,
              mut zako_storage,
              mut owl_storage,
-             mut posture_storage,
+             mut pos_storage,
              mut speed_storage,
+             mut troops_storage,
              player_storage,
              mut game_info) = data;
 
@@ -219,28 +223,37 @@ impl<'a> System<'a> for SysAttackManager {
         };
         if let Some((fi, capture_attack)) = result {
             let get_player_pos = || {
-                for (_player, posture) in (&player_storage, &posture_storage).join() {
+                for (_player, posture) in (&player_storage, &pos_storage).join() {
                     return Some(posture.0.clone());
                 }
                 None
             };
 
             let player_pos = get_player_pos().unwrap();
-            (&mut enemy_storage, (&mut zako_storage).maybe(), (&mut owl_storage).maybe(), &mut posture_storage, &mut speed_storage).join()
-                .filter(|(enemy, ..)| enemy.formation_index == fi)
-                .for_each(|(mut enemy, zako_opt, owl_opt, mut posture, mut speed)| {
-                    if let Some(zako) = zako_opt {
-                        zako_start_attack(zako, &mut enemy, &posture);
+            let entity = (&enemy_storage, &*entities).join()
+                .find(|(enemy, _entity)| enemy.formation_index == fi)
+                .map(|(_enemy, entity)| entity);
+
+            if let Some(entity) = entity {
+                let speed = speed_storage.get_mut(entity).unwrap();
+
+                if let Some(zako) = zako_storage.get_mut(entity) {
+                    let enemy = enemy_storage.get_mut(entity).unwrap();
+                    let posture = pos_storage.get_mut(entity).unwrap();
+                    zako_start_attack(zako, enemy, posture);
+                }
+                if let Some(owl) = owl_storage.get_mut(entity) {
+                    owl_start_attack(
+                        owl, entity, capture_attack, speed, &player_pos,
+                        &mut enemy_storage, &mut zako_storage, &mut troops_storage,
+                        &mut pos_storage, entities);
+                    if capture_attack {
+                        game_info.capture_state = CaptureState::CaptureAttacking;
+                        game_info.capture_enemy_fi = fi;
                     }
-                    if let Some(owl) = owl_opt {
-                        owl_start_attack(owl, &mut enemy, &mut posture, capture_attack, &mut speed, &player_pos);
-                        if capture_attack {
-                            game_info.capture_state = CaptureState::CaptureAttacking;
-                            game_info.capture_enemy_fi = fi;
-                        }
-                    }
-                    attack_manager.put_attacker(&fi);
-                });
+                }
+                attack_manager.put_attacker(&fi);
+            }
         }
     }
 }
@@ -296,7 +309,9 @@ impl<'a> System<'a> for SysOwlMover {
         WriteStorage<'a, Posture>,
         WriteStorage<'a, Speed>,
         Entities<'a>,
+        WriteStorage<'a, Zako>,
         WriteStorage<'a, TractorBeam>,
+        WriteStorage<'a, Troops>,
         Write<'a, GameInfo>,
     );
 
@@ -307,11 +322,13 @@ impl<'a> System<'a> for SysOwlMover {
              mut pos_storage,
              mut speed_storage,
              entities,
+             mut zako_storage,
              mut tractor_beam_storage,
+             mut troops_storage,
              mut game_info) = data;
 
-        for (enemy, owl, posture, speed, entity) in (&mut enemy_storage, &mut owl_storage, &mut pos_storage, &mut speed_storage, &*entities).join() {
-            move_owl(owl, entity, enemy, posture, speed, &formation, &mut tractor_beam_storage, &mut game_info);
+        for (owl, posture, speed, entity) in (&mut owl_storage, &mut pos_storage, &mut speed_storage, &*entities).join() {
+            move_owl(owl, entity, posture, speed, &formation, &mut enemy_storage, &mut zako_storage, &mut tractor_beam_storage, &mut troops_storage, &mut game_info);
         }
     }
 }

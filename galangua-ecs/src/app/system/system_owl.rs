@@ -14,7 +14,7 @@ use galangua_common::util::math::{atan2_lut, clamp, diff_angle, normalize_angle,
 use crate::app::components::*;
 use crate::app::resources::*;
 
-use super::system_enemy::{forward, move_to_formation, update_traj};
+use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, update_traj};
 use super::system_player::{move_capturing_player, set_player_captured, start_player_capturing};
 
 // Owl
@@ -30,10 +30,13 @@ pub fn create_owl(traj: Traj) -> Owl {
 }
 
 pub fn move_owl<'a>(
-    owl: &mut Owl, entity: Entity, enemy: &mut Enemy,
+    owl: &mut Owl, entity: Entity,
     posture: &mut Posture, speed: &mut Speed,
     formation: &Formation,
+    enemy_storage: &mut WriteStorage<'a, Enemy>,
+    zako_storage: &mut WriteStorage<'a, Zako>,
     tractor_beam_storage: &mut WriteStorage<'a, TractorBeam>,
+    troops_storage: &mut WriteStorage<'a, Troops>,
     game_info: &mut GameInfo,
 ) {
     match owl.state {
@@ -49,7 +52,8 @@ pub fn move_owl<'a>(
             }
         }
         OwlState::Formation => {
-            posture.0 = formation.pos(&enemy.formation_index);
+            let fi = enemy_storage.get(entity).unwrap().formation_index;
+            posture.0 = formation.pos(&fi);
 
             let ang = ANGLE * ONE / 128;
             posture.1 -= clamp(posture.1, -ang, ang);
@@ -66,27 +70,57 @@ pub fn move_owl<'a>(
             }
         }
         OwlState::CaptureAttack(phase) => {
-            run_capture_attack(owl, entity, phase, enemy, posture, speed, &formation, tractor_beam_storage, game_info);
+            let troops_opt = troops_storage.get_mut(entity);
+            run_capture_attack(owl, entity, phase, posture, speed, &formation, enemy_storage, zako_storage, tractor_beam_storage, troops_opt, game_info);
             forward(posture, speed);
         }
         OwlState::MoveToFormation => {
-            let result = move_to_formation(posture, speed, &enemy.formation_index, formation);
+            let fi = enemy_storage.get(entity).unwrap().formation_index;
+            let result = move_to_formation(posture, speed, &fi, formation);
             forward(posture, speed);
             if result {
+                let exist = if let Some(troops) = troops_storage.get_mut(entity) {
+                    release_troops(troops, enemy_storage, zako_storage);
+                    true
+                } else {
+                    false
+                };
+                if exist {
+                    troops_storage.remove(entity).unwrap();
+                }
+
                 owl.capturing_state = OwlCapturingState::None;
                 owl.state = OwlState::Formation;
+                let enemy = enemy_storage.get_mut(entity).unwrap();
                 enemy.is_formation = true;
             }
         }
     }
 }
 
-pub fn owl_start_attack(owl: &mut Owl, enemy: &mut Enemy, posture: &mut Posture, capture_attack: bool, speed: &mut Speed, player_pos: &Vec2I) {
-    let flip_x = enemy.formation_index.0 >= (X_COUNT as u8) / 2;
+pub fn owl_start_attack<'a>(
+    owl: &mut Owl,
+    entity: Entity,
+    capture_attack: bool,
+    speed: &mut Speed,
+    player_pos: &Vec2I,
+    enemy_storage: &mut WriteStorage<'a, Enemy>,
+    zako_storage: &mut WriteStorage<'a, Zako>,
+    troops_storage: &mut WriteStorage<'a, Troops>,
+    pos_storage: &mut WriteStorage<'a, Posture>,
+    entities: Entities<'a>,
+) {
+    let fi = enemy_storage.get(entity).unwrap().formation_index;
+    let flip_x = fi.0 >= (X_COUNT as u8) / 2;
     if !capture_attack {
+        let pos = pos_storage.get(entity).unwrap().0;
+        choose_troops(
+            troops_storage, entity, &fi, &pos, entities,
+             enemy_storage, zako_storage, pos_storage);
+
         let table: &[TrajCommand] = &OWL_ATTACK_TABLE;
-        let mut traj = Traj::new(table, &ZERO_VEC, flip_x, enemy.formation_index.clone());
-        traj.set_pos(&posture.0);
+        let mut traj = Traj::new(table, &ZERO_VEC, flip_x, fi);
+        traj.set_pos(&pos);
         owl.traj = Some(traj);
         owl.state = OwlState::TrajAttack;
     } else {
@@ -94,6 +128,7 @@ pub fn owl_start_attack(owl: &mut Owl, enemy: &mut Enemy, posture: &mut Posture,
 
         const DLIMIT: i32 = 4 * ONE;
         speed.0 = 3 * ONE / 2;
+        let posture = pos_storage.get_mut(entity).unwrap();
         posture.1 = 0;
         if !flip_x {
             speed.1 = -DLIMIT;
@@ -105,6 +140,8 @@ pub fn owl_start_attack(owl: &mut Owl, enemy: &mut Enemy, posture: &mut Posture,
 
         owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::Capture);
     }
+
+    let enemy = enemy_storage.get_mut(entity).unwrap();
     enemy.is_formation = false;
 }
 
@@ -112,10 +149,12 @@ fn run_capture_attack<'a>(
     owl: &mut Owl,
     entity: Entity,
     phase: OwlCaptureAttackPhase,
-    enemy: &mut Enemy,
     posture: &mut Posture, speed: &mut Speed,
     formation: &Formation,
+    enemy_storage: &mut WriteStorage<'a, Enemy>,
+    zako_storage: &mut WriteStorage<'a, Zako>,
     tractor_beam_storage: &mut WriteStorage<'a, TractorBeam>,
+    troops_opt: Option<&mut Troops>,
     game_info: &mut GameInfo,
 ) {
     match phase {
@@ -183,7 +222,8 @@ fn run_capture_attack<'a>(
             let pos = &mut posture.0;
 
             if pos.y >= (HEIGHT + 8) * ONE {
-                let target_pos = formation.pos(&enemy.formation_index);
+                let fi = enemy_storage.get(entity).unwrap().formation_index;
+                let target_pos = formation.pos(&fi);
                 let offset = Vec2I::new(target_pos.x - pos.x, (-32 - (HEIGHT + 8)) * ONE);
                 *pos += &offset;
 
@@ -210,7 +250,8 @@ fn run_capture_attack<'a>(
             }
         }
         OwlCaptureAttackPhase::CaptureDoneBack => {
-            if move_to_formation(posture, speed, &enemy.formation_index, formation) {
+            let fi = enemy_storage.get(entity).unwrap().formation_index;
+            if move_to_formation(posture, speed, &fi, formation) {
                 let angle = &mut posture.1;
                 let spd = &mut speed.0;
 
@@ -221,34 +262,38 @@ fn run_capture_attack<'a>(
             }
         }
         OwlCaptureAttackPhase::CaptureDonePushUp => {
-            let angle = &mut posture.1;
+            let troops = troops_opt.unwrap();
+            let done = {
+                let angle = &mut posture.1;
 
-            let ang = ANGLE * ONE / 128;
-            *angle -= clamp(*angle, -ang, ang);
+                let ang = ANGLE * ONE / 128;
+                *angle -= clamp(*angle, -ang, ang);
 
-            // Cannot touch troops' posture here.
+                // Cannot touch troops' posture here.
 
-            /*
-            let mut done = false;
-            let fi = FormationIndex(enemy.formation_index.0, enemy.formation_index.1 - 1);
-            let captured_fighter = accessor.get_enemy_at_mut(&fi).unwrap();
-            let mut pos = *captured_fighter.pos();
-            pos.y -= 1 * ONE;
-            let topy = self.info.pos.y - 16 * ONE;
-            if pos.y <= topy {
-                pos.y = topy;
-                done = true;
-            }
-            captured_fighter.set_pos(&pos);
+                let captured_fighter = troops.members[0].as_mut().unwrap();
+                //let fi = FormationIndex(enemy.formation_index.0, enemy.formation_index.1 - 1);
+                //let captured_fighter = accessor.get_enemy_at_mut(&fi).unwrap();
+                let pos = &mut captured_fighter.1;
+                pos.y -= 1 * ONE;
+                let topy = -16 * ONE;
+                if pos.y <= topy {
+                    pos.y = topy;
+                    true
+                } else {
+                    false
+                }
+            };
 
             if done {
                 //accessor.push_event(EventType::CaptureSequenceEnded);
-                //self.release_troops(accessor);
+                release_troops(troops, enemy_storage, zako_storage);
+
                 //self.set_to_formation();
                 owl.state = OwlState::Formation;
+                let enemy = enemy_storage.get_mut(entity).unwrap();
                 enemy.is_formation = true;
             }
-            */
         }
     }
 }
@@ -273,7 +318,7 @@ fn create_tractor_beam(pos: &Vec2I) -> TractorBeam {
 pub fn move_tractor_beam<'a>(
     tractor_beam: &mut TractorBeam,
     game_info: &mut GameInfo,
-    entities: &Entities<'a>, _entity: Entity,
+    entities: &Entities<'a>, entity: Entity,
     owl: &mut Owl,
     pos_storage: &mut WriteStorage<'a, Posture>,
     drawable_storage: &mut WriteStorage<'a, SpriteDrawable>,
@@ -350,12 +395,12 @@ pub fn move_tractor_beam<'a>(
         }
         Closed => {}
         Capturing => {
-            let entity = tractor_beam.capturing_player.unwrap();
-            let player = player_storage.get_mut(entity).unwrap();
-            let posture = pos_storage.get_mut(entity).unwrap();
+            let player_entity = tractor_beam.capturing_player.unwrap();
+            let player = player_storage.get_mut(player_entity).unwrap();
+            let posture = pos_storage.get_mut(player_entity).unwrap();
             if move_capturing_player(player, posture, &(&tractor_beam.pos + &Vec2I::new(0, 8 * ONE))) {
                 on_player_captured(
-                    &tractor_beam.pos, entity, entity, entities,
+                    &tractor_beam.pos, entity, player_entity, entities,
                     enemy_storage, zako_storage, pos_storage, speed_storage,
                     coll_rect_storage, drawable_storage, troops_storage);
                 tractor_beam.state = TractorBeamState::Closing;
@@ -425,6 +470,42 @@ fn start_capturing(tractor_beam: &mut TractorBeam) {
 
 // Troops
 
+fn choose_troops<'a>(
+    troops_storage: &mut WriteStorage<'a, Troops>,
+    leader_entity: Entity,
+    leader_fi: &FormationIndex,
+    leader_pos: &Vec2I,
+    entities: Entities<'a>,
+    enemy_storage: &mut WriteStorage<'a, Enemy>,
+    zako_storage: &mut WriteStorage<'a, Zako>,
+    pos_storage: &WriteStorage<'a, Posture>,
+) {
+    let indices = [
+        FormationIndex(leader_fi.0 - 1, leader_fi.1 + 1),
+        FormationIndex(leader_fi.0 + 1, leader_fi.1 + 1),
+        FormationIndex(leader_fi.0, leader_fi.1 - 1),
+    ];
+    for (enemy, zako, posture, zako_entity) in (enemy_storage, zako_storage, pos_storage, &*entities).join() {
+        for index in indices.iter() {
+            if enemy.formation_index == *index && enemy.is_formation {
+                let troops = if let Some(troops) = troops_storage.get_mut(leader_entity) {
+                    troops
+                } else {
+                    troops_storage.insert(leader_entity, Troops { members: Default::default() }).unwrap();
+                    troops_storage.get_mut(leader_entity).unwrap()
+                };
+                if let Some(slot) = troops.members.iter_mut().find(|x| x.is_none()) {
+                    let offset = &posture.0 - leader_pos;
+                    *slot = Some((zako_entity, offset));
+                    set_zako_to_troop(zako, enemy);
+                }
+                break;
+            }
+        }
+    }
+}
+
+
 pub fn update_troops<'a>(
     troops: &mut Troops, owner: &Entity, owl_storage: &ReadStorage<'a, Owl>,
     pos_storage: &mut WriteStorage<'a, Posture>,
@@ -445,7 +526,7 @@ fn add_captured_player_to_troops(troops: &mut Troops, captured: Entity, offset: 
     troops.members[0] = Some((captured, offset.clone()));
 }
 
-fn release_owl_troops<'a>(troops: &mut Troops, enemy_storage: &mut WriteStorage<'a, Enemy>, zako_storage: &mut WriteStorage<'a, Zako>) {
+fn release_troops<'a>(troops: &mut Troops, enemy_storage: &mut WriteStorage<'a, Enemy>, zako_storage: &mut WriteStorage<'a, Zako>) {
     for member_opt in troops.members.iter_mut().filter(|x| x.is_some()) {
         let member = member_opt.unwrap();
         if let Some(enemy) = enemy_storage.get_mut(member.0) {
