@@ -18,7 +18,6 @@ use crate::util::pad::Pad;
 
 const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;
-const DEFAULT_LEFT_SHIP: u32 = 3;
 
 #[derive(PartialEq)]
 enum GameState {

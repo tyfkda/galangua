@@ -4,6 +4,13 @@ pub const WIDTH: i32 = 224;
 pub const HEIGHT: i32 = 288;
 pub const ANGLE_DIV: i32 = 24;
 
+pub const KEY_HIGH_SCORE: &str = "highScore";
+pub const DEFAULT_HIGH_SCORE: u32 = 1000;
+
+pub const DEFAULT_LEFT_SHIP: u32 = 3;
+
+pub const CENTER_X: i32 = WIDTH * ONE / 2;
+pub const PLAYER_Y: i32 = (HEIGHT - 16 - 8) * ONE;
 pub const PLAYER_SPEED: i32 = 3 * ONE / 2;
 pub const MYSHOT_SPEED: i32 = 6 * ONE;
 
@@ -12,6 +19,8 @@ pub const ENE_SHOT_SPEED2: i32 = 40 * ONE / 10;
 
 pub const EXTEND_FIRST_SCORE: u32 = 20_000;
 pub const EXTEND_AFTER_SCORE: u32 = 50_000;
+
+pub const RUSH_THRESHOLD: u32 = 5;
 
 pub const BASE_VOLUME: f32 = 1.0 / 4.0;
 

@@ -1,3 +1,4 @@
+use super::consts::*;
 use super::game::effect::StarManager;
 use super::game::manager::game_manager::GameManager;
 use super::game::manager::game_manager::Params as GameManagerParams;
@@ -9,9 +10,6 @@ use crate::util::pad::{Pad, PadBit};
 
 #[cfg(debug_assertions)]
 use super::debug::EditTrajManager;
-
-const KEY_HIGH_SCORE: &str = "highScore";
-const DEFAULT_HIGH_SCORE: u32 = 1000;
 
 #[derive(PartialEq)]
 enum AppState {

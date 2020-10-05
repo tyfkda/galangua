@@ -5,6 +5,7 @@ use super::attack_manager::Accessor as AttackManagerAccessor;
 use super::enemy_manager::EnemyManager;
 use super::formation::Formation;
 
+use crate::app::consts::*;
 use crate::app::game::enemy::enemy::{create_appearance_enemy, Enemy};
 use crate::app::game::enemy::{Accessor, FormationIndex};
 use crate::app::game::manager::{CaptureState, EventType};
@@ -15,8 +16,6 @@ use crate::framework::RendererTrait;
 
 #[cfg(debug_assertions)]
 use crate::app::game::enemy::enemy::create_enemy;
-
-const RUSH_THRESHOLD: u32 = 5;
 
 #[derive(Clone, Copy, PartialEq)]
 enum StageState {

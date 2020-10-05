@@ -9,7 +9,6 @@ use crate::util::pad::{Pad, PadBit};
 use super::recaptured_fighter::RecapturedFighter;
 use super::Accessor;
 
-const Y_POSITION: i32 = HEIGHT - 16 - 8;
 const SPRITE_NAME: &str = "rustacean";
 const SPRITE_NAME_CAPTURED: &str = "rustacean_captured";
 
@@ -36,7 +35,7 @@ pub struct Player {
 impl Player {
     pub fn new() -> Self {
         Self {
-            pos: &Vec2I::new(WIDTH / 2, Y_POSITION) * ONE,
+            pos: Vec2I::new(CENTER_X, PLAYER_Y),
             state: State::Normal,
             dual: false,
             angle: 0,
@@ -48,7 +47,7 @@ impl Player {
 
     pub fn restart(&mut self) {
         self.state = State::Normal;
-        self.pos = &Vec2I::new(WIDTH / 2, HEIGHT - 16 - 8) * ONE;
+        self.pos = Vec2I::new(CENTER_X, PLAYER_Y);
     }
 
     pub fn set_shot_enable(&mut self, value: bool) {
@@ -62,14 +61,14 @@ impl Player {
             State::EscapeCapturing => {
                 const D: i32 = 1 * ONE;
                 self.pos.y += D;
-                if self.pos.y >= Y_POSITION * ONE {
-                    self.pos.y = Y_POSITION * ONE;
+                if self.pos.y >= PLAYER_Y {
+                    self.pos.y = PLAYER_Y;
                     self.state = State::Normal;
                     accessor.push_event(EventType::EscapeEnded);
                 }
             }
             State::MoveHomePos => {
-                let x = (WIDTH / 2 - 8) * ONE;
+                let x = CENTER_X - 8 * ONE;
                 let speed = 2 * ONE;
                 self.pos.x += clamp(x - self.pos.x, -speed, speed);
                 if self.pos.x == x {
@@ -87,7 +86,7 @@ impl Player {
         if let Some(recaptured_fighter) = &mut self.recaptured_fighter {
             recaptured_fighter.update(self.state != State::Dead, accessor);
             if self.state == State::Dead && recaptured_fighter.done() {
-                self.pos.x = WIDTH / 2 * ONE;
+                self.pos.x = CENTER_X;
                 self.state = State::Normal;
                 self.recaptured_fighter = None;
                 accessor.push_event(EventType::RecaptureEnded(false));

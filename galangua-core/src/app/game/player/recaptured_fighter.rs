@@ -34,7 +34,6 @@ impl RecapturedFighter {
     pub(super) fn update<A: Accessor>(&mut self, player_living: bool, accessor: &mut A) {
         const DANGLE: i32 = ANGLE * ONE / ANGLE_DIV;
         const SPEED: i32 = 2 * ONE;
-        const TARGET_Y: i32 = (HEIGHT - 16 - 8) * ONE;
         match self.state {
             State::Rotate => {
                 self.angle += DANGLE;
@@ -45,15 +44,15 @@ impl RecapturedFighter {
                 }
             }
             State::SlideHorz => {
-                let x = if player_living { (WIDTH / 2 + 8) * ONE } else { WIDTH / 2 * ONE };
+                let x = CENTER_X + if player_living { 8 * ONE } else { 0 };
                 self.pos.x += clamp(x - self.pos.x, -SPEED, SPEED);
                 if self.pos.x == x {
                     self.state = State::SlideDown;
                 }
             }
             State::SlideDown => {
-                self.pos.y += clamp(TARGET_Y - self.pos.y, -SPEED, SPEED);
-                if self.pos.y == TARGET_Y {
+                self.pos.y += clamp(PLAYER_Y - self.pos.y, -SPEED, SPEED);
+                if self.pos.y == PLAYER_Y {
                     self.state = State::Done;
                 }
             }

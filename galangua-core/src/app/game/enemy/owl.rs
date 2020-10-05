@@ -510,7 +510,7 @@ impl Enemy for Owl {
             }
 
             let player_pos = accessor.get_player_pos();
-            self.base.target_pos = Vec2I::new(player_pos.x, (HEIGHT - 16 - 8 - 88) * ONE);
+            self.base.target_pos = Vec2I::new(player_pos.x, PLAYER_Y - 88 * ONE);
 
             OwlAttackPhase::Capture
         };
