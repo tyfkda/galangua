@@ -22,6 +22,15 @@ use super::system_enemy::*;
 use super::system_player::*;
 use super::system_owl::*;
 
+pub struct SysGameController;
+impl<'a> System<'a> for SysGameController {
+    type SystemData = (Write<'a, GameInfo>, GameInfoUpdateParams<'a>);
+
+    fn run(&mut self, (mut game_info, params): Self::SystemData) {
+        game_info.update(params);
+    }
+}
+
 pub struct SysPadUpdater;
 impl<'a> System<'a> for SysPadUpdater {
     type SystemData = Write<'a, Pad>;
@@ -33,11 +42,11 @@ impl<'a> System<'a> for SysPadUpdater {
 
 pub struct SysPlayerMover;
 impl<'a> System<'a> for SysPlayerMover {
-    type SystemData = (Read<'a, Pad>, WriteStorage<'a, Player>, WriteStorage<'a, Posture>, WriteStorage<'a, SpriteDrawable>, WriteStorage<'a, CollRect>, Entities<'a>);
+    type SystemData = (Read<'a, Pad>, WriteStorage<'a, Player>, WriteStorage<'a, Posture>);
 
-    fn run(&mut self, (pad, mut player_storage, mut pos_storage, mut sprite_storage, mut coll_rect_storage, entities): Self::SystemData) {
-        for (player, mut posture, entity) in (&mut player_storage, &mut pos_storage, &*entities).join() {
-            move_player(player, entity, &pad, &mut posture, &mut sprite_storage, &mut coll_rect_storage);
+    fn run(&mut self, (pad, mut player_storage, mut pos_storage): Self::SystemData) {
+        for (player, mut posture) in (&mut player_storage, &mut pos_storage).join() {
+            move_player(player, &pad, &mut posture);
         }
     }
 }
@@ -370,6 +379,8 @@ impl<'a> System<'a> for SysTractorBeamMover {
         WriteStorage<'a, Owl>,
         WriteStorage<'a, Speed>,
         WriteStorage<'a, Troops>,
+        Write<'a, StarManager>,
+        Write<'a, AttackManager>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -384,13 +395,16 @@ impl<'a> System<'a> for SysTractorBeamMover {
              mut zako_storage,
              mut owl_storage,
              mut speed_storage,
-             mut troops_storage) = data;
+             mut troops_storage,
+             mut star_manager,
+             mut attack_manager) = data;
 
         for (tractor_beam, owl, entity) in (&mut tractor_beam_storage, &mut owl_storage, &*entities).join() {
             move_tractor_beam(
                 tractor_beam, &mut game_info, &entities, entity, owl, &mut pos_storage,
                 &mut sprite_storage, &mut player_storage, &mut coll_rect_storage,
-                &mut enemy_storage, &mut zako_storage, &mut speed_storage, &mut troops_storage);
+                &mut enemy_storage, &mut zako_storage, &mut speed_storage, &mut troops_storage,
+                &mut star_manager, &mut attack_manager);
         }
     }
 }
@@ -446,6 +460,9 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
         WriteStorage<'a, CollRect>,
         WriteStorage<'a, SequentialSpriteAnime>,
         WriteStorage<'a, SpriteDrawable>,
+        Write<'a, GameInfo>,
+        Write<'a, StarManager>,
+        Write<'a, AttackManager>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -455,7 +472,10 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
              enemy_storage,
              mut coll_rect_storage,
              mut seqanime_storage,
-             mut sprite_storage) = data;
+             mut sprite_storage,
+             mut game_info,
+             mut star_manager,
+             mut attack_manager) = data;
 
         let mut colls: Vec<(Entity, Vec2I, Vec2I)> = Vec::new();
         for (_player, player_pos, player_coll_rect, player_entity) in (&player_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
@@ -475,7 +495,13 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
             create_enemy_explosion_effect(enemy_pos, &entities, &mut pos_storage, &mut seqanime_storage, &mut sprite_storage);
 
             let player = player_storage.get_mut(*player_entity).unwrap();
-            crash_player(player, *player_entity, &mut sprite_storage, &mut coll_rect_storage);
+            if crash_player(player, *player_entity, &mut sprite_storage, &mut coll_rect_storage) {
+                star_manager.set_stop(true);
+                game_info.crash_player(true, &mut attack_manager);
+                star_manager.set_stop(true);
+            } else {
+                game_info.crash_player(false, &mut attack_manager);
+            }
         }
     }
 }
@@ -506,9 +532,9 @@ impl<'a> System<'a> for SysStarMover {
 
 pub struct SysDrawer<'a, R: RendererTrait>(pub &'a mut R);
 impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
-    type SystemData = (Read<'a, StarManager>, ReadStorage<'a, Posture>, ReadStorage<'a, SpriteDrawable>);
+    type SystemData = (Read<'a, StarManager>, ReadStorage<'a, Posture>, ReadStorage<'a, SpriteDrawable>, Read<'a, GameInfo>);
 
-    fn run(&mut self, (star_manager, pos_storage, drawable_storage): Self::SystemData) {
+    fn run(&mut self, (star_manager, pos_storage, drawable_storage, game_info): Self::SystemData) {
         let renderer = &mut self.0;
 
         star_manager.draw(*renderer);
@@ -519,6 +545,13 @@ impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
                 renderer.draw_sprite(drawable.sprite_name, &pos);
             } else {
                 renderer.draw_sprite_rot(drawable.sprite_name, &pos, angle, None);
+            }
+        }
+
+        if game_info.left_ship > 0 {
+            let disp_count = std::cmp::min(game_info.left_ship - 1, 8);
+            for i in 0..disp_count {
+                renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16));
             }
         }
     }

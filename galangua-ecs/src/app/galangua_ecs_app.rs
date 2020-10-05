@@ -31,12 +31,13 @@ impl GalanguaEcsApp {
         world.register::<SpriteDrawable>();
 
         let mut update_dispatcher = DispatcherBuilder::new()
+            .with(SysGameController, "game_controller", &[])
             .with(SysPadUpdater, "pad_updater", &[])
-            .with(SysPlayerMover, "player_mover", &["pad_updater"])
+            .with(SysPlayerMover, "player_mover", &["pad_updater", "game_controller"])
             .with(SysPlayerFirer, "player_firer", &["player_mover"])
             .with(SysMyShotMover, "myshot_mover", &["player_firer"])
-            .with(SysFormationMover, "formation_mover", &[])
-            .with(SysAppearanceManager, "appearance_manager", &[])
+            .with(SysFormationMover, "formation_mover", &["game_controller"])
+            .with(SysAppearanceManager, "appearance_manager", &["game_controller"])
             .with(SysAttackManager, "attack_manager", &["appearance_manager"])
             .with(SysZakoMover, "zako_mover", &["formation_mover", "appearance_manager", "attack_manager"])
             .with(SysOwlMover, "owl_mover", &["formation_mover", "appearance_manager", "attack_manager"])
@@ -45,7 +46,7 @@ impl GalanguaEcsApp {
             .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "zako_mover", "owl_mover"])
             .with(SysCollCheckPlayerEnemy, "collcheck_player_enemy", &["player_mover", "zako_mover", "owl_mover", "tractor_beam_mover", "collcheck_myshot_enemy"])
             .with(SysSequentialSpriteAnime, "sprite_anime", &[])
-            .with(SysStarMover, "star_mover", &[])
+            .with(SysStarMover, "star_mover", &["game_controller", "tractor_beam_mover", "collcheck_player_enemy"])
             .build();
         update_dispatcher.setup(&mut world);
 
