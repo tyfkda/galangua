@@ -1,3 +1,5 @@
+use specs::prelude::*;
+
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::X_COUNT;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
@@ -9,6 +11,9 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, square, ANGLE, ONE, ONE_BIT};
 
 use crate::app::components::*;
+
+use super::system_effect::*;
+use super::system_owl::set_owl_damage;
 
 pub fn forward(posture: &mut Posture, speed: &Speed) {
     posture.0 += &calc_velocity(posture.1 + speed.1 / 2, speed.0);
@@ -51,6 +56,32 @@ pub fn update_traj(traj: &mut Traj, posture: &mut Posture, vel: &mut Speed, form
     //    self.shot_wait = Some(wait);
     //}
     cont
+}
+
+pub fn set_enemy_damage<'a>(
+    entity: Entity, power: u32, entities: &Entities<'a>,
+    enemy_storage: &mut WriteStorage<'a, Enemy>,
+    pos_storage: &mut WriteStorage<'a, Posture>,
+    owl_storage: &mut WriteStorage<'a, Owl>,
+    troops_storage: &mut WriteStorage<'a, Troops>,
+    coll_rect_storage: &mut WriteStorage<'a, CollRect>,
+    seqanime_storage: &mut WriteStorage<'a, SequentialSpriteAnime>,
+    drawable_storage: &mut WriteStorage<'a, SpriteDrawable>,
+) {
+    let dead = match enemy_storage.get(entity).unwrap().enemy_type {
+        EnemyType::Owl => {
+            let owl = owl_storage.get_mut(entity).unwrap();
+            set_owl_damage(owl, entity, power, entities, enemy_storage, troops_storage, coll_rect_storage, drawable_storage)
+        }
+        _ => {
+            entities.delete(entity).unwrap();
+            true
+        }
+    };
+    if dead {
+        let pos = pos_storage.get(entity).unwrap().0.clone();
+        create_enemy_explosion_effect(&pos, entities, pos_storage, seqanime_storage, drawable_storage);
+    }
 }
 
 //

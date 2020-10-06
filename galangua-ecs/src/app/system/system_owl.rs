@@ -19,6 +19,8 @@ use crate::app::resources::*;
 use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, update_traj};
 use super::system_player::{move_capturing_player, set_player_captured, start_player_capturing};
 
+const LIFE: u32 = 2;
+
 // Owl
 
 pub fn create_owl(traj: Traj) -> Owl {
@@ -28,6 +30,7 @@ pub fn create_owl(traj: Traj) -> Owl {
         capturing_state: OwlCapturingState::None,
         target_pos: ZERO_VEC,
         count: 0,
+        life: LIFE,
     }
 }
 
@@ -35,6 +38,7 @@ pub fn move_owl<'a>(
     owl: &mut Owl, entity: Entity,
     posture: &mut Posture, speed: &mut Speed,
     formation: &Formation,
+    entities: &Entities<'a>,
     enemy_storage: &mut WriteStorage<'a, Enemy>,
     zako_storage: &mut WriteStorage<'a, Zako>,
     tractor_beam_storage: &mut WriteStorage<'a, TractorBeam>,
@@ -72,8 +76,7 @@ pub fn move_owl<'a>(
             }
         }
         OwlState::CaptureAttack(phase) => {
-            let troops_opt = troops_storage.get_mut(entity);
-            run_capture_attack(owl, entity, phase, posture, speed, &formation, enemy_storage, zako_storage, tractor_beam_storage, troops_opt, game_info);
+            run_capture_attack(owl, entity, phase, posture, speed, formation, entities, enemy_storage, zako_storage, tractor_beam_storage, troops_storage, game_info);
             forward(posture, speed);
         }
         OwlState::MoveToFormation => {
@@ -81,20 +84,7 @@ pub fn move_owl<'a>(
             let result = move_to_formation(posture, speed, &fi, formation);
             forward(posture, speed);
             if result {
-                let exist = if let Some(troops) = troops_storage.get_mut(entity) {
-                    release_troops(troops, enemy_storage, zako_storage);
-                    true
-                } else {
-                    false
-                };
-                if exist {
-                    troops_storage.remove(entity).unwrap();
-                }
-
-                owl.capturing_state = OwlCapturingState::None;
-                owl.state = OwlState::Formation;
-                let enemy = enemy_storage.get_mut(entity).unwrap();
-                enemy.is_formation = true;
+                set_to_formation(owl, entity, entities, enemy_storage, troops_storage, zako_storage);
             }
         }
     }
@@ -138,7 +128,7 @@ pub fn owl_start_attack<'a>(
             speed.1 = DLIMIT;
         }
 
-        owl.target_pos = Vec2I::new(player_pos.x, (HEIGHT - 16 - 8 - 88) * ONE);
+        owl.target_pos = Vec2I::new(player_pos.x, PLAYER_Y - 88 * ONE);
 
         owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::Capture);
     }
@@ -153,10 +143,11 @@ fn run_capture_attack<'a>(
     phase: OwlCaptureAttackPhase,
     posture: &mut Posture, speed: &mut Speed,
     formation: &Formation,
+    entities: &Entities<'a>,
     enemy_storage: &mut WriteStorage<'a, Enemy>,
     zako_storage: &mut WriteStorage<'a, Zako>,
     tractor_beam_storage: &mut WriteStorage<'a, TractorBeam>,
-    troops_opt: Option<&mut Troops>,
+    troops_storage: &mut WriteStorage<'a, Troops>,
     game_info: &mut GameInfo,
 ) {
     match phase {
@@ -263,8 +254,7 @@ fn run_capture_attack<'a>(
             }
         }
         OwlCaptureAttackPhase::CaptureDonePushUp => {
-            let troops = troops_opt.unwrap();
-            let done = {
+            let done = if let Some(troops) = troops_storage.get_mut(entity) {
                 let angle = &mut posture.1;
 
                 let ang = ANGLE * ONE / 128;
@@ -284,18 +274,15 @@ fn run_capture_attack<'a>(
                 } else {
                     false
                 }
+            } else {
+                panic!("No troops!");
             };
 
             if done {
                 //accessor.push_event(EventType::CaptureSequenceEnded);
-                release_troops(troops, enemy_storage, zako_storage);
+                set_to_formation(owl, entity, entities, enemy_storage, troops_storage, zako_storage);
 
-                //self.set_to_formation();
-                owl.state = OwlState::Formation;
-                let enemy = enemy_storage.get_mut(entity).unwrap();
-                enemy.is_formation = true;
-
-                game_info.next_player();
+                game_info.capture_completed();
             }
         }
     }
@@ -305,6 +292,79 @@ fn set_owl_capturing_player_completed(owl: &mut Owl) {
     owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::CaptureDoneWait);
     owl.count = 0;
 }
+
+fn set_to_formation<'a>(owl: &mut Owl, entity: Entity, entities: &Entities<'a>, enemy_storage: &mut WriteStorage<'a, Enemy>, troops_storage: &mut WriteStorage<'a, Troops>, zako_storage: &mut WriteStorage<'a, Zako>) -> bool {
+    let exist = if let Some(troops) = troops_storage.get_mut(entity) {
+        release_troops(troops, enemy_storage, zako_storage);
+        true
+    } else {
+        false
+    };
+    if exist {
+        troops_storage.remove(entity).unwrap();
+    }
+
+    owl.state = OwlState::Formation;
+    owl.capturing_state = OwlCapturingState::None;
+    let enemy = enemy_storage.get_mut(entity).unwrap();
+    enemy.is_formation = true;
+
+    if owl.life == 0 {
+        entities.delete(entity).unwrap();
+        false
+    } else {
+        true
+    }
+}
+
+pub fn set_owl_damage<'a>(
+    owl: &mut Owl, entity: Entity, power: u32, entities: &Entities<'a>,
+    enemy_storage: &mut WriteStorage<'a, Enemy>,
+    troops_storage: &mut WriteStorage<'a, Troops>,
+    coll_rect_storage: &mut WriteStorage<'a, CollRect>,
+    drawable_storage: &mut WriteStorage<'a, SpriteDrawable>,
+) -> bool {
+    if owl.life > power {
+        //accessor.push_event(EventType::PlaySe(CH_BOMB, SE_DAMAGE));
+        owl.life -= power;
+        //DamageResult { point: 0, keep_alive_as_ghost: false }
+        let drawable = drawable_storage.get_mut(entity).unwrap();
+        drawable.sprite_name = "cpp21";
+        false
+    } else {
+        owl.life = 0;
+
+        owl.capturing_state = OwlCapturingState::None;
+
+        let fi = enemy_storage.get(entity).unwrap().formation_index;
+        let cap_fi = FormationIndex(fi.0, fi.1 - 1);
+        let keep_alive_as_ghost = if let Some(troops) = troops_storage.get_mut(entity) {
+            if let Some(slot) = troops.members.iter_mut().filter(|x| x.is_some()).find(|troop| {
+                if let Some(enemy) = enemy_storage.get(troop.unwrap().0) {
+                    enemy.formation_index == cap_fi
+                } else {
+                    false
+                }
+            }) {
+                *slot = None;
+            }
+            troops.members.iter().any(|x| x.is_some())
+        } else {
+            false
+        };
+
+        if !keep_alive_as_ghost {
+            entities.delete(entity).unwrap();
+        } else {
+            // To keep moving troops.
+            drawable_storage.remove(entity);
+            coll_rect_storage.remove(entity);
+        }
+        true
+    }
+}
+
+// Tractor Beam
 
 fn create_tractor_beam(pos: &Vec2I) -> TractorBeam {
     TractorBeam {
@@ -393,7 +453,7 @@ pub fn move_tractor_beam<'a>(
 
                 if an == 0 {
                     if tractor_beam.capturing_player.is_some() {
-                        on_capturing_player_completed(owl);
+                        on_capturing_player_completed(owl, game_info);
                         star_manager.set_capturing(false);
                     }
                     tractor_beam.state = Closed;
@@ -409,8 +469,7 @@ pub fn move_tractor_beam<'a>(
                 on_player_captured(
                     &tractor_beam.pos, entity, player_entity, entities,
                     enemy_storage, zako_storage, pos_storage, speed_storage,
-                    coll_rect_storage, drawable_storage, troops_storage,
-                    game_info);
+                    coll_rect_storage, drawable_storage, troops_storage);
                 tractor_beam.state = TractorBeamState::Closing;
             }
         }
@@ -441,7 +500,6 @@ fn on_player_captured<'a>(
     coll_rect_storage: &mut WriteStorage<'a, CollRect>,
     drawable_storage: &mut WriteStorage<'a, SpriteDrawable>,
     troops_storage: &mut WriteStorage<'a, Troops>,
-    game_info: &mut GameInfo,
 ) {
     set_player_captured(player, drawable_storage);
 
@@ -459,12 +517,12 @@ fn on_player_captured<'a>(
     let mut troops = Troops {members: Default::default()};
     add_captured_player_to_troops(&mut troops, captured, &Vec2I::new(0, 16 * ONE));
     troops_storage.insert(owner, troops).unwrap();
-
-    game_info.player_captured();
 }
 
-fn on_capturing_player_completed<'a>(owl: &mut Owl) {
+fn on_capturing_player_completed<'a>(owl: &mut Owl, game_info: &mut GameInfo) {
     set_owl_capturing_player_completed(owl);
+
+    game_info.player_captured();
 }
 
 fn tractor_beam_closed(tractor_beam: &TractorBeam) -> bool {

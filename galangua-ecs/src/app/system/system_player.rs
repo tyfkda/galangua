@@ -11,6 +11,7 @@ pub fn new_player() -> Player {
     Player {
         state: PlayerState::Normal,
         count: 0,
+        shot_enable: true,
     }
 }
 
@@ -59,16 +60,19 @@ pub fn move_capturing_player<'a>(player: &mut Player, posture: &mut Posture, tar
 }
 
 pub fn can_player_fire(player: &Player) -> bool {
+    if !player.shot_enable {
+        return false;
+    }
     match player.state {
         PlayerState::Normal | PlayerState::Capturing => true,
         _ => false
     }
 }
 
-pub fn crash_player<'a>(player: &mut Player, entity: Entity, sprite_storage: &mut WriteStorage<'a, SpriteDrawable>, coll_rect_storage: &mut WriteStorage<'a, CollRect>) -> bool {
+pub fn crash_player<'a>(player: &mut Player, entity: Entity, drawable_storage: &mut WriteStorage<'a, SpriteDrawable>, coll_rect_storage: &mut WriteStorage<'a, CollRect>) -> bool {
     player.state = PlayerState::Dead;
     player.count = 0;
-    sprite_storage.remove(entity);
+    drawable_storage.remove(entity);
     coll_rect_storage.remove(entity);
     true
 }
@@ -82,6 +86,17 @@ pub fn set_player_captured<'a>(entity: Entity, sprite_storage: &mut WriteStorage
     sprite_storage.remove(entity);
 }
 
+pub fn restart_player<'a>(player: &mut Player, entity: Entity, posture: &mut Posture, drawable_storage: &mut WriteStorage<'a, SpriteDrawable>, coll_rect_storage: &mut WriteStorage<'a, CollRect>) {
+    player.state = PlayerState::Normal;
+    posture.0 = Vec2I::new(CENTER_X, PLAYER_Y);
+
+    drawable_storage.insert(entity, player_sprite()).unwrap();
+    coll_rect_storage.insert(entity, player_coll_rect()).unwrap();
+}
+
+pub fn enable_player_shot(player: &mut Player, enable: bool) {
+    player.shot_enable = enable;
+}
 
 pub fn player_sprite() -> SpriteDrawable {
     SpriteDrawable { sprite_name: "rustacean", offset: Vec2I::new(-8, -8) }
