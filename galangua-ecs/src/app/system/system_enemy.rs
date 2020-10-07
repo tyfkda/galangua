@@ -1,5 +1,6 @@
 use specs::prelude::*;
 
+use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::X_COUNT;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
@@ -11,6 +12,7 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, square, ANGLE, ONE, ONE_BIT};
 
 use crate::app::components::*;
+use crate::app::resources::GameInfo;
 
 use super::system_effect::*;
 use super::system_owl::set_owl_damage;
@@ -67,11 +69,18 @@ pub fn set_enemy_damage<'a>(
     coll_rect_storage: &mut WriteStorage<'a, CollRect>,
     seqanime_storage: &mut WriteStorage<'a, SequentialSpriteAnime>,
     drawable_storage: &mut WriteStorage<'a, SpriteDrawable>,
+    recaptured_fighter_storage: &mut WriteStorage<'a, RecapturedFighter>,
+    attack_manager: &mut AttackManager,
+    game_info: &mut GameInfo,
+    player_entity: Entity,
 ) {
     let dead = match enemy_storage.get(entity).unwrap().enemy_type {
         EnemyType::Owl => {
             let owl = owl_storage.get_mut(entity).unwrap();
-            set_owl_damage(owl, entity, power, entities, enemy_storage, troops_storage, coll_rect_storage, drawable_storage)
+            set_owl_damage(
+                owl, entity, power, entities, enemy_storage, troops_storage, pos_storage,
+                coll_rect_storage, drawable_storage, recaptured_fighter_storage,
+                attack_manager, game_info, player_entity)
         }
         _ => {
             entities.delete(entity).unwrap();

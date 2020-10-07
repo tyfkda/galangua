@@ -45,6 +45,7 @@ impl GalanguaEcsApp {
             .with(SysTractorBeamMover, "tractor_beam_mover", &["player_mover", "owl_mover"])
             .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "zako_mover", "owl_mover"])
             .with(SysCollCheckPlayerEnemy, "collcheck_player_enemy", &["player_mover", "zako_mover", "owl_mover", "tractor_beam_mover", "collcheck_myshot_enemy"])
+            .with(SysRecaptureFighter, "recapture_fighter", &["collcheck_myshot_enemy", "collcheck_player_enemy"])
             .with(SysSequentialSpriteAnime, "sprite_anime", &[])
             .with(SysStarMover, "star_mover", &["game_controller", "tractor_beam_mover", "collcheck_player_enemy"])
             .build();

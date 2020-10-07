@@ -30,7 +30,7 @@ pub enum PlayerState {
     Capturing,
     Captured,
     //EscapeCapturing,
-    //MoveHomePos,
+    MoveHomePos,
 }
 impl Default for PlayerState { fn default() -> Self { Self::Normal } }
 #[derive(Component, Default)]
@@ -39,12 +39,33 @@ pub struct Player {
     pub state: PlayerState,
     pub count: u32,
     pub shot_enable: bool,
+    pub dual: Option<Entity>,
 }
 
 //
-#[derive(Component, Default)]
-#[storage(NullStorage)]
-pub struct MyShot;
+#[derive(PartialEq)]
+pub enum RecapturedFighterState {
+    Rotate,
+    SlideHorz,
+    SlideDown,
+    Done,
+}
+impl Default for RecapturedFighterState { fn default() -> Self { Self::Rotate } }
+#[derive(Component)]
+#[storage(VecStorage)]
+pub struct RecapturedFighter {
+    pub state: RecapturedFighterState,
+    pub count: u32,
+    pub player_entity: Entity,
+}
+
+//
+#[derive(Component)]
+#[storage(VecStorage)]
+pub struct MyShot {
+    pub player_entity: Entity,
+    pub dual: Option<Entity>,
+}
 
 //
 #[derive(Component)]

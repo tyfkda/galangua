@@ -42,11 +42,11 @@ impl<'a> System<'a> for SysPadUpdater {
 
 pub struct SysPlayerMover;
 impl<'a> System<'a> for SysPlayerMover {
-    type SystemData = (Read<'a, Pad>, WriteStorage<'a, Player>, WriteStorage<'a, Posture>);
+    type SystemData = (Read<'a, Pad>, WriteStorage<'a, Player>, WriteStorage<'a, Posture>, Entities<'a>);
 
-    fn run(&mut self, (pad, mut player_storage, mut pos_storage): Self::SystemData) {
-        for (player, mut posture) in (&mut player_storage, &mut pos_storage).join() {
-            move_player(player, &pad, &mut posture);
+    fn run(&mut self, (pad, mut player_storage, mut pos_storage, entities): Self::SystemData) {
+        for (player, entity) in (&mut player_storage, &*entities).join() {
+            move_player(player, entity, &pad, &mut pos_storage);
         }
     }
 }
@@ -80,8 +80,17 @@ impl<'a> System<'a> for SysPlayerFirer {
         for (player, entity) in (&player_storage, &*entities).join() {
             if can_player_fire(player) && pad.is_trigger(PadBit::A) && shot_count < 2 {
                 let posture = pos_storage.get(entity).unwrap().clone();
+                let dual = if player.dual.is_some() {
+                    let second = entities.build_entity()
+                        .with(Posture(&posture.0 + &Vec2I::new(16 * ONE, 0), posture.1), &mut pos_storage)
+                        .with(SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)}, &mut drawable_storage)
+                        .build();
+                    Some(second)
+                } else {
+                    None
+                };
                 entities.build_entity()
-                    .with(MyShot, &mut shot_storage)
+                    .with(MyShot { player_entity: entity, dual }, &mut shot_storage)
                     .with(posture, &mut pos_storage)
                     .with(CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) }, &mut coll_rect_storage)
                     .with(SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)}, &mut drawable_storage)
@@ -94,14 +103,21 @@ impl<'a> System<'a> for SysPlayerFirer {
 
 pub struct SysMyShotMover;
 impl<'a> System<'a> for SysMyShotMover {
-    type SystemData = (ReadStorage<'a, MyShot>, WriteStorage<'a, Posture>, Entities<'a>);
+    type SystemData = (WriteStorage<'a, MyShot>, WriteStorage<'a, Posture>, Entities<'a>);
 
-    fn run(&mut self, (shot_storage, mut pos_storage, entities): Self::SystemData) {
-        for (_shot, pos, entity) in (&shot_storage, &mut pos_storage, &*entities).join() {
-            let mut pos = &mut pos.0;
-            pos.y -= MYSHOT_SPEED;
-            if pos.y < 0 * ONE {
-                entities.delete(entity).unwrap();
+    fn run(&mut self, (mut shot_storage, mut pos_storage, entities): Self::SystemData) {
+        for (shot, entity) in (&mut shot_storage, &*entities).join() {
+            let mut cont = false;
+            for e in [Some(entity), shot.dual].iter().flat_map(|x| x) {
+                let pos = pos_storage.get_mut(*e).unwrap();
+                let pos = &mut pos.0;
+                pos.y -= MYSHOT_SPEED;
+                if !(pos.y < 0 * ONE) {
+                    cont = true;
+                }
+            }
+            if !cont {
+                delete_myshot(shot, entity, &entities);
             }
         }
     }
@@ -405,41 +421,59 @@ impl<'a> System<'a> for SysCollCheckMyShotEnemy {
     type SystemData = (
         Entities<'a>,
         WriteStorage<'a, Posture>,
-        ReadStorage<'a, MyShot>,
+        WriteStorage<'a, MyShot>,
         WriteStorage<'a, Enemy>,
         WriteStorage<'a, CollRect>,
         WriteStorage<'a, SequentialSpriteAnime>,
         WriteStorage<'a, SpriteDrawable>,
         WriteStorage<'a, Owl>,
         WriteStorage<'a, Troops>,
+        WriteStorage<'a, RecapturedFighter>,
+        Write<'a, AttackManager>,
+        Write<'a, GameInfo>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (entities,
              mut pos_storage,
-             shot_storage,
+             mut shot_storage,
              mut enemy_storage,
              mut coll_rect_storage,
              mut seqanime_storage,
              mut drawable_storage,
              mut owl_storage,
-             mut troops_storage) = data;
+             mut troops_storage,
+             mut recaptured_fighter_storage,
+             mut attack_manager,
+             mut game_info) = data;
 
-        let mut colls: Vec<Entity> = Vec::new();
-        for (_shot, shot_pos, shot_coll_rect, shot_entity) in (&shot_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
-            let shot_collbox = CollBox { top_left: &round_vec(&shot_pos.0) + &shot_coll_rect.offset, size: shot_coll_rect.size };
-            for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in (&enemy_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
-                let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
-                if shot_collbox.check_collision(&enemy_collbox) {
-                    entities.delete(shot_entity).unwrap();
-                    colls.push(enemy_entity);
-                    break;
+        let mut colls: Vec<(Entity, Entity)> = Vec::new();
+        for (shot, shot_pos, shot_coll_rect, shot_entity) in (&mut shot_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
+            let shot_collboxes = [
+                Some(pos_to_coll_box(&shot_pos.0, &shot_coll_rect)),
+                shot.dual.map(|dual| pos_to_coll_box(&pos_storage.get(dual).unwrap().0, &shot_coll_rect)),
+            ];
+            let mut hit = false;
+            for shot_collbox in shot_collboxes.iter().flat_map(|x| x) {
+                for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in (&enemy_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
+                    let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
+                    if shot_collbox.check_collision(&enemy_collbox) {
+                        colls.push((enemy_entity, shot.player_entity));
+                        hit = true;
+                        break;
+                    }
                 }
+            }
+            if hit {
+                delete_myshot(shot, shot_entity, &entities);
             }
         }
 
-        for enemy_entity in colls.iter() {
-            set_enemy_damage(*enemy_entity, 1, &entities, &mut enemy_storage, &mut pos_storage, &mut owl_storage, &mut troops_storage, &mut coll_rect_storage, &mut seqanime_storage, &mut drawable_storage);
+        for (enemy_entity, player_entity) in colls.iter() {
+            set_enemy_damage(
+                *enemy_entity, 1, &entities, &mut enemy_storage, &mut pos_storage, &mut owl_storage,
+                &mut troops_storage, &mut coll_rect_storage, &mut seqanime_storage, &mut drawable_storage,
+                &mut recaptured_fighter_storage, &mut attack_manager, &mut game_info, *player_entity);
         }
     }
 }
@@ -456,6 +490,7 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
         WriteStorage<'a, SpriteDrawable>,
         WriteStorage<'a, Owl>,
         WriteStorage<'a, Troops>,
+        WriteStorage<'a, RecapturedFighter>,
         Write<'a, GameInfo>,
         Write<'a, StarManager>,
         Write<'a, AttackManager>,
@@ -471,35 +506,43 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
              mut drawable_storage,
              mut owl_storage,
              mut troops_storage,
+             mut recaptured_fighter_storage,
              mut game_info,
              mut star_manager,
              mut attack_manager) = data;
 
-        let mut colls: Vec<(Entity, Vec2I, Entity)> = Vec::new();
-        for (_player, player_pos, player_coll_rect, player_entity) in (&player_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
-            let player_collbox = CollBox { top_left: &round_vec(&player_pos.0) + &player_coll_rect.offset, size: player_coll_rect.size };
-            for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in (&enemy_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
-                let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
-                if player_collbox.check_collision(&enemy_collbox) {
-                    colls.push((player_entity, player_pos.0.clone(), enemy_entity));
-                    break;
+        let mut colls: Vec<(Entity, Vec2I, bool, Entity)> = Vec::new();
+        for (player, player_pos, player_coll_rect, player_entity) in (&player_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
+            let player_poses = [
+                Some(player_pos.0.clone()),
+                player.dual.map(|dual| pos_storage.get(dual).unwrap().0.clone()),
+            ];
+            for (i, pl_pos) in player_poses.iter().flat_map(|x| x).enumerate() {
+                let player_collbox = pos_to_coll_box(&pl_pos, player_coll_rect);
+                for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in (&enemy_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
+                    let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
+                    if player_collbox.check_collision(&enemy_collbox) {
+                        colls.push((player_entity, *pl_pos, i != 0, enemy_entity));
+                        break;
+                    }
                 }
             }
         }
 
-        for (player_entity, player_pos, enemy_entity) in colls.iter() {
+        for (player_entity, player_pos, dual, enemy_entity) in colls.iter() {
             set_enemy_damage(
-                *enemy_entity, 100, &entities, &mut enemy_storage,
-                &mut pos_storage, &mut owl_storage, &mut troops_storage,
-                &mut coll_rect_storage, &mut seqanime_storage, &mut drawable_storage);
+                *enemy_entity, 1, &entities, &mut enemy_storage, &mut pos_storage, &mut owl_storage,
+                &mut troops_storage, &mut coll_rect_storage, &mut seqanime_storage, &mut drawable_storage,
+                &mut recaptured_fighter_storage, &mut attack_manager, &mut game_info, *player_entity);
 
             create_player_explosion_effect(player_pos, &entities, &mut pos_storage, &mut seqanime_storage, &mut drawable_storage);
 
             let player = player_storage.get_mut(*player_entity).unwrap();
-            if crash_player(player, *player_entity, &mut drawable_storage, &mut coll_rect_storage) {
-                star_manager.set_stop(true);
+            if crash_player(player, *dual, *player_entity, &mut pos_storage, &mut drawable_storage, &mut coll_rect_storage, &entities) {
+                if game_info.capture_state != CaptureState::Recapturing {
+                    star_manager.set_stop(true);
+                }
                 game_info.crash_player(true, &mut attack_manager);
-                star_manager.set_stop(true);
             } else {
                 game_info.crash_player(false, &mut attack_manager);
             }
@@ -518,6 +561,26 @@ impl<'a> System<'a> for SysSequentialSpriteAnime {
             } else {
                 entities.delete(entity).unwrap();
             }
+        }
+    }
+}
+
+pub struct SysRecaptureFighter;
+impl<'a> System<'a> for SysRecaptureFighter {
+    type SystemData = (
+        WriteStorage<'a, RecapturedFighter>,
+        WriteStorage<'a, Posture>,
+        WriteStorage<'a, Player>,
+        WriteStorage<'a, CollRect>,
+        WriteStorage<'a, SpriteDrawable>,
+        Entities<'a>,
+        Write<'a, AttackManager>,
+        Write<'a, GameInfo>,
+    );
+
+    fn run(&mut self, (mut recaptured_fighter_storage, mut pos_storage, mut player_storage, mut coll_rect_storage, mut drawable_storage, entities, mut attack_manager, mut game_info): Self::SystemData) {
+        for (recaptured_fighter, entity) in (&mut recaptured_fighter_storage, &*entities).join() {
+            recapture_fighter(recaptured_fighter, entity, &entities, &mut player_storage, &mut pos_storage, &mut coll_rect_storage, &mut drawable_storage, &mut attack_manager, &mut game_info);
         }
     }
 }
@@ -580,4 +643,10 @@ impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
             _ => {}
         }
     }
+}
+
+//
+
+fn pos_to_coll_box(pos: &Vec2I, coll_rect: &CollRect) -> CollBox {
+    CollBox { top_left: &round_vec(pos) + &coll_rect.offset, size: coll_rect.size }
 }

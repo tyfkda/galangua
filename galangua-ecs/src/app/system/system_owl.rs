@@ -14,10 +14,10 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, clamp, diff_angle, normalize_angle, ANGLE, ONE};
 
 use crate::app::components::*;
-use crate::app::resources::*;
+use crate::app::resources::GameInfo;
 
 use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, update_traj};
-use super::system_player::{move_capturing_player, set_player_captured, start_player_capturing};
+use super::system_player::{move_capturing_player, set_player_captured, start_player_capturing, start_recapture_effect};
 
 const LIFE: u32 = 2;
 
@@ -321,8 +321,13 @@ pub fn set_owl_damage<'a>(
     owl: &mut Owl, entity: Entity, power: u32, entities: &Entities<'a>,
     enemy_storage: &mut WriteStorage<'a, Enemy>,
     troops_storage: &mut WriteStorage<'a, Troops>,
+    pos_storage: &mut WriteStorage<'a, Posture>,
     coll_rect_storage: &mut WriteStorage<'a, CollRect>,
     drawable_storage: &mut WriteStorage<'a, SpriteDrawable>,
+    recaptured_fighter_storage: &mut WriteStorage<'a, RecapturedFighter>,
+    attack_manager: &mut AttackManager,
+    game_info: &mut GameInfo,
+    player_entity: Entity,
 ) -> bool {
     if owl.life > power {
         //accessor.push_event(EventType::PlaySe(CH_BOMB, SE_DAMAGE));
@@ -334,8 +339,6 @@ pub fn set_owl_damage<'a>(
     } else {
         owl.life = 0;
 
-        owl.capturing_state = OwlCapturingState::None;
-
         let fi = enemy_storage.get(entity).unwrap().formation_index;
         let cap_fi = FormationIndex(fi.0, fi.1 - 1);
         let keep_alive_as_ghost = if let Some(troops) = troops_storage.get_mut(entity) {
@@ -346,12 +349,19 @@ pub fn set_owl_damage<'a>(
                     false
                 }
             }) {
+                let troop_entity = &slot.unwrap().0;
+                start_recapturing(
+                    *troop_entity, entities, player_entity, recaptured_fighter_storage,
+                    pos_storage, drawable_storage, attack_manager, game_info);
+
                 *slot = None;
             }
             troops.members.iter().any(|x| x.is_some())
         } else {
             false
         };
+
+        owl.capturing_state = OwlCapturingState::None;
 
         if !keep_alive_as_ghost {
             entities.delete(entity).unwrap();
@@ -362,6 +372,22 @@ pub fn set_owl_damage<'a>(
         }
         true
     }
+}
+
+fn start_recapturing<'a>(
+    owner_entity: Entity, entities: &Entities<'a>, player_entity: Entity,
+    recaptured_fighter_storage: &mut WriteStorage<'a, RecapturedFighter>,
+    pos_storage: &mut WriteStorage<'a, Posture>,
+    drawable_storage: &mut WriteStorage<'a, SpriteDrawable>,
+    attack_manager: &mut AttackManager,
+    game_info: &mut GameInfo,
+) {
+    let &Posture(pos, angle) = pos_storage.get(owner_entity).unwrap();
+    start_recapture_effect(&pos, angle, entities, player_entity, recaptured_fighter_storage, pos_storage, drawable_storage);
+    entities.delete(owner_entity).unwrap();
+    attack_manager.pause(true);
+    //system.play_se(CH_JINGLE, SE_RECAPTURE);
+    game_info.start_recapturing();
 }
 
 // Tractor Beam
