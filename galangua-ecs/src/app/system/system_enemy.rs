@@ -3,6 +3,7 @@ use specs::prelude::*;
 use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::X_COUNT;
+use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
 use galangua_common::app::game::traj::Traj;
 use galangua_common::app::game::traj_command::TrajCommand;
@@ -70,7 +71,10 @@ pub fn set_enemy_damage<'a>(
     seqanime_storage: &mut WriteStorage<'a, SequentialSpriteAnime>,
     drawable_storage: &mut WriteStorage<'a, SpriteDrawable>,
     recaptured_fighter_storage: &mut WriteStorage<'a, RecapturedFighter>,
+    player_storage: &mut WriteStorage<'a, Player>,
+    tractor_beam_storage: &mut WriteStorage<'a, TractorBeam>,
     attack_manager: &mut AttackManager,
+    star_manager: &mut StarManager,
     game_info: &mut GameInfo,
     player_entity: Entity,
 ) {
@@ -79,8 +83,8 @@ pub fn set_enemy_damage<'a>(
             let owl = owl_storage.get_mut(entity).unwrap();
             set_owl_damage(
                 owl, entity, power, entities, enemy_storage, troops_storage, pos_storage,
-                coll_rect_storage, drawable_storage, recaptured_fighter_storage,
-                attack_manager, game_info, player_entity)
+                coll_rect_storage, drawable_storage, recaptured_fighter_storage, player_storage,
+                tractor_beam_storage, attack_manager, star_manager, game_info, player_entity)
         }
         _ => {
             entities.delete(entity).unwrap();

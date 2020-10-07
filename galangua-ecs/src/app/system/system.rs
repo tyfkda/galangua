@@ -42,11 +42,29 @@ impl<'a> System<'a> for SysPadUpdater {
 
 pub struct SysPlayerMover;
 impl<'a> System<'a> for SysPlayerMover {
-    type SystemData = (Read<'a, Pad>, WriteStorage<'a, Player>, WriteStorage<'a, Posture>, Entities<'a>);
+    type SystemData = (
+        Read<'a, Pad>,
+        WriteStorage<'a, Player>,
+        WriteStorage<'a, Posture>,
+        WriteStorage<'a, CollRect>,
+        Entities<'a>,
+        Write<'a, GameInfo>,
+        Write<'a, AttackManager>,
+    );
 
-    fn run(&mut self, (pad, mut player_storage, mut pos_storage, entities): Self::SystemData) {
+    fn run(&mut self, data: Self::SystemData) {
+        let (pad,
+             mut player_storage,
+             mut pos_storage,
+             mut coll_rect_storage,
+             entities,
+             mut game_info,
+             mut attack_manager) = data;
+
         for (player, entity) in (&mut player_storage, &*entities).join() {
-            move_player(player, entity, &pad, &mut pos_storage);
+            move_player(
+                player, entity, &pad, &mut pos_storage, &mut coll_rect_storage,
+                &mut game_info, &mut attack_manager);
         }
     }
 }
@@ -429,8 +447,11 @@ impl<'a> System<'a> for SysCollCheckMyShotEnemy {
         WriteStorage<'a, Owl>,
         WriteStorage<'a, Troops>,
         WriteStorage<'a, RecapturedFighter>,
-        Write<'a, AttackManager>,
+        WriteStorage<'a, Player>,
+        WriteStorage<'a, TractorBeam>,
         Write<'a, GameInfo>,
+        Write<'a, StarManager>,
+        Write<'a, AttackManager>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -444,8 +465,11 @@ impl<'a> System<'a> for SysCollCheckMyShotEnemy {
              mut owl_storage,
              mut troops_storage,
              mut recaptured_fighter_storage,
-             mut attack_manager,
-             mut game_info) = data;
+             mut player_storage,
+             mut tractor_beam_storage,
+             mut game_info,
+             mut star_manager,
+             mut attack_manager) = data;
 
         let mut colls: Vec<(Entity, Entity)> = Vec::new();
         for (shot, shot_pos, shot_coll_rect, shot_entity) in (&mut shot_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
@@ -473,7 +497,8 @@ impl<'a> System<'a> for SysCollCheckMyShotEnemy {
             set_enemy_damage(
                 *enemy_entity, 1, &entities, &mut enemy_storage, &mut pos_storage, &mut owl_storage,
                 &mut troops_storage, &mut coll_rect_storage, &mut seqanime_storage, &mut drawable_storage,
-                &mut recaptured_fighter_storage, &mut attack_manager, &mut game_info, *player_entity);
+                &mut recaptured_fighter_storage, &mut player_storage, &mut tractor_beam_storage,
+                &mut attack_manager, &mut star_manager, &mut game_info, *player_entity);
         }
     }
 }
@@ -491,6 +516,7 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
         WriteStorage<'a, Owl>,
         WriteStorage<'a, Troops>,
         WriteStorage<'a, RecapturedFighter>,
+        WriteStorage<'a, TractorBeam>,
         Write<'a, GameInfo>,
         Write<'a, StarManager>,
         Write<'a, AttackManager>,
@@ -507,6 +533,7 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
              mut owl_storage,
              mut troops_storage,
              mut recaptured_fighter_storage,
+             mut tractor_beam_storage,
              mut game_info,
              mut star_manager,
              mut attack_manager) = data;
@@ -533,7 +560,8 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
             set_enemy_damage(
                 *enemy_entity, 1, &entities, &mut enemy_storage, &mut pos_storage, &mut owl_storage,
                 &mut troops_storage, &mut coll_rect_storage, &mut seqanime_storage, &mut drawable_storage,
-                &mut recaptured_fighter_storage, &mut attack_manager, &mut game_info, *player_entity);
+                &mut recaptured_fighter_storage, &mut player_storage, &mut tractor_beam_storage,
+                &mut attack_manager, &mut star_manager, &mut game_info, *player_entity);
 
             create_player_explosion_effect(player_pos, &entities, &mut pos_storage, &mut seqanime_storage, &mut drawable_storage);
 

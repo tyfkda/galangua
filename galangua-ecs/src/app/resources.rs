@@ -139,6 +139,18 @@ impl GameInfo {
         self.count = WAIT1 - 1;
     }
 
+    pub fn escape_capturing(&mut self) {
+        self.capture_state = CaptureState::NoCapture;
+        self.capture_enemy_fi = FormationIndex(0, 0);
+        //params.star_manager.set_capturing(false);
+        //self.player.escape_capturing();
+    }
+
+    pub fn escape_ended(&mut self) {
+        //self.stage_manager.pause_attack(false);
+        self.game_state = GameState::Playing;
+    }
+
     pub fn start_recapturing(&mut self) {
         self.game_state = GameState::Recapturing;
         self.capture_state = CaptureState::Recapturing;

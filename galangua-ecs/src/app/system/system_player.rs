@@ -21,7 +21,13 @@ pub fn new_player() -> Player {
     }
 }
 
-pub fn move_player<'a>(player: &mut Player, entity: Entity, pad: &Pad, pos_storage: &mut WriteStorage<'a, Posture>) {
+pub fn move_player<'a>(
+    player: &mut Player, entity: Entity, pad: &Pad,
+    pos_storage: &mut WriteStorage<'a, Posture>,
+    coll_rect_storage: &mut WriteStorage<'a, CollRect>,
+    game_info: &mut GameInfo,
+    attack_manager: &mut AttackManager,
+) {
     use PlayerState::*;
 
     match player.state {
@@ -60,6 +66,22 @@ pub fn move_player<'a>(player: &mut Player, entity: Entity, pad: &Pad, pos_stora
             let pos = &mut posture.0;
             let speed = 2 * ONE;
             pos.x += clamp(HOME_X - pos.x, -speed, speed);
+        }
+        EscapeCapturing => {
+            const D: i32 = 1 * ONE;
+            let posture = pos_storage.get_mut(entity).unwrap();
+            let pos = &mut posture.0;
+            let angle = &mut posture.1;
+            pos.y += D;
+            *angle = 0;
+            if pos.y >= PLAYER_Y {
+                pos.y = PLAYER_Y;
+                player.state = Normal;
+                coll_rect_storage.insert(entity, player_coll_rect()).unwrap();
+
+                attack_manager.pause(false);
+                game_info.escape_ended();
+            }
         }
     }
 }
@@ -152,6 +174,10 @@ pub fn start_player_capturing<'a>(player: &mut Player, entity: Entity, coll_rect
 
 pub fn set_player_captured<'a>(entity: Entity, sprite_storage: &mut WriteStorage<'a, SpriteDrawable>) {
     sprite_storage.remove(entity);
+}
+
+pub fn escape_player_from_tractor_beam(player: &mut Player) {
+    player.state = PlayerState::EscapeCapturing;
 }
 
 pub fn restart_player<'a>(player: &mut Player, entity: Entity, posture: &mut Posture, drawable_storage: &mut WriteStorage<'a, SpriteDrawable>, coll_rect_storage: &mut WriteStorage<'a, CollRect>) {

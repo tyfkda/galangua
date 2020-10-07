@@ -29,7 +29,7 @@ pub enum PlayerState {
     Dead,
     Capturing,
     Captured,
-    //EscapeCapturing,
+    EscapeCapturing,
     MoveHomePos,
 }
 impl Default for PlayerState { fn default() -> Self { Self::Normal } }
