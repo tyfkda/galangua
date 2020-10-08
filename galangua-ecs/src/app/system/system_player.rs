@@ -3,7 +3,7 @@ use specs::prelude::*;
 use galangua_common::app::consts::*;
 use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::framework::types::Vec2I;
-use galangua_common::util::math::{clamp, ANGLE, ONE};
+use galangua_common::util::math::{calc_velocity, clamp, ANGLE, ONE};
 use galangua_common::util::pad::{Pad, PadBit};
 
 use crate::app::components::*;
@@ -201,6 +201,62 @@ pub fn player_coll_rect() -> CollRect {
 }
 
 // MyShot
+
+pub fn fire_myshot<'a>(player: &Player, entity: Entity, shot_storage: &mut WriteStorage<'a, MyShot>, pos_storage: &mut WriteStorage<'a, Posture>, coll_rect_storage: &mut WriteStorage<'a, CollRect>, drawable_storage: &mut WriteStorage<'a, SpriteDrawable>, entities: &Entities<'a>) -> bool {
+    if !can_player_fire(player) {
+        return false;
+    }
+
+    let mut posture = pos_storage.get(entity).unwrap().clone();
+    posture.0 += &calc_velocity(posture.1, 4 * ONE);
+    let dual = if player.dual.is_some() {
+        assert!(posture.1 == 0);
+        let second = entities.build_entity()
+            .with(Posture(&posture.0 + &Vec2I::new(16 * ONE, 0), posture.1), pos_storage)
+            .with(SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)}, drawable_storage)
+            .build();
+        Some(second)
+    } else {
+        None
+    };
+    entities.build_entity()
+        .with(MyShot { player_entity: entity, dual }, shot_storage)
+        .with(posture, pos_storage)
+        .with(CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) }, coll_rect_storage)
+        .with(SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)}, drawable_storage)
+        .build();
+    true
+}
+
+pub fn move_myshot<'a>(shot: &mut MyShot, entity: Entity, pos_storage: &mut WriteStorage<'a, Posture>, entities: &Entities<'a>) {
+    let mut cont = false;
+    for e in [Some(entity), shot.dual].iter().flat_map(|x| x) {
+        let posture = pos_storage.get_mut(*e).unwrap();
+        let pos = &mut posture.0;
+        let angle = &posture.1;
+
+        if *angle == 0 {
+            pos.y -= MYSHOT_SPEED;
+        } else {
+            *pos += &calc_velocity(*angle, MYSHOT_SPEED);
+        }
+        if !out_of_screen(pos) {
+            cont = true;
+        }
+    }
+    if !cont {
+        delete_myshot(shot, entity, &entities);
+    }
+}
+
+fn out_of_screen(pos: &Vec2I) -> bool {
+    const MARGIN: i32 = 4;
+    const TOP: i32 = -MARGIN * ONE;
+    const LEFT: i32 = -MARGIN * ONE;
+    const RIGHT: i32 = (WIDTH + MARGIN) * ONE;
+    const BOTTOM: i32 = (HEIGHT + MARGIN) * ONE;
+    pos.y < TOP || pos.x < LEFT || pos.x > RIGHT || pos.y > BOTTOM
+}
 
 pub fn delete_myshot<'a>(shot: &MyShot, entity: Entity, entities: &Entities<'a>) {
     if let Some(dual) = shot.dual {

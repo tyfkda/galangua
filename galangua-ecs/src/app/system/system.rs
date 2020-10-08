@@ -11,7 +11,7 @@ use galangua_common::app::game::{CaptureState, EnemyType, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
-use galangua_common::util::math::{quantize_angle, round_vec, ONE};
+use galangua_common::util::math::{quantize_angle, round_vec};
 use galangua_common::util::pad::{Pad, PadBit};
 
 use crate::app::components::*;
@@ -96,24 +96,10 @@ impl<'a> System<'a> for SysPlayerFirer {
         }
 
         for (player, entity) in (&player_storage, &*entities).join() {
-            if can_player_fire(player) && pad.is_trigger(PadBit::A) && shot_count < 2 {
-                let posture = pos_storage.get(entity).unwrap().clone();
-                let dual = if player.dual.is_some() {
-                    let second = entities.build_entity()
-                        .with(Posture(&posture.0 + &Vec2I::new(16 * ONE, 0), posture.1), &mut pos_storage)
-                        .with(SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)}, &mut drawable_storage)
-                        .build();
-                    Some(second)
-                } else {
-                    None
-                };
-                entities.build_entity()
-                    .with(MyShot { player_entity: entity, dual }, &mut shot_storage)
-                    .with(posture, &mut pos_storage)
-                    .with(CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) }, &mut coll_rect_storage)
-                    .with(SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)}, &mut drawable_storage)
-                    .build();
-                shot_count += 1;
+            if pad.is_trigger(PadBit::A) && shot_count < 2 {
+                if fire_myshot(player, entity, &mut shot_storage, &mut pos_storage, &mut coll_rect_storage, &mut drawable_storage, &entities) {
+                    shot_count += 1;
+                }
             }
         }
     }
@@ -125,18 +111,7 @@ impl<'a> System<'a> for SysMyShotMover {
 
     fn run(&mut self, (mut shot_storage, mut pos_storage, entities): Self::SystemData) {
         for (shot, entity) in (&mut shot_storage, &*entities).join() {
-            let mut cont = false;
-            for e in [Some(entity), shot.dual].iter().flat_map(|x| x) {
-                let pos = pos_storage.get_mut(*e).unwrap();
-                let pos = &mut pos.0;
-                pos.y -= MYSHOT_SPEED;
-                if !(pos.y < 0 * ONE) {
-                    cont = true;
-                }
-            }
-            if !cont {
-                delete_myshot(shot, entity, &entities);
-            }
+            move_myshot(shot, entity, &mut pos_storage, &entities);
         }
     }
 }
