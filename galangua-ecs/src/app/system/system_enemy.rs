@@ -1,8 +1,9 @@
 use specs::prelude::*;
 
+use galangua_common::app::consts::*;
 use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
-use galangua_common::app::game::formation_table::X_COUNT;
+use galangua_common::app::game::formation_table::{X_COUNT, Y_COUNT};
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
 use galangua_common::app::game::traj::Traj;
@@ -94,25 +95,38 @@ pub fn set_enemy_damage<'a>(
     if dead {
         let pos = pos_storage.get(entity).unwrap().0.clone();
         create_enemy_explosion_effect(&pos, entities, pos_storage, seqanime_storage, drawable_storage);
+
+        game_info.decrement_alive_enemy();
     }
 }
 
 //
 
-pub fn move_zako(zako: &mut Zako, enemy: &mut Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation) {
+pub fn move_zako<'a>(
+    zako: &mut Zako, entity: Entity, enemy: &mut Enemy, speed: &mut Speed,
+    formation: &Formation, player_storage: &ReadStorage<'a, Player>,
+    pos_storage: &mut WriteStorage<'a, Posture>,
+    entities: &Entities<'a>, game_info: &mut GameInfo,
+) {
     match zako.state {
         ZakoState::Appearance => {
             let cont = if let Some(traj) = &mut zako.traj.as_mut() {
+                let posture = pos_storage.get_mut(entity).unwrap();
                 update_traj(traj, posture, speed, formation)
             } else {
                 false
             };
             if !cont {
                 zako.traj = None;
-                zako.state = ZakoState::MoveToFormation;
+                if enemy.formation_index.1 >= Y_COUNT as u8 {  // Assault
+                    set_zako_assault(zako, speed, player_storage, pos_storage);
+                } else {
+                    zako.state = ZakoState::MoveToFormation;
+                }
             }
         }
         ZakoState::Formation => {
+            let mut posture = pos_storage.get_mut(entity).unwrap();
             posture.0 = formation.pos(&enemy.formation_index);
 
             let ang = ANGLE * ONE / 128;
@@ -120,6 +134,7 @@ pub fn move_zako(zako: &mut Zako, enemy: &mut Enemy, posture: &mut Posture, spee
         }
         ZakoState::Attack => {
             let cont = if let Some(traj) = &mut zako.traj.as_mut() {
+                let posture = pos_storage.get_mut(entity).unwrap();
                 update_traj(traj, posture, speed, formation)
             } else {
                 false
@@ -130,6 +145,7 @@ pub fn move_zako(zako: &mut Zako, enemy: &mut Enemy, posture: &mut Posture, spee
             }
         }
         ZakoState::MoveToFormation => {
+            let posture = pos_storage.get_mut(entity).unwrap();
             let result = move_to_formation(posture, speed, &enemy.formation_index, formation);
             forward(posture, speed);
             if result {
@@ -137,10 +153,66 @@ pub fn move_zako(zako: &mut Zako, enemy: &mut Enemy, posture: &mut Posture, spee
                 enemy.is_formation = true;
             }
         }
+        ZakoState::Assault(phase) => {
+            let posture = pos_storage.get_mut(entity).unwrap();
+            if let Some(new_phase) = update_assault(zako, posture, phase, entity, entities, game_info) {
+                zako.state = ZakoState::Assault(new_phase);
+            }
+            forward(posture, speed);
+        }
         ZakoState::Troop => {
             // Controlled by leader.
         }
     }
+}
+
+fn set_zako_assault<'a>(zako: &mut Zako, speed: &mut Speed, player_storage: &ReadStorage<'a, Player>, pos_storage: &WriteStorage<'a, Posture>) {
+    /*let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+    let target_pos = [
+        Some(*accessor.get_player_pos()),
+        accessor.get_dual_player_pos(),
+    ];
+    let count = target_pos.iter().flat_map(|x| x).count();
+    let target: &Vec2I = target_pos.iter()
+        .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();*/
+
+    for (_player, posture) in (player_storage, pos_storage).join() {
+        zako.target_pos = posture.0.clone();
+        speed.1 = 0;
+        break;
+    }
+
+    zako.state = ZakoState::Assault(0);
+}
+
+fn update_assault<'a>(zako: &mut Zako, posture: &mut Posture, phase: u32, entity: Entity, entities: &Entities<'a>, game_info: &mut GameInfo) -> Option<u32> {
+    let pos = &mut posture.0;
+    let angle = &mut posture.1;
+    match phase {
+        0 => {
+            let target = &zako.target_pos;
+            let diff = target - pos;
+
+            const DLIMIT: i32 = 5 * ONE;
+            let target_angle = atan2_lut(-diff.y, diff.x);
+            let d = diff_angle(target_angle, *angle);
+            if d < -DLIMIT {
+                *angle -= DLIMIT;
+            } else if d > DLIMIT {
+                *angle += DLIMIT;
+            } else {
+                *angle += d;
+                return Some(1);
+            }
+        }
+        1 | _ => {
+            if pos.y >= (HEIGHT + 8) * ONE {
+                entities.delete(entity).unwrap();
+                game_info.decrement_alive_enemy();
+            }
+        }
+    }
+    None
 }
 
 pub fn zako_start_attack(zako: &mut Zako, enemy: &mut Enemy, posture: &Posture) {

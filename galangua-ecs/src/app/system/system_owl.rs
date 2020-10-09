@@ -414,7 +414,9 @@ fn start_recapturing<'a>(
     entities.delete(owner_entity).unwrap();
     attack_manager.pause(true);
     //system.play_se(CH_JINGLE, SE_RECAPTURE);
+
     game_info.start_recapturing();
+    game_info.decrement_alive_enemy();
 }
 
 // Tractor Beam
@@ -528,7 +530,8 @@ pub fn move_tractor_beam<'a>(
                 on_player_captured(
                     &tractor_beam.pos, entity, player_entity, entities,
                     enemy_storage, zako_storage, pos_storage, speed_storage,
-                    coll_rect_storage, drawable_storage, troops_storage);
+                    coll_rect_storage, drawable_storage, troops_storage,
+                    game_info);
                 tractor_beam.state = TractorBeamState::Closing;
             }
         }
@@ -559,6 +562,7 @@ fn on_player_captured<'a>(
     coll_rect_storage: &mut WriteStorage<'a, CollRect>,
     drawable_storage: &mut WriteStorage<'a, SpriteDrawable>,
     troops_storage: &mut WriteStorage<'a, Troops>,
+    game_info: &mut GameInfo,
 ) {
     set_player_captured(player, drawable_storage);
 
@@ -570,12 +574,14 @@ fn on_player_captured<'a>(
         .with(Speed(0, 0), speed_storage)
         .with(CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) }, coll_rect_storage)
         .with(SpriteDrawable {sprite_name: "rustacean_captured", offset: Vec2I::new(-8, -8)}, drawable_storage)
-        .with(Zako { state: ZakoState::Troop, traj: None }, zako_storage)
+        .with(Zako { state: ZakoState::Troop, traj: None, target_pos: ZERO_VEC }, zako_storage)
         .build();
 
     let mut troops = Troops {members: Default::default()};
     add_captured_player_to_troops(&mut troops, captured, &Vec2I::new(0, 16 * ONE));
     troops_storage.insert(owner, troops).unwrap();
+
+    game_info.alive_enemy_count += 1;
 }
 
 fn on_capturing_player_completed<'a>(owl: &mut Owl, captured: bool, game_info: &mut GameInfo) {

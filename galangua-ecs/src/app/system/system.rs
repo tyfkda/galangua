@@ -6,10 +6,11 @@ use galangua_common::app::game::appearance_manager::Accessor as AppearanceManage
 use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::attack_manager::Accessor as AttackManagerAccessor;
 use galangua_common::app::game::formation::Formation;
+use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, EnemyType, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
-use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{quantize_angle, round_vec};
 use galangua_common::util::pad::{Pad, PadBit};
@@ -139,6 +140,7 @@ impl<'a> System<'a> for SysAppearanceManager {
         WriteStorage<'a, SpriteDrawable>,
         Write<'a, Formation>,
         Write<'a, AttackManager>,
+        Write<'a, GameInfo>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -153,7 +155,8 @@ impl<'a> System<'a> for SysAppearanceManager {
             mut coll_rect_storage,
             mut drawable_storage,
             mut formation,
-            mut attack_manager) = data;
+            mut attack_manager,
+            mut game_info) = data;
 
         if appearance_manager.done {
             return;
@@ -176,11 +179,12 @@ impl<'a> System<'a> for SysAppearanceManager {
                     .with(CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) }, &mut coll_rect_storage)
                     .with(SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)}, &mut drawable_storage);
                 builder = if e.enemy_type != EnemyType::Owl {
-                    builder.with(Zako { state: ZakoState::Appearance, traj: Some(e.traj) }, &mut zako_storage)
+                    builder.with(Zako { state: ZakoState::Appearance, traj: Some(e.traj), target_pos: ZERO_VEC }, &mut zako_storage)
                 } else {
                     builder.with(create_owl(e.traj), &mut owl_storage)
                 };
                 builder.build();
+                game_info.alive_enemy_count += 1;
             }
         }
 
@@ -300,11 +304,29 @@ impl<'a> AttackManagerAccessor for SysAttackManagerAccessor<'a> {
 
 pub struct SysZakoMover;
 impl<'a> System<'a> for SysZakoMover {
-    type SystemData = (WriteStorage<'a, Enemy>, WriteStorage<'a, Zako>, Read<'a, Formation>, WriteStorage<'a, Posture>, WriteStorage<'a, Speed>);
+    type SystemData = (
+        WriteStorage<'a, Enemy>,
+        WriteStorage<'a, Zako>,
+        Read<'a, Formation>,
+        WriteStorage<'a, Posture>,
+        WriteStorage<'a, Speed>,
+        ReadStorage<'a, Player>,
+        Entities<'a>,
+        Write<'a, GameInfo>,
+    );
 
-    fn run(&mut self, (mut enemy_storage, mut zako_storage, formation, mut pos_storage, mut speed_storage): Self::SystemData) {
-        for (enemy, zako, posture, speed) in (&mut enemy_storage, &mut zako_storage, &mut pos_storage, &mut speed_storage).join() {
-            move_zako(zako, enemy, posture, speed, &formation);
+    fn run(&mut self, data: Self::SystemData) {
+        let (mut enemy_storage,
+             mut zako_storage,
+             formation,
+             mut pos_storage,
+             mut speed_storage,
+             player_storage,
+             entities,
+             mut game_info) = data;
+
+        for (enemy, zako, speed, entity) in (&mut enemy_storage, &mut zako_storage, &mut speed_storage, &*entities).join() {
+            move_zako(zako, entity, enemy, speed, &formation, &player_storage, &mut pos_storage, &entities, &mut game_info);
         }
     }
 }
@@ -599,9 +621,9 @@ impl<'a> System<'a> for SysStarMover {
 
 pub struct SysDrawer<'a, R: RendererTrait>(pub &'a mut R);
 impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
-    type SystemData = (Read<'a, StarManager>, ReadStorage<'a, Posture>, ReadStorage<'a, SpriteDrawable>, Read<'a, GameInfo>);
+    type SystemData = (Read<'a, StarManager>, ReadStorage<'a, Posture>, ReadStorage<'a, SpriteDrawable>, Read<'a, GameInfo>, Read<'a, StageIndicator>);
 
-    fn run(&mut self, (star_manager, pos_storage, drawable_storage, game_info): Self::SystemData) {
+    fn run(&mut self, (star_manager, pos_storage, drawable_storage, game_info, stage_indicator): Self::SystemData) {
         let renderer = &mut self.0;
 
         star_manager.draw(*renderer);
@@ -615,6 +637,8 @@ impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
             }
         }
 
+        stage_indicator.draw(*renderer);
+
         if game_info.left_ship > 0 {
             let disp_count = std::cmp::min(game_info.left_ship - 1, 8);
             for i in 0..disp_count {
@@ -623,10 +647,10 @@ impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
         }
 
         match game_info.game_state {
-            //GameState::StartStage => {
-            //    renderer.set_texture_color_mod("font", 0, 255, 255);
-            //    renderer.draw_str("font", 10 * 8, 18 * 8, &format!("STAGE {}", self.stage + 1));
-            //}
+            GameState::StartStage => {
+                renderer.set_texture_color_mod("font", 0, 255, 255);
+                renderer.draw_str("font", 10 * 8, 18 * 8, &format!("STAGE {}", game_info.stage + 1));
+            }
             GameState::WaitReady | GameState::WaitReady2 => {
                 if game_info.left_ship > 1 || game_info.game_state == GameState::WaitReady2 {
                     renderer.set_texture_color_mod("font", 0, 255, 255);
