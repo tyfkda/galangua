@@ -163,7 +163,12 @@ const MAX_TROOPS: usize = 3;
 #[derive(Component)]
 #[storage(VecStorage)]
 pub struct Troops {
-    pub members: [Option<(Entity, Vec2I)>; MAX_TROOPS],
+    pub members: [Option<Troop>; MAX_TROOPS],
+}
+pub struct Troop {
+    pub entity: Entity,
+    pub offset: Vec2I,
+    pub is_guard: bool,
 }
 
 //

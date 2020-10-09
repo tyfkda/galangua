@@ -294,11 +294,11 @@ fn run_capture_attack<'a>(
                 let captured_fighter = troops.members[0].as_mut().unwrap();
                 //let fi = FormationIndex(enemy.formation_index.0, enemy.formation_index.1 - 1);
                 //let captured_fighter = accessor.get_enemy_at_mut(&fi).unwrap();
-                let pos = &mut captured_fighter.1;
-                pos.y -= 1 * ONE;
+                let offset = &mut captured_fighter.offset;
+                offset.y -= 1 * ONE;
                 let topy = -16 * ONE;
-                if pos.y <= topy {
-                    pos.y = topy;
+                if offset.y <= topy {
+                    offset.y = topy;
                     true
                 } else {
                     false
@@ -393,13 +393,13 @@ pub fn set_owl_damage<'a>(
         let cap_fi = FormationIndex(fi.0, fi.1 - 1);
         let keep_alive_as_ghost = if let Some(troops) = troops_storage.get_mut(entity) {
             if let Some(slot) = troops.members.iter_mut().filter(|x| x.is_some()).find(|troop| {
-                if let Some(enemy) = enemy_storage.get(troop.unwrap().0) {
+                if let Some(enemy) = enemy_storage.get(troop.as_ref().unwrap().entity) {
                     enemy.formation_index == cap_fi
                 } else {
                     false
                 }
             }) {
-                let troop_entity = &slot.unwrap().0;
+                let troop_entity = &slot.as_ref().unwrap().entity;
                 start_recapturing(
                     *troop_entity, entities, player_entity, recaptured_fighter_storage,
                     pos_storage, drawable_storage, attack_manager, game_info);
@@ -666,12 +666,12 @@ fn choose_troops<'a>(
     pos_storage: &WriteStorage<'a, Posture>,
 ) {
     let indices = [
-        FormationIndex(leader_fi.0 - 1, leader_fi.1 + 1),
-        FormationIndex(leader_fi.0 + 1, leader_fi.1 + 1),
-        FormationIndex(leader_fi.0, leader_fi.1 - 1),
+        (FormationIndex(leader_fi.0 - 1, leader_fi.1 + 1), true),
+        (FormationIndex(leader_fi.0 + 1, leader_fi.1 + 1), true),
+        (FormationIndex(leader_fi.0, leader_fi.1 - 1), false),
     ];
     for (enemy, zako, posture, zako_entity) in (enemy_storage, zako_storage, pos_storage, &*entities).join() {
-        for index in indices.iter() {
+        for (index, is_guard) in indices.iter() {
             if enemy.formation_index == *index && enemy.is_formation {
                 let troops = if let Some(troops) = troops_storage.get_mut(leader_entity) {
                     troops
@@ -681,7 +681,7 @@ fn choose_troops<'a>(
                 };
                 if let Some(slot) = troops.members.iter_mut().find(|x| x.is_none()) {
                     let offset = &posture.0 - leader_pos;
-                    *slot = Some((zako_entity, offset));
+                    *slot = Some(Troop { entity: zako_entity, offset, is_guard: *is_guard });
                     set_zako_to_troop(zako, enemy);
                 }
                 break;
@@ -698,8 +698,8 @@ pub fn update_troops<'a>(
     assert!(owl_storage.get(*owner).is_some());
     let &Posture(pos, angle) = pos_storage.get(*owner).unwrap();
     for member in troops.members.iter().flat_map(|x| x) {
-        if let Some(member_pos) = pos_storage.get_mut(member.0) {
-            member_pos.0 = &pos + &member.1;
+        if let Some(member_pos) = pos_storage.get_mut(member.entity) {
+            member_pos.0 = &pos + &member.offset;
             member_pos.1 = angle;
         }
     }
@@ -708,16 +708,16 @@ pub fn update_troops<'a>(
 fn add_captured_player_to_troops(troops: &mut Troops, captured: Entity, offset: &Vec2I) {
     // On capture attack, must be no troops exists.
     assert!(troops.members[0].is_none());
-    troops.members[0] = Some((captured, offset.clone()));
+    troops.members[0] = Some(Troop { entity: captured, offset: offset.clone(), is_guard: false });
 }
 
 fn release_troops<'a>(troops: &mut Troops, enemy_storage: &mut WriteStorage<'a, Enemy>, zako_storage: &mut WriteStorage<'a, Zako>) {
     for member_opt in troops.members.iter_mut().filter(|x| x.is_some()) {
-        let member = member_opt.unwrap();
-        if let Some(enemy) = enemy_storage.get_mut(member.0) {
+        let member = member_opt.as_ref().unwrap();
+        if let Some(enemy) = enemy_storage.get_mut(member.entity) {
             enemy.is_formation = true;
         }
-        if let Some(zako) = zako_storage.get_mut(member.0) {
+        if let Some(zako) = zako_storage.get_mut(member.entity) {
             zako.state = ZakoState::Formation;
         }
         *member_opt = None;
