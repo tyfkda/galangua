@@ -77,13 +77,18 @@ pub struct Enemy {
 }
 
 //
+#[derive(Clone, Copy, PartialEq)]
+pub enum ZakoAttackType {
+    BeeAttack,
+    Traj,
+}
 #[derive(PartialEq)]
 pub enum ZakoState {
     Appearance,
     MoveToFormation,
     Assault(u32),
     Formation,
-    Attack,
+    Attack(ZakoAttackType),
     Troop,
 }
 #[derive(Component)]

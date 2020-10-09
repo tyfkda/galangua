@@ -268,6 +268,10 @@ impl GameInfo {
         self.alive_enemy_count -= 1;
     }
 
+    pub fn is_rush(&self) -> bool {
+        self.game_state == GameState::Playing && self.stage_state == StageState::RUSH
+    }
+
     fn start_next_stage(
         &mut self, stage: u16, captured_fighter: Option<FormationIndex>, formation: &mut Formation,
         appearance_manager: &mut AppearanceManager, attack_manager: &mut AttackManager,

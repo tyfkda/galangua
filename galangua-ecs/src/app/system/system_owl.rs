@@ -68,15 +68,8 @@ pub fn move_owl<'a>(
             posture.1 -= clamp(posture.1, -ang, ang);
         }
         OwlState::TrajAttack => {
-            let cont = if let Some(traj) = &mut owl.traj.as_mut() {
-                update_traj(traj, posture, speed, formation)
-            } else {
-                false
-            };
-            if !cont {
-                owl.traj = None;
-                owl.state = OwlState::MoveToFormation;
-            }
+            let enemy = enemy_storage.get(entity).unwrap();
+            update_attack_traj(owl, enemy, posture, speed, formation, game_info);
         }
         OwlState::CaptureAttack(phase) => {
             run_capture_attack(owl, entity, phase, posture, speed, formation, entities, enemy_storage, zako_storage, tractor_beam_storage, troops_storage, game_info);
@@ -138,6 +131,36 @@ pub fn owl_start_attack<'a>(
 
     let enemy = enemy_storage.get_mut(entity).unwrap();
     enemy.is_formation = false;
+}
+
+fn update_attack_traj<'a>(owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, game_info: &GameInfo) {
+    let cont = if let Some(traj) = &mut owl.traj.as_mut() {
+        update_traj(traj, posture, speed, formation)
+    } else {
+        false
+    };
+    if !cont {
+        owl.traj = None;
+        if game_info.is_rush() {
+            // Rush mode: Continue attacking
+            //self.remove_destroyed_troops(accessor);
+            let table = &OWL_RUSH_ATTACK_TABLE;
+            rush_attack(owl, table, posture, &enemy.formation_index);
+            //accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+        } else {
+            owl.state = OwlState::MoveToFormation;
+        }
+    }
+}
+
+fn rush_attack(owl: &mut Owl, table: &'static [TrajCommand], posture: &Posture, fi: &FormationIndex) {
+    let flip_x = fi.0 >= 5;
+    let mut traj = Traj::new(table, &ZERO_VEC, flip_x, *fi);
+    traj.set_pos(&posture.0);
+
+    //self.count = 0;
+    //self.attack_frame_count = 0;
+    owl.traj = Some(traj);
 }
 
 fn run_capture_attack<'a>(
