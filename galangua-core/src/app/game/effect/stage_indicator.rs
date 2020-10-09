@@ -59,6 +59,7 @@ impl StageIndicator {
     pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         let mut x = WIDTH - self.width as i32;
         let mut count = self.stage_disp;
+        renderer.set_sprite_texture_color_mod(FLAG_INFO_TABLE[FLAG_INFO_TABLE.len() - 1].sprite_name, 255, 255, 255);
         for flag_info in FLAG_INFO_TABLE.iter() {
             while count >= flag_info.count {
                 renderer.draw_sprite(flag_info.sprite_name, &Vec2I::new(x, HEIGHT - 16));

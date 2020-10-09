@@ -82,14 +82,16 @@ impl TractorBeam {
         let pos = round_vec(&self.pos);
 
         let n = (self.size_count / ONE) as usize;
-        let tex_name = "chr";
-        let hue = self.color_count * 64;
-        let pos = &pos + &Vec2I::new(-24, 0);
-        for i in 0..n {
-            set_hsv_color(renderer, tex_name, hue + i as u32 * 160, 255, 255);
-            renderer.draw_sprite(SPRITE_NAMES[i], &(&pos + &Vec2I::new(0, Y_OFFSET_TABLE[i])));
+        if n > 0 {
+            let hue = self.color_count * 64;
+            let pos = &pos + &Vec2I::new(-24, 0);
+            for i in 0..n {
+                let sprite_name = SPRITE_NAMES[i];
+                set_hsv_color(renderer, sprite_name, hue + i as u32 * 160, 255, 255);
+                renderer.draw_sprite(sprite_name, &(&pos + &Vec2I::new(0, Y_OFFSET_TABLE[i])));
+            }
+            renderer.set_sprite_texture_color_mod(SPRITE_NAMES[0], 255, 255, 255);
         }
-        renderer.set_texture_color_mod(tex_name, 255, 255, 255);
     }
 
     pub fn closed(&self) -> bool {
@@ -114,9 +116,9 @@ impl TractorBeam {
     }
 }
 
-fn set_hsv_color(renderer: &mut dyn RendererTrait, tex_name: &str, h: u32, s: u8, v: u8) {
+fn set_hsv_color(renderer: &mut dyn RendererTrait, sprite_name: &str, h: u32, s: u8, v: u8) {
     let (r, g, b) = hsv(h, s, v);
-    renderer.set_texture_color_mod(tex_name, r, g, b);
+    renderer.set_sprite_texture_color_mod(sprite_name, r, g, b);
 }
 
 fn hsv(h: u32, s: u8, v: u8) -> (u8, u8, u8) {

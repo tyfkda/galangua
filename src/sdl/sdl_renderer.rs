@@ -1,6 +1,7 @@
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::WindowCanvas;
+use std::collections::HashMap;
 
 use galangua_core::framework::sprite_sheet::SpriteSheet;
 use galangua_core::framework::types::Vec2I;
@@ -12,6 +13,7 @@ pub struct SdlRenderer {
     canvas: WindowCanvas,
     texture_manager: SdlTextureManager,
     sprite_sheet: SpriteSheet,
+    tex_color_map: HashMap<String, (u8, u8, u8)>,
 }
 
 impl SdlRenderer {
@@ -23,6 +25,7 @@ impl SdlRenderer {
             canvas,
             texture_manager: SdlTextureManager::new(),
             sprite_sheet: SpriteSheet::new(),
+            tex_color_map: HashMap::new(),
         }
     }
 
@@ -48,8 +51,32 @@ impl RendererTrait for SdlRenderer {
     }
 
     fn set_texture_color_mod(&mut self, tex_name: &str, r: u8, g: u8, b: u8) {
+        let color = (r, g, b);
+        if self.tex_color_map.contains_key(tex_name) {
+            if self.tex_color_map[tex_name] == color {
+                return;
+            }
+        }
+        self.tex_color_map.insert(tex_name.to_string(), color);
+
         if let Some(texture) = self.texture_manager.get_mut(tex_name) {
             texture.set_color_mod(r, g, b);
+        }
+    }
+
+    fn set_sprite_texture_color_mod(&mut self, sprite_name: &str, r: u8, g: u8, b: u8) {
+        if let Some((_sheet, tex_name)) = self.sprite_sheet.get(sprite_name) {
+            let color = (r, g, b);
+            if self.tex_color_map.contains_key(tex_name) {
+                if self.tex_color_map[tex_name] == color {
+                    return;
+                }
+            }
+            self.tex_color_map.insert(tex_name.to_string(), color);
+
+            if let Some(texture) = self.texture_manager.get_mut(tex_name) {
+                texture.set_color_mod(r, g, b);
+            }
         }
     }
 
