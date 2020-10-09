@@ -2,6 +2,7 @@ use specs::prelude::*;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::attack_manager::AttackManager;
+use galangua_common::app::game::effect_table::to_earned_point_type;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::{X_COUNT, Y_COUNT};
 use galangua_common::app::game::star_manager::StarManager;
@@ -89,6 +90,7 @@ pub fn set_enemy_damage<'a>(
     entity: Entity, power: u32, entities: &Entities<'a>,
     enemy_storage: &mut WriteStorage<'a, Enemy>,
     pos_storage: &mut WriteStorage<'a, Posture>,
+    zako_storage: &ReadStorage<'a, Zako>,
     owl_storage: &mut WriteStorage<'a, Owl>,
     troops_storage: &mut WriteStorage<'a, Troops>,
     coll_rect_storage: &mut WriteStorage<'a, CollRect>,
@@ -102,7 +104,8 @@ pub fn set_enemy_damage<'a>(
     game_info: &mut GameInfo,
     player_entity: Entity,
 ) {
-    let dead = match enemy_storage.get(entity).unwrap().enemy_type {
+    let enemy_type = enemy_storage.get(entity).unwrap().enemy_type;
+    let point = match enemy_type {
         EnemyType::Owl => {
             let owl = owl_storage.get_mut(entity).unwrap();
             set_owl_damage(
@@ -111,14 +114,22 @@ pub fn set_enemy_damage<'a>(
                 tractor_beam_storage, attack_manager, star_manager, game_info, player_entity)
         }
         _ => {
+            let is_formation = zako_storage.get(entity).unwrap().state == ZakoState::Formation;
+            let point = calc_zako_point(enemy_type, is_formation);
             entities.delete(entity).unwrap();
-            true
+            point
         }
     };
-    if dead {
+    if point > 0 {
         let pos = pos_storage.get(entity).unwrap().0.clone();
+
+        if let Some(point_type) = to_earned_point_type(point) {
+            create_earned_piont_effect(point_type, &pos, entities, pos_storage, seqanime_storage, drawable_storage);
+        }
+
         create_enemy_explosion_effect(&pos, entities, pos_storage, seqanime_storage, drawable_storage);
 
+        game_info.score_holder.add_score(point);
         game_info.decrement_alive_enemy();
     }
 }
@@ -310,6 +321,21 @@ fn rush_attack(zako: &mut Zako, table: &'static [TrajCommand], posture: &Posture
 pub fn set_zako_to_troop(zako: &mut Zako, enemy: &mut Enemy) {
     zako.state = ZakoState::Troop;
     enemy.is_formation = false;
+}
+
+fn calc_zako_point(enemy_type: EnemyType, is_formation: bool) -> u32 {
+    match enemy_type {
+        EnemyType::Bee => {
+            if is_formation { 50 } else { 100 }
+        }
+        EnemyType::Butterfly => {
+            if is_formation { 80 } else { 160 }
+        }
+        EnemyType::CapturedFighter => {
+            if is_formation { 500 } else { 1000 }
+        }
+        _ => { panic!("Illegal"); }
+    }
 }
 
 //

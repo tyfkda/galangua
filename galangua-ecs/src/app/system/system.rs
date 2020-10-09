@@ -441,6 +441,7 @@ impl<'a> System<'a> for SysCollCheckMyShotEnemy {
         WriteStorage<'a, CollRect>,
         WriteStorage<'a, SequentialSpriteAnime>,
         WriteStorage<'a, SpriteDrawable>,
+        ReadStorage<'a, Zako>,
         WriteStorage<'a, Owl>,
         WriteStorage<'a, Troops>,
         WriteStorage<'a, RecapturedFighter>,
@@ -459,6 +460,7 @@ impl<'a> System<'a> for SysCollCheckMyShotEnemy {
              mut coll_rect_storage,
              mut seqanime_storage,
              mut drawable_storage,
+             zako_storage,
              mut owl_storage,
              mut troops_storage,
              mut recaptured_fighter_storage,
@@ -492,7 +494,7 @@ impl<'a> System<'a> for SysCollCheckMyShotEnemy {
 
         for (enemy_entity, player_entity) in colls.iter() {
             set_enemy_damage(
-                *enemy_entity, 1, &entities, &mut enemy_storage, &mut pos_storage, &mut owl_storage,
+                *enemy_entity, 1, &entities, &mut enemy_storage, &mut pos_storage, &zako_storage, &mut owl_storage,
                 &mut troops_storage, &mut coll_rect_storage, &mut seqanime_storage, &mut drawable_storage,
                 &mut recaptured_fighter_storage, &mut player_storage, &mut tractor_beam_storage,
                 &mut attack_manager, &mut star_manager, &mut game_info, *player_entity);
@@ -510,6 +512,7 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
         WriteStorage<'a, CollRect>,
         WriteStorage<'a, SequentialSpriteAnime>,
         WriteStorage<'a, SpriteDrawable>,
+        ReadStorage<'a, Zako>,
         WriteStorage<'a, Owl>,
         WriteStorage<'a, Troops>,
         WriteStorage<'a, RecapturedFighter>,
@@ -527,6 +530,7 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
              mut coll_rect_storage,
              mut seqanime_storage,
              mut drawable_storage,
+             zako_storage,
              mut owl_storage,
              mut troops_storage,
              mut recaptured_fighter_storage,
@@ -555,7 +559,7 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
 
         for (player_entity, player_pos, dual, enemy_entity) in colls.iter() {
             set_enemy_damage(
-                *enemy_entity, 1, &entities, &mut enemy_storage, &mut pos_storage, &mut owl_storage,
+                *enemy_entity, 1, &entities, &mut enemy_storage, &mut pos_storage, &zako_storage, &mut owl_storage,
                 &mut troops_storage, &mut coll_rect_storage, &mut seqanime_storage, &mut drawable_storage,
                 &mut recaptured_fighter_storage, &mut player_storage, &mut tractor_beam_storage,
                 &mut attack_manager, &mut star_manager, &mut game_info, *player_entity);
@@ -645,6 +649,8 @@ impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
                 renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16));
             }
         }
+
+        game_info.score_holder.draw(*renderer, /*(self.frame_count & 31) < 16*/ true);
 
         match game_info.game_state {
             GameState::StartStage => {

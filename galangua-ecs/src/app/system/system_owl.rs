@@ -362,16 +362,27 @@ pub fn set_owl_damage<'a>(
     star_manager: &mut StarManager,
     game_info: &mut GameInfo,
     player_entity: Entity,
-) -> bool {
+) -> u32 {
     if owl.life > power {
         //accessor.push_event(EventType::PlaySe(CH_BOMB, SE_DAMAGE));
         owl.life -= power;
         //DamageResult { point: 0, keep_alive_as_ghost: false }
         let drawable = drawable_storage.get_mut(entity).unwrap();
         drawable.sprite_name = "cpp21";
-        false
+        0
     } else {
         owl.life = 0;
+        let point = {
+            let is_formation = owl.state == OwlState::Formation;
+            let guard_count = if let Some(troops) = troops_storage.get(entity) {
+                troops.members.iter().flat_map(|x| x)
+                    .filter(|troop| troop.is_guard)
+                    .count() as u32
+            } else {
+                0
+            };
+            calc_point(is_formation, guard_count)
+        };
 
         if let Some(tractor_beam) = tractor_beam_storage.get_mut(entity) {
             break_tractor_beam(tractor_beam, player_storage, entities);
@@ -420,7 +431,15 @@ pub fn set_owl_damage<'a>(
             drawable_storage.remove(entity);
             coll_rect_storage.remove(entity);
         }
-        true
+        point
+    }
+}
+
+fn calc_point<'a>(is_formation: bool, guard_count: u32) -> u32 {
+    if is_formation {
+        150
+    } else {
+        (1 << guard_count) * 400
     }
 }
 

@@ -7,6 +7,7 @@ use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, FormationIndex};
+use galangua_common::app::score_holder::ScoreHolder;
 
 use super::components::*;
 use super::system::system_player::{enable_player_shot, restart_player};
@@ -45,6 +46,7 @@ pub struct GameInfo {
     pub capture_state: CaptureState,
     pub capture_enemy_fi: FormationIndex,
     pub alive_enemy_count: u32,
+    pub score_holder: ScoreHolder,
 }
 
 pub type GameInfoUpdateParams<'a> = (
@@ -73,6 +75,7 @@ impl GameInfo {
             capture_state: CaptureState::NoCapture,
             capture_enemy_fi: FormationIndex(0, 0),
             alive_enemy_count: 0,
+            score_holder: ScoreHolder::new(0),
         }
     }
 
