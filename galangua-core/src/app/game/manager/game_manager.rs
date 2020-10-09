@@ -110,7 +110,9 @@ impl GameManager {
 
         match self.state {
             GameState::StartStage => {
-                self.stage_indicator.update(system);
+                if self.stage_indicator.update() {
+                    system.play_se(CH_BOMB, SE_COUNT_STAGE);
+                }
                 self.count += 1;
                 if self.count >= 90 {
                     let captured_fighter = if self.capture_state == CaptureState::Captured {

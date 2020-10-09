@@ -3,7 +3,6 @@ use counted_array::counted_array;
 use crate::app::consts::*;
 use crate::framework::types::Vec2I;
 use crate::framework::RendererTrait;
-use crate::framework::SystemTrait;
 
 const FLAG50_WIDTH: u16 = 16;
 const FLAG30_WIDTH: u16 = 16;
@@ -36,14 +35,14 @@ impl StageIndicator {
         self.width = calc_width(stage);
     }
 
-    pub fn update<S: SystemTrait>(&mut self, system: &mut S) {
+    pub fn update(&mut self) -> bool {
         if self.stage_disp >= self.stage {
-            return;
+            return false;
         }
 
         if self.wait > 0 {
             self.wait -= 1;
-            return;
+            return false;
         }
 
         let diff = self.stage - self.stage_disp;
@@ -51,10 +50,10 @@ impl StageIndicator {
             if diff >= flag_info.count {
                 self.stage_disp += flag_info.count;
                 self.wait = 3;
-                system.play_se(CH_BOMB, SE_COUNT_STAGE);
-                break;
+                return true;
             }
         }
+        false
     }
 
     pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
