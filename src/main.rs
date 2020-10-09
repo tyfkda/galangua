@@ -55,14 +55,14 @@ pub fn main() -> Result<(), String> {
         3
     };
 
+    let audio = SdlAudio::new(CHANNEL_COUNT, BASE_VOLUME);
+    let system = StdSystem::new(audio);
     if matches.is_present("oo") {
         let timer = StdTimer::new();
-        let audio = SdlAudio::new(CHANNEL_COUNT, BASE_VOLUME);
-        let system = StdSystem::new(audio);
         let app = GalanguaApp::new(timer, system);
         run_app(app, scale, fullscreen)
     } else {
-        let app = GalanguaEcsApp::new();
+        let app = GalanguaEcsApp::new(system);
         run_app(app, scale, fullscreen)
     }
 }

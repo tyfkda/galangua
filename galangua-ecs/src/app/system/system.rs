@@ -32,15 +32,6 @@ impl<'a> System<'a> for SysGameController {
     }
 }
 
-pub struct SysPadUpdater;
-impl<'a> System<'a> for SysPadUpdater {
-    type SystemData = Write<'a, Pad>;
-
-    fn run(&mut self, mut pad: Self::SystemData) {
-        pad.update();
-    }
-}
-
 pub struct SysPlayerMover;
 impl<'a> System<'a> for SysPlayerMover {
     type SystemData = (
