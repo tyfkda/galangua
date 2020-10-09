@@ -392,6 +392,7 @@ impl<'a> System<'a> for SysTractorBeamMover {
         Entities<'a>,
         WriteStorage<'a, Posture>,
         WriteStorage<'a, SpriteDrawable>,
+        WriteStorage<'a, SpriteColor>,
         WriteStorage<'a, Player>,
         WriteStorage<'a, CollRect>,
         WriteStorage<'a, Enemy>,
@@ -408,7 +409,8 @@ impl<'a> System<'a> for SysTractorBeamMover {
              mut game_info,
              entities,
              mut pos_storage,
-             mut sprite_storage,
+             mut drawable_storage,
+             mut color_storage,
              mut player_storage,
              mut coll_rect_storage,
              mut enemy_storage,
@@ -422,7 +424,7 @@ impl<'a> System<'a> for SysTractorBeamMover {
         for (tractor_beam, owl, entity) in (&mut tractor_beam_storage, &mut owl_storage, &*entities).join() {
             move_tractor_beam(
                 tractor_beam, &mut game_info, &entities, entity, owl, &mut pos_storage,
-                &mut sprite_storage, &mut player_storage, &mut coll_rect_storage,
+                &mut drawable_storage, &mut color_storage, &mut player_storage, &mut coll_rect_storage,
                 &mut enemy_storage, &mut zako_storage, &mut speed_storage, &mut troops_storage,
                 &mut star_manager, &mut attack_manager);
         }
@@ -708,15 +710,19 @@ impl<'a> System<'a> for SysStarMover {
 
 pub struct SysDrawer<'a, R: RendererTrait>(pub &'a mut R);
 impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
-    type SystemData = (Read<'a, StarManager>, ReadStorage<'a, Posture>, ReadStorage<'a, SpriteDrawable>, Read<'a, GameInfo>, Read<'a, StageIndicator>);
+    type SystemData = (Read<'a, StarManager>, ReadStorage<'a, Posture>, ReadStorage<'a, SpriteDrawable>, ReadStorage<'a, SpriteColor>, Read<'a, GameInfo>, Read<'a, StageIndicator>);
 
-    fn run(&mut self, (star_manager, pos_storage, drawable_storage, game_info, stage_indicator): Self::SystemData) {
+    fn run(&mut self, (star_manager, pos_storage, drawable_storage, tex_color_storage, game_info, stage_indicator): Self::SystemData) {
         let renderer = &mut self.0;
 
         star_manager.draw(*renderer);
-        for (posture, drawable) in (&pos_storage, &drawable_storage).join() {
+        for (posture, drawable, tex_color_opt) in (&pos_storage, &drawable_storage, (&tex_color_storage).maybe()).join() {
             let pos = &round_vec(&posture.0) + &drawable.offset;
             let angle = quantize_angle(posture.1, ANGLE_DIV);
+
+            let tex_color = tex_color_opt.unwrap_or_else(|| &SpriteColor(255, 255, 255));
+            renderer.set_sprite_texture_color_mod(drawable.sprite_name, tex_color.0, tex_color.1, tex_color.2);
+
             if angle == 0 {
                 renderer.draw_sprite(drawable.sprite_name, &pos);
             } else {
@@ -728,6 +734,7 @@ impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
 
         if game_info.left_ship > 0 {
             let disp_count = std::cmp::min(game_info.left_ship - 1, 8);
+            renderer.set_sprite_texture_color_mod("rustacean", 255, 255, 255);
             for i in 0..disp_count {
                 renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16));
             }

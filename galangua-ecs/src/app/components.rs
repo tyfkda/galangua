@@ -195,3 +195,8 @@ pub struct SequentialSpriteAnime(pub &'static [&'static str], pub u32, pub u32);
 #[derive(Component)]
 #[storage(VecStorage)]
 pub struct SpriteDrawable { pub sprite_name: &'static str, pub offset: Vec2I }
+
+//
+#[derive(Clone, Component, PartialEq)]
+#[storage(VecStorage)]
+pub struct SpriteColor(pub u8, pub u8, pub u8);

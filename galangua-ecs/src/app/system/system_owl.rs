@@ -10,6 +10,7 @@ use galangua_common::app::game::traj::Traj;
 use galangua_common::app::game::traj_command::TrajCommand;
 use galangua_common::app::game::traj_command_table::*;
 use galangua_common::app::game::{EnemyType, FormationIndex};
+use galangua_common::app::util::hsv;
 use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, clamp, diff_angle, normalize_angle, ANGLE, ONE};
 
@@ -480,6 +481,7 @@ pub fn move_tractor_beam<'a>(
     owl: &mut Owl,
     pos_storage: &mut WriteStorage<'a, Posture>,
     drawable_storage: &mut WriteStorage<'a, SpriteDrawable>,
+    color_storage: &mut WriteStorage<'a, SpriteColor>,
     player_storage: &mut WriteStorage<'a, Player>,
     coll_rect_storage: &mut WriteStorage<'a, CollRect>,
     enemy_storage: &mut WriteStorage<'a, Enemy>,
@@ -503,8 +505,9 @@ pub fn move_tractor_beam<'a>(
                 let sprite = SpriteDrawable { sprite_name: TRACTOR_BEAM_SPRITE_NAMES[i], offset: Vec2I::new(-24, 0) };
                 let posture = Posture(&tractor_beam.pos + &Vec2I::new(0, TRACTOR_BEAM_Y_OFFSET_TABLE[i] * ONE), 0);
                 let entity = entities.build_entity()
-                    .with(sprite, drawable_storage)
                     .with(posture, pos_storage)
+                    .with(sprite, drawable_storage)
+                    .with(SpriteColor(255, 255, 255), color_storage)
                     .build();
                 tractor_beam.beam_sprites[i] = Some(entity);
 
@@ -570,6 +573,20 @@ pub fn move_tractor_beam<'a>(
                     game_info);
                 tractor_beam.state = TractorBeamState::Closing;
             }
+        }
+    }
+
+    update_beam_colors(&tractor_beam.beam_sprites, tractor_beam.color_count, color_storage);
+}
+
+fn update_beam_colors<'a>(beam_sprites: &[Option<Entity>], color_count: u32, color_storage: &mut WriteStorage<'a, SpriteColor>) {
+    for i in 0..beam_sprites.len() {
+        if let Some(entity) = &beam_sprites[i] {
+            let hue = color_count * 64 + i as u32 * 160;
+            let (r, g, b) = hsv(hue, 255, 255);
+
+            let color = color_storage.get_mut(*entity).unwrap();
+            *color = SpriteColor(r, g, b);
         }
     }
 }

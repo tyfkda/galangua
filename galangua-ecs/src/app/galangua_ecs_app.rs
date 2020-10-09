@@ -182,7 +182,8 @@ impl Game {
         let mut world = World::new();
         // Components are registered automatically which used in dispatcher.
         //world.register::<Pos>();
-        world.register::<SpriteDrawable>();
+        //world.register::<SpriteDrawable>();
+        //world.register::<TextureColor>();
 
         let mut update_dispatcher = DispatcherBuilder::new()
             .with(SysGameController, "game_controller", &[])
