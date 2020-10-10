@@ -740,7 +740,7 @@ impl<'a, R: RendererTrait> System<'a> for SysDrawer<'a, R> {
             }
         }
 
-        game_info.score_holder.draw(*renderer, /*(self.frame_count & 31) < 16*/ true);
+        game_info.score_holder.draw(*renderer, (game_info.frame_count & 31) < 16);
 
         match game_info.game_state {
             GameState::StartStage => {

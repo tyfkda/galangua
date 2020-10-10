@@ -49,6 +49,7 @@ pub struct GameInfo {
     pub capture_enemy_fi: FormationIndex,
     pub alive_enemy_count: u32,
     pub score_holder: ScoreHolder,
+    pub frame_count: u32,
 }
 
 pub type GameInfoUpdateParams<'a> = (
@@ -78,6 +79,7 @@ impl GameInfo {
             capture_enemy_fi: FormationIndex(0, 0),
             alive_enemy_count: 0,
             score_holder: ScoreHolder::new(high_score),
+            frame_count: 0,
         }
     }
 
@@ -93,6 +95,7 @@ impl GameInfo {
              mut coll_rect_storage,
              entities) = data;
 
+        self.frame_count = self.frame_count.wrapping_add(1);
         self.check_stage_state(&appearance_manager);
 
         match self.game_state {
