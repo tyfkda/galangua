@@ -196,8 +196,11 @@ impl Game {
             .with(SysOwlMover, "owl_mover", &["formation_mover", "appearance_manager", "attack_manager"])
             .with(SysTroopsMover, "troops_mover", &["owl_mover"])
             .with(SysTractorBeamMover, "tractor_beam_mover", &["player_mover", "owl_mover"])
+            .with(SysEneShotSpawner, "eneshot_spawner", &["zako_mover", "owl_mover"])
+            .with(SysEneShotMover, "eneshot_mover", &["zako_mover", "owl_mover", "eneshot_spawner"])
             .with(SysCollCheckMyShotEnemy, "collcheck_myshot_enemy", &["myshot_mover", "zako_mover", "owl_mover"])
             .with(SysCollCheckPlayerEnemy, "collcheck_player_enemy", &["player_mover", "zako_mover", "owl_mover", "tractor_beam_mover", "collcheck_myshot_enemy"])
+            .with(SysCollCheckPlayerEneShot, "collcheck_player_eneshot", &["player_mover", "eneshot_mover", "collcheck_myshot_enemy"])
             .with(SysRecaptureFighter, "recapture_fighter", &["collcheck_myshot_enemy", "collcheck_player_enemy"])
             .with(SysSequentialSpriteAnime, "sprite_anime", &[])
             .with(SysStarMover, "star_mover", &["game_controller", "tractor_beam_mover", "collcheck_player_enemy"])
@@ -217,6 +220,7 @@ impl Game {
         world.insert(AppearanceManager::default());
         world.insert(AttackManager::default());
         world.insert(GameInfo::new(high_score));
+        world.insert(EneShotSpawner::default());
 
         Self {
             world,

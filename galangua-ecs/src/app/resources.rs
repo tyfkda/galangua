@@ -8,6 +8,8 @@ use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, FormationIndex};
 use galangua_common::app::score_holder::ScoreHolder;
+use galangua_common::framework::types::Vec2I;
+use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
 use super::components::*;
 use super::system::system_player::{enable_player_shot, restart_player};
@@ -308,4 +310,64 @@ impl Default for GameInfo {
     fn default() -> Self {
         GameInfo::new(0)
     }
+}
+
+//
+
+#[derive(Default)]
+pub struct EneShotSpawner {
+    queue: Vec<Vec2I>,
+}
+
+pub type EneShotSpawnerParam<'a> = (
+    ReadStorage<'a, Player>,
+    WriteStorage<'a, EneShot>,
+    WriteStorage<'a, Posture>,
+    WriteStorage<'a, CollRect>,
+    WriteStorage<'a, SpriteDrawable>,
+    Entities<'a>,
+    Read<'a, GameInfo>,
+);
+
+impl EneShotSpawner {
+    pub fn update(&mut self, data: EneShotSpawnerParam) {
+        let (player_storage,
+             mut eneshot_storage,
+             mut pos_storage,
+             mut coll_rect_storage,
+             mut drawable_storage,
+             entities,
+             game_info) = data;
+
+        // TODO: Limit maximum.
+        let player_pos_opt = (&player_storage, &pos_storage).join()
+            .find(|_| true)
+            .map(|(_, posture)| posture.0.clone());
+        if let Some(target_pos) = player_pos_opt {
+            for pos in self.queue.iter() {
+                let d = &target_pos - &pos;
+                let angle = atan2_lut(d.y, -d.x);  // 0=down
+                let limit = ANGLE * ONE * 30 / 360;
+                let angle = clamp(angle, -limit, limit);
+                let vel = calc_velocity(angle + ANGLE * ONE / 2, calc_ene_shot_speed(game_info.stage));
+                entities.build_entity()
+                    .with(EneShot(vel), &mut eneshot_storage)
+                    .with(Posture(*pos, 0), &mut pos_storage)
+                    .with(CollRect { offset: Vec2I::new(1, 4), size: Vec2I::new(1, 8) }, &mut coll_rect_storage)
+                    .with(SpriteDrawable { sprite_name: "ene_shot", offset: Vec2I::new(-2, -4) }, &mut drawable_storage)
+                    .build();
+            }
+        }
+        self.queue.clear();
+    }
+
+    pub fn push(&mut self, pos: &Vec2I) {
+        self.queue.push(pos.clone());
+    }
+}
+
+fn calc_ene_shot_speed(stage: u16) -> i32 {
+    const MAX_STAGE: i32 = 64;
+    let per = std::cmp::min(stage as i32, MAX_STAGE) * ONE / MAX_STAGE;
+    (ENE_SHOT_SPEED2 - ENE_SHOT_SPEED1) * per / ONE + ENE_SHOT_SPEED1
 }

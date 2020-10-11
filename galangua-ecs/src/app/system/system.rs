@@ -170,7 +170,8 @@ impl<'a> System<'a> for SysAppearanceManager {
                     .with(CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) }, &mut coll_rect_storage)
                     .with(SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)}, &mut drawable_storage);
                 builder = if e.enemy_type != EnemyType::Owl {
-                    builder.with(Zako { state: ZakoState::Appearance, traj: Some(e.traj), target_pos: ZERO_VEC }, &mut zako_storage)
+                    let base = EnemyBase { traj: Some(e.traj), shot_wait: None, target_pos: ZERO_VEC, count: 0 };
+                    builder.with(Zako { base, state: ZakoState::Appearance }, &mut zako_storage)
                 } else {
                     builder.with(create_owl(e.traj), &mut owl_storage)
                 };
@@ -304,6 +305,7 @@ impl<'a> System<'a> for SysZakoMover {
         ReadStorage<'a, Player>,
         Entities<'a>,
         Write<'a, GameInfo>,
+        Write<'a, EneShotSpawner>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -314,10 +316,11 @@ impl<'a> System<'a> for SysZakoMover {
              mut speed_storage,
              player_storage,
              entities,
-             mut game_info) = data;
+             mut game_info,
+             mut eneshot_spawner) = data;
 
         for (enemy, zako, speed, entity) in (&mut enemy_storage, &mut zako_storage, &mut speed_storage, &*entities).join() {
-            move_zako(zako, entity, enemy, speed, &formation, &player_storage, &mut pos_storage, &entities, &mut game_info);
+            move_zako(zako, entity, enemy, speed, &formation, &player_storage, &mut pos_storage, &entities, &mut game_info, &mut eneshot_spawner);
         }
     }
 }
@@ -335,6 +338,7 @@ impl<'a> System<'a> for SysOwlMover {
         WriteStorage<'a, TractorBeam>,
         WriteStorage<'a, Troops>,
         Write<'a, GameInfo>,
+        Write<'a, EneShotSpawner>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -347,10 +351,13 @@ impl<'a> System<'a> for SysOwlMover {
              mut zako_storage,
              mut tractor_beam_storage,
              mut troops_storage,
-             mut game_info) = data;
+             mut game_info,
+             mut eneshot_spawner) = data;
 
         for (owl, posture, speed, entity) in (&mut owl_storage, &mut pos_storage, &mut speed_storage, &*entities).join() {
-            move_owl(owl, entity, posture, speed, &formation, &entities, &mut enemy_storage, &mut zako_storage, &mut tractor_beam_storage, &mut troops_storage, &mut game_info);
+            move_owl(
+                owl, entity, posture, speed, &formation, &entities, &mut enemy_storage, &mut zako_storage, &mut tractor_beam_storage, &mut troops_storage, &mut game_info,
+                &mut eneshot_spawner);
         }
     }
 }
@@ -418,6 +425,26 @@ impl<'a> System<'a> for SysTractorBeamMover {
                 &mut sprite_storage, &mut player_storage, &mut coll_rect_storage,
                 &mut enemy_storage, &mut zako_storage, &mut speed_storage, &mut troops_storage,
                 &mut star_manager, &mut attack_manager);
+        }
+    }
+}
+
+pub struct SysEneShotSpawner;
+impl<'a> System<'a> for SysEneShotSpawner {
+    type SystemData = (Write<'a, EneShotSpawner>, EneShotSpawnerParam<'a>);
+
+    fn run(&mut self, (mut eneshot_spawner, param): Self::SystemData) {
+        eneshot_spawner.update(param);
+    }
+}
+
+pub struct SysEneShotMover;
+impl<'a> System<'a> for SysEneShotMover {
+    type SystemData = (WriteStorage<'a, EneShot>, WriteStorage<'a, Posture>, Entities<'a>);
+
+    fn run(&mut self, (mut shot_storage, mut pos_storage, entities): Self::SystemData) {
+        for (shot, posture, entity) in (&mut shot_storage, &mut pos_storage, &*entities).join() {
+            move_eneshot(shot, posture, entity, &entities);
         }
     }
 }
@@ -558,14 +585,79 @@ impl<'a> System<'a> for SysCollCheckPlayerEnemy {
             create_player_explosion_effect(player_pos, &entities, &mut pos_storage, &mut seqanime_storage, &mut drawable_storage);
 
             let player = player_storage.get_mut(*player_entity).unwrap();
-            if crash_player(player, *dual, *player_entity, &mut pos_storage, &mut drawable_storage, &mut coll_rect_storage, &entities) {
-                if game_info.capture_state != CaptureState::Recapturing {
-                    star_manager.set_stop(true);
+            set_damage_to_player(
+                player, *dual, *player_entity, &mut pos_storage, &mut coll_rect_storage, &mut drawable_storage, &entities,
+                &mut game_info, &mut star_manager, &mut attack_manager);
+        }
+    }
+}
+
+fn set_damage_to_player<'a>(
+    player: &mut Player, dual: bool, entity: Entity, pos_storage: &mut WriteStorage<'a, Posture>, coll_rect_storage: &mut WriteStorage<'a, CollRect>, drawable_storage: &mut WriteStorage<'a, SpriteDrawable>, entities: &Entities<'a>,
+    game_info: &mut GameInfo, star_manager: &mut StarManager, attack_manager: &mut AttackManager,
+) {
+    if crash_player(player, dual, entity, pos_storage, drawable_storage, coll_rect_storage, entities) {
+        if game_info.capture_state != CaptureState::Recapturing {
+            star_manager.set_stop(true);
+        }
+        game_info.crash_player(true, attack_manager);
+    } else {
+        game_info.crash_player(false, attack_manager);
+    }
+}
+
+pub struct SysCollCheckPlayerEneShot;
+impl<'a> System<'a> for SysCollCheckPlayerEneShot {
+    type SystemData = (
+        Entities<'a>,
+        WriteStorage<'a, Posture>,
+        WriteStorage<'a, Player>,
+        ReadStorage<'a, EneShot>,
+        WriteStorage<'a, CollRect>,
+        WriteStorage<'a, SequentialSpriteAnime>,
+        WriteStorage<'a, SpriteDrawable>,
+        Write<'a, GameInfo>,
+        Write<'a, StarManager>,
+        Write<'a, AttackManager>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities,
+             mut pos_storage,
+             mut player_storage,
+             eneshot_storage,
+             mut coll_rect_storage,
+             mut seqanime_storage,
+             mut drawable_storage,
+             mut game_info,
+             mut star_manager,
+             mut attack_manager) = data;
+
+        let mut colls: Vec<(Entity, Vec2I, bool)> = Vec::new();
+        for (player, player_pos, player_coll_rect, player_entity) in (&player_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
+            let player_collboxes = [
+                Some(pos_to_coll_box(&player_pos.0, &player_coll_rect)),
+                player.dual.map(|dual| pos_to_coll_box(&pos_storage.get(dual).unwrap().0, &player_coll_rect)),
+            ];
+            for (i, player_collbox) in player_collboxes.iter().flat_map(|x| x).enumerate() {
+                for (_eneshot, eneshot_pos, eneshot_coll_rect, eneshot_entity) in (&eneshot_storage, &pos_storage, &coll_rect_storage, &*entities).join() {
+                    let enemy_collbox = CollBox { top_left: &round_vec(&eneshot_pos.0) + &eneshot_coll_rect.offset, size: eneshot_coll_rect.size };
+                    if player_collbox.check_collision(&enemy_collbox) {
+                        colls.push((player_entity, player_pos.0.clone(), i != 0));
+                        entities.delete(eneshot_entity).unwrap();
+                        break;
+                    }
                 }
-                game_info.crash_player(true, &mut attack_manager);
-            } else {
-                game_info.crash_player(false, &mut attack_manager);
             }
+        }
+
+        for (player_entity, player_pos, dual) in colls.iter() {
+            create_player_explosion_effect(player_pos, &entities, &mut pos_storage, &mut seqanime_storage, &mut drawable_storage);
+
+            let player = player_storage.get_mut(*player_entity).unwrap();
+            set_damage_to_player(
+                player, *dual, *player_entity, &mut pos_storage, &mut coll_rect_storage, &mut drawable_storage, &entities,
+                &mut game_info, &mut star_manager, &mut attack_manager);
         }
     }
 }

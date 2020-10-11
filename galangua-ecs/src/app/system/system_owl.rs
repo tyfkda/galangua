@@ -14,9 +14,9 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, clamp, diff_angle, normalize_angle, ANGLE, ONE};
 
 use crate::app::components::*;
-use crate::app::resources::GameInfo;
+use crate::app::resources::{EneShotSpawner, GameInfo};
 
-use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, update_traj};
+use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, EneBaseAccessorImpl};
 use super::system_player::{
     escape_player_from_tractor_beam, move_capturing_player, set_player_captured,
     start_player_capturing, start_recapture_effect,
@@ -27,36 +27,30 @@ const LIFE: u32 = 2;
 // Owl
 
 pub fn create_owl(traj: Traj) -> Owl {
+    let base = EnemyBase { traj: Some(traj), shot_wait: None, target_pos: ZERO_VEC, count: 0 };
     Owl {
+        base,
         state: OwlState::Appearance,
-        traj: Some(traj),
         capturing_state: OwlCapturingState::None,
-        target_pos: ZERO_VEC,
-        count: 0,
         life: LIFE,
     }
 }
 
 pub fn move_owl<'a>(
-    owl: &mut Owl, entity: Entity,
-    posture: &mut Posture, speed: &mut Speed,
-    formation: &Formation,
+    owl: &mut Owl, entity: Entity, posture: &mut Posture, speed: &mut Speed, formation: &Formation,
     entities: &Entities<'a>,
     enemy_storage: &mut WriteStorage<'a, Enemy>,
     zako_storage: &mut WriteStorage<'a, Zako>,
     tractor_beam_storage: &mut WriteStorage<'a, TractorBeam>,
     troops_storage: &mut WriteStorage<'a, Troops>,
     game_info: &mut GameInfo,
+    eneshot_spawner: &mut EneShotSpawner,
 ) {
     match owl.state {
         OwlState::Appearance => {
-            let cont = if let Some(traj) = &mut owl.traj.as_mut() {
-                update_traj(traj, posture, speed, formation)
-            } else {
-                false
-            };
-            if !cont {
-                owl.traj = None;
+            let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+            if !owl.base.update_trajectory(posture, speed, &mut accessor) {
+                owl.base.traj = None;
                 owl.state = OwlState::MoveToFormation;
             }
         }
@@ -69,7 +63,8 @@ pub fn move_owl<'a>(
         }
         OwlState::TrajAttack => {
             let enemy = enemy_storage.get(entity).unwrap();
-            update_attack_traj(owl, enemy, posture, speed, formation, game_info);
+            update_attack_traj(
+                owl, enemy, posture, speed, formation, game_info, eneshot_spawner);
         }
         OwlState::CaptureAttack(phase) => {
             run_capture_attack(owl, entity, phase, posture, speed, formation, entities, enemy_storage, zako_storage, tractor_beam_storage, troops_storage, game_info);
@@ -109,7 +104,7 @@ pub fn owl_start_attack<'a>(
         let table: &[TrajCommand] = &OWL_ATTACK_TABLE;
         let mut traj = Traj::new(table, &ZERO_VEC, flip_x, fi);
         traj.set_pos(&pos);
-        owl.traj = Some(traj);
+        owl.base.traj = Some(traj);
         owl.state = OwlState::TrajAttack;
     } else {
         owl.capturing_state = OwlCapturingState::Attacking;
@@ -124,7 +119,7 @@ pub fn owl_start_attack<'a>(
             speed.1 = DLIMIT;
         }
 
-        owl.target_pos = Vec2I::new(player_pos.x, PLAYER_Y - 88 * ONE);
+        owl.base.target_pos = Vec2I::new(player_pos.x, PLAYER_Y - 88 * ONE);
 
         owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::Capture);
     }
@@ -133,14 +128,13 @@ pub fn owl_start_attack<'a>(
     enemy.is_formation = false;
 }
 
-fn update_attack_traj<'a>(owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, game_info: &GameInfo) {
-    let cont = if let Some(traj) = &mut owl.traj.as_mut() {
-        update_traj(traj, posture, speed, formation)
-    } else {
-        false
-    };
-    if !cont {
-        owl.traj = None;
+fn update_attack_traj<'a>(
+    owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, game_info: &GameInfo,
+    eneshot_spawner: &mut EneShotSpawner,
+) {
+    let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+    if !owl.base.update_trajectory(posture, speed, &mut accessor) {
+        owl.base.traj = None;
         if game_info.is_rush() {
             // Rush mode: Continue attacking
             //self.remove_destroyed_troops(accessor);
@@ -160,7 +154,7 @@ fn rush_attack(owl: &mut Owl, table: &'static [TrajCommand], posture: &Posture, 
 
     //self.count = 0;
     //self.attack_frame_count = 0;
-    owl.traj = Some(traj);
+    owl.base.traj = Some(traj);
 }
 
 fn run_capture_attack<'a>(
@@ -178,7 +172,7 @@ fn run_capture_attack<'a>(
 ) {
     match phase {
         OwlCaptureAttackPhase::Capture => {
-            let target_pos = &owl.target_pos;
+            let target_pos = &owl.base.target_pos;
             let pos = &mut posture.0;
             let angle = &mut posture.1;
             let spd = &mut speed.0;
@@ -259,12 +253,12 @@ fn run_capture_attack<'a>(
             // Handled in TractorBeam.
         }
         OwlCaptureAttackPhase::CaptureDoneWait => {
-            if owl.count == 0 {
+            if owl.base.count == 0 {
                 remove_tractor_beam(entity, tractor_beam_storage);
             }
 
-            owl.count += 1;
-            if owl.count >= 120 {
+            owl.base.count += 1;
+            if owl.base.count >= 120 {
                 let spd = &mut speed.0;
                 *spd = 5 * ONE / 2;
                 owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::CaptureDoneBack);
@@ -320,7 +314,7 @@ fn run_capture_attack<'a>(
 fn set_owl_capturing_player_completed<'a>(owl: &mut Owl, captured: bool) {
     if captured {
         owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::CaptureDoneWait);
-        owl.count = 0;
+        owl.base.count = 0;
     }
 }
 
@@ -610,13 +604,14 @@ fn on_player_captured<'a>(
 
     let enemy = enemy_storage.get(owner).unwrap();
     let fi = FormationIndex(enemy.formation_index.0, enemy.formation_index.1 - 1);
+    let base = EnemyBase { traj: None, shot_wait: None, target_pos: ZERO_VEC, count: 0 };
     let captured = entities.build_entity()
         .with(Enemy { enemy_type: EnemyType::CapturedFighter, formation_index: fi, is_formation: false }, enemy_storage)
         .with(Posture(pos + &Vec2I::new(0, 8 * ONE), 0), pos_storage)
         .with(Speed(0, 0), speed_storage)
         .with(CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) }, coll_rect_storage)
         .with(SpriteDrawable {sprite_name: "rustacean_captured", offset: Vec2I::new(-8, -8)}, drawable_storage)
-        .with(Zako { state: ZakoState::Troop, traj: None, target_pos: ZERO_VEC }, zako_storage)
+        .with(Zako { base, state: ZakoState::Troop }, zako_storage)
         .build();
 
     let mut troops = Troops {members: Default::default()};
