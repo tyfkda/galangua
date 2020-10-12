@@ -1,8 +1,13 @@
 use galangua_common::app::game::{EnemyType, FormationIndex};
+use galangua_common::app::game::traj::Traj;
 use galangua_common::framework::types::Vec2I;
 
 //
-pub struct Pos(pub Vec2I);
+#[derive(Clone)]
+pub struct Posture(pub Vec2I, pub i32);
+
+//
+pub struct Speed(pub i32, pub i32);
 
 //
 pub struct CollRect {
@@ -20,6 +25,17 @@ pub struct MyShot;
 pub struct Enemy {
     pub enemy_type: EnemyType,
     pub formation_index: FormationIndex,
+}
+
+//
+pub enum ZakoState {
+    MoveToFormation,
+    Formation,
+    Attack,
+}
+pub struct Zako {
+    pub state: ZakoState,
+    pub traj: Option<Traj>,
 }
 
 //

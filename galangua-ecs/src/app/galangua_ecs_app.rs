@@ -4,10 +4,12 @@ use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::{BASE_X_TABLE, BASE_Y_TABLE};
+use galangua_common::app::game::traj::Traj;
+use galangua_common::app::game::traj_command_table::{BUTTERFLY_ATTACK_TABLE};
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::EnemyType;
 use galangua_common::framework::{AppTrait, RendererTrait, VKey};
-use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::ONE;
 use galangua_common::util::pad::Pad;
 
@@ -29,7 +31,7 @@ impl GalanguaEcsApp {
             .add_system(fire_myshot_system())
             .add_system(move_myshot_system())
             .add_system(move_formation_system())
-            .add_system(move_enemy_system())
+            .add_system(move_zako_system())
             .add_system(coll_check_myshot_enemy_system())
             .add_system(move_star_system())
             .build();
@@ -73,7 +75,7 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
         }
 
         self.world.extend(vec![
-            (Player, Pos(Vec2I::new(CENTER_X, PLAYER_Y)), SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)}),
+            (Player, Posture(Vec2I::new(CENTER_X, PLAYER_Y), 0), SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)}),
         ]);
 
         let enemies = (0..ORDER.len()).map(|i| {
@@ -86,9 +88,18 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
                 EnemyType::Owl => "cpp11",
                 EnemyType::CapturedFighter => "rustacean_captured",
             };
+            let zako = if i == 0 {
+                let mut traj = Traj::new(&BUTTERFLY_ATTACK_TABLE, &ZERO_VEC, false, fi);
+                traj.set_pos(&pos);
+                Zako { state: ZakoState::Attack, traj: Some(traj) }
+            } else {
+                Zako { state: ZakoState::Formation, traj: None }
+            };
             (
+                zako,
                 Enemy { enemy_type, formation_index: fi },
-                Pos(pos),
+                Posture(pos, 0),
+                Speed(0, 0),
                 CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) },
                 SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)},
             )
