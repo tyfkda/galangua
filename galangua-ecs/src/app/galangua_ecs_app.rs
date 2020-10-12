@@ -20,6 +20,8 @@ impl GalanguaEcsApp {
         let schedule = Schedule::builder()
             .add_system(update_pad_system())
             .add_system(move_player_system())
+            .add_system(fire_myshot_system())
+            .add_system(move_myshot_system())
             .build();
 
         Self {

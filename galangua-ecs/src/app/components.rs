@@ -7,4 +7,7 @@ pub struct Pos(pub Vec2I);
 pub struct Player;
 
 //
+pub struct MyShot;
+
+//
 pub struct SpriteDrawable { pub sprite_name: &'static str, pub offset: Vec2I }
