@@ -80,9 +80,8 @@ pub struct EnemyBase {
     pub traj: Option<Traj>,
     pub shot_wait: Option<u32>,
     pub count: u32,
-    //pub attack_frame_count: u32,
+    pub attack_frame_count: u32,
     pub target_pos: Vec2I,
-    //pub disappeared: bool,
 }
 
 //

@@ -27,7 +27,7 @@ const LIFE: u32 = 2;
 // Owl
 
 pub fn create_owl(traj: Traj) -> Owl {
-    let base = EnemyBase { traj: Some(traj), shot_wait: None, target_pos: ZERO_VEC, count: 0 };
+    let base = EnemyBase::new(Some(traj));
     Owl {
         base,
         state: OwlState::Appearance,
@@ -48,7 +48,7 @@ pub fn move_owl<'a>(
 ) {
     match owl.state {
         OwlState::Appearance => {
-            let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+            let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
             if !owl.base.update_trajectory(posture, speed, &mut accessor) {
                 owl.base.traj = None;
                 owl.state = OwlState::MoveToFormation;
@@ -104,6 +104,9 @@ pub fn owl_start_attack<'a>(
         let table: &[TrajCommand] = &OWL_ATTACK_TABLE;
         let mut traj = Traj::new(table, &ZERO_VEC, flip_x, fi);
         traj.set_pos(&pos);
+
+        owl.base.count = 0;
+        owl.base.attack_frame_count = 0;
         owl.base.traj = Some(traj);
         owl.state = OwlState::TrajAttack;
     } else {
@@ -132,14 +135,14 @@ fn update_attack_traj<'a>(
     owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, game_info: &GameInfo,
     eneshot_spawner: &mut EneShotSpawner,
 ) {
-    let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+    let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
+    owl.base.update_attack(&posture.0, &mut accessor);
     if !owl.base.update_trajectory(posture, speed, &mut accessor) {
         owl.base.traj = None;
         if game_info.is_rush() {
             // Rush mode: Continue attacking
             //self.remove_destroyed_troops(accessor);
-            let table = &OWL_RUSH_ATTACK_TABLE;
-            rush_attack(owl, table, posture, &enemy.formation_index);
+            rush_attack(owl, enemy, posture);
             //accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
         } else {
             owl.state = OwlState::MoveToFormation;
@@ -147,14 +150,10 @@ fn update_attack_traj<'a>(
     }
 }
 
-fn rush_attack(owl: &mut Owl, table: &'static [TrajCommand], posture: &Posture, fi: &FormationIndex) {
-    let flip_x = fi.0 >= 5;
-    let mut traj = Traj::new(table, &ZERO_VEC, flip_x, *fi);
-    traj.set_pos(&posture.0);
-
-    //self.count = 0;
-    //self.attack_frame_count = 0;
-    owl.base.traj = Some(traj);
+fn rush_attack(owl: &mut Owl, enemy: &Enemy, posture: &mut Posture) {
+    let table = &OWL_RUSH_ATTACK_TABLE;
+    owl.base.rush_attack(table, posture, &enemy.formation_index);
+    owl.state = OwlState::TrajAttack;
 }
 
 fn run_capture_attack<'a>(
@@ -234,15 +233,16 @@ fn run_capture_attack<'a>(
             let pos = &mut posture.0;
 
             if pos.y >= (HEIGHT + 8) * ONE {
-                let fi = enemy_storage.get(entity).unwrap().formation_index;
+                let enemy = enemy_storage.get(entity).unwrap();
+                let fi = enemy.formation_index;
                 let target_pos = formation.pos(&fi);
                 let offset = Vec2I::new(target_pos.x - pos.x, (-32 - (HEIGHT + 8)) * ONE);
                 *pos += &offset;
 
-                /*if accessor.is_rush() {
-                    self.rush_attack();
-                    accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
-                } else*/ {
+                if game_info.is_rush() {
+                    rush_attack(owl, enemy, posture);
+                    //accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+                } else {
                     owl.state = OwlState::MoveToFormation;
                     owl.capturing_state = OwlCapturingState::Failed;
                     game_info.end_capture_attack();
@@ -604,7 +604,7 @@ fn on_player_captured<'a>(
 
     let enemy = enemy_storage.get(owner).unwrap();
     let fi = FormationIndex(enemy.formation_index.0, enemy.formation_index.1 - 1);
-    let base = EnemyBase { traj: None, shot_wait: None, target_pos: ZERO_VEC, count: 0 };
+    let base = EnemyBase::new(None);
     let captured = entities.build_entity()
         .with(Enemy { enemy_type: EnemyType::CapturedFighter, formation_index: fi, is_formation: false }, enemy_storage)
         .with(Posture(pos + &Vec2I::new(0, 8 * ONE), 0), pos_storage)

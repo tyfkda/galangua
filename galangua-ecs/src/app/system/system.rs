@@ -10,7 +10,7 @@ use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, EnemyType, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
-use galangua_common::framework::types::{Vec2I, ZERO_VEC};
+use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{quantize_angle, round_vec};
 use galangua_common::util::pad::{Pad, PadBit};
@@ -170,7 +170,7 @@ impl<'a> System<'a> for SysAppearanceManager {
                     .with(CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) }, &mut coll_rect_storage)
                     .with(SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)}, &mut drawable_storage);
                 builder = if e.enemy_type != EnemyType::Owl {
-                    let base = EnemyBase { traj: Some(e.traj), shot_wait: None, target_pos: ZERO_VEC, count: 0 };
+                    let base = EnemyBase::new(Some(e.traj));
                     builder.with(Zako { base, state: ZakoState::Appearance }, &mut zako_storage)
                 } else {
                     builder.with(create_owl(e.traj), &mut owl_storage)
