@@ -3,6 +3,7 @@ use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 
 use galangua_common::app::consts::*;
+use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{round_vec, ONE};
@@ -32,7 +33,7 @@ pub fn move_player(_player: &Player, pos: &mut Pos, #[resource] pad: &Pad) {
 }
 
 #[system(for_each)]
-#[write_component(MyShot)]
+#[read_component(MyShot)]
 pub fn fire_myshot(_player: &Player, pos: &Pos, world: &mut SubWorld, #[resource] pad: &Pad, commands: &mut CommandBuffer) {
     let shot_count = <&MyShot>::query().iter(world).count();
     if pad.is_trigger(PadBit::A) {
@@ -40,6 +41,7 @@ pub fn fire_myshot(_player: &Player, pos: &Pos, world: &mut SubWorld, #[resource
             commands.push((
                 MyShot,
                 Pos(pos.0.clone()),
+                CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) },
                 SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)},
             ));
         }
@@ -53,6 +55,25 @@ pub fn move_myshot(_myshot: &MyShot, pos: &mut Pos, entity: &Entity, commands: &
     if pos.y < 0 * ONE {
         commands.remove(*entity);
 
+    }
+}
+
+#[system]
+#[read_component(MyShot)]
+#[read_component(Enemy)]
+#[read_component(Pos)]
+#[read_component(CollRect)]
+pub fn coll_check_myshot_enemy(world: &mut SubWorld, commands: &mut CommandBuffer) {
+    for (_shot, shot_pos, shot_coll_rect, shot_entity) in <(&MyShot, &Pos, &CollRect, Entity)>::query().iter(world) {
+        let shot_collbox = CollBox { top_left: &round_vec(&shot_pos.0) + &shot_coll_rect.offset, size: shot_coll_rect.size };
+        for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Pos, &CollRect, Entity)>::query().iter(world) {
+            let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
+            if shot_collbox.check_collision(&enemy_collbox) {
+                commands.remove(*enemy_entity);
+                commands.remove(*shot_entity);
+                break;
+            }
+        }
     }
 }
 
