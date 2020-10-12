@@ -5,27 +5,20 @@ use legion::world::SubWorld;
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_manager::AppearanceManager;
 use galangua_common::app::game::appearance_manager::Accessor as AppearanceManagerAccessor;
+use galangua_common::app::game::attack_manager::AttackManager;
+use galangua_common::app::game::attack_manager::Accessor as AttackManagerAccessor;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::star_manager::StarManager;
-use galangua_common::app::game::traj::Accessor as TrajAccessor;
 use galangua_common::app::game::{EnemyType, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
-use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, quantize_angle, round_vec, square, ANGLE, ONE, ONE_BIT};
+use galangua_common::util::math::{quantize_angle, round_vec, ONE};
 use galangua_common::util::pad::{Pad, PadBit};
 
-use super::components::*;
+use crate::app::components::*;
 
-struct TrajAccessorImpl<'a> {
-    formation: &'a Formation,
-}
-impl<'a> TrajAccessor for TrajAccessorImpl<'a> {
-    fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
-        self.formation.pos(formation_index)
-    }
-    fn get_stage_no(&self) -> u16 { 0 }
-}
+use super::system_enemy::*;
 
 #[system]
 pub fn update_pad(#[resource] pad: &mut Pad) {
@@ -81,7 +74,7 @@ pub fn move_formation(#[resource] formation: &mut Formation) {
 
 #[system]
 #[read_component(Zako)]
-pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manager: &mut AppearanceManager, #[resource] formation: &mut Formation, commands: &mut CommandBuffer) {
+pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manager: &mut AppearanceManager, #[resource] attack_manager: &mut AttackManager, #[resource] formation: &mut Formation, commands: &mut CommandBuffer) {
     if appearance_manager.done {
         return;
     }
@@ -110,6 +103,7 @@ pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manag
 
     if appearance_manager.done {
         formation.done_appearance();
+        attack_manager.set_enable(true);
     }
 }
 
@@ -121,72 +115,55 @@ impl<'a, 'b> AppearanceManagerAccessor for SysAppearanceManagerAccessor<'a, 'b> 
     }
 }
 
-fn update_traj(zako: &mut Zako, posture: &mut Posture, speed: &mut Speed, formation: &Formation) -> bool {
-    if let Some(traj) = &mut zako.traj.as_mut() {
-        let traj_accessor = TrajAccessorImpl { formation: &formation };
-        let cont = traj.update(&traj_accessor);
+#[system]
+#[write_component(Zako)]
+#[read_component(Enemy)]
+#[read_component(Posture)]
+pub fn run_attack_manager(world: &mut SubWorld, #[resource] attack_manager: &mut AttackManager) {
+    let result = {
+        let accessor = SysAttackManagerAccessor(world);
+        attack_manager.update(&accessor)
+    };
+    if let Some((fi, capture_attack)) = result {
+        <(&Enemy, &mut Zako, &Posture)>::query().iter_mut(world)
+            .filter(|(enemy, ..)| enemy.formation_index == fi)
+            .for_each(|(enemy, zako, posture)| {
+                zako_start_attack(zako, &enemy, &posture, capture_attack);
+                attack_manager.put_attacker(&fi);
+            });
+    }
+}
 
-        posture.0 = traj.pos();
-        posture.1 = traj.angle;
-        speed.0 = traj.speed;
-        speed.1 = traj.vangle;
-        //if let Some(wait) = traj.is_shot() {
-        //    self.shot_wait = Some(wait);
-        //}
-        cont
-    } else {
-        false
+struct SysAttackManagerAccessor<'a, 'b>(&'a mut SubWorld<'b>);
+impl<'a, 'b> SysAttackManagerAccessor<'a, 'b> {
+    fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {
+        <&Enemy>::query().iter(self.0)
+            .find(|enemy| enemy.formation_index == *formation_index)
+    }
+    fn get_zako_at(&self, formation_index: &FormationIndex) -> Option<&Zako> {
+        <(&Enemy, &Zako)>::query().iter(self.0)
+            .find(|(enemy, _zako)| enemy.formation_index == *formation_index)
+            .map(|(_enemy, zako)| zako)
+    }
+}
+impl<'a, 'b> AttackManagerAccessor for SysAttackManagerAccessor<'a, 'b> {
+    fn can_capture_attack(&self) -> bool { true }
+    fn captured_fighter_index(&self) -> Option<FormationIndex> { None }
+    fn is_enemy_live_at(&self, formation_index: &FormationIndex) -> bool {
+        self.get_enemy_at(formation_index).is_some()
+    }
+    fn is_enemy_formation_at(&self, formation_index: &FormationIndex) -> bool {
+        if let Some(zako) = self.get_zako_at(formation_index) {
+            zako.state == ZakoState::Formation
+        } else {
+            false
+        }
     }
 }
 
 #[system(for_each)]
 pub fn move_zako(enemy: &Enemy, zako: &mut Zako, posture: &mut Posture, speed: &mut Speed, #[resource] formation: &Formation) {
-    match zako.state {
-        ZakoState::Appearance => {
-            if !update_traj(zako, posture, speed, &formation) {
-                zako.traj = None;
-                zako.state = ZakoState::MoveToFormation;
-            }
-        }
-        ZakoState::Formation => {
-            posture.0 = formation.pos(&enemy.formation_index);
-            let ang = ANGLE * ONE / 128;
-            posture.1 -= clamp(posture.1, -ang, ang);
-        }
-        ZakoState::Attack => {
-            if !update_traj(zako, posture, speed, &formation) {
-                zako.traj = None;
-                zako.state = ZakoState::MoveToFormation;
-            }
-        }
-        ZakoState::MoveToFormation => {
-            let target = formation.pos(&enemy.formation_index);
-            let pos = &mut posture.0;
-            let angle = &mut posture.1;
-            let spd = &mut speed.0;
-            let vangle = &mut speed.1;
-            let diff = &target - &pos;
-            let sq_distance = square(diff.x >> (ONE_BIT / 2)) + square(diff.y >> (ONE_BIT / 2));
-            let cont = if sq_distance > square(*spd >> (ONE_BIT / 2)) {
-                let dlimit: i32 = *spd * 5 / 3;
-                let target_angle = atan2_lut(-diff.y, diff.x);
-                let d = diff_angle(target_angle, *angle);
-                *angle += clamp(d, -dlimit, dlimit);
-                *vangle = 0;
-                *pos += &calc_velocity(*angle, *spd);
-                true
-            } else {
-                *pos = target;
-                *spd = 0;
-                *angle = normalize_angle(*angle);
-                *vangle = 0;
-                false
-            };
-            if !cont {
-                zako.state = ZakoState::Formation;
-            }
-        }
-    }
+    do_move_zako(zako, enemy, posture, speed, &formation);
 }
 
 #[system]

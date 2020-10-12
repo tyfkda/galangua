@@ -2,6 +2,7 @@ use legion::*;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_manager::AppearanceManager;
+use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::framework::{AppTrait, RendererTrait, VKey};
@@ -29,6 +30,7 @@ impl GalanguaEcsApp {
             .add_system(move_formation_system())
             .add_system(run_appearance_manager_system())
             .flush()
+            .add_system(run_attack_manager_system())
             .add_system(move_zako_system())
             .add_system(coll_check_myshot_enemy_system())
             .build();
@@ -71,6 +73,7 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
             self.resources.insert(appearance_manager);
         }
         self.resources.insert(Formation::default());
+        self.resources.insert(AttackManager::default());
 
         self.world.extend(vec![
             (Player, Posture(Vec2I::new(CENTER_X, PLAYER_Y), 0), SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)}),
