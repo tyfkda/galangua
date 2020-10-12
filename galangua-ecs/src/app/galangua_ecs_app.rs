@@ -33,6 +33,7 @@ impl GalanguaEcsApp {
             .add_system(run_attack_manager_system())
             .add_system(move_zako_system())
             .add_system(coll_check_myshot_enemy_system())
+            .add_system(move_sequential_anime_system())
             .build();
 
         Self {

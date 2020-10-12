@@ -18,6 +18,7 @@ use galangua_common::util::pad::{Pad, PadBit};
 
 use crate::app::components::*;
 
+use super::system_effect::*;
 use super::system_enemy::*;
 
 #[system]
@@ -177,11 +178,22 @@ pub fn coll_check_myshot_enemy(world: &mut SubWorld, commands: &mut CommandBuffe
         for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
             let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
             if shot_collbox.check_collision(&enemy_collbox) {
+                let pos = enemy_pos.0.clone();
                 commands.remove(*enemy_entity);
                 commands.remove(*shot_entity);
+                create_enemy_explosion_effect(&pos, commands);
                 break;
             }
         }
+    }
+}
+
+#[system(for_each)]
+pub fn move_sequential_anime(anime: &mut SequentialSpriteAnime, drawable: &mut SpriteDrawable, entity: &Entity, commands: &mut CommandBuffer) {
+    if let Some(sprite_name) = update_seqanime(anime) {
+        drawable.sprite_name = sprite_name;
+    } else {
+        commands.remove(*entity);
     }
 }
 
