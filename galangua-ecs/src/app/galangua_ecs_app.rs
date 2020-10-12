@@ -1,9 +1,9 @@
 use legion::*;
 
+use galangua_common::app::consts::*;
 use galangua_common::framework::{AppTrait, RendererTrait, VKey};
-
 use galangua_common::framework::types::Vec2I;
-use galangua_common::util::math::ONE;
+use galangua_common::util::pad::Pad;
 
 use super::components::*;
 use super::system::*;
@@ -18,7 +18,8 @@ pub struct GalanguaEcsApp {
 impl GalanguaEcsApp {
     pub fn new() -> Self {
         let schedule = Schedule::builder()
-            .add_system(mover_system())
+            .add_system(update_pad_system())
+            .add_system(move_player_system())
             .build();
 
         Self {
@@ -32,6 +33,10 @@ impl GalanguaEcsApp {
 
 impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
     fn on_key(&mut self, vkey: VKey, down: bool) {
+        if let Some(mut pad) = self.resources.get_mut::<Pad>() {
+            pad.on_key(vkey, down);
+        }
+
         if down {
             self.pressed_key = Some(vkey);
         }
@@ -47,8 +52,10 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
         renderer.load_textures("assets", &["chr.png", "font.png"]);
         renderer.load_sprite_sheet("assets/chr.json");
 
+        self.resources.insert(Pad::default());
+
         self.world.extend(vec![
-            (Pos(Vec2I::new(0 * ONE, 100 * ONE)), Vel(Vec2I::new(1 * ONE, 0)), SpriteDrawable),
+            (Player, Pos(Vec2I::new(CENTER_X, PLAYER_Y)), SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)}),
         ]);
     }
 
