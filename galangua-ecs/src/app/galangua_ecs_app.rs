@@ -4,6 +4,7 @@ use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::{BASE_X_TABLE, BASE_Y_TABLE};
+use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::EnemyType;
 use galangua_common::framework::{AppTrait, RendererTrait, VKey};
 use galangua_common::framework::types::Vec2I;
@@ -30,6 +31,7 @@ impl GalanguaEcsApp {
             .add_system(move_formation_system())
             .add_system(move_enemy_system())
             .add_system(coll_check_myshot_enemy_system())
+            .add_system(move_star_system())
             .build();
 
         Self {
@@ -63,6 +65,7 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
         renderer.load_sprite_sheet("assets/chr.json");
 
         self.resources.insert(Pad::default());
+        self.resources.insert(StarManager::default());
         {
             let mut formation = Formation::default();
             formation.done_appearance();
@@ -108,6 +111,6 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
         renderer.set_draw_color(0, 0, 0);
         renderer.clear();
 
-        draw_system(&self.world, renderer);
+        draw_system(&self.world, &self.resources, renderer);
     }
 }

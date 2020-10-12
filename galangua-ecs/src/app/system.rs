@@ -4,6 +4,7 @@ use legion::world::SubWorld;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::formation::Formation;
+use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
@@ -88,9 +89,16 @@ pub fn coll_check_myshot_enemy(world: &mut SubWorld, commands: &mut CommandBuffe
     }
 }
 
-pub fn draw_system<R: RendererTrait>(world: &World, renderer: &mut R) {
-    let mut query = <(&Pos, &SpriteDrawable)>::query();
-    for (pos, drawable) in query.iter(world) {
+#[system]
+pub fn move_star(#[resource] star_manager: &mut StarManager) {
+    star_manager.update();
+}
+
+pub fn draw_system<R: RendererTrait>(world: &World, resources: &Resources, renderer: &mut R) {
+    let star_manager = resources.get::<StarManager>().unwrap();
+    star_manager.draw(renderer);
+
+    for (pos, drawable) in <(&Pos, &SpriteDrawable)>::query().iter(world) {
         let pos = round_vec(&pos.0);
         renderer.draw_sprite(drawable.sprite_name, &(&pos + &drawable.offset));
     }
