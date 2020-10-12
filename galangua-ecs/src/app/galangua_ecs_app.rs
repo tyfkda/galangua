@@ -2,6 +2,7 @@ use legion::*;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};
+use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::{BASE_X_TABLE, BASE_Y_TABLE};
 use galangua_common::app::game::EnemyType;
 use galangua_common::framework::{AppTrait, RendererTrait, VKey};
@@ -26,6 +27,8 @@ impl GalanguaEcsApp {
             .add_system(move_player_system())
             .add_system(fire_myshot_system())
             .add_system(move_myshot_system())
+            .add_system(move_formation_system())
+            .add_system(move_enemy_system())
             .add_system(coll_check_myshot_enemy_system())
             .build();
 
@@ -60,6 +63,11 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
         renderer.load_sprite_sheet("assets/chr.json");
 
         self.resources.insert(Pad::default());
+        {
+            let mut formation = Formation::default();
+            formation.done_appearance();
+            self.resources.insert(formation);
+        }
 
         self.world.extend(vec![
             (Player, Pos(Vec2I::new(CENTER_X, PLAYER_Y)), SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)}),
@@ -76,7 +84,7 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
                 EnemyType::CapturedFighter => "rustacean_captured",
             };
             (
-                Enemy { enemy_type },
+                Enemy { enemy_type, formation_index: fi },
                 Pos(pos),
                 CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) },
                 SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)},

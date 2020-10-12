@@ -3,6 +3,7 @@ use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 
 use galangua_common::app::consts::*;
+use galangua_common::app::game::formation::Formation;
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
@@ -56,6 +57,16 @@ pub fn move_myshot(_myshot: &MyShot, pos: &mut Pos, entity: &Entity, commands: &
         commands.remove(*entity);
 
     }
+}
+
+#[system]
+pub fn move_formation(#[resource] formation: &mut Formation) {
+    formation.update();
+}
+
+#[system(for_each)]
+pub fn move_enemy(enemy: &Enemy, pos: &mut Pos, #[resource] formation: &Formation) {
+    *pos = Pos(formation.pos(&enemy.formation_index));
 }
 
 #[system]

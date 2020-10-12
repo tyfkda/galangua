@@ -1,4 +1,4 @@
-use galangua_common::app::game::EnemyType;
+use galangua_common::app::game::{EnemyType, FormationIndex};
 use galangua_common::framework::types::Vec2I;
 
 //
@@ -19,6 +19,7 @@ pub struct MyShot;
 //
 pub struct Enemy {
     pub enemy_type: EnemyType,
+    pub formation_index: FormationIndex,
 }
 
 //
