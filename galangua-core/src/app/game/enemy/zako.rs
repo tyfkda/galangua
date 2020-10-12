@@ -106,6 +106,7 @@ impl Zako {
             }
             ZakoState::Formation => { self.info.update_formation(accessor); }
             ZakoState::Attack(t) => {
+                self.base.update_attack(&self.info, accessor);
                 match t {
                     ZakoAttackType::BeeAttack => self.update_bee_attack(accessor),
                     ZakoAttackType::Traj => self.update_attack_traj(accessor),
@@ -115,7 +116,6 @@ impl Zako {
     }
 
     fn update_bee_attack(&mut self, accessor: &mut dyn Accessor) {
-        self.base.update_attack(&self.info, accessor);
         if !self.base.update_trajectory(&mut self.info, accessor) {
             if accessor.is_rush() {
                 let flip_x = self.info.formation_index.0 >= 5;
@@ -132,7 +132,6 @@ impl Zako {
     }
 
     fn update_attack_traj(&mut self, accessor: &mut dyn Accessor) {
-        self.base.update_attack(&self.info, accessor);
         if !self.base.update_trajectory(&mut self.info, accessor) {
             if self.enemy_type == EnemyType::CapturedFighter {
                 self.base.disappeared = true;
