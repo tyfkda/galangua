@@ -3,14 +3,16 @@ use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 
 use galangua_common::app::consts::*;
+use galangua_common::app::game::appearance_manager::AppearanceManager;
+use galangua_common::app::game::appearance_manager::Accessor as AppearanceManagerAccessor;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
-use galangua_common::app::game::FormationIndex;
+use galangua_common::app::game::{EnemyType, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
-use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, quantize_angle, round_vec, square, ANGLE, ONE, ONE_BIT};
+use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, quantize_angle, round_vec, square, ANGLE, ONE, ONE_BIT};
 use galangua_common::util::pad::{Pad, PadBit};
 
 use super::components::*;
@@ -77,30 +79,84 @@ pub fn move_formation(#[resource] formation: &mut Formation) {
     formation.update();
 }
 
+#[system]
+#[read_component(Zako)]
+pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manager: &mut AppearanceManager, #[resource] formation: &mut Formation, commands: &mut CommandBuffer) {
+    if appearance_manager.done {
+        return;
+    }
+
+    let accessor = SysAppearanceManagerAccessor(world);
+    let new_borns_opt = appearance_manager.update(&accessor);
+    if let Some(new_borns) = new_borns_opt {
+        let tuples = new_borns.into_iter().map(|e| {
+            let sprite_name = match e.enemy_type {
+                EnemyType::Bee => "gopher1",
+                EnemyType::Butterfly => "dman1",
+                EnemyType::Owl => "cpp11",
+                EnemyType::CapturedFighter => "rustacean_captured",
+            };
+            (
+                Enemy { enemy_type: e.enemy_type, formation_index: e.fi },
+                Zako { state: ZakoState::Appearance, traj: Some(e.traj) },
+                Posture(e.pos, 0),
+                Speed(0, 0),
+                CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) },
+                SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)},
+            )
+        });
+        commands.extend(tuples);
+    }
+
+    if appearance_manager.done {
+        formation.done_appearance();
+    }
+}
+
+struct SysAppearanceManagerAccessor<'a, 'b>(&'a mut SubWorld<'b>);
+impl<'a, 'b> AppearanceManagerAccessor for SysAppearanceManagerAccessor<'a, 'b> {
+    fn is_stationary(&self) -> bool {
+        <&Zako>::query().iter(self.0)
+            .all(|x| x.state == ZakoState::Formation)
+    }
+}
+
+fn update_traj(zako: &mut Zako, posture: &mut Posture, speed: &mut Speed, formation: &Formation) -> bool {
+    if let Some(traj) = &mut zako.traj.as_mut() {
+        let traj_accessor = TrajAccessorImpl { formation: &formation };
+        let cont = traj.update(&traj_accessor);
+
+        posture.0 = traj.pos();
+        posture.1 = traj.angle;
+        speed.0 = traj.speed;
+        speed.1 = traj.vangle;
+        //if let Some(wait) = traj.is_shot() {
+        //    self.shot_wait = Some(wait);
+        //}
+        cont
+    } else {
+        false
+    }
+}
+
 #[system(for_each)]
 pub fn move_zako(enemy: &Enemy, zako: &mut Zako, posture: &mut Posture, speed: &mut Speed, #[resource] formation: &Formation) {
     match zako.state {
+        ZakoState::Appearance => {
+            if !update_traj(zako, posture, speed, &formation) {
+                zako.traj = None;
+                zako.state = ZakoState::MoveToFormation;
+            }
+        }
         ZakoState::Formation => {
             posture.0 = formation.pos(&enemy.formation_index);
             let ang = ANGLE * ONE / 128;
             posture.1 -= clamp(posture.1, -ang, ang);
         }
         ZakoState::Attack => {
-            if let Some(traj) = &mut zako.traj.as_mut() {
-                let traj_accessor = TrajAccessorImpl { formation: &formation };
-                let cont = traj.update(&traj_accessor);
-
-                posture.0 = traj.pos();
-                posture.1 = traj.angle;
-                speed.0 = traj.speed;
-                speed.1 = traj.vangle;
-                //if let Some(wait) = traj.is_shot() {
-                //    self.shot_wait = Some(wait);
-                //}
-                if !cont {
-                    zako.traj = None;
-                    zako.state = ZakoState::MoveToFormation;
-                }
+            if !update_traj(zako, posture, speed, &formation) {
+                zako.traj = None;
+                zako.state = ZakoState::MoveToFormation;
             }
         }
         ZakoState::MoveToFormation => {
@@ -122,6 +178,7 @@ pub fn move_zako(enemy: &Enemy, zako: &mut Zako, posture: &mut Posture, speed: &
             } else {
                 *pos = target;
                 *spd = 0;
+                *angle = normalize_angle(*angle);
                 *vangle = 0;
                 false
             };

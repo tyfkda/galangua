@@ -28,7 +28,9 @@ pub struct Enemy {
 }
 
 //
+#[derive(PartialEq)]
 pub enum ZakoState {
+    Appearance,
     MoveToFormation,
     Formation,
     Attack,
