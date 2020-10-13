@@ -9,7 +9,7 @@ use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::attack_manager::Accessor as AttackManagerAccessor;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::star_manager::StarManager;
-use galangua_common::app::game::{EnemyType, FormationIndex};
+use galangua_common::app::game::{CaptureState, EnemyType, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
@@ -17,6 +17,7 @@ use galangua_common::util::math::{quantize_angle, round_vec, ONE};
 use galangua_common::util::pad::{Pad, PadBit};
 
 use crate::app::components::*;
+use crate::app::resources::*;
 
 use super::system_effect::*;
 use super::system_enemy::*;
@@ -73,23 +74,27 @@ pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manag
     let accessor = SysAppearanceManagerAccessor(world);
     let new_borns_opt = appearance_manager.update(&accessor);
     if let Some(new_borns) = new_borns_opt {
-        let tuples = new_borns.into_iter().map(|e| {
+        new_borns.into_iter().for_each(|e| {
             let sprite_name = match e.enemy_type {
                 EnemyType::Bee => "gopher1",
                 EnemyType::Butterfly => "dman1",
                 EnemyType::Owl => "cpp11",
                 EnemyType::CapturedFighter => "rustacean_captured",
             };
-            (
-                Enemy { enemy_type: e.enemy_type, formation_index: e.fi },
-                Zako { state: ZakoState::Appearance, traj: Some(e.traj) },
-                Posture(e.pos, 0),
-                Speed(0, 0),
-                CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) },
-                SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)},
-            )
+
+            let enemy = Enemy { enemy_type: e.enemy_type, formation_index: e.fi, is_formation: false };
+            let posture = Posture(e.pos, 0);
+            let speed = Speed(0, 0);
+            let coll_rect = CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) };
+            let drawable = SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)};
+            if e.enemy_type != EnemyType::Owl {
+                let zako = Zako { state: ZakoState::Appearance, traj: Some(e.traj) };
+                commands.push((enemy, zako, posture, speed, coll_rect, drawable));
+            } else {
+                let owl = create_owl(e.traj);
+                commands.push((enemy, owl, posture, speed, coll_rect, drawable));
+            }
         });
-        commands.extend(tuples);
     }
 
     if appearance_manager.done {
@@ -108,44 +113,68 @@ impl<'a, 'b> AppearanceManagerAccessor for SysAppearanceManagerAccessor<'a, 'b> 
 
 #[system]
 #[write_component(Zako)]
-#[read_component(Enemy)]
-#[read_component(Posture)]
-pub fn run_attack_manager(world: &mut SubWorld, #[resource] attack_manager: &mut AttackManager) {
+#[write_component(Owl)]
+#[write_component(Enemy)]
+#[write_component(Posture)]
+#[write_component(Speed)]
+#[read_component(Player)]
+pub fn run_attack_manager(world: &mut SubWorld, #[resource] attack_manager: &mut AttackManager, #[resource] game_info: &mut GameInfo) {
     let result = {
-        let accessor = SysAttackManagerAccessor(world);
+        let accessor = SysAttackManagerAccessor(world, game_info);
         attack_manager.update(&accessor)
     };
     if let Some((fi, capture_attack)) = result {
-        <(&Enemy, &mut Zako, &Posture)>::query().iter_mut(world)
+        let get_player_pos = || {
+            for (_player, posture) in <(&Player, &Posture)>::query().iter(world) {
+                return Some(posture.0.clone());
+            }
+            None
+        };
+        let player_pos = get_player_pos().unwrap();
+
+        <(&mut Enemy, Option<&mut Zako>, Option<&mut Owl>, &mut Posture, &mut Speed)>::query().iter_mut(world)
             .filter(|(enemy, ..)| enemy.formation_index == fi)
-            .for_each(|(enemy, zako, posture)| {
-                zako_start_attack(zako, &enemy, &posture, capture_attack);
+            .for_each(|(enemy, zako_opt, owl_opt, posture, speed)| {
+                if let Some(zako) = zako_opt {
+                    zako_start_attack(zako, enemy, &posture);
+                }
+                if let Some(owl) = owl_opt {
+                    owl_start_attack(owl, enemy, posture, capture_attack, speed, &player_pos);
+                    if capture_attack {
+                        game_info.capture_state = CaptureState::CaptureAttacking;
+                        game_info.capture_enemy_fi = fi;
+                    }
+                }
                 attack_manager.put_attacker(&fi);
             });
     }
 }
 
-struct SysAttackManagerAccessor<'a, 'b>(&'a mut SubWorld<'b>);
+struct SysAttackManagerAccessor<'a, 'b>(&'a mut SubWorld<'b>, &'a GameInfo);
 impl<'a, 'b> SysAttackManagerAccessor<'a, 'b> {
     fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Enemy> {
         <&Enemy>::query().iter(self.0)
             .find(|enemy| enemy.formation_index == *formation_index)
     }
-    fn get_zako_at(&self, formation_index: &FormationIndex) -> Option<&Zako> {
-        <(&Enemy, &Zako)>::query().iter(self.0)
-            .find(|(enemy, _zako)| enemy.formation_index == *formation_index)
-            .map(|(_enemy, zako)| zako)
-    }
 }
 impl<'a, 'b> AttackManagerAccessor for SysAttackManagerAccessor<'a, 'b> {
-    fn can_capture_attack(&self) -> bool { true }
-    fn captured_fighter_index(&self) -> Option<FormationIndex> { None }
+    fn can_capture_attack(&self) -> bool { self.1.capture_state == CaptureState::NoCapture }
+    fn captured_fighter_index(&self) -> Option<FormationIndex> {
+        match self.1.capture_state {
+            CaptureState::CaptureAttacking |
+            CaptureState::Capturing |
+            CaptureState::Captured => {
+                Some(FormationIndex(self.1.capture_enemy_fi.0, self.1.capture_enemy_fi.1 - 1))
+            }
+            _ => { None }
+        }
+    }
     fn is_enemy_live_at(&self, formation_index: &FormationIndex) -> bool {
         self.get_enemy_at(formation_index).is_some()
     }
     fn is_enemy_formation_at(&self, formation_index: &FormationIndex) -> bool {
-        if let Some(zako) = self.get_zako_at(formation_index) {
-            zako.state == ZakoState::Formation
+        if let Some(enemy) = self.get_enemy_at(formation_index) {
+            enemy.is_formation
         } else {
             false
         }
@@ -153,8 +182,18 @@ impl<'a, 'b> AttackManagerAccessor for SysAttackManagerAccessor<'a, 'b> {
 }
 
 #[system(for_each)]
-pub fn move_zako(enemy: &Enemy, zako: &mut Zako, posture: &mut Posture, speed: &mut Speed, #[resource] formation: &Formation) {
-    do_move_zako(zako, enemy, posture, speed, &formation);
+pub fn move_zako(enemy: &mut Enemy, zako: &mut Zako, posture: &mut Posture, speed: &mut Speed, #[resource] formation: &Formation) {
+    do_move_zako(zako, enemy, posture, speed, formation);
+}
+
+#[system(for_each)]
+pub fn move_owl(enemy: &mut Enemy, entity: &Entity, owl: &mut Owl, posture: &mut Posture, tractor_beam: Option<&mut TractorBeam>, speed: &mut Speed, #[resource] formation: &Formation, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
+    do_move_owl(owl, enemy, *entity, posture, speed, tractor_beam, formation, game_info, commands);
+}
+
+#[system(for_each)]
+pub fn move_tractor_beam(tractor_beam: &mut TractorBeam, commands: &mut CommandBuffer) {
+    do_move_tractor_beam(tractor_beam, commands);
 }
 
 #[system]

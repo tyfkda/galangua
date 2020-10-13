@@ -10,6 +10,7 @@ use galangua_common::framework::types::Vec2I;
 use galangua_common::util::pad::Pad;
 
 use super::components::*;
+use super::resources::*;
 use super::system::*;
 use super::system::system_player::*;
 
@@ -33,6 +34,8 @@ impl GalanguaEcsApp {
             .flush()
             .add_system(run_attack_manager_system())
             .add_system(move_zako_system())
+            .add_system(move_owl_system())
+            .add_system(move_tractor_beam_system())
             .add_system(coll_check_myshot_enemy_system())
             .add_system(coll_check_player_enemy_system())
             .add_system(move_sequential_anime_system())
@@ -77,6 +80,7 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
         }
         self.resources.insert(Formation::default());
         self.resources.insert(AttackManager::default());
+        self.resources.insert(GameInfo::new());
 
         self.world.push((
             new_player(),
