@@ -35,6 +35,7 @@ impl GalanguaEcsApp {
             .add_system(run_attack_manager_system())
             .add_system(move_zako_system())
             .add_system(move_owl_system())
+            .add_system(move_troops_system())
             .add_system(move_tractor_beam_system())
             .add_system(coll_check_myshot_enemy_system())
             .add_system(coll_check_player_enemy_system())

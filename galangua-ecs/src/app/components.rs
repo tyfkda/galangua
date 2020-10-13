@@ -18,11 +18,12 @@ pub struct CollRect {
 }
 
 //
+#[derive(PartialEq)]
 pub enum PlayerState {
     Normal,
     Dead,
-    //Capturing,
-    //Captured,
+    Capturing,
+    Captured,
     //EscapeCapturing,
     //MoveHomePos,
 }
@@ -48,6 +49,7 @@ pub enum ZakoState {
     MoveToFormation,
     Formation,
     Attack,
+    Troop,
 }
 pub struct Zako {
     pub state: ZakoState,
@@ -60,13 +62,12 @@ pub enum OwlCaptureAttackPhase {
     Capture,
     CaptureBeam,
     NoCaptureGoOut,
-    CaptureStart,
-    CaptureCloseBeam,
+    Capturing,
     CaptureDoneWait,
     CaptureDoneBack,
     CaptureDonePushUp,
 }
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum OwlState {
     Appearance,
     MoveToFormation,
@@ -78,7 +79,7 @@ pub enum OwlCapturingState {
     None,
     Attacking,
     BeamTracting,
-    Captured,
+    //Captured,
     Failed,
 }
 pub struct Owl {
@@ -86,6 +87,7 @@ pub struct Owl {
     pub traj: Option<Traj>,
     pub capturing_state: OwlCapturingState,
     pub target_pos: Vec2I,
+    pub count: u32,
 }
 
 //
@@ -105,6 +107,13 @@ pub struct TractorBeam {
     pub color_count: u32,
     pub size_count: i32,
     pub beam_sprites: [Option<Entity>; TRACTOR_BEAM_SPRITE_COUNT],
+    pub capturing_player: Option<Entity>,
+}
+
+//
+const MAX_TROOPS: usize = 3;
+pub struct Troops {
+    pub members: [Option<(Entity, Vec2I)>; MAX_TROOPS],
 }
 
 //

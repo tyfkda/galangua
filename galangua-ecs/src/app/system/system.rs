@@ -35,9 +35,9 @@ pub fn move_player(player: &mut Player, posture: &mut Posture, entity: &Entity, 
 
 #[system(for_each)]
 #[read_component(MyShot)]
-pub fn fire_myshot(_player: &Player, posture: &Posture, world: &mut SubWorld, #[resource] pad: &Pad, commands: &mut CommandBuffer) {
+pub fn fire_myshot(player: &Player, posture: &Posture, world: &mut SubWorld, #[resource] pad: &Pad, commands: &mut CommandBuffer) {
     let shot_count = <&MyShot>::query().iter(world).count();
-    if pad.is_trigger(PadBit::A) {
+    if can_player_fire(player) && pad.is_trigger(PadBit::A) {
         if shot_count < 2 {
             commands.push((
                 MyShot,
@@ -158,7 +158,7 @@ impl<'a, 'b> SysAttackManagerAccessor<'a, 'b> {
     }
 }
 impl<'a, 'b> AttackManagerAccessor for SysAttackManagerAccessor<'a, 'b> {
-    fn can_capture_attack(&self) -> bool { self.1.capture_state == CaptureState::NoCapture }
+    fn can_capture_attack(&self) -> bool { self.1.can_capture_attack() }
     fn captured_fighter_index(&self) -> Option<FormationIndex> {
         match self.1.capture_state {
             CaptureState::CaptureAttacking |
@@ -192,8 +192,16 @@ pub fn move_owl(enemy: &mut Enemy, entity: &Entity, owl: &mut Owl, posture: &mut
 }
 
 #[system(for_each)]
-pub fn move_tractor_beam(tractor_beam: &mut TractorBeam, commands: &mut CommandBuffer) {
-    do_move_tractor_beam(tractor_beam, commands);
+#[write_component(Posture)]
+pub fn move_troops(troops: &mut Troops, owl: &mut Owl, entity: &Entity, world: &mut SubWorld) {
+    update_troops(troops, *entity, owl, world);
+}
+
+#[system(for_each)]
+#[write_component(Player)]
+#[write_component(Posture)]
+pub fn move_tractor_beam(tractor_beam: &mut TractorBeam, owl: &mut Owl, enemy: &Enemy, entity: &Entity, world: &mut SubWorld, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
+    do_move_tractor_beam(tractor_beam, *entity, owl, enemy, game_info, world, commands);
 }
 
 #[system]
