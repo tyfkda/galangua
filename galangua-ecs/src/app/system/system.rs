@@ -21,6 +21,7 @@ use crate::app::resources::*;
 
 use super::system_effect::*;
 use super::system_enemy::*;
+use super::system_owl::*;
 use super::system_player::*;
 
 #[system]
