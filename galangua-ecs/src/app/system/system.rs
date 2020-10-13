@@ -20,6 +20,7 @@ use crate::app::components::*;
 
 use super::system_effect::*;
 use super::system_enemy::*;
+use super::system_player::*;
 
 #[system]
 pub fn update_pad(#[resource] pad: &mut Pad) {
@@ -27,19 +28,8 @@ pub fn update_pad(#[resource] pad: &mut Pad) {
 }
 
 #[system(for_each)]
-pub fn move_player(_player: &Player, posture: &mut Posture, #[resource] pad: &Pad) {
-    let mut pos = &mut posture.0;
-    if pad.is_pressed(PadBit::L) {
-        pos.x -= PLAYER_SPEED;
-    }
-    if pad.is_pressed(PadBit::R) {
-        pos.x += PLAYER_SPEED;
-    }
-    if pos.x < 8 * ONE {
-        pos.x = 8 * ONE;
-    } else if pos.x > (WIDTH - 8) * ONE {
-        pos.x = (WIDTH - 8) * ONE;
-    }
+pub fn move_player(player: &mut Player, posture: &mut Posture, entity: &Entity, #[resource] pad: &Pad, commands: &mut CommandBuffer) {
+    do_move_player(player, *entity, pad, posture, commands);
 }
 
 #[system(for_each)]
@@ -189,11 +179,12 @@ pub fn coll_check_myshot_enemy(world: &mut SubWorld, commands: &mut CommandBuffe
 }
 
 #[system]
-#[read_component(Player)]
+#[write_component(Player)]
 #[read_component(Enemy)]
 #[read_component(Posture)]
 #[read_component(CollRect)]
 pub fn coll_check_player_enemy(world: &mut SubWorld, commands: &mut CommandBuffer) {
+    let mut colls: Vec<Entity> = Vec::new();
     for (_player, player_pos, player_coll_rect, player_entity) in <(&Player, &Posture, &CollRect, Entity)>::query().iter(world) {
         let player_collbox = CollBox { top_left: &round_vec(&player_pos.0) + &player_coll_rect.offset, size: player_coll_rect.size };
         for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
@@ -202,12 +193,17 @@ pub fn coll_check_player_enemy(world: &mut SubWorld, commands: &mut CommandBuffe
                 let pl_pos = player_pos.0.clone();
                 let ene_pos = enemy_pos.0.clone();
                 commands.remove(*enemy_entity);
-                commands.remove(*player_entity);
                 create_player_explosion_effect(&pl_pos, commands);
                 create_enemy_explosion_effect(&ene_pos, commands);
+                colls.push(*player_entity);
                 break;
             }
         }
+    }
+
+    for player_entity in colls {
+        let player = <&mut Player>::query().get_mut(world, player_entity).unwrap();
+        crash_player(player, player_entity, commands);
     }
 }
 

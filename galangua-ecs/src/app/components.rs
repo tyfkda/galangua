@@ -16,7 +16,18 @@ pub struct CollRect {
 }
 
 //
-pub struct Player;
+pub enum PlayerState {
+    Normal,
+    Dead,
+    //Capturing,
+    //Captured,
+    //EscapeCapturing,
+    //MoveHomePos,
+}
+pub struct Player {
+    pub state: PlayerState,
+    pub count: u32,
+}
 
 //
 pub struct MyShot;
