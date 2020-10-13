@@ -39,3 +39,16 @@ pub fn create_enemy_explosion_effect(
         SpriteDrawable { sprite_name, offset },
     ));
 }
+
+pub fn create_player_explosion_effect(
+    pos: &Vec2I, commands: &mut CommandBuffer,
+) {
+    let anime_table = &PLAYER_EXPLOSION_SPRITE_TABLE;
+    let sprite_name = anime_table[0];
+    let offset = Vec2I::new(-16, -16);
+    commands.push((
+        Posture(pos.clone(), 0),
+        new_seqanime(anime_table, PLAYER_EXPLOSION_FRAME),
+        SpriteDrawable { sprite_name, offset },
+    ));
+}

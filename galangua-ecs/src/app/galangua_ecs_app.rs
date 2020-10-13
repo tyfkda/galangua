@@ -33,6 +33,7 @@ impl GalanguaEcsApp {
             .add_system(run_attack_manager_system())
             .add_system(move_zako_system())
             .add_system(coll_check_myshot_enemy_system())
+            .add_system(coll_check_player_enemy_system())
             .add_system(move_sequential_anime_system())
             .build();
 
@@ -76,9 +77,12 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
         self.resources.insert(Formation::default());
         self.resources.insert(AttackManager::default());
 
-        self.world.extend(vec![
-            (Player, Posture(Vec2I::new(CENTER_X, PLAYER_Y), 0), SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)}),
-        ]);
+        self.world.push((
+            Player,
+            Posture(Vec2I::new(CENTER_X, PLAYER_Y), 0),
+            CollRect { offset: Vec2I::new(-4, -4), size: Vec2I::new(8, 8) },
+            SpriteDrawable {sprite_name: "rustacean", offset: Vec2I::new(-8, -8)},
+        ));
     }
 
     fn update(&mut self) -> bool {

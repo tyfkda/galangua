@@ -188,6 +188,29 @@ pub fn coll_check_myshot_enemy(world: &mut SubWorld, commands: &mut CommandBuffe
     }
 }
 
+#[system]
+#[read_component(Player)]
+#[read_component(Enemy)]
+#[read_component(Posture)]
+#[read_component(CollRect)]
+pub fn coll_check_player_enemy(world: &mut SubWorld, commands: &mut CommandBuffer) {
+    for (_player, player_pos, player_coll_rect, player_entity) in <(&Player, &Posture, &CollRect, Entity)>::query().iter(world) {
+        let player_collbox = CollBox { top_left: &round_vec(&player_pos.0) + &player_coll_rect.offset, size: player_coll_rect.size };
+        for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
+            let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
+            if player_collbox.check_collision(&enemy_collbox) {
+                let pl_pos = player_pos.0.clone();
+                let ene_pos = enemy_pos.0.clone();
+                commands.remove(*enemy_entity);
+                commands.remove(*player_entity);
+                create_player_explosion_effect(&pl_pos, commands);
+                create_enemy_explosion_effect(&ene_pos, commands);
+                break;
+            }
+        }
+    }
+}
+
 #[system(for_each)]
 pub fn move_sequential_anime(anime: &mut SequentialSpriteAnime, drawable: &mut SpriteDrawable, entity: &Entity, commands: &mut CommandBuffer) {
     if let Some(sprite_name) = update_seqanime(anime) {
