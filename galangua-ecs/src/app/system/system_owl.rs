@@ -21,6 +21,8 @@ use crate::app::resources::*;
 use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, update_traj};
 use super::system_player::{move_capturing_player, set_player_captured, start_player_capturing};
 
+const LIFE: u32 = 2;
+
 // Owl
 
 pub fn create_owl(traj: Traj) -> Owl {
@@ -31,6 +33,7 @@ pub fn create_owl(traj: Traj) -> Owl {
         target_pos: ZERO_VEC,
         //tractor_beam: None,
         count: 0,
+        life: LIFE,
     }
 }
 
@@ -85,19 +88,7 @@ pub fn do_move_owl(
                 result
             };
             if result {
-                {
-                    let (mut subworld1, mut subworld2) = world.split::<&mut Troops>();
-                    if let Ok(troops) = <&mut Troops>::query().get_mut(&mut subworld1, entity) {
-                        release_troops(troops, &mut subworld2);
-                        commands.remove_component::<Troops>(entity);
-                    }
-                }
-
-                owl.capturing_state = OwlCapturingState::None;
-                owl.state = OwlState::Formation;
-
-                let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
-                enemy.is_formation = true;
+                set_to_formation(owl, entity, world, commands);
             }
         }
     }
@@ -258,9 +249,8 @@ fn run_capture_attack(
             }
         }
         OwlCaptureAttackPhase::CaptureDonePushUp => {
-            let (mut subworld1, mut subworld2) = world.split::<&mut Troops>();
-            let troops = <&mut Troops>::query().get_mut(&mut subworld1, entity).unwrap();
             let done = {
+                let troops = <&mut Troops>::query().get_mut(world, entity).unwrap();
                 let angle = &mut posture.1;
 
                 let ang = ANGLE * ONE / 128;
@@ -284,15 +274,9 @@ fn run_capture_attack(
 
             if done {
                 //accessor.push_event(EventType::CaptureSequenceEnded);
-                release_troops(troops, &mut subworld2);
+                set_to_formation(owl, entity, world, commands);
 
-                //self.set_to_formation();
-                owl.state = OwlState::Formation;
-
-                let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
-                enemy.is_formation = true;
-
-                game_info.next_player();
+                game_info.capture_completed();
             }
         }
     }
@@ -301,6 +285,84 @@ fn set_owl_capturing_player_completed(owl: &mut Owl) {
     owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::CaptureDoneWait);
     owl.count = 0;
 }
+
+fn set_to_formation(
+    owl: &mut Owl,
+    entity: Entity,
+    world: &mut SubWorld,
+    commands: &mut CommandBuffer,
+) -> bool {
+    {
+        let (mut subworld1, mut subworld2) = world.split::<&mut Troops>();
+        if let Ok(troops) = <&mut Troops>::query().get_mut(&mut subworld1, entity) {
+            release_troops(troops, &mut subworld2);
+            commands.remove_component::<Troops>(entity);
+        }
+    }
+
+    owl.capturing_state = OwlCapturingState::None;
+    owl.state = OwlState::Formation;
+
+    let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
+    enemy.is_formation = true;
+
+    if owl.life == 0 {
+        commands.remove(entity);
+        false
+    } else {
+        true
+    }
+}
+
+pub fn set_owl_damage(
+    owl: &mut Owl, entity: Entity, power: u32,
+    world: &mut SubWorld,
+    commands: &mut CommandBuffer,
+) -> bool {
+    if owl.life > power {
+        //accessor.push_event(EventType::PlaySe(CH_BOMB, SE_DAMAGE));
+        owl.life -= power;
+        //DamageResult { point: 0, keep_alive_as_ghost: false }
+        let drawable = <&mut SpriteDrawable>::query().get_mut(world, entity).unwrap();
+        drawable.sprite_name = "cpp21";
+        false
+    } else {
+        owl.life = 0;
+
+        owl.capturing_state = OwlCapturingState::None;
+
+        let keep_alive_as_ghost = {
+            let (mut subworld1, mut subworld2) = world.split::<&mut Troops>();
+            if let Ok(troops) = <&mut Troops>::query().get_mut(&mut subworld1, entity) {
+                let fi = <&Enemy>::query().get(&subworld2, entity).unwrap().formation_index;
+                let cap_fi = FormationIndex(fi.0, fi.1 - 1);
+                if let Some(slot) = troops.members.iter_mut().filter(|x| x.is_some()).find(|troop| {
+                    if let Ok(enemy) = <&mut Enemy>::query().get_mut(&mut subworld2, troop.unwrap().0) {
+                        enemy.formation_index == cap_fi
+                    } else {
+                        false
+                    }
+                }) {
+                    *slot = None;
+                }
+                troops.members.iter().any(|x| x.is_some())
+            } else {
+                false
+            }
+        };
+
+        if !keep_alive_as_ghost {
+            commands.remove(entity);
+        } else {
+            // To keep moving troops.
+            commands.remove_component::<SpriteDrawable>(entity);
+            commands.remove_component::<CollRect>(entity);
+        }
+        true
+    }
+}
+
+//
 
 fn create_tractor_beam(pos: &Vec2I) -> TractorBeam {
     TractorBeam {
@@ -380,7 +442,7 @@ pub fn do_move_tractor_beam(
 
                 if an == 0 {
                     if tractor_beam.capturing_player.is_some() {
-                        on_capturing_player_completed(owl);
+                        on_capturing_player_completed(owl, game_info);
                         star_manager.set_capturing(false);
                     }
                     tractor_beam.state = Closed;
@@ -393,7 +455,7 @@ pub fn do_move_tractor_beam(
             let (player, posture) = <(&mut Player, &mut Posture)>::query().iter_mut(world).find(|_| true).unwrap();
             if move_capturing_player(player, posture, &(&tractor_beam.pos + &Vec2I::new(0, 8 * ONE))) {
                 on_player_captured(
-                    enemy, &tractor_beam.pos, entity, player_entity, game_info, commands);
+                    enemy, &tractor_beam.pos, entity, player_entity, commands);
                 tractor_beam.state = TractorBeamState::Closing;
             }
         }
@@ -420,7 +482,6 @@ fn on_player_captured(
     pos: &Vec2I,
     owner: Entity,
     player: Entity,
-    game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
     set_player_captured(player, commands);
@@ -438,12 +499,12 @@ fn on_player_captured(
     let mut troops = Troops {members: Default::default()};
     add_captured_player_to_troops(&mut troops, captured, &Vec2I::new(0, 16 * ONE));
     commands.add_component(owner, troops);
-
-    game_info.player_captured();
 }
 
-fn on_capturing_player_completed(owl: &mut Owl) {
+fn on_capturing_player_completed(owl: &mut Owl, game_info: &mut GameInfo) {
     set_owl_capturing_player_completed(owl);
+
+    game_info.player_captured();
 }
 
 fn tractor_beam_closed(tractor_beam: &TractorBeam) -> bool {

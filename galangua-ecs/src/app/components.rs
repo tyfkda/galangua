@@ -30,6 +30,7 @@ pub enum PlayerState {
 pub struct Player {
     pub state: PlayerState,
     pub count: u32,
+    pub shot_enable: bool,
 }
 
 //
@@ -88,6 +89,7 @@ pub struct Owl {
     pub capturing_state: OwlCapturingState,
     pub target_pos: Vec2I,
     pub count: u32,
+    pub life: u32,
 }
 
 //

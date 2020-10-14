@@ -12,6 +12,7 @@ pub fn new_player() -> Player {
     Player {
         state: PlayerState::Normal,
         count: 0,
+        shot_enable: true,
     }
 }
 
@@ -60,6 +61,9 @@ pub fn move_capturing_player(player: &mut Player, posture: &mut Posture, target_
 }
 
 pub fn can_player_fire(player: &Player) -> bool {
+    if !player.shot_enable {
+        return false;
+    }
     match player.state {
         PlayerState::Normal | PlayerState::Capturing => true,
         _ => false
@@ -81,6 +85,18 @@ pub fn start_player_capturing(player: &mut Player, entity: Entity, commands: &mu
 
 pub fn set_player_captured(entity: Entity, commands: &mut CommandBuffer) {
     commands.remove_component::<SpriteDrawable>(entity);
+}
+
+pub fn restart_player(player: &mut Player, entity: Entity, posture: &mut Posture, commands: &mut CommandBuffer) {
+    player.state = PlayerState::Normal;
+    posture.0 = Vec2I::new(CENTER_X, PLAYER_Y);
+
+    commands.add_component(entity, player_sprite());
+    commands.add_component(entity, player_coll_rect());
+}
+
+pub fn enable_player_shot(player: &mut Player, enable: bool) {
+    player.shot_enable = enable;
 }
 
 pub fn player_sprite() -> SpriteDrawable {

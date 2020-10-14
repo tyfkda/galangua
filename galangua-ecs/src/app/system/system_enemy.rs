@@ -1,3 +1,7 @@
+use legion::*;
+use legion::systems::CommandBuffer;
+use legion::world::SubWorld;
+
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::X_COUNT;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
@@ -9,6 +13,9 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, square, ANGLE, ONE, ONE_BIT};
 
 use crate::app::components::*;
+
+use super::system_effect::*;
+use super::system_owl::set_owl_damage;
 
 pub fn forward(posture: &mut Posture, speed: &Speed) {
     posture.0 += &calc_velocity(posture.1 + speed.1 / 2, speed.0);
@@ -52,6 +59,30 @@ pub fn update_traj(traj: &mut Traj, posture: &mut Posture, vel: &mut Speed, form
     //}
     cont
 }
+
+pub fn set_enemy_damage(
+    enemy_type: EnemyType, entity: Entity, power: u32,
+    world: &mut SubWorld,
+    commands: &mut CommandBuffer,
+) {
+    let dead = match enemy_type {
+        EnemyType::Owl => {
+            let (mut subworld1, mut subworld2) = world.split::<&mut Owl>();
+            let owl = <&mut Owl>::query().get_mut(&mut subworld1, entity).unwrap();
+            set_owl_damage(owl, entity, power, &mut subworld2, commands)
+        }
+        _ => {
+            commands.remove(entity);
+            true
+        }
+    };
+    if dead {
+        let pos = <&Posture>::query().get(world, entity).unwrap().0;
+        create_enemy_explosion_effect(&pos, commands);
+    }
+}
+
+//
 
 pub fn do_move_zako(zako: &mut Zako, enemy: &mut Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation) {
     match zako.state {

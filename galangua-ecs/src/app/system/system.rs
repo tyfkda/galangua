@@ -25,8 +25,10 @@ use super::system_owl::*;
 use super::system_player::*;
 
 #[system]
-pub fn update_game_controller(#[resource] game_info: &mut GameInfo, #[resource] attack_manager: &mut AttackManager, #[resource] star_manager: &mut StarManager) {
-    game_info.update(attack_manager, star_manager);
+#[write_component(Player)]
+#[write_component(Posture)]
+pub fn update_game_controller(world: &mut SubWorld, #[resource] game_info: &mut GameInfo, #[resource] appearance_manager: &mut AppearanceManager, #[resource] attack_manager: &mut AttackManager, #[resource] star_manager: &mut StarManager, commands: &mut CommandBuffer) {
+    game_info.update(appearance_manager, attack_manager, star_manager, world, commands);
 }
 
 #[system]
@@ -230,30 +232,40 @@ pub fn move_tractor_beam(
 
 #[system]
 #[read_component(MyShot)]
-#[read_component(Enemy)]
 #[read_component(Posture)]
 #[read_component(CollRect)]
+#[write_component(Enemy)]
+#[write_component(Owl)]
+#[write_component(Troops)]
+#[write_component(SpriteDrawable)]
 pub fn coll_check_myshot_enemy(world: &mut SubWorld, commands: &mut CommandBuffer) {
+    let mut colls: Vec<Entity> = Vec::new();
     for (_shot, shot_pos, shot_coll_rect, shot_entity) in <(&MyShot, &Posture, &CollRect, Entity)>::query().iter(world) {
         let shot_collbox = CollBox { top_left: &round_vec(&shot_pos.0) + &shot_coll_rect.offset, size: shot_coll_rect.size };
         for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
             let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
             if shot_collbox.check_collision(&enemy_collbox) {
-                let pos = enemy_pos.0.clone();
-                commands.remove(*enemy_entity);
                 commands.remove(*shot_entity);
-                create_enemy_explosion_effect(&pos, commands);
+                colls.push(*enemy_entity);
                 break;
             }
         }
     }
+
+    for enemy_entity in colls {
+        let enemy_type = <&Enemy>::query().get(world, enemy_entity).unwrap().enemy_type;
+        set_enemy_damage(enemy_type, enemy_entity, 1, world, commands);
+    }
 }
 
 #[system]
-#[write_component(Player)]
-#[read_component(Enemy)]
 #[read_component(Posture)]
 #[read_component(CollRect)]
+#[write_component(Player)]
+#[write_component(Enemy)]
+#[write_component(Owl)]
+#[write_component(Troops)]
+#[write_component(SpriteDrawable)]
 pub fn coll_check_player_enemy(
     world: &mut SubWorld,
     #[resource] star_manager: &mut StarManager,
@@ -261,24 +273,25 @@ pub fn coll_check_player_enemy(
     #[resource] game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
-    let mut colls: Vec<Entity> = Vec::new();
+    let mut colls: Vec<(Entity, Vec2I, Entity)> = Vec::new();
     for (_player, player_pos, player_coll_rect, player_entity) in <(&Player, &Posture, &CollRect, Entity)>::query().iter(world) {
         let player_collbox = CollBox { top_left: &round_vec(&player_pos.0) + &player_coll_rect.offset, size: player_coll_rect.size };
         for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
             let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
             if player_collbox.check_collision(&enemy_collbox) {
                 let pl_pos = player_pos.0.clone();
-                let ene_pos = enemy_pos.0.clone();
-                commands.remove(*enemy_entity);
-                create_player_explosion_effect(&pl_pos, commands);
-                create_enemy_explosion_effect(&ene_pos, commands);
-                colls.push(*player_entity);
+                colls.push((*player_entity, pl_pos, *enemy_entity));
                 break;
             }
         }
     }
 
-    for player_entity in colls {
+    for (player_entity, pl_pos, enemy_entity) in colls {
+        let enemy_type = <&Enemy>::query().get(world, enemy_entity).unwrap().enemy_type;
+        set_enemy_damage(enemy_type, enemy_entity, 100, world, commands);
+
+        create_player_explosion_effect(&pl_pos, commands);
+
         let player = <&mut Player>::query().get_mut(world, player_entity).unwrap();
         if crash_player(player, player_entity, commands) {
             star_manager.set_stop(true);
@@ -324,5 +337,29 @@ pub fn draw_system<R: RendererTrait>(world: &World, resources: &Resources, rende
         for i in 0..disp_count {
             renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16));
         }
+    }
+
+    match game_info.game_state {
+        //GameState::StartStage => {
+        //    renderer.set_texture_color_mod("font", 0, 255, 255);
+        //    renderer.draw_str("font", 10 * 8, 18 * 8, &format!("STAGE {}", self.stage + 1));
+        //}
+        GameState::WaitReady | GameState::WaitReady2 => {
+            if game_info.left_ship > 1 || game_info.game_state == GameState::WaitReady2 {
+                renderer.set_texture_color_mod("font", 0, 255, 255);
+                renderer.draw_str("font", (28 - 6) / 2 * 8, 18 * 8, "READY");
+            }
+        }
+        GameState::Captured => {
+            if game_info.count < 120 {
+                renderer.set_texture_color_mod("font", 255, 0, 0);
+                renderer.draw_str("font", (28 - 16) / 2 * 8, 19 * 8, "FIGHTER CAPTURED");
+            }
+        }
+        GameState::GameOver => {
+            renderer.set_texture_color_mod("font", 0, 255, 255);
+            renderer.draw_str("font", (28 - 8) / 2 * 8, 18 * 8, "GAME OVER");
+        }
+        _ => {}
     }
 }
