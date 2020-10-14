@@ -6,7 +6,7 @@ use super::traj_command_table::*;
 use super::{Accessor, DamageResult, EnemyType, FormationIndex};
 
 use crate::app::consts::*;
-use crate::app::game::manager::stage::formation_table::Y_COUNT;
+use crate::app::game::manager::stage::formation_table::{X_COUNT, Y_COUNT};
 use crate::app::game::manager::EventType;
 use crate::app::util::collision::{CollBox, Collidable};
 use crate::framework::types::{Vec2I, ZERO_VEC};
@@ -486,12 +486,12 @@ impl Enemy for Owl {
         for slot in self.troops.iter_mut() {
             *slot = None;
         }
+        let flip_x = self.info.formation_index.0 >= (X_COUNT as u8) / 2;
         let phase = if !capture_attack {
             self.capturing_state = CapturingState::None;
             self.copy_angle_to_troops = true;
             self.choose_troops(accessor);
 
-            let flip_x = self.info.formation_index.0 >= 5;
             let mut traj = Traj::new(&OWL_ATTACK_TABLE, &ZERO_VEC, flip_x, self.info.formation_index);
             traj.set_pos(&self.info.pos);
 
@@ -503,7 +503,7 @@ impl Enemy for Owl {
             const DLIMIT: i32 = 4 * ONE;
             self.info.speed = 3 * ONE / 2;
             self.info.angle = 0;
-            if self.info.formation_index.0 < 5 {
+            if !flip_x {
                 self.info.vangle = -DLIMIT;
             } else {
                 self.info.vangle = DLIMIT;
