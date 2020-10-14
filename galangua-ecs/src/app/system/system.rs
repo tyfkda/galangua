@@ -119,7 +119,7 @@ impl<'a, 'b> AppearanceManagerAccessor for SysAppearanceManagerAccessor<'a, 'b> 
 #[write_component(Posture)]
 #[write_component(Speed)]
 #[read_component(Player)]
-pub fn run_attack_manager(world: &mut SubWorld, #[resource] attack_manager: &mut AttackManager, #[resource] game_info: &mut GameInfo) {
+pub fn run_attack_manager(world: &mut SubWorld, #[resource] attack_manager: &mut AttackManager, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
     let result = {
         let accessor = SysAttackManagerAccessor(world, game_info);
         attack_manager.update(&accessor)
@@ -131,23 +131,31 @@ pub fn run_attack_manager(world: &mut SubWorld, #[resource] attack_manager: &mut
             }
             None
         };
-        let player_pos = get_player_pos().unwrap();
 
-        <(&mut Enemy, Option<&mut Zako>, Option<&mut Owl>, &mut Posture, &mut Speed)>::query().iter_mut(world)
-            .filter(|(enemy, ..)| enemy.formation_index == fi)
-            .for_each(|(enemy, zako_opt, owl_opt, posture, speed)| {
-                if let Some(zako) = zako_opt {
-                    zako_start_attack(zako, enemy, &posture);
+        let entity_opt = <(&Enemy, Option<&Owl>, Entity)>::query().iter(world)
+            .find_map(|(enemy, owl, entity)| {
+                if enemy.formation_index == fi {
+                    Some((*entity, owl.is_some()))
+                } else {
+                    None
                 }
-                if let Some(owl) = owl_opt {
-                    owl_start_attack(owl, enemy, posture, capture_attack, speed, &player_pos);
-                    if capture_attack {
-                        game_info.capture_state = CaptureState::CaptureAttacking;
-                        game_info.capture_enemy_fi = fi;
-                    }
-                }
-                attack_manager.put_attacker(&fi);
             });
+        if let Some((entity, is_owl)) = entity_opt {
+            if is_owl {
+                let player_pos = get_player_pos().unwrap();
+                let (mut subworld1, mut subworld2) = world.split::<(&mut Owl, &mut Speed)>();
+                let (owl, speed) = <(&mut Owl, &mut Speed)>::query().get_mut(&mut subworld1, entity).unwrap();
+                owl_start_attack(owl, capture_attack, speed, &player_pos, entity, &mut subworld2, commands);
+                if capture_attack {
+                    game_info.capture_state = CaptureState::CaptureAttacking;
+                    game_info.capture_enemy_fi = fi;
+                }
+            } else {
+                let (zako, enemy, posture) = <(&mut Zako, &mut Enemy, &mut Posture)>::query().get_mut(world, entity).unwrap();
+                zako_start_attack(zako, enemy, posture);
+            }
+            attack_manager.put_attacker(&fi);
+        }
     }
 }
 
@@ -188,8 +196,12 @@ pub fn move_zako(enemy: &mut Enemy, zako: &mut Zako, posture: &mut Posture, spee
 }
 
 #[system(for_each)]
-pub fn move_owl(enemy: &mut Enemy, entity: &Entity, owl: &mut Owl, posture: &mut Posture, tractor_beam: Option<&mut TractorBeam>, speed: &mut Speed, #[resource] formation: &Formation, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
-    do_move_owl(owl, enemy, *entity, posture, speed, tractor_beam, formation, game_info, commands);
+#[write_component(TractorBeam)]
+#[write_component(Enemy)]
+#[write_component(Zako)]
+#[write_component(Troops)]
+pub fn move_owl(owl: &mut Owl, posture: &mut Posture, speed: &mut Speed, entity: &Entity, world: &mut SubWorld, #[resource] formation: &Formation, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
+    do_move_owl(owl, *entity, posture, speed, formation, game_info, world, commands);
 }
 
 #[system(for_each)]

@@ -16,7 +16,7 @@ use galangua_common::util::math::{atan2_lut, clamp, diff_angle, normalize_angle,
 use crate::app::components::*;
 use crate::app::resources::*;
 
-use super::system_enemy::{forward, move_to_formation, update_traj};
+use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, update_traj};
 use super::system_player::{move_capturing_player, set_player_captured, start_player_capturing};
 
 // Owl
@@ -33,12 +33,11 @@ pub fn create_owl(traj: Traj) -> Owl {
 }
 
 pub fn do_move_owl(
-    owl: &mut Owl, enemy: &mut Enemy, entity: Entity,
+    owl: &mut Owl, entity: Entity,
     posture: &mut Posture, speed: &mut Speed,
-    tractor_beam: Option<&mut TractorBeam>,
     formation: &Formation,
     game_info: &mut GameInfo,
-    commands: &mut CommandBuffer,
+    world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
     match owl.state {
         OwlState::Appearance => {
@@ -53,7 +52,8 @@ pub fn do_move_owl(
             }
         }
         OwlState::Formation => {
-            posture.0 = formation.pos(&enemy.formation_index);
+            let fi = &<&Enemy>::query().get(world, entity).unwrap().formation_index;
+            posture.0 = formation.pos(fi);
 
             let ang = ANGLE * ONE / 128;
             posture.1 -= clamp(posture.1, -ang, ang);
@@ -70,26 +70,51 @@ pub fn do_move_owl(
             }
         }
         OwlState::CaptureAttack(phase) => {
-            run_capture_attack(owl, entity, phase, enemy, posture, speed, tractor_beam, &formation, game_info, commands);
+            let (mut subworld1, mut subworld2) = world.split::<&mut TractorBeam>();
+            let tractor_beam_opt = <&mut TractorBeam>::query().get_mut(&mut subworld1, entity).ok();
+            run_capture_attack(owl, entity, phase, posture, speed, tractor_beam_opt, formation, game_info, &mut subworld2, commands);
             forward(posture, speed);
         }
         OwlState::MoveToFormation => {
-            let result = move_to_formation(posture, speed, &enemy.formation_index, formation);
-            forward(posture, speed);
+            let result = {
+                let fi = &<&Enemy>::query().get(world, entity).unwrap().formation_index;
+                let result = move_to_formation(posture, speed, fi, formation);
+                forward(posture, speed);
+                result
+            };
             if result {
+                {
+                    let (mut subworld1, mut subworld2) = world.split::<&mut Troops>();
+                    if let Ok(troops) = <&mut Troops>::query().get_mut(&mut subworld1, entity) {
+                        release_troops(troops, &mut subworld2);
+                        commands.remove_component::<Troops>(entity);
+                    }
+                }
+
                 owl.capturing_state = OwlCapturingState::None;
                 owl.state = OwlState::Formation;
+
+                let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
                 enemy.is_formation = true;
             }
         }
     }
 }
 
-pub fn owl_start_attack(owl: &mut Owl, enemy: &mut Enemy, posture: &mut Posture, capture_attack: bool, speed: &mut Speed, player_pos: &Vec2I) {
-    let flip_x = enemy.formation_index.0 >= (X_COUNT as u8) / 2;
+pub fn owl_start_attack(
+    owl: &mut Owl, capture_attack: bool, speed: &mut Speed, player_pos: &Vec2I,
+    entity: Entity,
+    world: &mut SubWorld, commands: &mut CommandBuffer,
+) {
+    let fi = <&Enemy>::query().get(world, entity).unwrap().formation_index.clone();
+    let flip_x = fi.0 >= (X_COUNT as u8) / 2;
     if !capture_attack {
+        let pos = <&Posture>::query().get(world, entity).unwrap().0.clone();
+        choose_troops(entity, &fi, &pos, world, commands);
+
+        let posture = <&Posture>::query().get(world, entity).unwrap();
         let table: &[TrajCommand] = &OWL_ATTACK_TABLE;
-        let mut traj = Traj::new(table, &ZERO_VEC, flip_x, enemy.formation_index.clone());
+        let mut traj = Traj::new(table, &ZERO_VEC, flip_x, fi);
         traj.set_pos(&posture.0);
         owl.traj = Some(traj);
         owl.state = OwlState::TrajAttack;
@@ -98,8 +123,9 @@ pub fn owl_start_attack(owl: &mut Owl, enemy: &mut Enemy, posture: &mut Posture,
 
         const DLIMIT: i32 = 4 * ONE;
         speed.0 = 3 * ONE / 2;
+        let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
         posture.1 = 0;
-        if enemy.formation_index.0 < 5 {
+        if fi.0 < (X_COUNT as u8) / 2 {
             speed.1 = -DLIMIT;
         } else {
             speed.1 = DLIMIT;
@@ -109,17 +135,19 @@ pub fn owl_start_attack(owl: &mut Owl, enemy: &mut Enemy, posture: &mut Posture,
 
         owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::Capture);
     }
+
+    let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
     enemy.is_formation = false;
 }
 
 fn run_capture_attack(
     owl: &mut Owl, entity: Entity,
     phase: OwlCaptureAttackPhase,
-    enemy: &mut Enemy,
     posture: &mut Posture, speed: &mut Speed,
     tractor_beam_opt: Option<&mut TractorBeam>,
     formation: &Formation,
     game_info: &mut GameInfo,
+    world: &mut SubWorld,
     commands: &mut CommandBuffer,
 ) {
     match phase {
@@ -189,6 +217,7 @@ fn run_capture_attack(
             let pos = &mut posture.0;
 
             if pos.y >= (HEIGHT + 8) * ONE {
+                let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
                 let target_pos = formation.pos(&enemy.formation_index);
                 let offset = Vec2I::new(target_pos.x - pos.x, (-32 - (HEIGHT + 8)) * ONE);
                 *pos += &offset;
@@ -216,6 +245,7 @@ fn run_capture_attack(
             }
         }
         OwlCaptureAttackPhase::CaptureDoneBack => {
+            let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
             if move_to_formation(posture, speed, &enemy.formation_index, formation) {
                 let angle = &mut posture.1;
                 let spd = &mut speed.0;
@@ -227,34 +257,40 @@ fn run_capture_attack(
             }
         }
         OwlCaptureAttackPhase::CaptureDonePushUp => {
-            let angle = &mut posture.1;
+            let (mut subworld1, mut subworld2) = world.split::<&mut Troops>();
+            let troops = <&mut Troops>::query().get_mut(&mut subworld1, entity).unwrap();
+            let done = {
+                let angle = &mut posture.1;
 
-            let ang = ANGLE * ONE / 128;
-            *angle -= clamp(*angle, -ang, ang);
+                let ang = ANGLE * ONE / 128;
+                *angle -= clamp(*angle, -ang, ang);
 
-            // Cannot touch troops' posture here.
+                // Cannot touch troops' posture here.
 
-            /*
-            let mut done = false;
-            let fi = FormationIndex(enemy.formation_index.0, enemy.formation_index.1 - 1);
-            let captured_fighter = accessor.get_enemy_at_mut(&fi).unwrap();
-            let mut pos = *captured_fighter.pos();
-            pos.y -= 1 * ONE;
-            let topy = self.info.pos.y - 16 * ONE;
-            if pos.y <= topy {
-                pos.y = topy;
-                done = true;
-            }
-            captured_fighter.set_pos(&pos);
+                let captured_fighter = troops.members[0].as_mut().unwrap();
+                //let fi = FormationIndex(enemy.formation_index.0, enemy.formation_index.1 - 1);
+                //let captured_fighter = accessor.get_enemy_at_mut(&fi).unwrap();
+                let pos = &mut captured_fighter.1;
+                pos.y -= 1 * ONE;
+                let topy = -16 * ONE;
+                if pos.y <= topy {
+                    pos.y = topy;
+                    true
+                } else {
+                    false
+                }
+            };
 
             if done {
                 //accessor.push_event(EventType::CaptureSequenceEnded);
-                //self.release_troops(accessor);
+                release_troops(troops, &mut subworld2);
+
                 //self.set_to_formation();
                 owl.state = OwlState::Formation;
+
+                let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
                 enemy.is_formation = true;
             }
-            */
         }
     }
 }
@@ -414,6 +450,36 @@ fn start_capturing(tractor_beam: &mut TractorBeam) {
 
 // Troops
 
+fn choose_troops(
+    leader_entity: Entity,
+    leader_fi: &FormationIndex,
+    leader_pos: &Vec2I,
+    world: &mut SubWorld,
+    commands: &mut CommandBuffer,
+) {
+    let indices = [
+        FormationIndex(leader_fi.0 - 1, leader_fi.1 + 1),
+        FormationIndex(leader_fi.0 + 1, leader_fi.1 + 1),
+        FormationIndex(leader_fi.0, leader_fi.1 - 1),
+    ];
+    let mut troops = Troops { members: Default::default() };
+    let mut i = 0;
+    for (enemy, zako, posture, zako_entity) in <(&mut Enemy, &mut Zako, &Posture, Entity)>::query().iter_mut(world) {
+        for index in indices.iter() {
+            if enemy.formation_index == *index && enemy.is_formation {
+                let offset = &posture.0 - leader_pos;
+                troops.members[i] = Some((*zako_entity, offset));
+                i += 1;
+                set_zako_to_troop(zako, enemy);
+                break;
+            }
+        }
+    }
+    if i > 0 {
+        commands.add_component(leader_entity, troops);
+    }
+}
+
 pub fn update_troops(
     troops: &mut Troops, owner: Entity, _owl: &mut Owl, world: &mut SubWorld,
 ) {
@@ -432,7 +498,7 @@ fn add_captured_player_to_troops(troops: &mut Troops, captured: Entity, offset: 
     troops.members[0] = Some((captured, offset.clone()));
 }
 
-fn release_owl_troops(troops: &mut Troops, world: &mut SubWorld) {
+fn release_troops(troops: &mut Troops, world: &mut SubWorld) {
     for member_opt in troops.members.iter_mut().filter(|x| x.is_some()) {
         let member = member_opt.unwrap();
         if let Ok((enemy, zako_opt)) = <(&mut Enemy, Option<&mut Zako>)>::query().get_mut(world, member.0) {
