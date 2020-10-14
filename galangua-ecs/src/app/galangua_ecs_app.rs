@@ -27,6 +27,7 @@ pub struct GalanguaEcsApp {
 impl GalanguaEcsApp {
     pub fn new() -> Self {
         let schedule = Schedule::builder()
+            .add_system(update_game_controller_system())
             .add_system(move_star_system())
             .add_system(update_pad_system())
             .add_system(move_player_system())

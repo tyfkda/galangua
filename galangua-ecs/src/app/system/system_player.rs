@@ -15,7 +15,7 @@ pub fn new_player() -> Player {
     }
 }
 
-pub fn do_move_player(player: &mut Player, entity: Entity, pad: &Pad, posture: &mut Posture, commands: &mut CommandBuffer) {
+pub fn do_move_player(player: &mut Player, pad: &Pad, posture: &mut Posture) {
     match player.state {
         PlayerState::Normal => {
             let mut pos = &mut posture.0;
@@ -31,18 +31,10 @@ pub fn do_move_player(player: &mut Player, entity: Entity, pad: &Pad, posture: &
                 pos.x = (WIDTH - 8) * ONE;
             }
         }
-        PlayerState::Dead => {
-            player.count += 1;
-            if player.count >= 60 * 3 {
-                commands.add_component(entity, player_coll_rect());
-                commands.add_component(entity, player_sprite());
-                player.state = PlayerState::Normal;
-            }
-        }
         PlayerState::Capturing => {
             // Controled by TractorBeam, so nothing to do here.
         }
-        PlayerState::Captured => {}
+        PlayerState::Dead | PlayerState::Captured => {}
     }
 }
 
@@ -74,11 +66,12 @@ pub fn can_player_fire(player: &Player) -> bool {
     }
 }
 
-pub fn crash_player(player: &mut Player, entity: Entity, commands: &mut CommandBuffer) {
+pub fn crash_player(player: &mut Player, entity: Entity, commands: &mut CommandBuffer) -> bool {
     player.state = PlayerState::Dead;
     player.count = 0;
     commands.remove_component::<CollRect>(entity);
     commands.remove_component::<SpriteDrawable>(entity);
+    true
 }
 
 pub fn start_player_capturing(player: &mut Player, entity: Entity, commands: &mut CommandBuffer) {

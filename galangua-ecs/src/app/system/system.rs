@@ -25,13 +25,18 @@ use super::system_owl::*;
 use super::system_player::*;
 
 #[system]
+pub fn update_game_controller(#[resource] game_info: &mut GameInfo, #[resource] attack_manager: &mut AttackManager, #[resource] star_manager: &mut StarManager) {
+    game_info.update(attack_manager, star_manager);
+}
+
+#[system]
 pub fn update_pad(#[resource] pad: &mut Pad) {
     pad.update();
 }
 
 #[system(for_each)]
-pub fn move_player(player: &mut Player, posture: &mut Posture, entity: &Entity, #[resource] pad: &Pad, commands: &mut CommandBuffer) {
-    do_move_player(player, *entity, pad, posture, commands);
+pub fn move_player(player: &mut Player, posture: &mut Posture, #[resource] pad: &Pad) {
+    do_move_player(player, pad, posture);
 }
 
 #[system(for_each)]
@@ -213,8 +218,14 @@ pub fn move_troops(troops: &mut Troops, owl: &mut Owl, entity: &Entity, world: &
 #[system(for_each)]
 #[write_component(Player)]
 #[write_component(Posture)]
-pub fn move_tractor_beam(tractor_beam: &mut TractorBeam, owl: &mut Owl, enemy: &Enemy, entity: &Entity, world: &mut SubWorld, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
-    do_move_tractor_beam(tractor_beam, *entity, owl, enemy, game_info, world, commands);
+pub fn move_tractor_beam(
+    tractor_beam: &mut TractorBeam, owl: &mut Owl, enemy: &Enemy, entity: &Entity,
+    #[resource] game_info: &mut GameInfo,
+    #[resource] star_manager: &mut StarManager,
+    #[resource] attack_manager: &mut AttackManager,
+    world: &mut SubWorld, commands: &mut CommandBuffer,
+) {
+    do_move_tractor_beam(tractor_beam, *entity, owl, enemy, game_info, star_manager, attack_manager, world, commands);
 }
 
 #[system]
@@ -243,7 +254,13 @@ pub fn coll_check_myshot_enemy(world: &mut SubWorld, commands: &mut CommandBuffe
 #[read_component(Enemy)]
 #[read_component(Posture)]
 #[read_component(CollRect)]
-pub fn coll_check_player_enemy(world: &mut SubWorld, commands: &mut CommandBuffer) {
+pub fn coll_check_player_enemy(
+    world: &mut SubWorld,
+    #[resource] star_manager: &mut StarManager,
+    #[resource] attack_manager: &mut AttackManager,
+    #[resource] game_info: &mut GameInfo,
+    commands: &mut CommandBuffer,
+) {
     let mut colls: Vec<Entity> = Vec::new();
     for (_player, player_pos, player_coll_rect, player_entity) in <(&Player, &Posture, &CollRect, Entity)>::query().iter(world) {
         let player_collbox = CollBox { top_left: &round_vec(&player_pos.0) + &player_coll_rect.offset, size: player_coll_rect.size };
@@ -263,7 +280,13 @@ pub fn coll_check_player_enemy(world: &mut SubWorld, commands: &mut CommandBuffe
 
     for player_entity in colls {
         let player = <&mut Player>::query().get_mut(world, player_entity).unwrap();
-        crash_player(player, player_entity, commands);
+        if crash_player(player, player_entity, commands) {
+            star_manager.set_stop(true);
+            game_info.crash_player(true, attack_manager);
+            star_manager.set_stop(true);
+        } else {
+            game_info.crash_player(false, attack_manager);
+        }
     }
 }
 
@@ -292,6 +315,14 @@ pub fn draw_system<R: RendererTrait>(world: &World, resources: &Resources, rende
             renderer.draw_sprite(drawable.sprite_name, &pos);
         } else {
             renderer.draw_sprite_rot(drawable.sprite_name, &pos, angle, None);
+        }
+    }
+
+    let game_info = resources.get::<GameInfo>().unwrap();
+    if game_info.left_ship > 0 {
+        let disp_count = std::cmp::min(game_info.left_ship - 1, 8);
+        for i in 0..disp_count {
+            renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16));
         }
     }
 }

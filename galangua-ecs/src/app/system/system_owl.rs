@@ -3,8 +3,10 @@ use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 
 use galangua_common::app::consts::*;
+use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::X_COUNT;
+use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::tractor_beam_table::*;
 use galangua_common::app::game::traj::Traj;
 use galangua_common::app::game::traj_command::TrajCommand;
@@ -203,10 +205,9 @@ fn run_capture_attack(
                 commands.remove_component::<TractorBeam>(entity);
                 *spd = 5 * ONE / 2;
                 owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::NoCaptureGoOut);
-            } else if tractor_beam_start_capturing(tractor_beam) {
+            } else if is_tractor_beam_capturing(tractor_beam) {
                 game_info.capture_player();
                 //accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_TRACTOR_BEAM2));
-                start_capturing(tractor_beam);
 
                 owl.capturing_state = OwlCapturingState::BeamTracting;
                 owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::Capturing);
@@ -290,6 +291,8 @@ fn run_capture_attack(
 
                 let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
                 enemy.is_formation = true;
+
+                game_info.next_player();
             }
         }
     }
@@ -315,6 +318,8 @@ pub fn do_move_tractor_beam(
     tractor_beam: &mut TractorBeam, entity: Entity,
     owl: &mut Owl, enemy: &Enemy,
     game_info: &mut GameInfo,
+    star_manager: &mut StarManager,
+    attack_manager: &mut AttackManager,
     world: &mut SubWorld,
     commands: &mut CommandBuffer,
 ) {
@@ -346,10 +351,11 @@ pub fn do_move_tractor_beam(
             if let Some(player_entity) = can_tractor_beam_capture_player(game_info, &tractor_beam.pos, world) {
                 let player = <&mut Player>::query().get_mut(world, player_entity).unwrap();
                 start_player_capturing(player, player_entity, commands);
+                start_capturing(tractor_beam, player_entity);
+
                 game_info.start_capturing();
-                tractor_beam.capturing_player = Some(player_entity);
-                tractor_beam.state = TractorBeamState::Capturing;
-                tractor_beam.count = 0;
+                star_manager.set_capturing(true);
+                attack_manager.pause(true);
                 return;
             }
 
@@ -375,6 +381,7 @@ pub fn do_move_tractor_beam(
                 if an == 0 {
                     if tractor_beam.capturing_player.is_some() {
                         on_capturing_player_completed(owl);
+                        star_manager.set_capturing(false);
                     }
                     tractor_beam.state = Closed;
                 }
@@ -386,7 +393,7 @@ pub fn do_move_tractor_beam(
             let (player, posture) = <(&mut Player, &mut Posture)>::query().iter_mut(world).find(|_| true).unwrap();
             if move_capturing_player(player, posture, &(&tractor_beam.pos + &Vec2I::new(0, 8 * ONE))) {
                 on_player_captured(
-                    enemy, &tractor_beam.pos, entity, player_entity, commands);
+                    enemy, &tractor_beam.pos, entity, player_entity, game_info, commands);
                 tractor_beam.state = TractorBeamState::Closing;
             }
         }
@@ -413,6 +420,7 @@ fn on_player_captured(
     pos: &Vec2I,
     owner: Entity,
     player: Entity,
+    game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
     set_player_captured(player, commands);
@@ -430,6 +438,8 @@ fn on_player_captured(
     let mut troops = Troops {members: Default::default()};
     add_captured_player_to_troops(&mut troops, captured, &Vec2I::new(0, 16 * ONE));
     commands.add_component(owner, troops);
+
+    game_info.player_captured();
 }
 
 fn on_capturing_player_completed(owl: &mut Owl) {
@@ -440,12 +450,14 @@ fn tractor_beam_closed(tractor_beam: &TractorBeam) -> bool {
     tractor_beam.state == TractorBeamState::Closed
 }
 
-fn tractor_beam_start_capturing(tractor_beam: &TractorBeam) -> bool {
-    tractor_beam.state == TractorBeamState::Capturing
+fn start_capturing(tractor_beam: &mut TractorBeam, player_entity: Entity) {
+    tractor_beam.capturing_player = Some(player_entity);
+    tractor_beam.state = TractorBeamState::Capturing;
+    tractor_beam.count = 0;
 }
 
-fn start_capturing(tractor_beam: &mut TractorBeam) {
-    tractor_beam.state = TractorBeamState::Capturing;
+fn is_tractor_beam_capturing(tractor_beam: &TractorBeam) -> bool {
+    tractor_beam.state == TractorBeamState::Capturing
 }
 
 // Troops
