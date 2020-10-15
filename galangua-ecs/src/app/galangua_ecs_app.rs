@@ -19,6 +19,9 @@ pub struct GalanguaEcsApp {
     world: World,
     resources: Resources,
     schedule: Schedule,
+
+    #[cfg(debug_assertions)]
+    paused: bool,
 }
 
 impl GalanguaEcsApp {
@@ -47,7 +50,30 @@ impl GalanguaEcsApp {
             world: World::default(),
             resources: Resources::default(),
             schedule,
+
+            #[cfg(debug_assertions)]
+            paused: false,
         }
+    }
+
+    fn update_main(&mut self) -> bool {
+        if self.pressed_key == Some(VKey::Escape) {
+            return false;
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            if self.pressed_key == Some(VKey::Return) {
+                self.paused = !self.paused;
+            }
+            if self.paused && self.pressed_key != Some(VKey::S) {
+                return true;
+            }
+        }
+
+        self.schedule.execute(&mut self.world, &mut self.resources);
+
+        true
     }
 }
 
@@ -92,14 +118,9 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
     }
 
     fn update(&mut self) -> bool {
-        if self.pressed_key == Some(VKey::Escape) {
-            return false;
-        }
-
-        self.schedule.execute(&mut self.world, &mut self.resources);
-
+        let result = self.update_main();
         self.pressed_key = None;
-        true
+        result
     }
 
     fn draw(&mut self, renderer: &mut R) {
