@@ -122,6 +122,19 @@ impl GameInfo {
         self.count = WAIT1 - 1;
     }
 
+    pub fn start_recapturing(&mut self) {
+        self.game_state = GameState::Recapturing;
+        self.capture_state = CaptureState::Recapturing;
+    }
+
+    pub fn end_recapturing(&mut self, dual: bool) {
+        //self.stage_manager.pause_attack(false);
+        self.capture_state = if dual { CaptureState::Dual } else { CaptureState::NoCapture };
+        self.capture_enemy_fi = FormationIndex(0, 0);
+        //params.star_manager.set_stop(false);
+        self.game_state = GameState::Playing;
+    }
+
     pub fn crash_player(&mut self, died: bool, attack_manager: &mut AttackManager) {
         if died {
             if self.game_state != GameState::Recapturing {

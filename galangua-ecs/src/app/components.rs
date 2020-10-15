@@ -25,16 +25,33 @@ pub enum PlayerState {
     Capturing,
     Captured,
     //EscapeCapturing,
-    //MoveHomePos,
+    MoveHomePos,
 }
 pub struct Player {
     pub state: PlayerState,
     pub count: u32,
     pub shot_enable: bool,
+    pub dual: Option<Entity>,
 }
 
 //
-pub struct MyShot;
+pub enum RecapturedFighterState {
+    Rotate,
+    SlideHorz,
+    SlideDown,
+    Done,
+}
+pub struct RecapturedFighter {
+    pub state: RecapturedFighterState,
+    pub count: u32,
+    pub player_entity: Entity,
+}
+
+//
+pub struct MyShot {
+    pub player_entity: Entity,
+    pub dual: Option<Entity>,
+}
 
 //
 pub struct Enemy {

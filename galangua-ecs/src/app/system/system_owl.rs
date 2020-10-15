@@ -16,10 +16,10 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, clamp, diff_angle, normalize_angle, ANGLE, ONE};
 
 use crate::app::components::*;
-use crate::app::resources::*;
+use crate::app::resources::GameInfo;
 
 use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, update_traj};
-use super::system_player::{move_capturing_player, set_player_captured, start_player_capturing};
+use super::system_player::{move_capturing_player, set_player_captured, start_player_capturing, start_recapture_effect};
 
 const LIFE: u32 = 2;
 
@@ -316,6 +316,9 @@ fn set_to_formation(
 
 pub fn set_owl_damage(
     owl: &mut Owl, entity: Entity, power: u32,
+    player_entity: Entity,
+    attack_manager: &mut AttackManager,
+    game_info: &mut GameInfo,
     world: &mut SubWorld,
     commands: &mut CommandBuffer,
 ) -> bool {
@@ -329,8 +332,6 @@ pub fn set_owl_damage(
     } else {
         owl.life = 0;
 
-        owl.capturing_state = OwlCapturingState::None;
-
         let keep_alive_as_ghost = {
             let (mut subworld1, mut subworld2) = world.split::<&mut Troops>();
             if let Ok(troops) = <&mut Troops>::query().get_mut(&mut subworld1, entity) {
@@ -343,6 +344,9 @@ pub fn set_owl_damage(
                         false
                     }
                 }) {
+                    let troop_entity = &slot.unwrap().0;
+                    start_recapturing(*troop_entity, player_entity, attack_manager, game_info, &subworld2, commands);
+
                     *slot = None;
                 }
                 troops.members.iter().any(|x| x.is_some())
@@ -350,6 +354,8 @@ pub fn set_owl_damage(
                 false
             }
         };
+
+        owl.capturing_state = OwlCapturingState::None;
 
         if !keep_alive_as_ghost {
             commands.remove(entity);
@@ -362,7 +368,21 @@ pub fn set_owl_damage(
     }
 }
 
-//
+fn start_recapturing(
+    owner_entity: Entity, player_entity: Entity,
+    attack_manager: &mut AttackManager,
+    game_info: &mut GameInfo,
+    world: &SubWorld, commands: &mut CommandBuffer,
+) {
+    let &Posture(pos, angle) = <&Posture>::query().get(world, owner_entity).unwrap();
+    start_recapture_effect(&pos, angle, player_entity, commands);
+    commands.remove(owner_entity);
+    attack_manager.pause(true);
+    //system.play_se(CH_JINGLE, SE_RECAPTURE);
+    game_info.start_recapturing();
+}
+
+// Tractor Beam
 
 fn create_tractor_beam(pos: &Vec2I) -> TractorBeam {
     TractorBeam {

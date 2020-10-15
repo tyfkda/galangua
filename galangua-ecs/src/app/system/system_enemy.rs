@@ -2,6 +2,7 @@ use legion::*;
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 
+use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::X_COUNT;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
@@ -13,6 +14,7 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, square, ANGLE, ONE, ONE_BIT};
 
 use crate::app::components::*;
+use crate::app::resources::GameInfo;
 
 use super::system_effect::*;
 use super::system_owl::set_owl_damage;
@@ -62,6 +64,9 @@ pub fn update_traj(traj: &mut Traj, posture: &mut Posture, vel: &mut Speed, form
 
 pub fn set_enemy_damage(
     enemy_type: EnemyType, entity: Entity, power: u32,
+    player_entity: Entity,
+    attack_manager: &mut AttackManager,
+    game_info: &mut GameInfo,
     world: &mut SubWorld,
     commands: &mut CommandBuffer,
 ) {
@@ -69,7 +74,7 @@ pub fn set_enemy_damage(
         EnemyType::Owl => {
             let (mut subworld1, mut subworld2) = world.split::<&mut Owl>();
             let owl = <&mut Owl>::query().get_mut(&mut subworld1, entity).unwrap();
-            set_owl_damage(owl, entity, power, &mut subworld2, commands)
+            set_owl_damage(owl, entity, power, player_entity, attack_manager, game_info, &mut subworld2, commands)
         }
         _ => {
             commands.remove(entity);

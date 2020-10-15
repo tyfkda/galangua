@@ -37,18 +37,29 @@ pub fn update_pad(#[resource] pad: &mut Pad) {
 }
 
 #[system(for_each)]
-pub fn move_player(player: &mut Player, posture: &mut Posture, #[resource] pad: &Pad) {
-    do_move_player(player, pad, posture);
+#[write_component(Posture)]
+pub fn move_player(player: &mut Player, entity: &Entity, world: &mut SubWorld, #[resource] pad: &Pad) {
+    do_move_player(player, pad, *entity, world);
 }
 
 #[system(for_each)]
 #[read_component(MyShot)]
-pub fn fire_myshot(player: &Player, posture: &Posture, world: &mut SubWorld, #[resource] pad: &Pad, commands: &mut CommandBuffer) {
+pub fn fire_myshot(player: &Player, posture: &Posture, entity: &Entity, world: &mut SubWorld, #[resource] pad: &Pad, commands: &mut CommandBuffer) {
     let shot_count = <&MyShot>::query().iter(world).count();
     if can_player_fire(player) && pad.is_trigger(PadBit::A) {
         if shot_count < 2 {
+            let dual = if player.dual.is_some() {
+                let second = commands.push((
+                    Posture(&posture.0 + &Vec2I::new(16 * ONE, 0), posture.1),
+                    SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)},
+                ));
+                Some(second)
+            } else {
+                None
+            };
+
             commands.push((
-                MyShot,
+                MyShot { player_entity: *entity, dual },
                 posture.clone(),
                 CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) },
                 SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)},
@@ -58,12 +69,19 @@ pub fn fire_myshot(player: &Player, posture: &Posture, world: &mut SubWorld, #[r
 }
 
 #[system(for_each)]
-pub fn move_myshot(_myshot: &MyShot, pos: &mut Posture, entity: &Entity, commands: &mut CommandBuffer) {
-    let mut pos = &mut pos.0;
-    pos.y -= MYSHOT_SPEED;
-    if pos.y < 0 * ONE {
-        commands.remove(*entity);
-
+#[write_component(Posture)]
+pub fn move_myshot(shot: &MyShot, entity: &Entity, world: &mut SubWorld, commands: &mut CommandBuffer) {
+    let mut cont = false;
+    for e in [Some(*entity), shot.dual].iter().flat_map(|x| x) {
+        let posture = <&mut Posture>::query().get_mut(world, *e).unwrap();
+        let pos = &mut posture.0;
+        pos.y -= MYSHOT_SPEED;
+        if !(pos.y < 0 * ONE) {
+            cont = true;
+        }
+    }
+    if !cont {
+        delete_myshot(shot, *entity, commands);
     }
 }
 
@@ -238,34 +256,43 @@ pub fn move_tractor_beam(
 #[write_component(Owl)]
 #[write_component(Troops)]
 #[write_component(SpriteDrawable)]
-pub fn coll_check_myshot_enemy(world: &mut SubWorld, commands: &mut CommandBuffer) {
-    let mut colls: Vec<Entity> = Vec::new();
-    for (_shot, shot_pos, shot_coll_rect, shot_entity) in <(&MyShot, &Posture, &CollRect, Entity)>::query().iter(world) {
-        let shot_collbox = CollBox { top_left: &round_vec(&shot_pos.0) + &shot_coll_rect.offset, size: shot_coll_rect.size };
-        for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
-            let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
-            if shot_collbox.check_collision(&enemy_collbox) {
-                commands.remove(*shot_entity);
-                colls.push(*enemy_entity);
-                break;
+pub fn coll_check_myshot_enemy(world: &mut SubWorld, #[resource] attack_manager: &mut AttackManager, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
+    let mut colls: Vec<(Entity, Entity)> = Vec::new();
+    for (shot, shot_pos, shot_coll_rect, shot_entity) in <(&MyShot, &Posture, &CollRect, Entity)>::query().iter(world) {
+        let shot_collboxes = [
+            Some(pos_to_coll_box(&shot_pos.0, &shot_coll_rect)),
+            shot.dual.map(|dual| pos_to_coll_box(&<&Posture>::query().get(world, dual).unwrap().0, &shot_coll_rect)),
+        ];
+        let mut hit = false;
+        for shot_collbox in shot_collboxes.iter().flat_map(|x| x) {
+            for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
+                let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
+                if shot_collbox.check_collision(&enemy_collbox) {
+                    colls.push((*enemy_entity, shot.player_entity));
+                    hit = true;
+                    break;
+                }
+            }
+            if hit {
+                delete_myshot(shot, *shot_entity, commands);
             }
         }
     }
 
-    for enemy_entity in colls {
+    for (enemy_entity, player_entity) in colls {
         let enemy_type = <&Enemy>::query().get(world, enemy_entity).unwrap().enemy_type;
-        set_enemy_damage(enemy_type, enemy_entity, 1, world, commands);
+        set_enemy_damage(enemy_type, enemy_entity, 1, player_entity, attack_manager, game_info, world, commands);
     }
 }
 
 #[system]
-#[read_component(Posture)]
-#[read_component(CollRect)]
+#[write_component(Posture)]
 #[write_component(Player)]
 #[write_component(Enemy)]
 #[write_component(Owl)]
 #[write_component(Troops)]
 #[write_component(SpriteDrawable)]
+#[read_component(CollRect)]
 pub fn coll_check_player_enemy(
     world: &mut SubWorld,
     #[resource] star_manager: &mut StarManager,
@@ -273,27 +300,33 @@ pub fn coll_check_player_enemy(
     #[resource] game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
-    let mut colls: Vec<(Entity, Vec2I, Entity)> = Vec::new();
-    for (_player, player_pos, player_coll_rect, player_entity) in <(&Player, &Posture, &CollRect, Entity)>::query().iter(world) {
-        let player_collbox = CollBox { top_left: &round_vec(&player_pos.0) + &player_coll_rect.offset, size: player_coll_rect.size };
-        for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
-            let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
-            if player_collbox.check_collision(&enemy_collbox) {
-                let pl_pos = player_pos.0.clone();
-                colls.push((*player_entity, pl_pos, *enemy_entity));
-                break;
+    let mut colls: Vec<(Entity, Vec2I, bool, Entity)> = Vec::new();
+    for (player, player_pos, player_coll_rect, player_entity) in <(&Player, &Posture, &CollRect, Entity)>::query().iter(world) {
+        let player_poses = [
+            Some(player_pos.0.clone()),
+            player.dual.map(|dual| <&Posture>::query().get(world, dual).unwrap().0.clone()),
+        ];
+        for (i, pl_pos) in player_poses.iter().flat_map(|x| x).enumerate() {
+            let player_collbox = pos_to_coll_box(&pl_pos, player_coll_rect);
+            for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
+                let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
+                if player_collbox.check_collision(&enemy_collbox) {
+                    colls.push((*player_entity, *pl_pos, i != 0, *enemy_entity));
+                    break;
+                }
             }
         }
     }
 
-    for (player_entity, pl_pos, enemy_entity) in colls {
+    for (player_entity, pl_pos, dual, enemy_entity) in colls {
         let enemy_type = <&Enemy>::query().get(world, enemy_entity).unwrap().enemy_type;
-        set_enemy_damage(enemy_type, enemy_entity, 100, world, commands);
+        set_enemy_damage(enemy_type, enemy_entity, 100, player_entity, attack_manager, game_info, world, commands);
 
         create_player_explosion_effect(&pl_pos, commands);
 
-        let player = <&mut Player>::query().get_mut(world, player_entity).unwrap();
-        if crash_player(player, player_entity, commands) {
+        let (mut subworld1, mut subworld2) = world.split::<&mut Player>();
+        let player = <&mut Player>::query().get_mut(&mut subworld1, player_entity).unwrap();
+        if crash_player(player, dual, player_entity, &mut subworld2, commands) {
             star_manager.set_stop(true);
             game_info.crash_player(true, attack_manager);
             star_manager.set_stop(true);
@@ -309,6 +342,17 @@ pub fn move_sequential_anime(anime: &mut SequentialSpriteAnime, drawable: &mut S
         drawable.sprite_name = sprite_name;
     } else {
         commands.remove(*entity);
+    }
+}
+
+#[system]
+#[write_component(RecapturedFighter)]
+#[write_component(Player)]
+#[write_component(Posture)]
+pub fn recapture_fighter(world: &mut SubWorld, #[resource] attack_manager: &mut AttackManager, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
+    let (mut subworld1, mut subworld2) = world.split::<&mut RecapturedFighter>();
+    for (recaptured_fighter, entity) in <(&mut RecapturedFighter, Entity)>::query().iter_mut(&mut subworld1) {
+        do_recapture_fighter(recaptured_fighter, *entity, attack_manager, game_info, &mut subworld2, commands);
     }
 }
 
@@ -362,4 +406,10 @@ pub fn draw_system<R: RendererTrait>(world: &World, resources: &Resources, rende
         }
         _ => {}
     }
+}
+
+//
+
+fn pos_to_coll_box(pos: &Vec2I, coll_rect: &CollRect) -> CollBox {
+    CollBox { top_left: &round_vec(pos) + &coll_rect.offset, size: coll_rect.size }
 }
