@@ -5,6 +5,7 @@ use legion::world::SubWorld;
 use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::X_COUNT;
+use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
 use galangua_common::app::game::traj::Traj;
 use galangua_common::app::game::traj_command::TrajCommand;
@@ -65,6 +66,7 @@ pub fn update_traj(traj: &mut Traj, posture: &mut Posture, vel: &mut Speed, form
 pub fn set_enemy_damage(
     enemy_type: EnemyType, entity: Entity, power: u32,
     player_entity: Entity,
+    star_manager: &mut StarManager,
     attack_manager: &mut AttackManager,
     game_info: &mut GameInfo,
     world: &mut SubWorld,
@@ -74,7 +76,7 @@ pub fn set_enemy_damage(
         EnemyType::Owl => {
             let (mut subworld1, mut subworld2) = world.split::<&mut Owl>();
             let owl = <&mut Owl>::query().get_mut(&mut subworld1, entity).unwrap();
-            set_owl_damage(owl, entity, power, player_entity, attack_manager, game_info, &mut subworld2, commands)
+            set_owl_damage(owl, entity, power, player_entity, attack_manager, star_manager, game_info, &mut subworld2, commands)
         }
         _ => {
             commands.remove(entity);

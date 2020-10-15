@@ -38,8 +38,14 @@ pub fn update_pad(#[resource] pad: &mut Pad) {
 
 #[system(for_each)]
 #[write_component(Posture)]
-pub fn move_player(player: &mut Player, entity: &Entity, world: &mut SubWorld, #[resource] pad: &Pad) {
-    do_move_player(player, pad, *entity, world);
+pub fn move_player(
+    player: &mut Player, entity: &Entity,
+    #[resource] pad: &Pad,
+    #[resource] game_info: &mut GameInfo,
+    #[resource] attack_manager: &mut AttackManager,
+    world: &mut SubWorld, commands: &mut CommandBuffer,
+) {
+    do_move_player(player, pad, *entity, game_info, attack_manager, world, commands);
 }
 
 #[system(for_each)]
@@ -254,9 +260,17 @@ pub fn move_tractor_beam(
 #[read_component(CollRect)]
 #[write_component(Enemy)]
 #[write_component(Owl)]
+#[write_component(TractorBeam)]
 #[write_component(Troops)]
 #[write_component(SpriteDrawable)]
-pub fn coll_check_myshot_enemy(world: &mut SubWorld, #[resource] attack_manager: &mut AttackManager, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
+#[write_component(Player)]
+pub fn coll_check_myshot_enemy(
+    world: &mut SubWorld,
+    #[resource] star_manager: &mut StarManager,
+    #[resource] attack_manager: &mut AttackManager,
+    #[resource] game_info: &mut GameInfo,
+    commands: &mut CommandBuffer,
+) {
     let mut colls: Vec<(Entity, Entity)> = Vec::new();
     for (shot, shot_pos, shot_coll_rect, shot_entity) in <(&MyShot, &Posture, &CollRect, Entity)>::query().iter(world) {
         let shot_collboxes = [
@@ -281,18 +295,20 @@ pub fn coll_check_myshot_enemy(world: &mut SubWorld, #[resource] attack_manager:
 
     for (enemy_entity, player_entity) in colls {
         let enemy_type = <&Enemy>::query().get(world, enemy_entity).unwrap().enemy_type;
-        set_enemy_damage(enemy_type, enemy_entity, 1, player_entity, attack_manager, game_info, world, commands);
+        set_enemy_damage(enemy_type, enemy_entity, 1, player_entity, star_manager, attack_manager, game_info, world, commands);
     }
 }
 
 #[system]
+#[read_component(CollRect)]
 #[write_component(Posture)]
 #[write_component(Player)]
 #[write_component(Enemy)]
 #[write_component(Owl)]
+#[write_component(TractorBeam)]
 #[write_component(Troops)]
 #[write_component(SpriteDrawable)]
-#[read_component(CollRect)]
+#[write_component(Player)]
 pub fn coll_check_player_enemy(
     world: &mut SubWorld,
     #[resource] star_manager: &mut StarManager,
@@ -320,7 +336,7 @@ pub fn coll_check_player_enemy(
 
     for (player_entity, pl_pos, dual, enemy_entity) in colls {
         let enemy_type = <&Enemy>::query().get(world, enemy_entity).unwrap().enemy_type;
-        set_enemy_damage(enemy_type, enemy_entity, 100, player_entity, attack_manager, game_info, world, commands);
+        set_enemy_damage(enemy_type, enemy_entity, 100, player_entity, star_manager, attack_manager, game_info, world, commands);
 
         create_player_explosion_effect(&pl_pos, commands);
 

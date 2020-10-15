@@ -23,7 +23,12 @@ pub fn new_player() -> Player {
     }
 }
 
-pub fn do_move_player(player: &mut Player, pad: &Pad, entity: Entity, world: &mut SubWorld) {
+pub fn do_move_player(
+    player: &mut Player, pad: &Pad, entity: Entity,
+    game_info: &mut GameInfo,
+    attack_manager: &mut AttackManager,
+    world: &mut SubWorld, commands: &mut CommandBuffer,
+) {
     use PlayerState::*;
 
     match player.state {
@@ -62,6 +67,22 @@ pub fn do_move_player(player: &mut Player, pad: &Pad, entity: Entity, world: &mu
             let pos = &mut posture.0;
             let speed = 2 * ONE;
             pos.x += clamp(HOME_X - pos.x, -speed, speed);
+        }
+        EscapeCapturing => {
+            const D: i32 = 1 * ONE;
+            let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
+            let pos = &mut posture.0;
+            let angle = &mut posture.1;
+            pos.y += D;
+            *angle = 0;
+            if pos.y >= PLAYER_Y {
+                pos.y = PLAYER_Y;
+                player.state = Normal;
+                commands.push((entity, player_coll_rect()));
+
+                attack_manager.pause(false);
+                game_info.escape_ended();
+            }
         }
     }
 }
@@ -150,6 +171,10 @@ pub fn start_player_capturing(player: &mut Player, entity: Entity, commands: &mu
 
 pub fn set_player_captured(entity: Entity, commands: &mut CommandBuffer) {
     commands.remove_component::<SpriteDrawable>(entity);
+}
+
+pub fn escape_player_from_tractor_beam(player: &mut Player) {
+    player.state = PlayerState::EscapeCapturing;
 }
 
 pub fn restart_player(player: &mut Player, entity: Entity, posture: &mut Posture, commands: &mut CommandBuffer) {

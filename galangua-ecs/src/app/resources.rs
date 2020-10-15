@@ -135,6 +135,18 @@ impl GameInfo {
         self.game_state = GameState::Playing;
     }
 
+    pub fn escape_capturing(&mut self) {
+        self.capture_state = CaptureState::NoCapture;
+        self.capture_enemy_fi = FormationIndex(0, 0);
+        //params.star_manager.set_capturing(false);
+        //self.player.escape_capturing();
+    }
+
+    pub fn escape_ended(&mut self) {
+        //self.stage_manager.pause_attack(false);
+        self.game_state = GameState::Playing;
+    }
+
     pub fn crash_player(&mut self, died: bool, attack_manager: &mut AttackManager) {
         if died {
             if self.game_state != GameState::Recapturing {

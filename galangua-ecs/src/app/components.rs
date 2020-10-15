@@ -24,7 +24,7 @@ pub enum PlayerState {
     Dead,
     Capturing,
     Captured,
-    //EscapeCapturing,
+    EscapeCapturing,
     MoveHomePos,
 }
 pub struct Player {
