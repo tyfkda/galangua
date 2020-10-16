@@ -52,7 +52,7 @@ pub struct GameInfo {
 }
 
 impl GameInfo {
-    pub fn new() -> Self {
+    pub fn new(high_score: u32) -> Self {
         let stage = 0;
 
         GameInfo {
@@ -64,7 +64,7 @@ impl GameInfo {
             capture_state: CaptureState::NoCapture,
             capture_enemy_fi: FormationIndex(0, 0),
             alive_enemy_count: 0,
-            score_holder: ScoreHolder::new(0),
+            score_holder: ScoreHolder::new(high_score),
         }
     }
 
@@ -275,11 +275,5 @@ impl GameInfo {
         if new_state != self.stage_state {
             self.stage_state = new_state;
         }
-    }
-}
-
-impl Default for GameInfo {
-    fn default() -> Self {
-        GameInfo::new()
     }
 }

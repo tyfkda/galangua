@@ -13,7 +13,7 @@ bitflags! {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Pad {
     pad: PadBit,
     trg: PadBit,

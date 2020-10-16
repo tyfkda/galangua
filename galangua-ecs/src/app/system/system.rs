@@ -43,11 +43,6 @@ pub fn update_game_controller(
         star_manager, world, commands);
 }
 
-#[system]
-pub fn update_pad(#[resource] pad: &mut Pad) {
-    pad.update();
-}
-
 #[system(for_each)]
 #[write_component(Posture)]
 pub fn move_player(
