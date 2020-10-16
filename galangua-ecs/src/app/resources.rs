@@ -10,6 +10,8 @@ use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, FormationIndex};
 use galangua_common::app::score_holder::ScoreHolder;
+use galangua_common::framework::types::Vec2I;
+use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
 use super::components::*;
 use super::system::system_player::{enable_player_shot, restart_player};
@@ -276,4 +278,46 @@ impl GameInfo {
             self.stage_state = new_state;
         }
     }
+}
+
+//
+
+#[derive(Default)]
+pub struct EneShotSpawner {
+    queue: Vec<Vec2I>,
+}
+
+impl EneShotSpawner {
+    pub fn update(&mut self, game_info: &GameInfo, world: &SubWorld, commands: &mut CommandBuffer) {
+        // TODO: Limit maximum.
+        let player_pos_opt = <(&Player, &Posture)>::query().iter(world)
+            .find(|_| true)
+            .map(|(_, posture)| posture.0.clone());
+        if let Some(target_pos) = player_pos_opt {
+            for pos in self.queue.iter() {
+                let d = &target_pos - &pos;
+                let angle = atan2_lut(d.y, -d.x);  // 0=down
+                let limit = ANGLE * ONE * 30 / 360;
+                let angle = clamp(angle, -limit, limit);
+                let vel = calc_velocity(angle + ANGLE * ONE / 2, calc_ene_shot_speed(game_info.stage));
+                commands.push((
+                    EneShot(vel),
+                    Posture(*pos, 0),
+                    CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) },
+                    SpriteDrawable { sprite_name: "ene_shot", offset: Vec2I::new(-2, -4) },
+                ));
+            }
+        }
+        self.queue.clear();
+    }
+
+    pub fn push(&mut self, pos: &Vec2I) {
+        self.queue.push(pos.clone());
+    }
+}
+
+fn calc_ene_shot_speed(stage: u16) -> i32 {
+    const MAX_STAGE: i32 = 64;
+    let per = std::cmp::min(stage as i32, MAX_STAGE) * ONE / MAX_STAGE;
+    (ENE_SHOT_SPEED2 - ENE_SHOT_SPEED1) * per / ONE + ENE_SHOT_SPEED1
 }

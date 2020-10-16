@@ -17,7 +17,7 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, square, ANGLE, ONE, ONE_BIT};
 
 use crate::app::components::*;
-use crate::app::resources::GameInfo;
+use crate::app::resources::{EneShotSpawner, GameInfo};
 
 use super::system_effect::*;
 use super::system_owl::set_owl_damage;
@@ -74,20 +74,6 @@ pub fn move_to_formation(posture: &mut Posture, speed: &mut Speed, fi: &Formatio
     }
 }
 
-pub fn update_traj(traj: &mut Traj, posture: &mut Posture, vel: &mut Speed, formation: &Formation) -> bool {
-    let traj_accessor = TrajAccessorImpl { formation: &formation };
-    let cont = traj.update(&traj_accessor);
-
-    posture.0 = traj.pos();
-    posture.1 = traj.angle;
-    vel.0 = traj.speed;
-    vel.1 = traj.vangle;
-    //if let Some(wait) = traj.is_shot() {
-    //    self.shot_wait = Some(wait);
-    //}
-    cont
-}
-
 pub fn set_enemy_damage(
     enemy_type: EnemyType, entity: Entity, power: u32,
     player_entity: Entity,
@@ -129,19 +115,15 @@ pub fn set_enemy_damage(
 pub fn do_move_zako(
     zako: &mut Zako, entity: Entity,
     enemy: &mut Enemy, speed: &mut Speed,
-    formation: &Formation, game_info: &mut GameInfo,
+    formation: &Formation, eneshot_spawner: &mut EneShotSpawner, game_info: &mut GameInfo,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
     match zako.state {
         ZakoState::Appearance => {
-            let cont = if let Some(traj) = &mut zako.traj.as_mut() {
-                let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
-                update_traj(traj, posture, speed, formation)
-            } else {
-                false
-            };
-            if !cont {
-                zako.traj = None;
+            let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+            let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
+            if !zako.base.update_trajectory(posture, speed, &mut accessor) {
+                zako.base.traj = None;
                 if enemy.formation_index.1 >= Y_COUNT as u8 {  // Assault
                     set_zako_assault(zako, speed, world);
                 } else {
@@ -160,10 +142,10 @@ pub fn do_move_zako(
             let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
             match t {
                 ZakoAttackType::BeeAttack => {
-                    update_bee_attack(zako, enemy, posture, speed, formation, game_info);
+                    update_bee_attack(zako, enemy, posture, speed, formation, eneshot_spawner, game_info);
                 }
                 ZakoAttackType::Traj => {
-                    update_attack_traj(zako, enemy, posture, speed, formation, game_info, entity, commands);
+                    update_attack_traj(zako, enemy, posture, speed, formation, eneshot_spawner, game_info, entity, commands);
                 }
             }
         }
@@ -200,7 +182,7 @@ fn set_zako_assault(zako: &mut Zako, speed: &mut Speed, world: &SubWorld) {
         .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();*/
 
     for (_player, posture) in <(&Player, &Posture)>::query().iter(world) {
-        zako.target_pos = posture.0.clone();
+        zako.base.target_pos = posture.0.clone();
         speed.1 = 0;
         break;
     }
@@ -213,7 +195,7 @@ fn update_assault(zako: &mut Zako, posture: &mut Posture, phase: u32, entity: En
     let angle = &mut posture.1;
     match phase {
         0 => {
-            let target = &zako.target_pos;
+            let target = &zako.base.target_pos;
             let diff = target - pos;
 
             const DLIMIT: i32 = 5 * ONE;
@@ -248,41 +230,33 @@ pub fn zako_start_attack(zako: &mut Zako, enemy: &mut Enemy, posture: &Posture) 
     };
     let mut traj = Traj::new(table, &ZERO_VEC, flip_x, enemy.formation_index.clone());
     traj.set_pos(&posture.0);
-    zako.traj = Some(traj);
+    zako.base.traj = Some(traj);
     zako.state = state;
     enemy.is_formation = false;
 }
 
-fn update_bee_attack(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, game_info: &GameInfo) {
-    let cont = if let Some(traj) = &mut zako.traj.as_mut() {
-        update_traj(traj, posture, speed, formation)
-    } else {
-        false
-    };
-    if !cont {
+fn update_bee_attack(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, eneshot_spawner: &mut EneShotSpawner, game_info: &GameInfo) {
+    let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+    if !zako.base.update_trajectory(posture, speed, &mut accessor) {
         if game_info.is_rush() {
             let flip_x = enemy.formation_index.0 >= 5;
             let mut traj = Traj::new(&BEE_ATTACK_RUSH_CONT_TABLE, &ZERO_VEC, flip_x,
                                      enemy.formation_index);
             traj.set_pos(&posture.0);
 
-            zako.traj = Some(traj);
+            zako.base.traj = Some(traj);
             zako.state = ZakoState::Attack(ZakoAttackType::Traj);
         } else {
-            zako.traj = None;
+            zako.base.traj = None;
             zako.state = ZakoState::MoveToFormation;
         }
     }
 }
 
-fn update_attack_traj(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, game_info: &mut GameInfo, entity: Entity, commands: &mut CommandBuffer) {
-    let cont = if let Some(traj) = &mut zako.traj.as_mut() {
-        update_traj(traj, posture, speed, formation)
-    } else {
-        false
-    };
-    if !cont {
-        zako.traj = None;
+fn update_attack_traj(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, eneshot_spawner: &mut EneShotSpawner, game_info: &mut GameInfo, entity: Entity, commands: &mut CommandBuffer) {
+    let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+    if !zako.base.update_trajectory(posture, speed, &mut accessor) {
+        zako.base.traj = None;
         if enemy.enemy_type == EnemyType::CapturedFighter {
             commands.remove(entity);
             game_info.decrement_alive_enemy();
@@ -304,7 +278,7 @@ fn rush_attack(zako: &mut Zako, table: &'static [TrajCommand], posture: &Posture
 
     //self.count = 0;
     //self.attack_frame_count = 0;
-    zako.traj = Some(traj);
+    zako.base.traj = Some(traj);
 }
 
 pub fn set_zako_to_troop(zako: &mut Zako, enemy: &mut Enemy) {
@@ -324,6 +298,81 @@ fn calc_zako_point(enemy_type: EnemyType, is_formation: bool) -> u32 {
             if is_formation { 500 } else { 1000 }
         }
         _ => { panic!("Illegal"); }
+    }
+}
+
+//
+
+pub fn do_move_eneshot(shot: &EneShot, posture: &mut Posture, entity: Entity, commands: &mut CommandBuffer) {
+    posture.0 += &shot.0;
+    if out_of_screen(&posture.0) {
+        commands.remove(entity);
+    }
+}
+
+fn out_of_screen(pos: &Vec2I) -> bool {
+    pos.x < -16 * ONE || pos.x > (WIDTH + 16) * ONE ||
+        pos.y < -16 * ONE || pos.y > (HEIGHT + 16) * ONE
+}
+
+//
+
+pub trait EneBaseAccessorTrait {
+    fn fire_shot(&mut self, pos: &Vec2I);
+    fn traj_accessor<'a>(&'a mut self) -> Box<dyn TrajAccessor + 'a>;
+}
+
+impl EnemyBase {
+    pub fn update_trajectory<A: EneBaseAccessorTrait>(&mut self, posture: &mut Posture, vel: &mut Speed, accessor: &mut A) -> bool {
+        if let Some(traj) = &mut self.traj {
+            let cont = traj.update(&*accessor.traj_accessor());
+            posture.0 = traj.pos();
+            posture.1 = traj.angle;
+            vel.0 = traj.speed;
+            vel.1 = traj.vangle;
+            if let Some(wait) = traj.is_shot() {
+                self.shot_wait = Some(wait);
+            }
+
+            if let Some(wait) = self.shot_wait {
+                if wait > 0 {
+                    self.shot_wait = Some(wait - 1);
+                } else {
+                    accessor.fire_shot(&posture.0);
+                    self.shot_wait = None;
+                }
+            }
+
+            if cont {
+                return true;
+            }
+            self.traj = None;
+        }
+        false
+    }
+}
+
+pub struct EneBaseAccessorImpl<'l> {
+    pub formation: &'l Formation,
+    pub eneshot_spawner: &'l mut EneShotSpawner,
+}
+
+impl<'l> EneBaseAccessorImpl<'l> {
+    pub fn new(formation: &'l Formation, eneshot_spawner: &'l mut EneShotSpawner) -> Self {
+        Self {
+            formation,
+            eneshot_spawner,
+        }
+    }
+}
+
+impl<'a> EneBaseAccessorTrait for EneBaseAccessorImpl<'a> {
+    fn fire_shot(&mut self, pos: &Vec2I) {
+        self.eneshot_spawner.push(pos);
+    }
+
+    fn traj_accessor<'b>(&'b mut self) -> Box<dyn TrajAccessor + 'b> {
+        Box::new(TrajAccessorImpl { formation: self.formation })
     }
 }
 

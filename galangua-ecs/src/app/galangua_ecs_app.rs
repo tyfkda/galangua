@@ -194,8 +194,11 @@ impl Game {
             .add_system(move_owl_system())
             .add_system(move_troops_system())
             .add_system(move_tractor_beam_system())
+            .add_system(spawn_eneshot_system())
+            .add_system(move_eneshot_system())
             .add_system(coll_check_myshot_enemy_system())
             .add_system(coll_check_player_enemy_system())
+            .add_system(coll_check_player_eneshot_system())
             .add_system(recapture_fighter_system())
             .add_system(move_sequential_anime_system())
             .build();
@@ -206,6 +209,7 @@ impl Game {
         resources.insert(Formation::default());
         resources.insert(AppearanceManager::default());
         resources.insert(AttackManager::default());
+        resources.insert(EneShotSpawner::default());
         resources.insert(GameInfo::new(high_score));
 
         let mut world = World::default();

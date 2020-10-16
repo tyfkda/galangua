@@ -16,9 +16,9 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, clamp, diff_angle, normalize_angle, ANGLE, ONE};
 
 use crate::app::components::*;
-use crate::app::resources::GameInfo;
+use crate::app::resources::{EneShotSpawner, GameInfo};
 
-use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, update_traj};
+use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, EneBaseAccessorImpl};
 use super::system_player::{
     escape_player_from_tractor_beam, move_capturing_player, set_player_captured,
     start_player_capturing, start_recapture_effect,
@@ -29,13 +29,12 @@ const LIFE: u32 = 2;
 // Owl
 
 pub fn create_owl(traj: Traj) -> Owl {
+    let base = EnemyBase { traj: Some(traj), shot_wait: None, target_pos: ZERO_VEC, count: 0 };
     Owl {
+        base,
         state: OwlState::Appearance,
-        traj: Some(traj),
         capturing_state: OwlCapturingState::None,
-        target_pos: ZERO_VEC,
         //tractor_beam: None,
-        count: 0,
         life: LIFE,
     }
 }
@@ -44,18 +43,15 @@ pub fn do_move_owl(
     owl: &mut Owl, entity: Entity,
     posture: &mut Posture, speed: &mut Speed,
     formation: &Formation,
+    eneshot_spawner: &mut EneShotSpawner,
     game_info: &mut GameInfo,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
     match owl.state {
         OwlState::Appearance => {
-            let cont = if let Some(traj) = &mut owl.traj.as_mut() {
-                update_traj(traj, posture, speed, formation)
-            } else {
-                false
-            };
-            if !cont {
-                owl.traj = None;
+            let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+            if !owl.base.update_trajectory(posture, speed, &mut accessor) {
+                owl.base.traj = None;
                 owl.state = OwlState::MoveToFormation;
             }
         }
@@ -68,7 +64,7 @@ pub fn do_move_owl(
         }
         OwlState::TrajAttack => {
             let enemy = <&Enemy>::query().get(world, entity).unwrap();
-            update_attack_traj(owl, enemy, posture, speed, formation, game_info);
+            update_attack_traj(owl, enemy, posture, speed, formation, eneshot_spawner, game_info);
         }
         OwlState::CaptureAttack(phase) => {
             let (mut subworld1, mut subworld2) = world.split::<&mut TractorBeam>();
@@ -105,7 +101,7 @@ pub fn owl_start_attack(
         let table: &[TrajCommand] = &OWL_ATTACK_TABLE;
         let mut traj = Traj::new(table, &ZERO_VEC, flip_x, fi);
         traj.set_pos(&posture.0);
-        owl.traj = Some(traj);
+        owl.base.traj = Some(traj);
         owl.state = OwlState::TrajAttack;
     } else {
         owl.capturing_state = OwlCapturingState::Attacking;
@@ -120,7 +116,7 @@ pub fn owl_start_attack(
             speed.1 = DLIMIT;
         }
 
-        owl.target_pos = Vec2I::new(player_pos.x, (HEIGHT - 16 - 8 - 88) * ONE);
+        owl.base.target_pos = Vec2I::new(player_pos.x, (HEIGHT - 16 - 8 - 88) * ONE);
 
         owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::Capture);
     }
@@ -129,14 +125,10 @@ pub fn owl_start_attack(
     enemy.is_formation = false;
 }
 
-fn update_attack_traj<'a>(owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, game_info: &GameInfo) {
-    let cont = if let Some(traj) = &mut owl.traj.as_mut() {
-        update_traj(traj, posture, speed, formation)
-    } else {
-        false
-    };
-    if !cont {
-        owl.traj = None;
+fn update_attack_traj(owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, eneshot_spawner: &mut EneShotSpawner, game_info: &GameInfo) {
+    let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+    if !owl.base.update_trajectory(posture, speed, &mut accessor) {
+        owl.base.traj = None;
         if game_info.is_rush() {
             // Rush mode: Continue attacking
             //self.remove_destroyed_troops(accessor);
@@ -156,7 +148,7 @@ fn rush_attack(owl: &mut Owl, table: &'static [TrajCommand], posture: &Posture, 
 
     //self.count = 0;
     //self.attack_frame_count = 0;
-    owl.traj = Some(traj);
+    owl.base.traj = Some(traj);
 }
 
 fn run_capture_attack(
@@ -171,7 +163,7 @@ fn run_capture_attack(
 ) {
     match phase {
         OwlCaptureAttackPhase::Capture => {
-            let target_pos = &owl.target_pos;
+            let target_pos = &owl.base.target_pos;
             let pos = &mut posture.0;
             let angle = &mut posture.1;
             let spd = &mut speed.0;
@@ -254,12 +246,12 @@ fn run_capture_attack(
             // Handled in TractorBeam.
         }
         OwlCaptureAttackPhase::CaptureDoneWait => {
-            if owl.count == 0 {
+            if owl.base.count == 0 {
                 remove_tractor_beam(entity, commands);
             }
 
-            owl.count += 1;
-            if owl.count >= 120 {
+            owl.base.count += 1;
+            if owl.base.count >= 120 {
                 let spd = &mut speed.0;
                 *spd = 5 * ONE / 2;
                 owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::CaptureDoneBack);
@@ -314,7 +306,7 @@ fn run_capture_attack(
 fn set_owl_capturing_player_completed(owl: &mut Owl, captured: bool) {
     if captured {
         owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::CaptureDoneWait);
-        owl.count = 0;
+        owl.base.count = 0;
     }
 }
 
@@ -587,9 +579,10 @@ fn on_player_captured(
     set_player_captured(player, commands);
 
     let fi = FormationIndex(enemy.formation_index.0, enemy.formation_index.1 - 1);
+    let base = EnemyBase { traj: None, shot_wait: None, target_pos: ZERO_VEC, count: 0 };
     let captured = commands.push((
         Enemy { enemy_type: EnemyType::CapturedFighter, formation_index: fi, is_formation: false },
-        Zako { state: ZakoState::Troop, traj: None, target_pos: ZERO_VEC },
+        Zako { base, state: ZakoState::Troop },
         Posture(pos + &Vec2I::new(0, 8 * ONE), 0),
         Speed(0, 0),
         CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) },

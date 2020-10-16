@@ -60,6 +60,15 @@ pub struct Enemy {
     pub is_formation: bool,
 }
 
+pub struct EnemyBase {
+    pub traj: Option<Traj>,
+    pub shot_wait: Option<u32>,
+    pub count: u32,
+    //pub attack_frame_count: u32,
+    pub target_pos: Vec2I,
+    //pub disappeared: bool,
+}
+
 //
 #[derive(Clone, Copy, PartialEq)]
 pub enum ZakoAttackType {
@@ -76,9 +85,10 @@ pub enum ZakoState {
     Troop,
 }
 pub struct Zako {
+    pub base: EnemyBase,
     pub state: ZakoState,
-    pub traj: Option<Traj>,
-    pub target_pos: Vec2I,
+    //pub traj: Option<Traj>,
+    //pub target_pos: Vec2I,
 }
 
 //
@@ -108,12 +118,13 @@ pub enum OwlCapturingState {
     Failed,
 }
 pub struct Owl {
+    pub base: EnemyBase,
     pub state: OwlState,
-    pub traj: Option<Traj>,
     pub capturing_state: OwlCapturingState,
-    pub target_pos: Vec2I,
-    pub count: u32,
     pub life: u32,
+    //pub traj: Option<Traj>,
+    //pub target_pos: Vec2I,
+    //pub count: u32,
 }
 
 //
@@ -146,6 +157,9 @@ pub struct Troop {
     pub offset: Vec2I,
     pub is_guard: bool,
 }
+
+//
+pub struct EneShot(pub Vec2I);
 
 //
 pub struct SequentialSpriteAnime(pub &'static [&'static str], pub u32, pub u32);

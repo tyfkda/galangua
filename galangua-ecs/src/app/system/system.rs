@@ -99,7 +99,8 @@ pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manag
             let coll_rect = CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) };
             let drawable = SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)};
             if e.enemy_type != EnemyType::Owl {
-                let zako = Zako { state: ZakoState::Appearance, traj: Some(e.traj), target_pos: ZERO_VEC };
+                let base = EnemyBase { traj: Some(e.traj), shot_wait: None, target_pos: ZERO_VEC, count: 0 };
+                let zako = Zako { base, state: ZakoState::Appearance };
                 commands.push((enemy, zako, posture, speed, coll_rect, drawable));
             } else {
                 let owl = create_owl(e.traj);
@@ -208,10 +209,11 @@ pub fn move_zako(
     enemy: &mut Enemy, zako: &mut Zako, speed: &mut Speed, entity: &Entity,
     world: &mut SubWorld,
     #[resource] formation: &Formation,
+    #[resource] eneshot_spawner: &mut EneShotSpawner,
     #[resource] game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
-    do_move_zako(zako, *entity, enemy, speed, formation, game_info, world, commands);
+    do_move_zako(zako, *entity, enemy, speed, formation, eneshot_spawner, game_info, world, commands);
 }
 
 #[system(for_each)]
@@ -219,8 +221,14 @@ pub fn move_zako(
 #[write_component(Enemy)]
 #[write_component(Zako)]
 #[write_component(Troops)]
-pub fn move_owl(owl: &mut Owl, posture: &mut Posture, speed: &mut Speed, entity: &Entity, world: &mut SubWorld, #[resource] formation: &Formation, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
-    do_move_owl(owl, *entity, posture, speed, formation, game_info, world, commands);
+pub fn move_owl(
+    owl: &mut Owl, posture: &mut Posture, speed: &mut Speed, entity: &Entity,
+    #[resource] formation: &Formation,
+    #[resource] eneshot_spawner: &mut EneShotSpawner,
+    #[resource] game_info: &mut GameInfo,
+    world: &mut SubWorld, commands: &mut CommandBuffer,
+) {
+    do_move_owl(owl, *entity, posture, speed, formation, eneshot_spawner, game_info, world, commands);
 }
 
 #[system(for_each)]
@@ -240,6 +248,19 @@ pub fn move_tractor_beam(
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
     do_move_tractor_beam(tractor_beam, *entity, owl, enemy, game_info, star_manager, attack_manager, world, commands);
+}
+
+#[system]
+#[read_component(Player)]
+#[read_component(Posture)]
+#[read_component(EneShot)]
+pub fn spawn_eneshot(world: &SubWorld, #[resource] eneshot_spawner: &mut EneShotSpawner, #[resource] game_info: &GameInfo, commands: &mut CommandBuffer) {
+    eneshot_spawner.update(game_info, world, commands);
+}
+
+#[system(for_each)]
+pub fn move_eneshot(shot: &mut EneShot, posture: &mut Posture, entity: &Entity, commands: &mut CommandBuffer) {
+    do_move_eneshot(shot, posture, *entity, commands);
 }
 
 #[system]
@@ -332,13 +353,62 @@ pub fn coll_check_player_enemy(
 
         let (mut subworld1, mut subworld2) = world.split::<&mut Player>();
         let player = <&mut Player>::query().get_mut(&mut subworld1, player_entity).unwrap();
-        if crash_player(player, dual, player_entity, &mut subworld2, commands) {
+        set_damage_to_player(player, dual, player_entity, game_info, star_manager, attack_manager, &mut subworld2, commands);
+    }
+}
+
+fn set_damage_to_player(
+    player: &mut Player, dual: bool, entity: Entity,
+    game_info: &mut GameInfo, star_manager: &mut StarManager, attack_manager: &mut AttackManager,
+    world: &mut SubWorld, commands: &mut CommandBuffer,
+) {
+    if crash_player(player, dual, entity, world, commands) {
+        if game_info.capture_state != CaptureState::Recapturing {
             star_manager.set_stop(true);
-            game_info.crash_player(true, attack_manager);
-            star_manager.set_stop(true);
-        } else {
-            game_info.crash_player(false, attack_manager);
         }
+        game_info.crash_player(true, attack_manager);
+    } else {
+        game_info.crash_player(false, attack_manager);
+    }
+}
+
+#[system]
+#[read_component(EneShot)]
+#[read_component(CollRect)]
+#[write_component(Posture)]
+#[write_component(Player)]
+pub fn coll_check_player_eneshot(
+    world: &mut SubWorld,
+    #[resource] star_manager: &mut StarManager,
+    #[resource] attack_manager: &mut AttackManager,
+    #[resource] game_info: &mut GameInfo,
+    commands: &mut CommandBuffer,
+) {
+    let mut colls: Vec<(Entity, Vec2I, bool)> = Vec::new();
+    for (player, player_pos, player_coll_rect, player_entity) in <(&Player, &Posture, &CollRect, Entity)>::query().iter(world) {
+        let player_poses = [
+            Some(player_pos.0.clone()),
+            player.dual.map(|dual| <&Posture>::query().get(world, dual).unwrap().0.clone()),
+        ];
+        for (i, pl_pos) in player_poses.iter().flat_map(|x| x).enumerate() {
+            let player_collbox = pos_to_coll_box(&pl_pos, player_coll_rect);
+            for (_eneshot, eneshot_pos, eneshot_coll_rect, eneshot_entity) in <(&EneShot, &Posture, &CollRect, Entity)>::query().iter(world) {
+                let enemy_collbox = CollBox { top_left: &round_vec(&eneshot_pos.0) + &eneshot_coll_rect.offset, size: eneshot_coll_rect.size };
+                if player_collbox.check_collision(&enemy_collbox) {
+                    colls.push((*player_entity, *pl_pos, i != 0));
+                    commands.remove(*eneshot_entity);
+                    break;
+                }
+            }
+        }
+    }
+
+    for (player_entity, pl_pos, dual) in colls {
+        create_player_explosion_effect(&pl_pos, commands);
+
+        let (mut subworld1, mut subworld2) = world.split::<&mut Player>();
+        let player = <&mut Player>::query().get_mut(&mut subworld1, player_entity).unwrap();
+        set_damage_to_player(player, dual, player_entity, game_info, star_manager, attack_manager, &mut subworld2, commands);
     }
 }
 
