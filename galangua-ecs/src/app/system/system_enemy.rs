@@ -4,6 +4,7 @@ use legion::world::SubWorld;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::attack_manager::AttackManager;
+use galangua_common::app::game::effect_table::to_earned_point_type;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::{X_COUNT, Y_COUNT};
 use galangua_common::app::game::star_manager::StarManager;
@@ -96,21 +97,29 @@ pub fn set_enemy_damage(
     world: &mut SubWorld,
     commands: &mut CommandBuffer,
 ) {
-    let dead = match enemy_type {
+    let point = match enemy_type {
         EnemyType::Owl => {
             let (mut subworld1, mut subworld2) = world.split::<&mut Owl>();
             let owl = <&mut Owl>::query().get_mut(&mut subworld1, entity).unwrap();
             set_owl_damage(owl, entity, power, player_entity, attack_manager, star_manager, game_info, &mut subworld2, commands)
         }
         _ => {
+            let is_formation = <&Zako>::query().get(world, entity).unwrap().state == ZakoState::Formation;
+            let point = calc_zako_point(enemy_type, is_formation);
             commands.remove(entity);
-            true
+            point
         }
     };
-    if dead {
+    if point > 0 {
         let pos = <&Posture>::query().get(world, entity).unwrap().0;
+
+        if let Some(point_type) = to_earned_point_type(point) {
+            create_earned_piont_effect(point_type, &pos, commands);
+        }
+
         create_enemy_explosion_effect(&pos, commands);
 
+        game_info.score_holder.add_score(point);
         game_info.decrement_alive_enemy();
     }
 }
@@ -301,6 +310,21 @@ fn rush_attack(zako: &mut Zako, table: &'static [TrajCommand], posture: &Posture
 pub fn set_zako_to_troop(zako: &mut Zako, enemy: &mut Enemy) {
     zako.state = ZakoState::Troop;
     enemy.is_formation = false;
+}
+
+fn calc_zako_point(enemy_type: EnemyType, is_formation: bool) -> u32 {
+    match enemy_type {
+        EnemyType::Bee => {
+            if is_formation { 50 } else { 100 }
+        }
+        EnemyType::Butterfly => {
+            if is_formation { 80 } else { 160 }
+        }
+        EnemyType::CapturedFighter => {
+            if is_formation { 500 } else { 1000 }
+        }
+        _ => { panic!("Illegal"); }
+    }
 }
 
 //

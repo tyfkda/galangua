@@ -251,6 +251,7 @@ pub fn move_tractor_beam(
 #[read_component(MyShot)]
 #[read_component(Posture)]
 #[read_component(CollRect)]
+#[read_component(Zako)]
 #[write_component(Enemy)]
 #[write_component(Owl)]
 #[write_component(TractorBeam)]
@@ -294,6 +295,7 @@ pub fn coll_check_myshot_enemy(
 
 #[system]
 #[read_component(CollRect)]
+#[read_component(Zako)]
 #[write_component(Posture)]
 #[write_component(Player)]
 #[write_component(Enemy)]
@@ -394,6 +396,8 @@ pub fn draw_system<R: RendererTrait>(world: &World, resources: &Resources, rende
             renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16));
         }
     }
+
+    game_info.score_holder.draw(renderer, /*(self.frame_count & 31) < 16*/ true);
 
     match game_info.game_state {
         GameState::StartStage => {

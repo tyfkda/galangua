@@ -1,6 +1,7 @@
 use legion::systems::CommandBuffer;
 
 use galangua_common::app::game::effect_table::*;
+use galangua_common::app::game::EarnedPointType;
 use galangua_common::framework::types::Vec2I;
 
 use crate::app::components::*;
@@ -49,6 +50,21 @@ pub fn create_player_explosion_effect(
     commands.push((
         Posture(pos.clone(), 0),
         new_seqanime(anime_table, PLAYER_EXPLOSION_FRAME),
+        SpriteDrawable { sprite_name, offset },
+    ));
+}
+
+pub fn create_earned_piont_effect(
+    point_type: EarnedPointType,
+    pos: &Vec2I,
+    commands: &mut CommandBuffer,
+) {
+    let anime_table = &EARNED_POINT_SPRITE_TABLE[point_type as usize];
+    let sprite_name = anime_table[0];
+    let offset = Vec2I::new(-8, -4);
+    commands.push((
+        Posture(pos.clone(), 0),
+        new_seqanime(anime_table, EARNED_POINT_FRAME),
         SpriteDrawable { sprite_name, offset },
     ));
 }
