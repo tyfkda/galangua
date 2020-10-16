@@ -13,7 +13,7 @@ use galangua_common::app::game::{CaptureState, EnemyType, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
-use galangua_common::util::math::{quantize_angle, round_vec, ONE};
+use galangua_common::util::math::{quantize_angle, round_vec};
 use galangua_common::util::pad::{Pad, PadBit};
 
 use crate::app::components::*;
@@ -52,43 +52,15 @@ pub fn move_player(
 #[read_component(MyShot)]
 pub fn fire_myshot(player: &Player, posture: &Posture, entity: &Entity, world: &mut SubWorld, #[resource] pad: &Pad, commands: &mut CommandBuffer) {
     let shot_count = <&MyShot>::query().iter(world).count();
-    if can_player_fire(player) && pad.is_trigger(PadBit::A) {
-        if shot_count < 2 {
-            let dual = if player.dual.is_some() {
-                let second = commands.push((
-                    Posture(&posture.0 + &Vec2I::new(16 * ONE, 0), posture.1),
-                    SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)},
-                ));
-                Some(second)
-            } else {
-                None
-            };
-
-            commands.push((
-                MyShot { player_entity: *entity, dual },
-                posture.clone(),
-                CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) },
-                SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)},
-            ));
-        }
+    if pad.is_trigger(PadBit::A) && shot_count < 2 {
+        do_fire_myshot(player, posture, *entity, commands);
     }
 }
 
 #[system(for_each)]
 #[write_component(Posture)]
 pub fn move_myshot(shot: &MyShot, entity: &Entity, world: &mut SubWorld, commands: &mut CommandBuffer) {
-    let mut cont = false;
-    for e in [Some(*entity), shot.dual].iter().flat_map(|x| x) {
-        let posture = <&mut Posture>::query().get_mut(world, *e).unwrap();
-        let pos = &mut posture.0;
-        pos.y -= MYSHOT_SPEED;
-        if !(pos.y < 0 * ONE) {
-            cont = true;
-        }
-    }
-    if !cont {
-        delete_myshot(shot, *entity, commands);
-    }
+    do_move_myshot(shot, *entity, world, commands);
 }
 
 #[system]
