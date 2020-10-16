@@ -21,6 +21,29 @@ use crate::app::resources::GameInfo;
 use super::system_effect::*;
 use super::system_owl::set_owl_damage;
 
+struct Vtable {
+    rush_traj_table: &'static [TrajCommand],
+}
+
+const VTABLE: [Vtable; 4] = [
+    // Bee
+    Vtable {
+        rush_traj_table: &BEE_RUSH_ATTACK_TABLE,
+    },
+    // Butterfly
+    Vtable {
+        rush_traj_table: &BUTTERFLY_RUSH_ATTACK_TABLE,
+    },
+    // Owl
+    Vtable {
+        rush_traj_table: &OWL_RUSH_ATTACK_TABLE,
+    },
+    // CapturedFighter
+    Vtable {
+        rush_traj_table: &OWL_RUSH_ATTACK_TABLE,
+    },
+];
+
 pub fn forward(posture: &mut Posture, speed: &Speed) {
     posture.0 += &calc_velocity(posture.1 + speed.1 / 2, speed.0);
     posture.1 += speed.1;
@@ -124,16 +147,15 @@ pub fn do_move_zako(
             let ang = ANGLE * ONE / 128;
             posture.1 -= clamp(posture.1, -ang, ang);
         }
-        ZakoState::Attack => {
-            let cont = if let Some(traj) = &mut zako.traj.as_mut() {
-                let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
-                update_traj(traj, posture, speed, formation)
-            } else {
-                false
-            };
-            if !cont {
-                zako.traj = None;
-                zako.state = ZakoState::MoveToFormation;
+        ZakoState::Attack(t) => {
+            let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
+            match t {
+                ZakoAttackType::BeeAttack => {
+                    update_bee_attack(zako, enemy, posture, speed, formation, game_info);
+                }
+                ZakoAttackType::Traj => {
+                    update_attack_traj(zako, enemy, posture, speed, formation, game_info, entity, commands);
+                }
             }
         }
         ZakoState::MoveToFormation => {
@@ -209,17 +231,71 @@ fn update_assault(zako: &mut Zako, posture: &mut Posture, phase: u32, entity: En
 
 pub fn zako_start_attack(zako: &mut Zako, enemy: &mut Enemy, posture: &Posture) {
     let flip_x = enemy.formation_index.0 >= (X_COUNT as u8) / 2;
-    let table: &[TrajCommand] = match enemy.enemy_type {
-        EnemyType::Bee => &BEE_ATTACK_TABLE,
-        EnemyType::Butterfly => &BUTTERFLY_ATTACK_TABLE,
-        EnemyType::Owl => &OWL_ATTACK_TABLE,
-        EnemyType::CapturedFighter => &OWL_ATTACK_TABLE,
+    let (table, state): (&[TrajCommand], ZakoState) = match enemy.enemy_type {
+        EnemyType::Bee => (&BEE_ATTACK_TABLE, ZakoState::Attack(ZakoAttackType::BeeAttack)),
+        EnemyType::Butterfly => (&BUTTERFLY_ATTACK_TABLE, ZakoState::Attack(ZakoAttackType::Traj)),
+        EnemyType::Owl => (&OWL_ATTACK_TABLE, ZakoState::Attack(ZakoAttackType::Traj)),
+        EnemyType::CapturedFighter => (&OWL_ATTACK_TABLE, ZakoState::Attack(ZakoAttackType::Traj)),
     };
     let mut traj = Traj::new(table, &ZERO_VEC, flip_x, enemy.formation_index.clone());
     traj.set_pos(&posture.0);
     zako.traj = Some(traj);
-    zako.state = ZakoState::Attack;
+    zako.state = state;
     enemy.is_formation = false;
+}
+
+fn update_bee_attack(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, game_info: &GameInfo) {
+    let cont = if let Some(traj) = &mut zako.traj.as_mut() {
+        update_traj(traj, posture, speed, formation)
+    } else {
+        false
+    };
+    if !cont {
+        if game_info.is_rush() {
+            let flip_x = enemy.formation_index.0 >= 5;
+            let mut traj = Traj::new(&BEE_ATTACK_RUSH_CONT_TABLE, &ZERO_VEC, flip_x,
+                                     enemy.formation_index);
+            traj.set_pos(&posture.0);
+
+            zako.traj = Some(traj);
+            zako.state = ZakoState::Attack(ZakoAttackType::Traj);
+        } else {
+            zako.traj = None;
+            zako.state = ZakoState::MoveToFormation;
+        }
+    }
+}
+
+fn update_attack_traj(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, game_info: &mut GameInfo, entity: Entity, commands: &mut CommandBuffer) {
+    let cont = if let Some(traj) = &mut zako.traj.as_mut() {
+        update_traj(traj, posture, speed, formation)
+    } else {
+        false
+    };
+    if !cont {
+        zako.traj = None;
+        if enemy.enemy_type == EnemyType::CapturedFighter {
+            commands.remove(entity);
+            game_info.decrement_alive_enemy();
+        } else if game_info.is_rush() {
+            // Rush mode: Continue attacking
+            let table = VTABLE[enemy.enemy_type as usize].rush_traj_table;
+            rush_attack(zako, table, posture, &enemy.formation_index);
+            //accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+        } else {
+            zako.state = ZakoState::MoveToFormation;
+        }
+    }
+}
+
+fn rush_attack(zako: &mut Zako, table: &'static [TrajCommand], posture: &Posture, fi: &FormationIndex) {
+    let flip_x = fi.0 >= 5;
+    let mut traj = Traj::new(table, &ZERO_VEC, flip_x, *fi);
+    traj.set_pos(&posture.0);
+
+    //self.count = 0;
+    //self.attack_frame_count = 0;
+    zako.traj = Some(traj);
 }
 
 pub fn set_zako_to_troop(zako: &mut Zako, enemy: &mut Enemy) {

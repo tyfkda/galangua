@@ -67,15 +67,8 @@ pub fn do_move_owl(
             posture.1 -= clamp(posture.1, -ang, ang);
         }
         OwlState::TrajAttack => {
-            let cont = if let Some(traj) = &mut owl.traj.as_mut() {
-                update_traj(traj, posture, speed, formation)
-            } else {
-                false
-            };
-            if !cont {
-                owl.traj = None;
-                owl.state = OwlState::MoveToFormation;
-            }
+            let enemy = <&Enemy>::query().get(world, entity).unwrap();
+            update_attack_traj(owl, enemy, posture, speed, formation, game_info);
         }
         OwlState::CaptureAttack(phase) => {
             let (mut subworld1, mut subworld2) = world.split::<&mut TractorBeam>();
@@ -134,6 +127,36 @@ pub fn owl_start_attack(
 
     let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
     enemy.is_formation = false;
+}
+
+fn update_attack_traj<'a>(owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, game_info: &GameInfo) {
+    let cont = if let Some(traj) = &mut owl.traj.as_mut() {
+        update_traj(traj, posture, speed, formation)
+    } else {
+        false
+    };
+    if !cont {
+        owl.traj = None;
+        if game_info.is_rush() {
+            // Rush mode: Continue attacking
+            //self.remove_destroyed_troops(accessor);
+            let table = &OWL_RUSH_ATTACK_TABLE;
+            rush_attack(owl, table, posture, &enemy.formation_index);
+            //accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+        } else {
+            owl.state = OwlState::MoveToFormation;
+        }
+    }
+}
+
+fn rush_attack(owl: &mut Owl, table: &'static [TrajCommand], posture: &Posture, fi: &FormationIndex) {
+    let flip_x = fi.0 >= 5;
+    let mut traj = Traj::new(table, &ZERO_VEC, flip_x, *fi);
+    traj.set_pos(&posture.0);
+
+    //self.count = 0;
+    //self.attack_frame_count = 0;
+    owl.traj = Some(traj);
 }
 
 fn run_capture_attack(
