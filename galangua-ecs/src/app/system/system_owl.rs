@@ -408,7 +408,9 @@ fn start_recapturing(
     commands.remove(owner_entity);
     attack_manager.pause(true);
     //system.play_se(CH_JINGLE, SE_RECAPTURE);
+
     game_info.start_recapturing();
+    game_info.decrement_alive_enemy();
 }
 
 // Tractor Beam
@@ -510,7 +512,7 @@ pub fn do_move_tractor_beam(
             let (player, posture) = <(&mut Player, &mut Posture)>::query().iter_mut(world).find(|_| true).unwrap();
             if move_capturing_player(player, posture, &(&tractor_beam.pos + &Vec2I::new(0, 8 * ONE))) {
                 on_player_captured(
-                    enemy, &tractor_beam.pos, entity, player_entity, commands);
+                    enemy, &tractor_beam.pos, entity, player_entity, game_info, commands);
                 tractor_beam.state = TractorBeamState::Closing;
             }
         }
@@ -537,6 +539,7 @@ fn on_player_captured(
     pos: &Vec2I,
     owner: Entity,
     player: Entity,
+    game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
     set_player_captured(player, commands);
@@ -544,7 +547,7 @@ fn on_player_captured(
     let fi = FormationIndex(enemy.formation_index.0, enemy.formation_index.1 - 1);
     let captured = commands.push((
         Enemy { enemy_type: EnemyType::CapturedFighter, formation_index: fi, is_formation: false },
-        Zako { state: ZakoState::Troop, traj: None },
+        Zako { state: ZakoState::Troop, traj: None, target_pos: ZERO_VEC },
         Posture(pos + &Vec2I::new(0, 8 * ONE), 0),
         Speed(0, 0),
         CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) },
@@ -554,6 +557,8 @@ fn on_player_captured(
     let mut troops = Troops {members: Default::default()};
     add_captured_player_to_troops(&mut troops, captured, &Vec2I::new(0, 16 * ONE));
     commands.add_component(owner, troops);
+
+    game_info.alive_enemy_count += 1;
 }
 
 fn on_capturing_player_completed(owl: &mut Owl, captured: bool, game_info: &mut GameInfo) {

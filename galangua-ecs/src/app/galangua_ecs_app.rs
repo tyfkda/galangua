@@ -4,6 +4,7 @@ use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_manager::AppearanceManager;
 use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
+use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::framework::{AppTrait, RendererTrait, VKey};
 use galangua_common::framework::types::Vec2I;
@@ -102,12 +103,9 @@ impl<R: RendererTrait> AppTrait<R> for GalanguaEcsApp {
 
         self.resources.insert(Pad::default());
         self.resources.insert(StarManager::default());
-        {
-            let mut appearance_manager = AppearanceManager::default();
-            appearance_manager.restart(0, None);
-            self.resources.insert(appearance_manager);
-        }
+        self.resources.insert(StageIndicator::default());
         self.resources.insert(Formation::default());
+        self.resources.insert(AppearanceManager::default());
         self.resources.insert(AttackManager::default());
         self.resources.insert(GameInfo::new());
 

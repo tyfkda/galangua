@@ -8,10 +8,11 @@ use galangua_common::app::game::appearance_manager::Accessor as AppearanceManage
 use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::attack_manager::Accessor as AttackManagerAccessor;
 use galangua_common::app::game::formation::Formation;
+use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, EnemyType, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
-use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{quantize_angle, round_vec};
 use galangua_common::util::pad::{Pad, PadBit};
@@ -27,8 +28,19 @@ use super::system_player::*;
 #[system]
 #[write_component(Player)]
 #[write_component(Posture)]
-pub fn update_game_controller(world: &mut SubWorld, #[resource] game_info: &mut GameInfo, #[resource] appearance_manager: &mut AppearanceManager, #[resource] attack_manager: &mut AttackManager, #[resource] star_manager: &mut StarManager, commands: &mut CommandBuffer) {
-    game_info.update(appearance_manager, attack_manager, star_manager, world, commands);
+pub fn update_game_controller(
+    world: &mut SubWorld,
+    #[resource] game_info: &mut GameInfo,
+    #[resource] stage_indicator: &mut StageIndicator,
+    #[resource] formation: &mut Formation,
+    #[resource] appearance_manager: &mut AppearanceManager,
+    #[resource] attack_manager: &mut AttackManager,
+    #[resource] star_manager: &mut StarManager,
+    commands: &mut CommandBuffer,
+) {
+    game_info.update(
+        stage_indicator, formation, appearance_manager, attack_manager,
+        star_manager, world, commands);
 }
 
 #[system]
@@ -70,7 +82,7 @@ pub fn move_formation(#[resource] formation: &mut Formation) {
 
 #[system]
 #[read_component(Zako)]
-pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manager: &mut AppearanceManager, #[resource] attack_manager: &mut AttackManager, #[resource] formation: &mut Formation, commands: &mut CommandBuffer) {
+pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manager: &mut AppearanceManager, #[resource] attack_manager: &mut AttackManager, #[resource] formation: &mut Formation, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
     if appearance_manager.done {
         return;
     }
@@ -92,12 +104,13 @@ pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manag
             let coll_rect = CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) };
             let drawable = SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)};
             if e.enemy_type != EnemyType::Owl {
-                let zako = Zako { state: ZakoState::Appearance, traj: Some(e.traj) };
+                let zako = Zako { state: ZakoState::Appearance, traj: Some(e.traj), target_pos: ZERO_VEC };
                 commands.push((enemy, zako, posture, speed, coll_rect, drawable));
             } else {
                 let owl = create_owl(e.traj);
                 commands.push((enemy, owl, posture, speed, coll_rect, drawable));
             }
+            game_info.alive_enemy_count += 1;
         });
     }
 
@@ -194,8 +207,16 @@ impl<'a, 'b> AttackManagerAccessor for SysAttackManagerAccessor<'a, 'b> {
 }
 
 #[system(for_each)]
-pub fn move_zako(enemy: &mut Enemy, zako: &mut Zako, posture: &mut Posture, speed: &mut Speed, #[resource] formation: &Formation) {
-    do_move_zako(zako, enemy, posture, speed, formation);
+#[read_component(Player)]
+#[write_component(Posture)]
+pub fn move_zako(
+    enemy: &mut Enemy, zako: &mut Zako, speed: &mut Speed, entity: &Entity,
+    world: &mut SubWorld,
+    #[resource] formation: &Formation,
+    #[resource] game_info: &mut GameInfo,
+    commands: &mut CommandBuffer,
+) {
+    do_move_zako(zako, *entity, enemy, speed, formation, game_info, world, commands);
 }
 
 #[system(for_each)]
@@ -363,6 +384,9 @@ pub fn draw_system<R: RendererTrait>(world: &World, resources: &Resources, rende
         }
     }
 
+    let stage_indicator = resources.get::<StageIndicator>().unwrap();
+    stage_indicator.draw(renderer);
+
     let game_info = resources.get::<GameInfo>().unwrap();
     if game_info.left_ship > 0 {
         let disp_count = std::cmp::min(game_info.left_ship - 1, 8);
@@ -372,10 +396,10 @@ pub fn draw_system<R: RendererTrait>(world: &World, resources: &Resources, rende
     }
 
     match game_info.game_state {
-        //GameState::StartStage => {
-        //    renderer.set_texture_color_mod("font", 0, 255, 255);
-        //    renderer.draw_str("font", 10 * 8, 18 * 8, &format!("STAGE {}", self.stage + 1));
-        //}
+        GameState::StartStage => {
+            renderer.set_texture_color_mod("font", 0, 255, 255);
+            renderer.draw_str("font", 10 * 8, 18 * 8, &format!("STAGE {}", game_info.stage + 1));
+        }
         GameState::WaitReady | GameState::WaitReady2 => {
             if game_info.left_ship > 1 || game_info.game_state == GameState::WaitReady2 {
                 renderer.set_texture_color_mod("font", 0, 255, 255);

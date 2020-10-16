@@ -5,6 +5,8 @@ use legion::world::SubWorld;
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_manager::AppearanceManager;
 use galangua_common::app::game::attack_manager::AttackManager;
+use galangua_common::app::game::formation::Formation;
+use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, FormationIndex};
 
@@ -15,7 +17,7 @@ const WAIT1: u32 = 60;
 
 #[derive(PartialEq)]
 pub enum GameState {
-    //StartStage,
+    StartStage,
     Playing,
     PlayerDead,
     WaitReady,
@@ -23,36 +25,79 @@ pub enum GameState {
     Capturing,
     Captured,
     Recapturing,
-    //StageClear,
+    StageClear,
     GameOver,
-    //Finished,
+    Finished,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum StageState {
+    APPEARANCE,
+    NORMAL,
+    RUSH,
+    CLEARED,
 }
 
 pub struct GameInfo {
+    pub stage: u16,
     pub left_ship: u32,
     pub game_state: GameState,
     pub count: u32,
+    pub stage_state: StageState,
     pub capture_state: CaptureState,
     pub capture_enemy_fi: FormationIndex,
+    pub alive_enemy_count: u32,
 }
 
 impl GameInfo {
     pub fn new() -> Self {
+        let stage = 0;
+
         GameInfo {
+            stage,
             left_ship: DEFAULT_LEFT_SHIP,
-            game_state: GameState::Playing,
+            game_state: GameState::StartStage,
             count: 0,
+            stage_state: StageState::APPEARANCE,
             capture_state: CaptureState::NoCapture,
             capture_enemy_fi: FormationIndex(0, 0),
+            alive_enemy_count: 0,
         }
     }
 
     pub fn update(
-        &mut self, appearance_manager: &mut AppearanceManager, attack_manager: &mut AttackManager,
+        &mut self, stage_indicator: &mut StageIndicator, formation: &mut Formation,
+        appearance_manager: &mut AppearanceManager, attack_manager: &mut AttackManager,
         star_manager: &mut StarManager,
         world: &mut SubWorld, commands: &mut CommandBuffer,
     ) {
+        self.check_stage_state(&appearance_manager);
+
         match self.game_state {
+            GameState::StartStage => {
+                if self.count == 0 {
+                    stage_indicator.set_stage(std::cmp::min(self.stage, 255) + 1);
+                }
+                if stage_indicator.update() {
+                    //system.play_se(CH_BOMB, SE_COUNT_STAGE);
+                }
+                self.count += 1;
+                if self.count >= 90 {
+                    let captured_fighter = if self.capture_state == CaptureState::Captured {
+                        Some(FormationIndex(self.capture_enemy_fi.0, self.capture_enemy_fi.1 - 1))
+                    } else {
+                        None
+                    };
+                    self.start_next_stage(self.stage, captured_fighter, formation, appearance_manager, attack_manager);
+                    self.game_state = GameState::Playing;
+                }
+            }
+            GameState::Playing => {
+                if self.stage_state == StageState::CLEARED {  // TODO: Check enemy-shots.
+                    self.game_state = GameState::StageClear;
+                    self.count = 0;
+                }
+            }
             GameState::PlayerDead => {
                 self.count += 1;
                 if self.count >= 60 {
@@ -80,10 +125,25 @@ impl GameInfo {
                     self.count = 0;
                 }
             }
+            GameState::Capturing | GameState::Recapturing => {}
             GameState::Captured => {
                 self.count += 1;
             }
-            _ => {}
+            GameState::StageClear => {
+                self.count += 1;
+                if self.count >= 60 {
+                    self.stage = self.stage.saturating_add(1);
+                    self.game_state = GameState::StartStage;
+                    self.count = 0;
+                }
+            }
+            GameState::GameOver => {
+                self.count += 1;
+                if self.count >= 35 * 60 / 10 {
+                    self.game_state = GameState::Finished;
+                }
+            }
+            GameState::Finished => {}
         }
     }
 
@@ -175,6 +235,38 @@ impl GameInfo {
             }
             self.game_state = GameState::WaitReady2;
             self.count = 0;
+        }
+    }
+
+    pub fn decrement_alive_enemy(&mut self) {
+        self.alive_enemy_count -= 1;
+    }
+
+    fn start_next_stage(
+        &mut self, stage: u16, captured_fighter: Option<FormationIndex>, formation: &mut Formation,
+        appearance_manager: &mut AppearanceManager, attack_manager: &mut AttackManager,
+    ) {
+        formation.restart();
+        appearance_manager.restart(stage, captured_fighter);
+        attack_manager.restart(stage);
+        self.stage_state = StageState::APPEARANCE;
+    }
+
+    fn check_stage_state(&mut self, appearance_manager: &AppearanceManager) {
+        if self.stage_state == StageState::APPEARANCE {
+            if !appearance_manager.done {
+                return;
+            }
+            self.stage_state = StageState::NORMAL;
+        }
+
+        let new_state = match self.alive_enemy_count {
+            n if n == 0               => StageState::CLEARED,
+            n if n <= RUSH_THRESHOLD  => StageState::RUSH,
+            _                         => self.stage_state,
+        };
+        if new_state != self.stage_state {
+            self.stage_state = new_state;
         }
     }
 }

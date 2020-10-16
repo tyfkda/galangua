@@ -65,6 +65,7 @@ pub struct Enemy {
 pub enum ZakoState {
     Appearance,
     MoveToFormation,
+    Assault(u32),
     Formation,
     Attack,
     Troop,
@@ -72,6 +73,7 @@ pub enum ZakoState {
 pub struct Zako {
     pub state: ZakoState,
     pub traj: Option<Traj>,
+    pub target_pos: Vec2I,
 }
 
 //
