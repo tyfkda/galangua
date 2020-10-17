@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use galangua_common::framework::{AppTrait, VKey};
-use galangua_core::app::GalanguaApp;
+use galangua_ecs::app::GalanguaEcsApp;
 
 use super::wasm_renderer::WasmRenderer;
 use super::wasm_system::WasmSystem;
@@ -21,7 +21,7 @@ impl WasmAppFramework {
     ) -> Self {
         web_sys::console::log_1(&"WasmAppFramework#new".into());
 
-        let timer = WasmTimer::new(move || {
+        /*let timer = WasmTimer::new(move || {
             let this = JsValue::NULL;
             if let Ok(v) = get_now_fn.call0(&this) {
                 if let Some(t) = v.as_f64() {
@@ -29,7 +29,7 @@ impl WasmAppFramework {
                 }
             }
             0.0
-        });
+        });*/
         let system = WasmSystem::new(
             move |key| {
                 let this = JsValue::NULL;
@@ -40,7 +40,7 @@ impl WasmAppFramework {
                 set_item_fn.call2(&this, &JsValue::from(key), &JsValue::from(value)).unwrap();
             },
         );
-        let mut app = GalanguaApp::new(timer, system);
+        let mut app = GalanguaEcsApp::new(system);
 
         app.init(&mut renderer);
 
