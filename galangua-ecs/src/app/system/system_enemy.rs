@@ -120,7 +120,7 @@ pub fn do_move_zako(
 ) {
     match zako.state {
         ZakoState::Appearance => {
-            let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+            let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
             let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
             if !zako.base.update_trajectory(posture, speed, &mut accessor) {
                 zako.base.traj = None;
@@ -139,7 +139,9 @@ pub fn do_move_zako(
             posture.1 -= clamp(posture.1, -ang, ang);
         }
         ZakoState::Attack(t) => {
+            let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
             let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
+            zako.base.update_attack(&posture.0, &mut accessor);
             match t {
                 ZakoAttackType::BeeAttack => {
                     update_bee_attack(zako, enemy, posture, speed, formation, eneshot_spawner, game_info);
@@ -230,13 +232,16 @@ pub fn zako_start_attack(zako: &mut Zako, enemy: &mut Enemy, posture: &Posture) 
     };
     let mut traj = Traj::new(table, &ZERO_VEC, flip_x, enemy.formation_index.clone());
     traj.set_pos(&posture.0);
+
+    zako.base.count = 0;
+    zako.base.attack_frame_count = 0;
     zako.base.traj = Some(traj);
     zako.state = state;
     enemy.is_formation = false;
 }
 
 fn update_bee_attack(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, eneshot_spawner: &mut EneShotSpawner, game_info: &GameInfo) {
-    let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+    let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
     if !zako.base.update_trajectory(posture, speed, &mut accessor) {
         if game_info.is_rush() {
             let flip_x = enemy.formation_index.0 >= 5;
@@ -254,7 +259,7 @@ fn update_bee_attack(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, spee
 }
 
 fn update_attack_traj(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, eneshot_spawner: &mut EneShotSpawner, game_info: &mut GameInfo, entity: Entity, commands: &mut CommandBuffer) {
-    let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner);
+    let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
     if !zako.base.update_trajectory(posture, speed, &mut accessor) {
         zako.base.traj = None;
         if enemy.enemy_type == EnemyType::CapturedFighter {
@@ -263,22 +268,12 @@ fn update_attack_traj(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, spe
         } else if game_info.is_rush() {
             // Rush mode: Continue attacking
             let table = VTABLE[enemy.enemy_type as usize].rush_traj_table;
-            rush_attack(zako, table, posture, &enemy.formation_index);
+            zako.base.rush_attack(table, posture, &enemy.formation_index);
             //accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
         } else {
             zako.state = ZakoState::MoveToFormation;
         }
     }
-}
-
-fn rush_attack(zako: &mut Zako, table: &'static [TrajCommand], posture: &Posture, fi: &FormationIndex) {
-    let flip_x = fi.0 >= 5;
-    let mut traj = Traj::new(table, &ZERO_VEC, flip_x, *fi);
-    traj.set_pos(&posture.0);
-
-    //self.count = 0;
-    //self.attack_frame_count = 0;
-    zako.base.traj = Some(traj);
 }
 
 pub fn set_zako_to_troop(zako: &mut Zako, enemy: &mut Enemy) {
@@ -320,9 +315,20 @@ fn out_of_screen(pos: &Vec2I) -> bool {
 pub trait EneBaseAccessorTrait {
     fn fire_shot(&mut self, pos: &Vec2I);
     fn traj_accessor<'a>(&'a mut self) -> Box<dyn TrajAccessor + 'a>;
+    fn get_stage_no(&self) -> u16;
 }
 
 impl EnemyBase {
+    pub fn new(traj: Option<Traj>) -> Self {
+        Self {
+            traj,
+            shot_wait: None,
+            target_pos: ZERO_VEC,
+            count: 0,
+            attack_frame_count: 0,
+        }
+    }
+
     pub fn update_trajectory<A: EneBaseAccessorTrait>(&mut self, posture: &mut Posture, vel: &mut Speed, accessor: &mut A) -> bool {
         if let Some(traj) = &mut self.traj {
             let cont = traj.update(&*accessor.traj_accessor());
@@ -350,18 +356,47 @@ impl EnemyBase {
         }
         false
     }
+
+    pub fn update_attack<A: EneBaseAccessorTrait>(&mut self, pos: &Vec2I, accessor: &mut A) -> bool {
+        self.attack_frame_count += 1;
+
+        let stage_no = accessor.get_stage_no();
+        let shot_count = std::cmp::min(2 + stage_no / 8, 5) as u32;
+        let shot_interval = 20 - shot_count * 2;
+
+        if self.attack_frame_count <= shot_interval * shot_count &&
+            self.attack_frame_count % shot_interval == 0
+        {
+            accessor.fire_shot(pos);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn rush_attack(&mut self, table: &'static [TrajCommand], posture: &Posture, fi: &FormationIndex) {
+        let flip_x = fi.0 >= 5;
+        let mut traj = Traj::new(table, &ZERO_VEC, flip_x, *fi);
+        traj.set_pos(&posture.0);
+
+        self.count = 0;
+        self.attack_frame_count = 0;
+        self.traj = Some(traj);
+    }
 }
 
 pub struct EneBaseAccessorImpl<'l> {
     pub formation: &'l Formation,
     pub eneshot_spawner: &'l mut EneShotSpawner,
+    pub stage_no: u16,
 }
 
 impl<'l> EneBaseAccessorImpl<'l> {
-    pub fn new(formation: &'l Formation, eneshot_spawner: &'l mut EneShotSpawner) -> Self {
+    pub fn new(formation: &'l Formation, eneshot_spawner: &'l mut EneShotSpawner, stage_no: u16) -> Self {
         Self {
             formation,
             eneshot_spawner,
+            stage_no,
         }
     }
 }
@@ -372,18 +407,21 @@ impl<'a> EneBaseAccessorTrait for EneBaseAccessorImpl<'a> {
     }
 
     fn traj_accessor<'b>(&'b mut self) -> Box<dyn TrajAccessor + 'b> {
-        Box::new(TrajAccessorImpl { formation: self.formation })
+        Box::new(TrajAccessorImpl { formation: self.formation, stage_no: self.stage_no })
     }
+
+    fn get_stage_no(&self) -> u16 { self.stage_no }
 }
 
 //
 
 struct TrajAccessorImpl<'a> {
     formation: &'a Formation,
+    pub stage_no: u16,
 }
 impl<'a> TrajAccessor for TrajAccessorImpl<'a> {
     fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I {
         self.formation.pos(formation_index)
     }
-    fn get_stage_no(&self) -> u16 { 0 }
+    fn get_stage_no(&self) -> u16 { self.stage_no }
 }
