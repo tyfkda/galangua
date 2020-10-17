@@ -12,6 +12,7 @@ use galangua_common::app::game::traj::Traj;
 use galangua_common::app::game::traj_command::TrajCommand;
 use galangua_common::app::game::traj_command_table::*;
 use galangua_common::app::game::{EnemyType, FormationIndex};
+use galangua_common::app::util::hsv;
 use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, clamp, diff_angle, normalize_angle, ANGLE, ONE};
 
@@ -485,8 +486,9 @@ pub fn do_move_tractor_beam(
             if an != pn {
                 let i = pn as usize;
                 let entity = commands.push((
-                    SpriteDrawable { sprite_name: TRACTOR_BEAM_SPRITE_NAMES[i], offset: Vec2I::new(-24, 0) },
                     Posture(&tractor_beam.pos + &Vec2I::new(0, TRACTOR_BEAM_Y_OFFSET_TABLE[i] * ONE), 0),
+                    SpriteDrawable { sprite_name: TRACTOR_BEAM_SPRITE_NAMES[i], offset: Vec2I::new(-24, 0) },
+                    SpriteColor(0, 0, 0),
                 ));
                 tractor_beam.beam_sprites[i] = Some(entity);
 
@@ -547,6 +549,21 @@ pub fn do_move_tractor_beam(
                 on_player_captured(
                     enemy, &tractor_beam.pos, entity, player_entity, game_info, commands);
                 tractor_beam.state = TractorBeamState::Closing;
+            }
+        }
+    }
+
+    update_beam_colors(&tractor_beam.beam_sprites, tractor_beam.color_count, world);
+}
+
+fn update_beam_colors<'a>(beam_sprites: &[Option<Entity>], color_count: u32, world: &mut SubWorld) {
+    for i in 0..beam_sprites.len() {
+        if let Some(entity) = &beam_sprites[i] {
+            let hue = color_count * 64 + i as u32 * 160;
+            let (r, g, b) = hsv(hue, 255, 255);
+
+            if let Ok(color) = <&mut SpriteColor>::query().get_mut(world, *entity) {
+                *color = SpriteColor(r, g, b);
             }
         }
     }

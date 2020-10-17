@@ -165,3 +165,6 @@ pub struct SequentialSpriteAnime(pub &'static [&'static str], pub u32, pub u32);
 
 //
 pub struct SpriteDrawable { pub sprite_name: &'static str, pub offset: Vec2I }
+
+//
+pub struct SpriteColor(pub u8, pub u8, pub u8);

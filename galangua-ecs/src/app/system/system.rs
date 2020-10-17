@@ -240,6 +240,7 @@ pub fn move_troops(troops: &mut Troops, owl: &mut Owl, entity: &Entity, world: &
 #[system(for_each)]
 #[write_component(Player)]
 #[write_component(Posture)]
+#[write_component(SpriteColor)]
 pub fn move_tractor_beam(
     tractor_beam: &mut TractorBeam, owl: &mut Owl, enemy: &Enemy, entity: &Entity,
     #[resource] game_info: &mut GameInfo,
@@ -441,9 +442,14 @@ pub fn draw_system<R: RendererTrait>(world: &World, resources: &Resources, rende
     let star_manager = resources.get::<StarManager>().unwrap();
     star_manager.draw(renderer);
 
-    for (posture, drawable) in <(&Posture, &SpriteDrawable)>::query().iter(world) {
+    let white = SpriteColor(255, 255, 255);
+    for (posture, drawable, sprite_color_opt) in <(&Posture, &SpriteDrawable, Option<&SpriteColor>)>::query().iter(world) {
         let pos = &round_vec(&posture.0) + &drawable.offset;
         let angle = quantize_angle(posture.1, ANGLE_DIV);
+
+        let sprite_color = sprite_color_opt.unwrap_or_else(|| &white);
+        renderer.set_sprite_texture_color_mod(drawable.sprite_name, sprite_color.0, sprite_color.1, sprite_color.2);
+
         if angle == 0 {
             renderer.draw_sprite(drawable.sprite_name, &pos);
         } else {
@@ -457,6 +463,7 @@ pub fn draw_system<R: RendererTrait>(world: &World, resources: &Resources, rende
     let game_info = resources.get::<GameInfo>().unwrap();
     if game_info.left_ship > 0 {
         let disp_count = std::cmp::min(game_info.left_ship - 1, 8);
+        renderer.set_sprite_texture_color_mod("rustacean", 255, 255, 255);
         for i in 0..disp_count {
             renderer.draw_sprite("rustacean", &Vec2I::new(i as i32 * 16, HEIGHT - 16));
         }
