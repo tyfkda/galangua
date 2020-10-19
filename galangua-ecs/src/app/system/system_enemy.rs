@@ -102,7 +102,11 @@ pub fn set_enemy_damage<'a>(
         _ => {
             let is_formation = zako_storage.get(entity).unwrap().state == ZakoState::Formation;
             let point = calc_zako_point(enemy_type, is_formation);
+            assert!(point > 0);
             entities.delete(entity).unwrap();
+            if enemy_type == EnemyType::CapturedFighter {
+                game_info.captured_fighter_destroyed();
+            }
             point
         }
     };
