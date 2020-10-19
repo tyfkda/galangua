@@ -136,9 +136,9 @@ impl EnemyBase {
             Some(*accessor.get_player_pos()),
             accessor.get_dual_player_pos(),
         ];
-        let count = target_pos.iter().flat_map(|x| x).count();
+        let count = target_pos.iter().flatten().count();
         let target: &Vec2I = target_pos.iter()
-            .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();
+            .flatten().nth(rng.gen_range(0, count)).unwrap();
 
         self.target_pos = *target;
         info.vangle = 0;

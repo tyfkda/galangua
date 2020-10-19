@@ -61,7 +61,7 @@ pub struct GameManager {
 impl GameManager {
     pub fn new() -> Self {
         let stage = 0;
-        let mut stage_indicator = StageIndicator::new();
+        let mut stage_indicator = StageIndicator::default();
         stage_indicator.set_stage(stage + 1);
 
         Self {
@@ -243,11 +243,11 @@ impl GameManager {
     pub fn draw<R: RendererTrait>(&mut self, renderer: &mut R) {
         self.player.draw(renderer);
         self.stage_manager.draw(renderer);
-        for myshot in self.myshots.iter().flat_map(|x| x) {
+        for myshot in self.myshots.iter().flatten() {
             myshot.draw(renderer);
         }
 
-        for effect in self.effects.iter().flat_map(|x| x) {
+        for effect in self.effects.iter().flatten() {
             effect.draw(renderer);
         }
         self.stage_indicator.draw(renderer);
@@ -449,7 +449,7 @@ impl GameManager {
                 myshot.dual_collbox(),
             ];
             let mut hit = false;
-            for collbox in colls.iter().flat_map(|x| x) {
+            for collbox in colls.iter().flatten() {
                 if self.stage_manager.check_collision(collbox, power, accessor) {
                     hit = true;
                 }
@@ -539,7 +539,7 @@ impl AccessorForEnemy for GameManager {
         }
     }
 
-    fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>> {
+    fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&dyn Enemy> {
         self.stage_manager.get_enemy_at(formation_index)
     }
 

@@ -25,8 +25,8 @@ pub struct AttackManager {
     cycle: u32,
 }
 
-impl AttackManager {
-    pub fn new() -> Self {
+impl Default for AttackManager {
+    fn default() -> Self {
         Self {
             enable: false,
             paused: false,
@@ -35,9 +35,11 @@ impl AttackManager {
             cycle: 0,
         }
     }
+}
 
+impl AttackManager {
     pub fn restart(&mut self, _stage: u16) {
-        *self = Self::new();
+        *self = Self::default();
     }
 
     pub fn set_enable(&mut self, value: bool) {

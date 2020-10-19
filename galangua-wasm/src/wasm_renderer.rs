@@ -44,7 +44,7 @@ impl WasmRenderer {
             canvas,
             context,
             images: Rc::new(RefCell::new(HashMap::new())),
-            sprite_sheet: Rc::new(RefCell::new(SpriteSheet::new())),
+            sprite_sheet: Rc::new(RefCell::new(SpriteSheet::default())),
         }
     }
 }

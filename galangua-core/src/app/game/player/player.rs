@@ -71,13 +71,11 @@ impl Player {
                 let x = CENTER_X - 8 * ONE;
                 let speed = 2 * ONE;
                 self.pos.x += clamp(x - self.pos.x, -speed, speed);
-                if self.pos.x == x {
-                    if self.recaptured_fighter.as_ref().unwrap().done() {
-                        self.dual = true;
-                        self.state = State::Normal;
-                        self.recaptured_fighter = None;
-                        accessor.push_event(EventType::RecaptureEnded(true));
-                    }
+                if self.pos.x == x && self.recaptured_fighter.as_ref().unwrap().done() {
+                    self.dual = true;
+                    self.state = State::Normal;
+                    self.recaptured_fighter = None;
+                    accessor.push_event(EventType::RecaptureEnded(true));
                 }
             }
             State::Dead | State::Captured => {}

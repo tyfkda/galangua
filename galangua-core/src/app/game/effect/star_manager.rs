@@ -25,8 +25,8 @@ pub struct StarManager {
     stars: [Star; STAR_COUNT],
 }
 
-impl StarManager {
-    pub fn new() -> Self {
+impl Default for StarManager {
+    fn default() -> Self {
         let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
         let stars = array![|_i|
             Star {
@@ -44,7 +44,9 @@ impl StarManager {
             stars,
         }
     }
+}
 
+impl StarManager {
     pub fn update(&mut self) {
         self.frame_count = (self.frame_count + 1) & 63;
         if self.state != State::Stop && self.scroll_vel < MAX_SPEED {

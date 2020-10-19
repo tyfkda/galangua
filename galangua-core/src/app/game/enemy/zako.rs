@@ -138,7 +138,7 @@ impl Zako {
             } else if accessor.is_rush() {
                 // Rush mode: Continue attacking
                 let table = VTABLE[self.enemy_type as usize].rush_traj_table;
-                self.base.rush_attack(&mut self.info, table);
+                self.base.rush_attack(&self.info, table);
                 accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
             } else {
                 self.set_state(ZakoState::MoveToFormation);

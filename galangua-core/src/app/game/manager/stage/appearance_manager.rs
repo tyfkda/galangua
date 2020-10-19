@@ -79,10 +79,10 @@ pub struct AppearanceManager {
     captured_fighter: Option<FormationIndex>,
 }
 
-impl AppearanceManager {
-    pub fn new(stage: u16) -> Self {
+impl Default for AppearanceManager {
+    fn default() -> Self {
         Self {
-            stage,
+            stage: 0,
             paused: false,
             wait_stationary: false,
             wait: 0,
@@ -94,11 +94,13 @@ impl AppearanceManager {
             captured_fighter: None,
         }
     }
+}
 
+impl AppearanceManager {
     pub fn restart(&mut self, stage: u16, captured_fighter: Option<FormationIndex>) {
-        *self = Self::new(stage);
+        *self = Self::default();
+        self.stage = stage;
         self.done = false;
-        self.orders.clear();
         self.captured_fighter = captured_fighter;
     }
 
@@ -229,7 +231,6 @@ impl AppearanceManager {
 
         if assault_count > 0 {
             let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-            let mut assault_index = 0;
             for i in 0..assault_count * 2 {
                 let lr = i & 1;
                 let n = self.orders.len() / 2;
@@ -240,10 +241,9 @@ impl AppearanceManager {
                     self.orders[(n - j) * 2 + lr] = self.orders[(n - j - 1) * 2 + lr].clone();
                 }
 
-                let fi = gen_assault_index(assault_index);
+                let fi = gen_assault_index(i as u8);
                 let ins = index * 2 + lr;
                 self.orders[ins] = self.create_info(fi, ins as u32);
-                assault_index += 1;
             }
 
             recalc_order_time(&mut self.orders, STEP_WAIT, div);
@@ -317,7 +317,7 @@ fn gen_assault_index(assault_count: u8) -> FormationIndex {
 }
 
 fn recalc_order_time(orders: &mut Vec<Info>, step_wait: u32, div: u32) {
-    for i in 0..orders.len() {
-        orders[i].time = step_wait * (i as u32 / div);
+    for (i, order) in orders.iter_mut().enumerate() {
+        order.time = step_wait * (i as u32 / div);
     }
 }

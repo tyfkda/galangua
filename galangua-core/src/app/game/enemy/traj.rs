@@ -84,7 +84,7 @@ impl Traj {
     }
 
     pub fn set_pos(&mut self, pos: &Vec2I) {
-        self.pos = pos.clone();
+        self.pos = *pos;
     }
 
     pub fn is_shot(&mut self) -> Option<u32> {

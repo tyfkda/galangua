@@ -58,10 +58,10 @@ impl EnemyManager {
 
     pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
         let pat = ((self.frame_count >> 5) & 1) as usize;
-        for enemy in self.enemies.iter().rev().flat_map(|x| x) {
+        for enemy in self.enemies.iter().rev().flatten() {
             enemy.draw(renderer, pat);
         }
-        for shot in self.shots.iter().flat_map(|x| x) {
+        for shot in self.shots.iter().flatten() {
             shot.draw(renderer);
         }
     }
@@ -143,10 +143,10 @@ impl EnemyManager {
 
         if let Some(index) = self.shots.iter().position(|x| x.is_none()) {
             let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-            let count = target_pos.iter().flat_map(|x| x).count();
+            let count = target_pos.iter().flatten().count();
             let target: &Vec2I = target_pos.iter()
-                .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();
-            let d = target - &pos;
+                .flatten().nth(rng.gen_range(0, count)).unwrap();
+            let d = target - pos;
 
             let limit = ANGLE * ONE * 30 / 360;
             let angle = atan2_lut(d.y, -d.x);  // 0=down
@@ -162,12 +162,12 @@ impl EnemyManager {
     }
 
     pub fn is_stationary(&self) -> bool {
-        self.enemies.iter().flat_map(|x| x).all(|x| x.is_formation())
+        self.enemies.iter().flatten().all(|x| x.is_formation())
     }
 
-    pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>> {
+    pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&dyn Enemy> {
         let index = calc_array_index(formation_index);
-        self.enemies[index].as_ref()
+        self.enemies[index].as_deref()
     }
 
     pub fn get_enemy_at_mut(&mut self, formation_index: &FormationIndex) -> Option<&mut Box<dyn Enemy>> {

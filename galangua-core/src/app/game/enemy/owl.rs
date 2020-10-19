@@ -93,7 +93,7 @@ impl Owl {
             150
         } else {
             let cap_fi = FormationIndex(self.info.formation_index.0, self.info.formation_index.1 - 1);
-            let count = self.troops.iter().flat_map(|x| x)
+            let count = self.troops.iter().flatten()
                 .filter(|index| **index != cap_fi)
                 .count();
             (1 << count) * 400
@@ -101,7 +101,7 @@ impl Owl {
     }
 
     fn live_troops_exist(&self, accessor: &dyn Accessor) -> bool {
-        self.troops.iter().flat_map(|x| x)
+        self.troops.iter().flatten()
             .filter_map(|index| accessor.get_enemy_at(index))
             .any(|_enemy| true)
     }
@@ -129,7 +129,7 @@ impl Owl {
                 }
             }
         }
-        self.troops.iter().flat_map(|x| x).for_each(|index| {
+        self.troops.iter().flatten().for_each(|index| {
             if let Some(enemy) = accessor.get_enemy_at_mut(index) {
                 enemy.set_to_troop();
             }
@@ -355,8 +355,8 @@ impl Owl {
     }
 
     fn update_attack(&mut self, accessor: &mut dyn Accessor) {
-        if self.base.update_attack(&mut self.info, accessor) {
-            for troop_fi in self.troops.iter().flat_map(|x| x) {
+        if self.base.update_attack(&self.info, accessor) {
+            for troop_fi in self.troops.iter().flatten() {
                 let pos_opt = accessor.get_enemy_at(troop_fi)
                     .map(|troop| *troop.pos());
                 if let Some(pos) = pos_opt {
@@ -409,7 +409,7 @@ impl Owl {
 
     fn rush_attack(&mut self) {
         let table = &OWL_RUSH_ATTACK_TABLE;
-        self.base.rush_attack(&mut self.info, table);
+        self.base.rush_attack(&self.info, table);
         self.set_state(OwlState::Attack(OwlAttackPhase::Traj));
     }
 }

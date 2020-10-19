@@ -5,19 +5,13 @@ use std::rc::Rc;
 
 use super::types::Vec2I;
 
+#[derive(Default)]
 pub struct SpriteSheet {
     sprite_sheets: Vec<Rc<SpriteSheet1>>,
     sheet_map: HashMap<String, Rc<SpriteSheet1>>,
 }
 
 impl SpriteSheet {
-    pub fn new() -> Self {
-        Self {
-            sprite_sheets: Vec::new(),
-            sheet_map: HashMap::new(),
-        }
-    }
-
     pub fn load_sprite_sheet(&mut self, text: &str) -> bool {
         if let Some(sprite_sheet) = SpriteSheet1::load(text) {
             let sprite_sheet = Rc::new(sprite_sheet);

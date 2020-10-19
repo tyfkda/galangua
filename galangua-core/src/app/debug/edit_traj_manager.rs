@@ -115,17 +115,15 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
             let reader = BufReader::new(file);
             let mut vec = Vec::new();
             let mut err = false;
-            let mut lineno = 0;
             let one = ONE as f32;
-            for line in reader.lines() {
-                lineno += 1;
+            for (lineno, line) in (1..).zip(reader.lines()) {
                 if let Ok(line) = line {
-                    if line.len() > 0 && line.starts_with("#") {
+                    if !line.is_empty() && line.starts_with('#') {
                         continue;
                     }
 
                     let words: Vec<&str> = line.split_whitespace().collect();
-                    if words.len() >= 1 {
+                    if !words.is_empty() {
                         match words[0] {
                             "Pos" if words.len() >= 3 => {
                                 if let (Ok(x), Ok(y)) = (&words[1].parse::<f32>(), &words[2].parse::<f32>()) {
@@ -156,7 +154,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                 }
                             }
                             "VAngle" if words.len() >= 2 => {
-                                if let Ok(vangle) = &words[1].parse::<f32>() {
+                                if let Ok(vangle) = words[1].parse::<f32>() {
                                     let ivangle = (vangle * one).round() as i32;
                                     vec.push(TrajCommand::VAngle(ivangle));
                                 } else {
@@ -165,7 +163,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                 }
                             }
                             "Delay" if words.len() >= 2 => {
-                                if let &Ok(delay) = &words[1].parse::<u32>() {
+                                if let Ok(delay) = words[1].parse::<u32>() {
                                     vec.push(TrajCommand::Delay(delay));
                                 } else {
                                     println!("Line {}: number expected", lineno);

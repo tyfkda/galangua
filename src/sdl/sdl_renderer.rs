@@ -24,7 +24,7 @@ impl SdlRenderer {
         Self {
             canvas,
             texture_manager: SdlTextureManager::new(),
-            sprite_sheet: SpriteSheet::new(),
+            sprite_sheet: SpriteSheet::default(),
             tex_color_map: HashMap::new(),
         }
     }

@@ -37,9 +37,9 @@ impl StageManager {
     pub fn new() -> Self {
         Self {
             enemy_manager: EnemyManager::new(),
-            formation: Formation::new(),
-            appearance_manager: AppearanceManager::new(0),
-            attack_manager: AttackManager::new(),
+            formation: Formation::default(),
+            appearance_manager: AppearanceManager::default(),
+            attack_manager: AttackManager::default(),
             stage_state: StageState::APPEARANCE,
         }
     }
@@ -157,7 +157,7 @@ impl StageManager {
         self.attack_manager.is_no_attacker()
     }
 
-    pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&Box<dyn Enemy>> {
+    pub fn get_enemy_at(&self, formation_index: &FormationIndex) -> Option<&dyn Enemy> {
         self.enemy_manager.get_enemy_at(formation_index)
     }
 

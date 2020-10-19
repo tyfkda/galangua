@@ -26,9 +26,9 @@ lazy_static! {
 
 fn gen_sin_table(phase: usize) -> [i32; ANGLE as usize] {
     let mut table = [0; ANGLE_SIZE];
-    for i in 0..ANGLE_SIZE {
+    for (i, elem) in table.iter_mut().enumerate() {
         let angle = ((i + phase) as f64) * (2.0 * std::f64::consts::PI / (ANGLE as f64));
-        table[i] = ((ONE as f64) * angle.sin()).round() as i32;
+        *elem = ((ONE as f64) * angle.sin()).round() as i32;
     }
     table
 }
@@ -90,7 +90,7 @@ fn normalize_significand(mut x: i32, mut y: i32, bit: u32) -> (i32, i32) {
         let s = msb - bit;
         (x >> (s + 1), y >> (s + 1))
     } else if msb + 1 < bit {
-        (x << bit - msb - 1, y << bit - msb - 1)
+        (x << (bit - msb - 1), y << (bit - msb - 1))
     } else {
         (x, y)
     }
@@ -109,9 +109,7 @@ pub fn atan2_lut(mut x: i32, mut y: i32) -> i32 {
     let swapxy = if x >= y {
         false
     } else {
-        let t = x;
-        x = y;
-        y = t;
+        std::mem::swap(&mut x, &mut y);
         true
     };
 

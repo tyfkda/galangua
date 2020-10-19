@@ -11,6 +11,7 @@ const FLAG10_WIDTH: u16 = 16;
 const FLAG5_WIDTH: u16 = 8;
 const FLAG1_WIDTH: u16 = 8;
 
+#[derive(Default)]
 pub struct StageIndicator {
     stage: u16,
     wait: u32,
@@ -19,15 +20,6 @@ pub struct StageIndicator {
 }
 
 impl StageIndicator {
-    pub fn new() -> Self {
-        Self {
-            stage: 0,
-            wait: 0,
-            stage_disp: 0,
-            width: 0,
-        }
-    }
-
     pub fn set_stage(&mut self, stage: u16) {
         self.stage = stage;
         self.wait = 0;

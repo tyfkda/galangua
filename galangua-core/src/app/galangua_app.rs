@@ -47,11 +47,11 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
         Self {
             system,
             state: AppState::Title,
-            pad: Pad::new(),
+            pad: Pad::default(),
             pressed_key: None,
             fps_calc: FpsCalc::new(timer),
             game_manager: None,
-            star_manager: StarManager::new(),
+            star_manager: StarManager::default(),
             frame_count: 0,
             score_holder: ScoreHolder::new(high_score),
             prev_high_score: 0,

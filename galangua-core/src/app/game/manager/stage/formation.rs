@@ -19,8 +19,8 @@ pub struct Formation {
     done_appearance: bool,
 }
 
-impl Formation {
-    pub fn new() -> Self {
+impl Default for Formation {
+    fn default() -> Self {
         let mut formation = Self {
             xtbl: Default::default(),
             ytbl: Default::default(),
@@ -31,7 +31,9 @@ impl Formation {
         formation.restart();
         formation
     }
+}
 
+impl Formation {
     pub fn restart(&mut self) {
         *self = Self {
             moving_pat: MovingPat::Slide,

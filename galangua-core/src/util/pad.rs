@@ -3,6 +3,7 @@ use bitflags::bitflags;
 use crate::framework::VKey;
 
 bitflags! {
+    #[derive(Default)]
     pub struct PadBit: u32 {
         const L = 0b00000001;
         const R = 0b00000010;
@@ -12,6 +13,7 @@ bitflags! {
     }
 }
 
+#[derive(Default)]
 pub struct Pad {
     pad: PadBit,
     trg: PadBit,
@@ -21,17 +23,6 @@ pub struct Pad {
 }
 
 impl Pad {
-    pub fn new() -> Self {
-        let empty = PadBit::empty();
-        Self {
-            pad: empty,
-            trg: empty,
-            last_pad: empty,
-            key: empty,
-            joy: empty,
-        }
-    }
-
     pub fn update(&mut self) {
         self.pad = self.key | self.joy;
         self.trg = self.pad & !self.last_pad;
@@ -58,15 +49,19 @@ impl Pad {
     pub fn on_joystick_axis(&mut self, axis_index: u8, dir: i8) {
         match axis_index {
             0 => {
-                let lr = if dir < 0 { PadBit::L }
-                    else if dir > 0 { PadBit::R }
-                    else { PadBit::empty() };
+                let lr = match dir {
+                    dir if dir < 0 => PadBit::L,
+                    dir if dir > 0 => PadBit::R,
+                    _              => PadBit::empty(),
+                };
                 self.joy = (self.joy & !(PadBit::L | PadBit::R)) | lr;
             }
             1 => {
-                let ud = if dir < 0 { PadBit::U }
-                    else if dir > 0 { PadBit::D }
-                    else { PadBit::empty() };
+                let ud = match dir {
+                    dir if dir < 0 => PadBit::U,
+                    dir if dir > 0 => PadBit::D,
+                    _              => PadBit::empty(),
+                };
                 self.joy = (self.joy & !(PadBit::U | PadBit::D)) | ud;
             }
             _ => {}
