@@ -36,11 +36,12 @@ pub fn update_game_controller(
     #[resource] appearance_manager: &mut AppearanceManager,
     #[resource] attack_manager: &mut AttackManager,
     #[resource] star_manager: &mut StarManager,
+    #[resource] sound_queue: &mut SoundQueue,
     commands: &mut CommandBuffer,
 ) {
     game_info.update(
         stage_indicator, formation, appearance_manager, attack_manager,
-        star_manager, world, commands);
+        star_manager, sound_queue, world, commands);
 }
 
 #[system(for_each)]
@@ -57,10 +58,12 @@ pub fn move_player(
 
 #[system(for_each)]
 #[read_component(MyShot)]
-pub fn fire_myshot(player: &Player, posture: &Posture, entity: &Entity, world: &mut SubWorld, #[resource] pad: &Pad, commands: &mut CommandBuffer) {
+pub fn fire_myshot(player: &Player, posture: &Posture, entity: &Entity, world: &mut SubWorld, #[resource] pad: &Pad, #[resource] sound_queue: &mut SoundQueue, commands: &mut CommandBuffer) {
     let shot_count = <&MyShot>::query().iter(world).count();
     if pad.is_trigger(PadBit::A) && shot_count < 2 {
-        do_fire_myshot(player, posture, *entity, commands);
+        if do_fire_myshot(player, posture, *entity, commands) {
+            sound_queue.push_play_se(CH_SHOT, SE_MYSHOT);
+        }
     }
 }
 
@@ -131,7 +134,7 @@ impl<'a, 'b> AppearanceManagerAccessor for SysAppearanceManagerAccessor<'a, 'b> 
 #[write_component(Posture)]
 #[write_component(Speed)]
 #[read_component(Player)]
-pub fn run_attack_manager(world: &mut SubWorld, #[resource] attack_manager: &mut AttackManager, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
+pub fn run_attack_manager(world: &mut SubWorld, #[resource] attack_manager: &mut AttackManager, #[resource] sound_queue: &mut SoundQueue, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
     let result = {
         let accessor = SysAttackManagerAccessor(world, game_info);
         attack_manager.update(&accessor)
@@ -157,14 +160,14 @@ pub fn run_attack_manager(world: &mut SubWorld, #[resource] attack_manager: &mut
                 let player_pos = get_player_pos().unwrap();
                 let (mut subworld1, mut subworld2) = world.split::<(&mut Owl, &mut Speed)>();
                 let (owl, speed) = <(&mut Owl, &mut Speed)>::query().get_mut(&mut subworld1, entity).unwrap();
-                owl_start_attack(owl, capture_attack, speed, &player_pos, entity, &mut subworld2, commands);
+                owl_start_attack(owl, capture_attack, speed, &player_pos, entity, sound_queue, &mut subworld2, commands);
                 if capture_attack {
                     game_info.capture_state = CaptureState::CaptureAttacking;
                     game_info.capture_enemy_fi = fi;
                 }
             } else {
                 let (zako, enemy, posture) = <(&mut Zako, &mut Enemy, &mut Posture)>::query().get_mut(world, entity).unwrap();
-                zako_start_attack(zako, enemy, posture);
+                zako_start_attack(zako, enemy, posture, sound_queue);
             }
             attack_manager.put_attacker(&fi);
         }
@@ -210,10 +213,11 @@ pub fn move_zako(
     world: &mut SubWorld,
     #[resource] formation: &Formation,
     #[resource] eneshot_spawner: &mut EneShotSpawner,
+    #[resource] sound_queue: &mut SoundQueue,
     #[resource] game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
-    do_move_zako(zako, *entity, enemy, speed, formation, eneshot_spawner, game_info, world, commands);
+    do_move_zako(zako, *entity, enemy, speed, formation, eneshot_spawner, sound_queue, game_info, world, commands);
 }
 
 #[system(for_each)]
@@ -226,10 +230,11 @@ pub fn move_owl(
     owl: &mut Owl, posture: &mut Posture, speed: &mut Speed, entity: &Entity,
     #[resource] formation: &Formation,
     #[resource] eneshot_spawner: &mut EneShotSpawner,
+    #[resource] sound_queue: &mut SoundQueue,
     #[resource] game_info: &mut GameInfo,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
-    do_move_owl(owl, *entity, posture, speed, formation, eneshot_spawner, game_info, world, commands);
+    do_move_owl(owl, *entity, posture, speed, formation, eneshot_spawner, sound_queue, game_info, world, commands);
 }
 
 #[system(for_each)]
@@ -280,6 +285,7 @@ pub fn coll_check_myshot_enemy(
     world: &mut SubWorld,
     #[resource] star_manager: &mut StarManager,
     #[resource] attack_manager: &mut AttackManager,
+    #[resource] sound_queue: &mut SoundQueue,
     #[resource] game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
@@ -307,7 +313,7 @@ pub fn coll_check_myshot_enemy(
 
     for (enemy_entity, player_entity) in colls {
         let enemy_type = <&Enemy>::query().get(world, enemy_entity).unwrap().enemy_type;
-        set_enemy_damage(enemy_type, enemy_entity, 1, player_entity, star_manager, attack_manager, game_info, world, commands);
+        set_enemy_damage(enemy_type, enemy_entity, 1, player_entity, star_manager, attack_manager, sound_queue, game_info, world, commands);
     }
 }
 
@@ -326,6 +332,7 @@ pub fn coll_check_player_enemy(
     world: &mut SubWorld,
     #[resource] star_manager: &mut StarManager,
     #[resource] attack_manager: &mut AttackManager,
+    #[resource] sound_queue: &mut SoundQueue,
     #[resource] game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
@@ -349,22 +356,23 @@ pub fn coll_check_player_enemy(
 
     for (player_entity, pl_pos, dual, enemy_entity) in colls {
         let enemy_type = <&Enemy>::query().get(world, enemy_entity).unwrap().enemy_type;
-        set_enemy_damage(enemy_type, enemy_entity, 100, player_entity, star_manager, attack_manager, game_info, world, commands);
+        set_enemy_damage(enemy_type, enemy_entity, 100, player_entity, star_manager, attack_manager, sound_queue, game_info, world, commands);
 
         create_player_explosion_effect(&pl_pos, commands);
 
         let (mut subworld1, mut subworld2) = world.split::<&mut Player>();
         let player = <&mut Player>::query().get_mut(&mut subworld1, player_entity).unwrap();
-        set_damage_to_player(player, dual, player_entity, game_info, star_manager, attack_manager, &mut subworld2, commands);
+        set_damage_to_player(player, dual, player_entity, game_info, star_manager, attack_manager, sound_queue, &mut subworld2, commands);
     }
 }
 
 fn set_damage_to_player(
     player: &mut Player, dual: bool, entity: Entity,
     game_info: &mut GameInfo, star_manager: &mut StarManager, attack_manager: &mut AttackManager,
+    sound_queue: &mut SoundQueue,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
-    if crash_player(player, dual, entity, world, commands) {
+    if crash_player(player, dual, sound_queue, entity, world, commands) {
         if game_info.capture_state != CaptureState::Recapturing {
             star_manager.set_stop(true);
         }
@@ -383,6 +391,7 @@ pub fn coll_check_player_eneshot(
     world: &mut SubWorld,
     #[resource] star_manager: &mut StarManager,
     #[resource] attack_manager: &mut AttackManager,
+    #[resource] sound_queue: &mut SoundQueue,
     #[resource] game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
@@ -410,7 +419,7 @@ pub fn coll_check_player_eneshot(
 
         let (mut subworld1, mut subworld2) = world.split::<&mut Player>();
         let player = <&mut Player>::query().get_mut(&mut subworld1, player_entity).unwrap();
-        set_damage_to_player(player, dual, player_entity, game_info, star_manager, attack_manager, &mut subworld2, commands);
+        set_damage_to_player(player, dual, player_entity, game_info, star_manager, attack_manager, sound_queue, &mut subworld2, commands);
     }
 }
 

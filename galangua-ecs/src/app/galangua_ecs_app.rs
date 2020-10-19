@@ -23,6 +23,7 @@ enum AppState {
 }
 
 pub struct GalanguaEcsApp<S: SystemTrait> {
+    system: S,
     pressed_key: Option<VKey>,
     state: AppState,
     pad: Pad,
@@ -41,6 +42,7 @@ impl<S: SystemTrait> GalanguaEcsApp<S> {
                 .unwrap();
 
         Self {
+            system,
             pressed_key: None,
             state: AppState::Title(Title::new()),
             pad: Pad::default(),
@@ -121,7 +123,7 @@ impl<R: RendererTrait, S: SystemTrait> AppTrait<R> for GalanguaEcsApp<S> {
                 }
             }
             AppState::Game(game) => {
-                if !game.update(&self.pad) {
+                if !game.update(&self.pad, &mut self.system) {
                     self.back_to_title();
                 }
             }
@@ -211,6 +213,7 @@ impl Game {
         resources.insert(AttackManager::default());
         resources.insert(EneShotSpawner::default());
         resources.insert(GameInfo::new(high_score));
+        resources.insert(SoundQueue::new());
 
         let mut world = World::default();
         world.push((
@@ -227,10 +230,15 @@ impl Game {
         }
     }
 
-    fn update(&mut self, pad: &Pad) -> bool {
+    fn update<S: SystemTrait>(&mut self, pad: &Pad, system: &mut S) -> bool {
         self.resources.insert(pad.clone());
 
         self.schedule.execute(&mut self.world, &mut self.resources);
+
+        {
+            let mut sound_queue = self.resources.get_mut::<SoundQueue>().unwrap();
+            sound_queue.flush(system);
+        }
 
         self.resources.get::<GameInfo>()
             .map_or(true, |game_info| game_info.game_state != GameState::Finished)

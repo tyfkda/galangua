@@ -9,7 +9,7 @@ use galangua_common::util::math::{calc_velocity, clamp, ANGLE, ONE};
 use galangua_common::util::pad::{Pad, PadBit};
 
 use crate::app::components::*;
-use crate::app::resources::GameInfo;
+use crate::app::resources::{GameInfo, SoundQueue};
 
 const SPRITE_NAME: &str = "rustacean";
 const HOME_X: i32 = (WIDTH / 2 - 8) * ONE;
@@ -139,9 +139,10 @@ pub fn can_player_fire(player: &Player) -> bool {
 }
 
 pub fn crash_player(
-    player: &mut Player, dual: bool, entity: Entity,
+    player: &mut Player, dual: bool, sound_queue: &mut SoundQueue, entity: Entity,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) -> bool {
+    sound_queue.push_play_se(CH_BOMB, SE_BOMB_PLAYER);
     if dual {
         if let Some(dual) = player.dual.take() {
             commands.remove(dual);

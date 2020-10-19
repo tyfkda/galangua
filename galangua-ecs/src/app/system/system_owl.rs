@@ -17,7 +17,7 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, clamp, diff_angle, normalize_angle, ANGLE, ONE};
 
 use crate::app::components::*;
-use crate::app::resources::{EneShotSpawner, GameInfo};
+use crate::app::resources::{EneShotSpawner, GameInfo, SoundQueue};
 
 use super::system_enemy::{forward, move_to_formation, set_zako_to_troop, EneBaseAccessorImpl};
 use super::system_player::{
@@ -45,6 +45,7 @@ pub fn do_move_owl(
     posture: &mut Posture, speed: &mut Speed,
     formation: &Formation,
     eneshot_spawner: &mut EneShotSpawner,
+    sound_queue: &mut SoundQueue,
     game_info: &mut GameInfo,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
@@ -71,12 +72,12 @@ pub fn do_move_owl(
         }
         OwlState::TrajAttack => {
             let enemy = <&Enemy>::query().get(world, entity).unwrap();
-            update_attack_traj(owl, enemy, posture, speed, formation, eneshot_spawner, game_info);
+            update_attack_traj(owl, enemy, posture, speed, formation, eneshot_spawner, sound_queue, game_info);
         }
         OwlState::CaptureAttack(phase) => {
             let (mut subworld1, mut subworld2) = world.split::<&mut TractorBeam>();
             let tractor_beam_opt = <&mut TractorBeam>::query().get_mut(&mut subworld1, entity).ok();
-            run_capture_attack(owl, entity, phase, posture, speed, tractor_beam_opt, formation, game_info, &mut subworld2, commands);
+            run_capture_attack(owl, entity, phase, posture, speed, tractor_beam_opt, formation, sound_queue, game_info, &mut subworld2, commands);
             forward(posture, speed);
         }
         OwlState::MoveToFormation => {
@@ -103,6 +104,7 @@ pub fn do_move_owl(
 pub fn owl_start_attack(
     owl: &mut Owl, capture_attack: bool, speed: &mut Speed, player_pos: &Vec2I,
     entity: Entity,
+    sound_queue: &mut SoundQueue,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
     let fi = <&Enemy>::query().get(world, entity).unwrap().formation_index.clone();
@@ -138,11 +140,18 @@ pub fn owl_start_attack(
         owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::Capture);
     }
 
+    sound_queue.push_play_se(CH_ATTACK, SE_ATTACK_START);
+
     let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
     enemy.is_formation = false;
 }
 
-fn update_attack_traj(owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, eneshot_spawner: &mut EneShotSpawner, game_info: &GameInfo) {
+fn update_attack_traj(
+    owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed,
+    formation: &Formation, eneshot_spawner: &mut EneShotSpawner,
+    sound_queue: &mut SoundQueue,
+    game_info: &GameInfo,
+) {
     let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
     owl.base.update_attack(&posture.0, &mut accessor);
     if !owl.base.update_trajectory(posture, speed, &mut accessor) {
@@ -151,7 +160,7 @@ fn update_attack_traj(owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed
             // Rush mode: Continue attacking
             //self.remove_destroyed_troops(accessor);
             rush_attack(owl, enemy, posture);
-            //accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+            sound_queue.push_play_se(CH_ATTACK, SE_ATTACK_START);
         } else {
             owl.state = OwlState::MoveToFormation;
         }
@@ -170,6 +179,7 @@ fn run_capture_attack(
     posture: &mut Posture, speed: &mut Speed,
     tractor_beam_opt: Option<&mut TractorBeam>,
     formation: &Formation,
+    sound_queue: &mut SoundQueue,
     game_info: &mut GameInfo,
     world: &mut SubWorld,
     commands: &mut CommandBuffer,
@@ -212,7 +222,7 @@ fn run_capture_attack(
                     entity,
                     create_tractor_beam(&(&*pos + &Vec2I::new(0, 8 * ONE))));
 
-                //accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_TRACTOR_BEAM1));
+                sound_queue.push_play_se(CH_JINGLE, SE_TRACTOR_BEAM1);
 
                 owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::CaptureBeam);
                 //self.base.count = 0;
@@ -229,7 +239,7 @@ fn run_capture_attack(
                 owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::NoCaptureGoOut);
             } else if is_tractor_beam_capturing(tractor_beam) {
                 game_info.capture_player();
-                //accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_TRACTOR_BEAM2));
+                sound_queue.push_play_se(CH_JINGLE, SE_TRACTOR_BEAM2);
 
                 owl.capturing_state = OwlCapturingState::BeamTracting;
                 owl.state = OwlState::CaptureAttack(OwlCaptureAttackPhase::Capturing);
@@ -247,7 +257,7 @@ fn run_capture_attack(
 
                 if game_info.is_rush() {
                     rush_attack(owl, enemy, posture);
-                    //accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+                    sound_queue.push_play_se(CH_ATTACK, SE_ATTACK_START);
                 } else {
                     owl.state = OwlState::MoveToFormation;
                     owl.capturing_state = OwlCapturingState::Failed;
@@ -356,14 +366,14 @@ pub fn set_owl_damage(
     player_entity: Entity,
     attack_manager: &mut AttackManager,
     star_manager: &mut StarManager,
+    sound_queue: &mut SoundQueue,
     game_info: &mut GameInfo,
     world: &mut SubWorld,
     commands: &mut CommandBuffer,
 ) -> u32 {
     if owl.life > power {
-        //accessor.push_event(EventType::PlaySe(CH_BOMB, SE_DAMAGE));
+        sound_queue.push_play_se(CH_BOMB, SE_DAMAGE);
         owl.life -= power;
-        //DamageResult { point: 0, keep_alive_as_ghost: false }
         let drawable = <&mut SpriteDrawable>::query().get_mut(world, entity).unwrap();
         drawable.sprite_name = "cpp21";
         0
@@ -413,7 +423,7 @@ pub fn set_owl_damage(
                     }
                 }) {
                     let troop_entity = &slot.as_ref().unwrap().entity;
-                    start_recapturing(*troop_entity, player_entity, attack_manager, game_info, &subworld2, commands);
+                    start_recapturing(*troop_entity, player_entity, attack_manager, sound_queue, game_info, &subworld2, commands);
 
                     *slot = None;
                 }
@@ -424,6 +434,8 @@ pub fn set_owl_damage(
         };
 
         owl.capturing_state = OwlCapturingState::None;
+
+        sound_queue.push_play_se(CH_BOMB, SE_BOMB_ZAKO);
 
         if !keep_alive_as_ghost {
             commands.remove(entity);
@@ -447,6 +459,7 @@ fn calc_point(is_formation: bool, guard_count: u32) -> u32 {
 fn start_recapturing(
     owner_entity: Entity, player_entity: Entity,
     attack_manager: &mut AttackManager,
+    sound_queue: &mut SoundQueue,
     game_info: &mut GameInfo,
     world: &SubWorld, commands: &mut CommandBuffer,
 ) {
@@ -454,7 +467,7 @@ fn start_recapturing(
     start_recapture_effect(&pos, angle, player_entity, commands);
     commands.remove(owner_entity);
     attack_manager.pause(true);
-    //system.play_se(CH_JINGLE, SE_RECAPTURE);
+    sound_queue.push_play_se(CH_JINGLE, SE_RECAPTURE);
 
     game_info.start_recapturing();
     game_info.decrement_alive_enemy();

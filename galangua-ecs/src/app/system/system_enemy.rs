@@ -17,7 +17,7 @@ use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, square, ANGLE, ONE, ONE_BIT};
 
 use crate::app::components::*;
-use crate::app::resources::{EneShotSpawner, GameInfo};
+use crate::app::resources::{EneShotSpawner, GameInfo, SoundQueue};
 
 use super::system_effect::*;
 use super::system_owl::set_owl_damage;
@@ -79,6 +79,7 @@ pub fn set_enemy_damage(
     player_entity: Entity,
     star_manager: &mut StarManager,
     attack_manager: &mut AttackManager,
+    sound_queue: &mut SoundQueue,
     game_info: &mut GameInfo,
     world: &mut SubWorld,
     commands: &mut CommandBuffer,
@@ -87,7 +88,7 @@ pub fn set_enemy_damage(
         EnemyType::Owl => {
             let (mut subworld1, mut subworld2) = world.split::<&mut Owl>();
             let owl = <&mut Owl>::query().get_mut(&mut subworld1, entity).unwrap();
-            set_owl_damage(owl, entity, power, player_entity, attack_manager, star_manager, game_info, &mut subworld2, commands)
+            set_owl_damage(owl, entity, power, player_entity, attack_manager, star_manager, sound_queue, game_info, &mut subworld2, commands)
         }
         _ => {
             let is_formation = <&Zako>::query().get(world, entity).unwrap().state == ZakoState::Formation;
@@ -95,7 +96,10 @@ pub fn set_enemy_damage(
             assert!(point > 0);
             commands.remove(entity);
             if enemy_type == EnemyType::CapturedFighter {
+                sound_queue.push_play_se(CH_JINGLE, SE_BOMB_CAPTURED);
                 game_info.captured_fighter_destroyed();
+            } else {
+                sound_queue.push_play_se(CH_BOMB, SE_BOMB_ZAKO);
             }
             point
         }
@@ -119,7 +123,8 @@ pub fn set_enemy_damage(
 pub fn do_move_zako(
     zako: &mut Zako, entity: Entity,
     enemy: &mut Enemy, speed: &mut Speed,
-    formation: &Formation, eneshot_spawner: &mut EneShotSpawner, game_info: &mut GameInfo,
+    formation: &Formation, eneshot_spawner: &mut EneShotSpawner,
+    sound_queue: &mut SoundQueue, game_info: &mut GameInfo,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
     match zako.state {
@@ -152,7 +157,7 @@ pub fn do_move_zako(
                     update_bee_attack(zako, enemy, posture, speed, formation, eneshot_spawner, game_info);
                 }
                 ZakoAttackType::Traj => {
-                    update_attack_traj(zako, enemy, posture, speed, formation, eneshot_spawner, game_info, entity, commands);
+                    update_attack_traj(zako, enemy, posture, speed, formation, eneshot_spawner, sound_queue, game_info, entity, commands);
                 }
             }
         }
@@ -178,7 +183,7 @@ pub fn do_move_zako(
     }
 }
 
-pub fn zako_start_attack(zako: &mut Zako, enemy: &mut Enemy, posture: &Posture) {
+pub fn zako_start_attack(zako: &mut Zako, enemy: &mut Enemy, posture: &Posture, sound_queue: &mut SoundQueue) {
     let flip_x = enemy.formation_index.0 >= (X_COUNT as u8) / 2;
     let (table, state): (&[TrajCommand], ZakoState) = match enemy.enemy_type {
         EnemyType::Bee => (&BEE_ATTACK_TABLE, ZakoState::Attack(ZakoAttackType::BeeAttack)),
@@ -194,6 +199,8 @@ pub fn zako_start_attack(zako: &mut Zako, enemy: &mut Enemy, posture: &Posture) 
     zako.base.traj = Some(traj);
     zako.state = state;
     enemy.is_formation = false;
+
+    sound_queue.push_play_se(CH_ATTACK, SE_ATTACK_START);
 }
 
 fn update_bee_attack(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, eneshot_spawner: &mut EneShotSpawner, game_info: &GameInfo) {
@@ -214,7 +221,7 @@ fn update_bee_attack(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, spee
     }
 }
 
-fn update_attack_traj(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, eneshot_spawner: &mut EneShotSpawner, game_info: &mut GameInfo, entity: Entity, commands: &mut CommandBuffer) {
+fn update_attack_traj(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed, formation: &Formation, eneshot_spawner: &mut EneShotSpawner, sound_queue: &mut SoundQueue, game_info: &mut GameInfo, entity: Entity, commands: &mut CommandBuffer) {
     let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
     if !zako.base.update_trajectory(posture, speed, &mut accessor) {
         zako.base.traj = None;
@@ -225,7 +232,7 @@ fn update_attack_traj(zako: &mut Zako, enemy: &Enemy, posture: &mut Posture, spe
             // Rush mode: Continue attacking
             let table = VTABLE[enemy.enemy_type as usize].rush_traj_table;
             zako.base.rush_attack(table, posture, &enemy.formation_index);
-            //accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+            sound_queue.push_play_se(CH_ATTACK, SE_ATTACK_START);
         } else {
             zako.state = ZakoState::MoveToFormation;
         }

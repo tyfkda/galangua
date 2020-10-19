@@ -11,6 +11,7 @@ use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, FormationIndex};
 use galangua_common::app::score_holder::ScoreHolder;
 use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::SystemTrait;
 use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
 use super::components::*;
@@ -75,7 +76,7 @@ impl GameInfo {
     pub fn update(
         &mut self, stage_indicator: &mut StageIndicator, formation: &mut Formation,
         appearance_manager: &mut AppearanceManager, attack_manager: &mut AttackManager,
-        star_manager: &mut StarManager,
+        star_manager: &mut StarManager, sound_queue: &mut SoundQueue,
         world: &mut SubWorld, commands: &mut CommandBuffer,
     ) {
         self.frame_count = self.frame_count.wrapping_add(1);
@@ -87,7 +88,7 @@ impl GameInfo {
                     stage_indicator.set_stage(std::cmp::min(self.stage, 255) + 1);
                 }
                 if stage_indicator.update() {
-                    //system.play_se(CH_BOMB, SE_COUNT_STAGE);
+                    sound_queue.push_play_se(CH_BOMB, SE_COUNT_STAGE);
                 }
                 self.count += 1;
                 if self.count >= 90 {
@@ -328,4 +329,29 @@ fn calc_ene_shot_speed(stage: u16) -> i32 {
     const MAX_STAGE: i32 = 64;
     let per = std::cmp::min(stage as i32, MAX_STAGE) * ONE / MAX_STAGE;
     (ENE_SHOT_SPEED2 - ENE_SHOT_SPEED1) * per / ONE + ENE_SHOT_SPEED1
+}
+
+//
+
+pub struct SoundQueue {
+    queue: Vec<(u32, &'static str)>,
+}
+
+impl SoundQueue {
+    pub fn new() -> Self {
+        Self {
+            queue: Vec::new(),
+        }
+    }
+
+    pub fn flush<S: SystemTrait>(&mut self, system: &mut S) {
+        for (channel, filename) in self.queue.iter() {
+            system.play_se(*channel, filename);
+        }
+        self.queue.clear();
+    }
+
+    pub fn push_play_se(&mut self, channel: u32, filename: &'static str) {
+        self.queue.push((channel, filename));
+    }
 }
