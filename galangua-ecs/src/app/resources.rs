@@ -215,6 +215,11 @@ impl GameInfo {
         self.game_state = GameState::Playing;
     }
 
+    pub fn captured_fighter_destroyed(&mut self) {
+        self.capture_state = CaptureState::NoCapture;
+        self.capture_enemy_fi = FormationIndex(0, 0);
+    }
+
     pub fn crash_player(&mut self, died: bool, attack_manager: &mut AttackManager) {
         if died {
             if self.game_state != GameState::Recapturing {
