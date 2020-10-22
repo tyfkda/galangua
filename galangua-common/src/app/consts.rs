@@ -14,6 +14,7 @@ pub const PLAYER_Y: i32 = (HEIGHT - 16 - 8) * ONE;
 pub const PLAYER_SPEED: i32 = 3 * ONE / 2;
 pub const MYSHOT_SPEED: i32 = 6 * ONE;
 
+pub const MAX_ENE_SHOT_COUNT: usize = 12;
 pub const ENE_SHOT_SPEED1: i32 = 25 * ONE / 10;
 pub const ENE_SHOT_SPEED2: i32 = 40 * ONE / 10;
 

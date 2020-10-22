@@ -323,12 +323,12 @@ impl EneShotSpawner {
     }
 
     fn process_queue(&mut self, game_info: &GameInfo, world: &SubWorld, commands: &mut CommandBuffer) {
-        // TODO: Limit maximum.
+        let shot_count = <&EneShot>::query().iter(world).count();
         let player_pos_opt = <(&Player, &Posture)>::query().iter(world)
             .find(|_| true)
             .map(|(_, posture)| posture.0.clone());
         if let Some(target_pos) = player_pos_opt {
-            for pos in self.queue.iter() {
+            for (pos, _i) in self.queue.iter().zip(shot_count..MAX_ENE_SHOT_COUNT) {
                 let d = &target_pos - &pos;
                 let angle = atan2_lut(d.y, -d.x);  // 0=down
                 let limit = ANGLE * ONE * 30 / 360;

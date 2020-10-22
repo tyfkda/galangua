@@ -7,6 +7,7 @@ use crate::app::game::enemy::enemy::{create_enemy, Enemy};
 use crate::app::game::enemy::Accessor;
 use crate::app::game::manager::EventType;
 
+use galangua_common::app::consts::*;
 use galangua_common::app::game::effect_table::to_earned_point_type;
 use galangua_common::app::game::formation_table::X_COUNT;
 use galangua_common::app::game::{EnemyType, FormationIndex};
@@ -16,12 +17,11 @@ use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
 const MAX_ENEMY_COUNT: usize = 70;
-const MAX_SHOT_COUNT: usize = 12;
 
 pub struct EnemyManager {
     enemies: [Option<Box<dyn Enemy>>; MAX_ENEMY_COUNT],
     pub(super) alive_enemy_count: u32,
-    shots: [Option<EneShot>; MAX_SHOT_COUNT],
+    shots: [Option<EneShot>; MAX_ENE_SHOT_COUNT],
     shot_paused_count: u32,
     frame_count: u32,
 }
