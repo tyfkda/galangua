@@ -22,6 +22,8 @@ pub const EXTEND_AFTER_SCORE: u32 = 50_000;
 
 pub const RUSH_THRESHOLD: u32 = 5;
 
+pub const OWL_DESTROY_SHOT_WAIT: u32 = 3 * 60;
+
 pub const BASE_VOLUME: f32 = 1.0 / 4.0;
 
 pub const CHANNEL_COUNT: u32 = 3;

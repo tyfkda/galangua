@@ -21,7 +21,6 @@ use galangua_common::util::math::{
 use galangua_common::app::game::traj_command::TrajCommand;
 
 const MAX_TROOPS: usize = 3;
-const OWL_DESTROY_SHOT_WAIT: u32 = 3 * 60;
 const LIFE: u32 = 2;
 
 const OWL_SPRITE_NAMES: [&str; 4] = ["cpp11", "cpp12", "cpp21", "cpp22"];

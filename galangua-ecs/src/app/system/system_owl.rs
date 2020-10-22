@@ -369,6 +369,7 @@ pub fn set_owl_damage(
     owl: &mut Owl, entity: Entity, power: u32,
     player_entity: Entity,
     attack_manager: &mut AttackManager,
+    eneshot_spawner: &mut EneShotSpawner,
     star_manager: &mut StarManager,
     sound_queue: &mut SoundQueue,
     game_info: &mut GameInfo,
@@ -438,6 +439,8 @@ pub fn set_owl_damage(
         };
 
         owl.capturing_state = OwlCapturingState::None;
+
+        eneshot_spawner.pause_enemy_shot(OWL_DESTROY_SHOT_WAIT);
 
         sound_queue.push_play_se(CH_BOMB, SE_BOMB_ZAKO);
 

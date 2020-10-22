@@ -35,13 +35,14 @@ pub fn update_game_controller(
     #[resource] formation: &mut Formation,
     #[resource] appearance_manager: &mut AppearanceManager,
     #[resource] attack_manager: &mut AttackManager,
+    #[resource] eneshot_spawner: &mut EneShotSpawner,
     #[resource] star_manager: &mut StarManager,
     #[resource] sound_queue: &mut SoundQueue,
     commands: &mut CommandBuffer,
 ) {
     game_info.update(
         stage_indicator, formation, appearance_manager, attack_manager,
-        star_manager, sound_queue, world, commands);
+        eneshot_spawner, star_manager, sound_queue, world, commands);
 }
 
 #[system(for_each)]
@@ -286,6 +287,7 @@ pub fn coll_check_myshot_enemy(
     world: &mut SubWorld,
     #[resource] star_manager: &mut StarManager,
     #[resource] attack_manager: &mut AttackManager,
+    #[resource] eneshot_spawner: &mut EneShotSpawner,
     #[resource] sound_queue: &mut SoundQueue,
     #[resource] game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
@@ -314,7 +316,9 @@ pub fn coll_check_myshot_enemy(
 
     for (enemy_entity, player_entity) in colls {
         let enemy_type = <&Enemy>::query().get(world, enemy_entity).unwrap().enemy_type;
-        set_enemy_damage(enemy_type, enemy_entity, 1, player_entity, star_manager, attack_manager, sound_queue, game_info, world, commands);
+        set_enemy_damage(
+            enemy_type, enemy_entity, 1, player_entity, star_manager, attack_manager, eneshot_spawner,
+            sound_queue, game_info, world, commands);
     }
 }
 
@@ -334,6 +338,7 @@ pub fn coll_check_player_enemy(
     #[resource] star_manager: &mut StarManager,
     #[resource] attack_manager: &mut AttackManager,
     #[resource] sound_queue: &mut SoundQueue,
+    #[resource] eneshot_spawner: &mut EneShotSpawner,
     #[resource] game_info: &mut GameInfo,
     commands: &mut CommandBuffer,
 ) {
@@ -357,7 +362,9 @@ pub fn coll_check_player_enemy(
 
     for (player_entity, pl_pos, dual, enemy_entity) in colls {
         let enemy_type = <&Enemy>::query().get(world, enemy_entity).unwrap().enemy_type;
-        set_enemy_damage(enemy_type, enemy_entity, 100, player_entity, star_manager, attack_manager, sound_queue, game_info, world, commands);
+        set_enemy_damage(
+            enemy_type, enemy_entity, 100, player_entity, star_manager, attack_manager, eneshot_spawner,
+            sound_queue, game_info, world, commands);
 
         create_player_explosion_effect(&pl_pos, commands);
 

@@ -76,7 +76,7 @@ impl GameInfo {
     pub fn update(
         &mut self, stage_indicator: &mut StageIndicator, formation: &mut Formation,
         appearance_manager: &mut AppearanceManager, attack_manager: &mut AttackManager,
-        star_manager: &mut StarManager, sound_queue: &mut SoundQueue,
+        eneshot_spawner: &mut EneShotSpawner, star_manager: &mut StarManager, sound_queue: &mut SoundQueue,
         world: &mut SubWorld, commands: &mut CommandBuffer,
     ) {
         self.frame_count = self.frame_count.wrapping_add(1);
@@ -97,7 +97,7 @@ impl GameInfo {
                     } else {
                         None
                     };
-                    self.start_next_stage(self.stage, captured_fighter, formation, appearance_manager, attack_manager);
+                    self.start_next_stage(self.stage, captured_fighter, formation, appearance_manager, attack_manager, eneshot_spawner);
                     self.game_state = GameState::Playing;
                 }
             }
@@ -263,10 +263,12 @@ impl GameInfo {
     fn start_next_stage(
         &mut self, stage: u16, captured_fighter: Option<FormationIndex>, formation: &mut Formation,
         appearance_manager: &mut AppearanceManager, attack_manager: &mut AttackManager,
+        eneshot_spawner: &mut EneShotSpawner,
     ) {
         formation.restart();
         appearance_manager.restart(stage, captured_fighter);
         attack_manager.restart(stage);
+        eneshot_spawner.restart();
         self.stage_state = StageState::APPEARANCE;
     }
 
@@ -294,10 +296,33 @@ impl GameInfo {
 #[derive(Default)]
 pub struct EneShotSpawner {
     queue: Vec<Vec2I>,
+    shot_paused_count: u32,
 }
 
 impl EneShotSpawner {
+    pub fn push(&mut self, pos: &Vec2I) {
+        self.queue.push(pos.clone());
+    }
+
     pub fn update(&mut self, game_info: &GameInfo, world: &SubWorld, commands: &mut CommandBuffer) {
+        if self.shot_paused_count > 0 {
+            self.shot_paused_count -= 1;
+        } else {
+            self.process_queue(game_info, world, commands);
+        }
+        self.queue.clear();
+    }
+
+    pub fn pause_enemy_shot(&mut self, wait: u32) {
+        self.shot_paused_count = wait;
+    }
+
+    pub fn restart(&mut self) {
+        self.shot_paused_count = 0;
+        self.queue.clear();
+    }
+
+    fn process_queue(&mut self, game_info: &GameInfo, world: &SubWorld, commands: &mut CommandBuffer) {
         // TODO: Limit maximum.
         let player_pos_opt = <(&Player, &Posture)>::query().iter(world)
             .find(|_| true)
@@ -317,11 +342,6 @@ impl EneShotSpawner {
                 ));
             }
         }
-        self.queue.clear();
-    }
-
-    pub fn push(&mut self, pos: &Vec2I) {
-        self.queue.push(pos.clone());
     }
 }
 

@@ -79,6 +79,7 @@ pub fn set_enemy_damage(
     player_entity: Entity,
     star_manager: &mut StarManager,
     attack_manager: &mut AttackManager,
+    eneshot_spawner: &mut EneShotSpawner,
     sound_queue: &mut SoundQueue,
     game_info: &mut GameInfo,
     world: &mut SubWorld,
@@ -88,7 +89,9 @@ pub fn set_enemy_damage(
         EnemyType::Owl => {
             let (mut subworld1, mut subworld2) = world.split::<&mut Owl>();
             let owl = <&mut Owl>::query().get_mut(&mut subworld1, entity).unwrap();
-            set_owl_damage(owl, entity, power, player_entity, attack_manager, star_manager, sound_queue, game_info, &mut subworld2, commands)
+            set_owl_damage(
+                owl, entity, power, player_entity, attack_manager, eneshot_spawner, star_manager,
+                sound_queue, game_info, &mut subworld2, commands)
         }
         _ => {
             let is_formation = <&Zako>::query().get(world, entity).unwrap().state == ZakoState::Formation;
