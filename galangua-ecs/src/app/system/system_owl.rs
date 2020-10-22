@@ -42,7 +42,7 @@ pub fn create_owl(traj: Traj) -> Owl {
 
 pub fn do_move_owl(
     owl: &mut Owl, entity: Entity,
-    posture: &mut Posture, speed: &mut Speed,
+    speed: &mut Speed,
     formation: &Formation,
     eneshot_spawner: &mut EneShotSpawner,
     sound_queue: &mut SoundQueue,
@@ -51,6 +51,7 @@ pub fn do_move_owl(
 ) {
     match owl.state {
         OwlState::Appearance => {
+            let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
             let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
             if !owl.base.update_trajectory(posture, speed, &mut accessor) {
                 owl.base.traj = None;
@@ -64,26 +65,28 @@ pub fn do_move_owl(
             }
         }
         OwlState::Formation => {
-            let fi = &<&Enemy>::query().get(world, entity).unwrap().formation_index;
-            posture.0 = formation.pos(fi);
+            let (enemy, posture) = <(&Enemy, &mut Posture)>::query().get_mut(world, entity).unwrap();
+            posture.0 = formation.pos(&enemy.formation_index);
 
             let ang = ANGLE * ONE / 128;
             posture.1 -= clamp(posture.1, -ang, ang);
         }
         OwlState::TrajAttack => {
-            let enemy = <&Enemy>::query().get(world, entity).unwrap();
+            let (enemy, posture) = <(&Enemy, &mut Posture)>::query().get_mut(world, entity).unwrap();
             update_attack_traj(owl, enemy, posture, speed, formation, eneshot_spawner, sound_queue, game_info);
         }
         OwlState::CaptureAttack(phase) => {
             let (mut subworld1, mut subworld2) = world.split::<&mut TractorBeam>();
             let tractor_beam_opt = <&mut TractorBeam>::query().get_mut(&mut subworld1, entity).ok();
-            run_capture_attack(owl, entity, phase, posture, speed, tractor_beam_opt, formation, sound_queue, game_info, &mut subworld2, commands);
+            run_capture_attack(owl, entity, phase, speed, tractor_beam_opt, formation, sound_queue, game_info, &mut subworld2, commands);
+
+            let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
             forward(posture, speed);
         }
         OwlState::MoveToFormation => {
             let result = {
-                let fi = &<&Enemy>::query().get(world, entity).unwrap().formation_index;
-                let result = move_to_formation(posture, speed, fi, formation);
+                let (enemy, posture) = <(&Enemy, &mut Posture)>::query().get_mut(world, entity).unwrap();
+                let result = move_to_formation(posture, speed, &enemy.formation_index, formation);
                 forward(posture, speed);
                 result
             };
@@ -176,7 +179,7 @@ fn rush_attack(owl: &mut Owl, enemy: &Enemy, posture: &Posture) {
 fn run_capture_attack(
     owl: &mut Owl, entity: Entity,
     phase: OwlCaptureAttackPhase,
-    posture: &mut Posture, speed: &mut Speed,
+    speed: &mut Speed,
     tractor_beam_opt: Option<&mut TractorBeam>,
     formation: &Formation,
     sound_queue: &mut SoundQueue,
@@ -186,6 +189,7 @@ fn run_capture_attack(
 ) {
     match phase {
         OwlCaptureAttackPhase::Capture => {
+            let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
             let target_pos = &owl.base.target_pos;
             let pos = &mut posture.0;
             let angle = &mut posture.1;
@@ -247,10 +251,10 @@ fn run_capture_attack(
             }
         }
         OwlCaptureAttackPhase::NoCaptureGoOut => {
+            let (enemy, posture) = <(&mut Enemy, &mut Posture)>::query().get_mut(world, entity).unwrap();
             let pos = &mut posture.0;
 
             if pos.y >= (HEIGHT + 8) * ONE {
-                let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
                 let target_pos = formation.pos(&enemy.formation_index);
                 let offset = Vec2I::new(target_pos.x - pos.x, (-32 - (HEIGHT + 8)) * ONE);
                 *pos += &offset;
@@ -281,7 +285,7 @@ fn run_capture_attack(
             }
         }
         OwlCaptureAttackPhase::CaptureDoneBack => {
-            let enemy = <&mut Enemy>::query().get_mut(world, entity).unwrap();
+            let (enemy, posture) = <(&mut Enemy, &mut Posture)>::query().get_mut(world, entity).unwrap();
             if move_to_formation(posture, speed, &enemy.formation_index, formation) {
                 let angle = &mut posture.1;
                 let spd = &mut speed.0;
@@ -294,7 +298,7 @@ fn run_capture_attack(
         }
         OwlCaptureAttackPhase::CaptureDonePushUp => {
             let done = {
-                let troops = <&mut Troops>::query().get_mut(world, entity).unwrap();
+                let (troops, posture) = <(&mut Troops, &mut Posture)>::query().get_mut(world, entity).unwrap();
                 let angle = &mut posture.1;
 
                 let ang = ANGLE * ONE / 128;
@@ -736,11 +740,10 @@ fn add_captured_player_to_troops(troops: &mut Troops, captured: Entity, offset: 
 fn release_troops(troops: &mut Troops, world: &mut SubWorld) {
     for member_opt in troops.members.iter_mut().filter(|x| x.is_some()) {
         let member = member_opt.as_ref().unwrap();
-        if let Ok((enemy, zako_opt)) = <(&mut Enemy, Option<&mut Zako>)>::query().get_mut(world, member.entity) {
+        if let Ok((enemy, zako, posture)) = <(&mut Enemy, &mut Zako, &mut Posture)>::query().get_mut(world, member.entity) {
             enemy.is_formation = true;
-            if let Some(zako) = zako_opt {
-                zako.state = ZakoState::Formation;
-            }
+            zako.state = ZakoState::Formation;
+            posture.1 = normalize_angle(posture.1);
         }
         *member_opt = None;
     }

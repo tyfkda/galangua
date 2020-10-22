@@ -225,16 +225,17 @@ pub fn move_zako(
 #[write_component(TractorBeam)]
 #[write_component(Enemy)]
 #[write_component(Zako)]
+#[write_component(Posture)]
 #[write_component(Troops)]
 pub fn move_owl(
-    owl: &mut Owl, posture: &mut Posture, speed: &mut Speed, entity: &Entity,
+    owl: &mut Owl, speed: &mut Speed, entity: &Entity,
     #[resource] formation: &Formation,
     #[resource] eneshot_spawner: &mut EneShotSpawner,
     #[resource] sound_queue: &mut SoundQueue,
     #[resource] game_info: &mut GameInfo,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
-    do_move_owl(owl, *entity, posture, speed, formation, eneshot_spawner, sound_queue, game_info, world, commands);
+    do_move_owl(owl, *entity, speed, formation, eneshot_spawner, sound_queue, game_info, world, commands);
 }
 
 #[system(for_each)]
