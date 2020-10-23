@@ -337,6 +337,7 @@ impl<'a> System<'a> for SysOwlMover {
         WriteStorage<'a, Zako>,
         WriteStorage<'a, TractorBeam>,
         WriteStorage<'a, Troops>,
+        ReadStorage<'a, Player>,
         Write<'a, GameInfo>,
         Write<'a, EneShotSpawner>,
     );
@@ -351,13 +352,15 @@ impl<'a> System<'a> for SysOwlMover {
              mut zako_storage,
              mut tractor_beam_storage,
              mut troops_storage,
+             player_storage,
              mut game_info,
              mut eneshot_spawner) = data;
 
-        for (owl, posture, speed, entity) in (&mut owl_storage, &mut pos_storage, &mut speed_storage, &*entities).join() {
+        for (owl, speed, entity) in (&mut owl_storage, &mut speed_storage, &*entities).join() {
             move_owl(
-                owl, entity, posture, speed, &formation, &entities, &mut enemy_storage, &mut zako_storage, &mut tractor_beam_storage, &mut troops_storage, &mut game_info,
-                &mut eneshot_spawner);
+                owl, entity, speed, &formation, &entities, &mut enemy_storage, &mut zako_storage,
+                &mut tractor_beam_storage, &mut troops_storage, &player_storage, &mut pos_storage,
+                &mut game_info, &mut eneshot_spawner);
         }
     }
 }

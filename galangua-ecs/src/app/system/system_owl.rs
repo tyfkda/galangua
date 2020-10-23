@@ -3,7 +3,7 @@ use specs::prelude::*;
 use galangua_common::app::consts::*;
 use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
-use galangua_common::app::game::formation_table::X_COUNT;
+use galangua_common::app::game::formation_table::{X_COUNT, Y_COUNT};
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::tractor_beam_table::*;
 use galangua_common::app::game::traj::Traj;
@@ -38,24 +38,33 @@ pub fn create_owl(traj: Traj) -> Owl {
 }
 
 pub fn move_owl<'a>(
-    owl: &mut Owl, entity: Entity, posture: &mut Posture, speed: &mut Speed, formation: &Formation,
+    owl: &mut Owl, entity: Entity, speed: &mut Speed, formation: &Formation,
     entities: &Entities<'a>,
     enemy_storage: &mut WriteStorage<'a, Enemy>,
     zako_storage: &mut WriteStorage<'a, Zako>,
     tractor_beam_storage: &mut WriteStorage<'a, TractorBeam>,
     troops_storage: &mut WriteStorage<'a, Troops>,
+    player_storage: &ReadStorage<'a, Player>,
+    pos_storage: &mut WriteStorage<'a, Posture>,
     game_info: &mut GameInfo,
     eneshot_spawner: &mut EneShotSpawner,
 ) {
     match owl.state {
         OwlState::Appearance => {
             let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
-            if !owl.base.update_trajectory(posture, speed, &mut accessor) {
+            if !owl.base.update_trajectory(pos_storage.get_mut(entity).unwrap(), speed, &mut accessor) {
                 owl.base.traj = None;
-                owl.state = OwlState::MoveToFormation;
+                let enemy = enemy_storage.get(entity).unwrap();
+                if enemy.formation_index.1 >= Y_COUNT as u8 {  // Assault
+                    owl.base.set_assault(speed, player_storage, pos_storage);
+                    owl.state = OwlState::Assault(0);
+                } else {
+                    owl.state = OwlState::MoveToFormation;
+                }
             }
         }
         OwlState::Formation => {
+            let mut posture = pos_storage.get_mut(entity).unwrap();
             let fi = enemy_storage.get(entity).unwrap().formation_index;
             posture.0 = formation.pos(&fi);
 
@@ -63,21 +72,31 @@ pub fn move_owl<'a>(
             posture.1 -= clamp(posture.1, -ang, ang);
         }
         OwlState::TrajAttack => {
+            let posture = pos_storage.get_mut(entity).unwrap();
             let enemy = enemy_storage.get(entity).unwrap();
             update_attack_traj(
                 owl, enemy, posture, speed, formation, game_info, eneshot_spawner);
         }
         OwlState::CaptureAttack(phase) => {
+            let posture = pos_storage.get_mut(entity).unwrap();
             run_capture_attack(owl, entity, phase, posture, speed, formation, entities, enemy_storage, zako_storage, tractor_beam_storage, troops_storage, game_info);
             forward(posture, speed);
         }
         OwlState::MoveToFormation => {
+            let posture = pos_storage.get_mut(entity).unwrap();
             let fi = enemy_storage.get(entity).unwrap().formation_index;
             let result = move_to_formation(posture, speed, &fi, formation);
             forward(posture, speed);
             if result {
                 set_to_formation(owl, entity, entities, enemy_storage, troops_storage, zako_storage);
             }
+        }
+        OwlState::Assault(phase) => {
+            let posture = pos_storage.get_mut(entity).unwrap();
+            if let Some(new_phase) = owl.base.update_assault(posture, phase, entity, entities, game_info) {
+                owl.state = OwlState::Assault(new_phase);
+            }
+            forward(posture, speed);
         }
     }
 }
