@@ -128,6 +128,7 @@ impl GameInfo {
                     for player in <&mut Player>::query().iter_mut(world) {
                         enable_player_shot(player, true);
                     }
+                    appearance_manager.pause(false);
                     attack_manager.pause(false);
                     star_manager.set_stop(false);
                     self.game_state = GameState::Playing;
@@ -221,9 +222,10 @@ impl GameInfo {
         self.capture_enemy_fi = FormationIndex(0, 0);
     }
 
-    pub fn crash_player(&mut self, died: bool, attack_manager: &mut AttackManager) {
+    pub fn crash_player(&mut self, died: bool, appearance_manager: &mut AppearanceManager, attack_manager: &mut AttackManager) {
         if died {
             if self.game_state != GameState::Recapturing {
+                appearance_manager.pause(true);
                 attack_manager.pause(true);
                 self.game_state = GameState::PlayerDead;
                 self.count = 0;

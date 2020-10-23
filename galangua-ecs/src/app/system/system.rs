@@ -336,6 +336,7 @@ pub fn coll_check_myshot_enemy(
 pub fn coll_check_player_enemy(
     world: &mut SubWorld,
     #[resource] star_manager: &mut StarManager,
+    #[resource] appearance_manager: &mut AppearanceManager,
     #[resource] attack_manager: &mut AttackManager,
     #[resource] sound_queue: &mut SoundQueue,
     #[resource] eneshot_spawner: &mut EneShotSpawner,
@@ -370,24 +371,21 @@ pub fn coll_check_player_enemy(
 
         let (mut subworld1, mut subworld2) = world.split::<&mut Player>();
         let player = <&mut Player>::query().get_mut(&mut subworld1, player_entity).unwrap();
-        set_damage_to_player(player, dual, player_entity, game_info, star_manager, attack_manager, sound_queue, &mut subworld2, commands);
+        set_damage_to_player(player, dual, player_entity, game_info, star_manager, appearance_manager, attack_manager, sound_queue, &mut subworld2, commands);
     }
 }
 
 fn set_damage_to_player(
     player: &mut Player, dual: bool, entity: Entity,
-    game_info: &mut GameInfo, star_manager: &mut StarManager, attack_manager: &mut AttackManager,
-    sound_queue: &mut SoundQueue,
+    game_info: &mut GameInfo, star_manager: &mut StarManager, appearance_manager: &mut AppearanceManager,
+    attack_manager: &mut AttackManager, sound_queue: &mut SoundQueue,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
-    if crash_player(player, dual, sound_queue, entity, world, commands) {
-        if game_info.capture_state != CaptureState::Recapturing {
-            star_manager.set_stop(true);
-        }
-        game_info.crash_player(true, attack_manager);
-    } else {
-        game_info.crash_player(false, attack_manager);
+    let died = crash_player(player, dual, sound_queue, entity, world, commands);
+    if died && game_info.capture_state != CaptureState::Recapturing {
+        star_manager.set_stop(true);
     }
+    game_info.crash_player(died, appearance_manager, attack_manager);
 }
 
 #[system]
@@ -398,6 +396,7 @@ fn set_damage_to_player(
 pub fn coll_check_player_eneshot(
     world: &mut SubWorld,
     #[resource] star_manager: &mut StarManager,
+    #[resource] appearance_manager: &mut AppearanceManager,
     #[resource] attack_manager: &mut AttackManager,
     #[resource] sound_queue: &mut SoundQueue,
     #[resource] game_info: &mut GameInfo,
@@ -427,7 +426,7 @@ pub fn coll_check_player_eneshot(
 
         let (mut subworld1, mut subworld2) = world.split::<&mut Player>();
         let player = <&mut Player>::query().get_mut(&mut subworld1, player_entity).unwrap();
-        set_damage_to_player(player, dual, player_entity, game_info, star_manager, attack_manager, sound_queue, &mut subworld2, commands);
+        set_damage_to_player(player, dual, player_entity, game_info, star_manager, appearance_manager, attack_manager, sound_queue, &mut subworld2, commands);
     }
 }
 
