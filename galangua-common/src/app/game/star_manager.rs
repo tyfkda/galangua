@@ -11,13 +11,14 @@ const STAR_COUNT: usize = 256;
 const MAX_SPEED: i32 = ONE;
 const REVERSE_SPEED: i32 = -3 * ONE;
 
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 enum State {
     Stop,
     Normal,
     Capturing,
 }
 
+#[derive(Clone)]
 pub struct StarManager {
     state: State,
     frame_count: i32,
@@ -104,6 +105,7 @@ impl StarManager {
     }
 }
 
+#[derive(Clone)]
 struct Star {
     pos: Vec2I,
     t: i32,

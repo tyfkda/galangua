@@ -27,6 +27,7 @@ pub struct GalanguaEcsApp<S: SystemTrait> {
     pressed_key: Option<VKey>,
     state: AppState,
     pad: Pad,
+    star_manager: StarManager,
     score_holder: ScoreHolder,
 
     #[cfg(debug_assertions)]
@@ -46,6 +47,7 @@ impl<S: SystemTrait> GalanguaEcsApp<S> {
             pressed_key: None,
             state: AppState::Title(Title::new()),
             pad: Pad::default(),
+            star_manager: StarManager::default(),
             score_holder: ScoreHolder::new(high_score),
 
             #[cfg(debug_assertions)]
@@ -56,7 +58,7 @@ impl<S: SystemTrait> GalanguaEcsApp<S> {
     }
 
     fn start_game(&mut self) {
-        self.state = AppState::Game(Game::new(self.score_holder.high_score));
+        self.state = AppState::Game(Game::new(&self.star_manager, self.score_holder.high_score));
     }
 
     fn back_to_title(&mut self) {
@@ -64,6 +66,10 @@ impl<S: SystemTrait> GalanguaEcsApp<S> {
             if let Some(score_holder) = game_state.get_score_holder() {
                 self.score_holder = score_holder;
             }
+            if let Some(star_manager) = game_state.get_star_manager() {
+                self.star_manager = star_manager.clone();  // Write back.
+            }
+            self.star_manager.set_stop(false);
             self.state = AppState::Title(Title::new());
 
             #[cfg(debug_assertions)]
@@ -114,7 +120,7 @@ impl<R: RendererTrait, S: SystemTrait> AppTrait<R> for GalanguaEcsApp<S> {
 
         match &mut self.state {
             AppState::Title(title) => {
-                if let Some(value) = title.update(&self.pad) {
+                if let Some(value) = title.update(&self.pad, &mut self.star_manager) {
                     if value {
                         self.start_game();
                     } else {
@@ -134,7 +140,7 @@ impl<R: RendererTrait, S: SystemTrait> AppTrait<R> for GalanguaEcsApp<S> {
 
     fn draw(&mut self, renderer: &mut R) {
         match &self.state {
-            AppState::Title(title) => title.draw(&self.score_holder, renderer),
+            AppState::Title(title) => title.draw(&self.star_manager, &self.score_holder, renderer),
             AppState::Game(game) => game.draw(renderer),
         }
     }
@@ -151,8 +157,10 @@ impl Title {
         }
     }
 
-    fn update(&mut self, pad: &Pad) -> Option<bool> {
+    fn update(&mut self, pad: &Pad, star_manager: &mut StarManager) -> Option<bool> {
         self.frame_count = self.frame_count.wrapping_add(1);
+
+        star_manager.update();
 
         if pad.is_trigger(PadBit::A) {
             return Some(true);
@@ -160,9 +168,11 @@ impl Title {
         None
     }
 
-    fn draw<R: RendererTrait>(&self, score_holder: &ScoreHolder, renderer: &mut R) {
+    fn draw<R: RendererTrait>(&self, star_manager: &StarManager, score_holder: &ScoreHolder, renderer: &mut R) {
         renderer.set_draw_color(0, 0, 0);
         renderer.clear();
+
+        star_manager.draw(renderer);
 
         renderer.set_texture_color_mod("font", 255, 255, 255);
         renderer.draw_str("font", 10 * 8, 8 * 8, "GALANGUA");
@@ -181,7 +191,7 @@ struct Game {
 }
 
 impl Game {
-    fn new(high_score: u32) -> Self {
+    fn new(star_manager: &StarManager, high_score: u32) -> Self {
         let schedule = Schedule::builder()
             .add_system(update_game_controller_system())
             .add_system(move_star_system())
@@ -206,7 +216,7 @@ impl Game {
             .build();
 
         let mut resources = Resources::default();
-        resources.insert(StarManager::default());
+        resources.insert(star_manager.clone());
         resources.insert(StageIndicator::default());
         resources.insert(Formation::default());
         resources.insert(AppearanceManager::default());
@@ -254,5 +264,9 @@ impl Game {
     fn get_score_holder(&self) -> Option<ScoreHolder> {
         self.resources.get::<GameInfo>()
             .map(|game_info| game_info.score_holder.clone())
+    }
+
+    fn get_star_manager<'a>(&'a self) -> Option<legion::systems::Fetch<'_, StarManager>> {
+        self.resources.get::<StarManager>()
     }
 }
