@@ -116,7 +116,7 @@ pub fn set_enemy_damage(
 
         create_enemy_explosion_effect(&pos, commands);
 
-        game_info.score_holder.add_score(point);
+        game_info.add_score(point, sound_queue);
         game_info.decrement_alive_enemy();
     }
 }

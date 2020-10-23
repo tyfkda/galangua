@@ -260,6 +260,24 @@ impl GameInfo {
         self.game_state == GameState::Playing && self.stage_state == StageState::RUSH
     }
 
+    pub fn add_score(&mut self, add: u32, sound_queue: &mut SoundQueue) {
+        let before = self.score_holder.score;
+        self.score_holder.add_score(add);
+        let ext = if before < EXTEND_FIRST_SCORE {
+            EXTEND_FIRST_SCORE
+        } else {
+            (before + EXTEND_AFTER_SCORE - 1) / EXTEND_AFTER_SCORE * EXTEND_AFTER_SCORE
+        };
+        if before + add >= ext {
+            self.extend_ship(sound_queue);
+        }
+    }
+
+    fn extend_ship(&mut self, sound_queue: &mut SoundQueue) {
+        self.left_ship += 1;
+        sound_queue.push_play_se(CH_JINGLE, SE_EXTEND_SHIP);
+    }
+
     fn start_next_stage(
         &mut self, stage: u16, captured_fighter: Option<FormationIndex>, formation: &mut Formation,
         appearance_manager: &mut AppearanceManager, attack_manager: &mut AttackManager,
