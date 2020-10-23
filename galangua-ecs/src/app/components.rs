@@ -105,6 +105,7 @@ pub enum OwlCaptureAttackPhase {
 pub enum OwlState {
     Appearance,
     MoveToFormation,
+    Assault(u32),
     Formation,
     TrajAttack,
     CaptureAttack(OwlCaptureAttackPhase),

@@ -217,6 +217,7 @@ pub fn move_zako(
 }
 
 #[system(for_each)]
+#[read_component(Player)]
 #[write_component(TractorBeam)]
 #[write_component(Enemy)]
 #[write_component(Zako)]

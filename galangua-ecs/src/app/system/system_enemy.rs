@@ -129,7 +129,8 @@ pub fn do_move_zako(
             if !zako.base.update_trajectory(posture, speed, &mut accessor) {
                 zako.base.traj = None;
                 if enemy.formation_index.1 >= Y_COUNT as u8 {  // Assault
-                    set_zako_assault(zako, speed, world);
+                    zako.base.set_assault(speed, world);
+                    zako.state = ZakoState::Assault(0);
                 } else {
                     zako.state = ZakoState::MoveToFormation;
                 }
@@ -166,7 +167,7 @@ pub fn do_move_zako(
         }
         ZakoState::Assault(phase) => {
             let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
-            if let Some(new_phase) = update_assault(zako, posture, phase, entity, game_info, commands) {
+            if let Some(new_phase) = zako.base.update_assault(posture, phase, entity, game_info, commands) {
                 zako.state = ZakoState::Assault(new_phase);
             }
             forward(posture, speed);
@@ -175,55 +176,6 @@ pub fn do_move_zako(
             // Controlled by leader.
         }
     }
-}
-
-fn set_zako_assault(zako: &mut Zako, speed: &mut Speed, world: &SubWorld) {
-    /*let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-    let target_pos = [
-        Some(*accessor.get_player_pos()),
-        accessor.get_dual_player_pos(),
-    ];
-    let count = target_pos.iter().flat_map(|x| x).count();
-    let target: &Vec2I = target_pos.iter()
-        .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();*/
-
-    for (_player, posture) in <(&Player, &Posture)>::query().iter(world) {
-        zako.base.target_pos = posture.0.clone();
-        speed.1 = 0;
-        break;
-    }
-
-    zako.state = ZakoState::Assault(0);
-}
-
-fn update_assault(zako: &mut Zako, posture: &mut Posture, phase: u32, entity: Entity, game_info: &mut GameInfo, commands: &mut CommandBuffer) -> Option<u32> {
-    let pos = &mut posture.0;
-    let angle = &mut posture.1;
-    match phase {
-        0 => {
-            let target = &zako.base.target_pos;
-            let diff = target - pos;
-
-            const DLIMIT: i32 = 5 * ONE;
-            let target_angle = atan2_lut(-diff.y, diff.x);
-            let d = diff_angle(target_angle, *angle);
-            if d < -DLIMIT {
-                *angle -= DLIMIT;
-            } else if d > DLIMIT {
-                *angle += DLIMIT;
-            } else {
-                *angle += d;
-                return Some(1);
-            }
-        }
-        1 | _ => {
-            if pos.y >= (HEIGHT + 8) * ONE {
-                commands.remove(entity);
-                game_info.decrement_alive_enemy();
-            }
-        }
-    }
-    None
 }
 
 pub fn zako_start_attack(zako: &mut Zako, enemy: &mut Enemy, posture: &Posture) {
@@ -361,6 +313,36 @@ impl EnemyBase {
         false
     }
 
+    pub fn update_assault(&mut self, posture: &mut Posture, phase: u32, entity: Entity, game_info: &mut GameInfo, commands: &mut CommandBuffer) -> Option<u32> {
+        let pos = &mut posture.0;
+        let angle = &mut posture.1;
+        match phase {
+            0 => {
+                let target = &self.target_pos;
+                let diff = target - pos;
+
+                const DLIMIT: i32 = 5 * ONE;
+                let target_angle = atan2_lut(-diff.y, diff.x);
+                let d = diff_angle(target_angle, *angle);
+                if d < -DLIMIT {
+                    *angle -= DLIMIT;
+                } else if d > DLIMIT {
+                    *angle += DLIMIT;
+                } else {
+                    *angle += d;
+                    return Some(1);
+                }
+            }
+            1 | _ => {
+                if pos.y >= (HEIGHT + 8) * ONE {
+                    commands.remove(entity);
+                    game_info.decrement_alive_enemy();
+                }
+            }
+        }
+        None
+    }
+
     pub fn update_attack<A: EneBaseAccessorTrait>(&mut self, pos: &Vec2I, accessor: &mut A) -> bool {
         self.attack_frame_count += 1;
 
@@ -386,6 +368,23 @@ impl EnemyBase {
         self.count = 0;
         self.attack_frame_count = 0;
         self.traj = Some(traj);
+    }
+
+    pub fn set_assault(&mut self, speed: &mut Speed, world: &SubWorld) {
+        /*let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let target_pos = [
+            Some(*accessor.get_player_pos()),
+            accessor.get_dual_player_pos(),
+        ];
+        let count = target_pos.iter().flat_map(|x| x).count();
+        let target: &Vec2I = target_pos.iter()
+            .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();*/
+
+        for (_player, posture) in <(&Player, &Posture)>::query().iter(world) {
+            self.target_pos = posture.0.clone();
+            speed.1 = 0;
+            break;
+        }
     }
 }
 

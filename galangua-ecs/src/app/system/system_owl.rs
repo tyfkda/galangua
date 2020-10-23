@@ -5,7 +5,7 @@ use legion::world::SubWorld;
 use galangua_common::app::consts::*;
 use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
-use galangua_common::app::game::formation_table::X_COUNT;
+use galangua_common::app::game::formation_table::{X_COUNT, Y_COUNT};
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::tractor_beam_table::*;
 use galangua_common::app::game::traj::Traj;
@@ -53,7 +53,13 @@ pub fn do_move_owl(
             let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
             if !owl.base.update_trajectory(posture, speed, &mut accessor) {
                 owl.base.traj = None;
-                owl.state = OwlState::MoveToFormation;
+                let enemy = <&Enemy>::query().get(world, entity).unwrap();
+                if enemy.formation_index.1 >= Y_COUNT as u8 {  // Assault
+                    owl.base.set_assault(speed, world);
+                    owl.state = OwlState::Assault(0);
+                } else {
+                    owl.state = OwlState::MoveToFormation;
+                }
             }
         }
         OwlState::Formation => {
@@ -83,6 +89,13 @@ pub fn do_move_owl(
             if result {
                 set_to_formation(owl, entity, world, commands);
             }
+        }
+        OwlState::Assault(phase) => {
+            let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
+            if let Some(new_phase) = owl.base.update_assault(posture, phase, entity, game_info, commands) {
+                owl.state = OwlState::Assault(new_phase);
+            }
+            forward(posture, speed);
         }
     }
 }
