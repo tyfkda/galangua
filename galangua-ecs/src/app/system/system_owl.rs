@@ -72,8 +72,9 @@ pub fn do_move_owl(
             posture.1 -= clamp(posture.1, -ang, ang);
         }
         OwlState::TrajAttack => {
-            let (enemy, posture) = <(&Enemy, &mut Posture)>::query().get_mut(world, entity).unwrap();
-            update_attack_traj(owl, enemy, posture, speed, formation, eneshot_spawner, sound_queue, game_info);
+            let (subworld1, mut subworld2) = world.split::<(&Enemy, &Troops)>();
+            let (enemy, troops_opt) = <(&Enemy, Option<&Troops>)>::query().get(&subworld1, entity).unwrap();
+            update_attack_traj(owl, entity, enemy, speed, troops_opt, formation, eneshot_spawner, sound_queue, game_info, &mut subworld2);
         }
         OwlState::CaptureAttack(phase) => {
             let (mut subworld1, mut subworld2) = world.split::<&mut TractorBeam>();
@@ -150,13 +151,29 @@ pub fn owl_start_attack(
 }
 
 fn update_attack_traj(
-    owl: &mut Owl, enemy: &Enemy, posture: &mut Posture, speed: &mut Speed,
+    owl: &mut Owl, entity: Entity, enemy: &Enemy, speed: &mut Speed, troops_opt: Option<&Troops>,
     formation: &Formation, eneshot_spawner: &mut EneShotSpawner,
     sound_queue: &mut SoundQueue,
     game_info: &GameInfo,
+    world: &mut SubWorld,
 ) {
+    let result = {
+        let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
+        owl.base.update_attack(&<&mut Posture>::query().get_mut(world, entity).unwrap().0, &mut accessor)
+     };
+     if result {
+        // Troops fire bullet, too.
+        if let Some(troops) = troops_opt {
+            for troop in troops.members.iter().flatten() {
+                if let Ok(troop_pos) = <&Posture>::query().get(world, troop.entity) {
+                    eneshot_spawner.push(&troop_pos.0);
+                }
+            }
+        }
+    }
+
     let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
-    owl.base.update_attack(&posture.0, &mut accessor);
+    let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
     if !owl.base.update_trajectory(posture, speed, &mut accessor) {
         owl.base.traj = None;
         if game_info.is_rush() {
