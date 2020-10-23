@@ -10,6 +10,7 @@ use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::score_holder::ScoreHolder;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::{AppTrait, RendererTrait, SystemTrait, VKey};
+use galangua_common::util::fps_calc::{FpsCalc, TimerTrait};
 use galangua_common::util::pad::{Pad, PadBit};
 
 use super::components::*;
@@ -22,13 +23,14 @@ enum AppState {
     Game(Game),
 }
 
-pub struct GalanguaEcsApp<S: SystemTrait> {
+pub struct GalanguaEcsApp<T: TimerTrait, S: SystemTrait> {
     system: S,
     pressed_key: Option<VKey>,
     state: AppState,
     pad: Pad,
     star_manager: StarManager,
     score_holder: ScoreHolder,
+    fps_calc: FpsCalc<T>,
 
     #[cfg(debug_assertions)]
     paused: bool,
@@ -36,8 +38,8 @@ pub struct GalanguaEcsApp<S: SystemTrait> {
     phantom_data: PhantomData<S>,
 }
 
-impl<S: SystemTrait> GalanguaEcsApp<S> {
-    pub fn new(system: S) -> Self {
+impl<T: TimerTrait, S: SystemTrait> GalanguaEcsApp<T, S> {
+    pub fn new(timer: T, system: S) -> Self {
         let high_score = system.get_u32(&KEY_HIGH_SCORE)
                 .or(Some(DEFAULT_HIGH_SCORE))
                 .unwrap();
@@ -49,6 +51,7 @@ impl<S: SystemTrait> GalanguaEcsApp<S> {
             pad: Pad::default(),
             star_manager: StarManager::default(),
             score_holder: ScoreHolder::new(high_score),
+            fps_calc: FpsCalc::new(timer),
 
             #[cfg(debug_assertions)]
             paused: false,
@@ -78,7 +81,7 @@ impl<S: SystemTrait> GalanguaEcsApp<S> {
     }
 }
 
-impl<R: RendererTrait, S: SystemTrait> AppTrait<R> for GalanguaEcsApp<S> {
+impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaEcsApp<T, S> {
     fn on_key(&mut self, vkey: VKey, down: bool) {
         self.pad.on_key(vkey, down);
         if down {
@@ -142,6 +145,14 @@ impl<R: RendererTrait, S: SystemTrait> AppTrait<R> for GalanguaEcsApp<S> {
         match &self.state {
             AppState::Title(title) => title.draw(&self.star_manager, &self.score_holder, renderer),
             AppState::Game(game) => game.draw(renderer),
+        }
+
+        self.fps_calc.update();
+
+        #[cfg(debug_assertions)]
+        {
+            renderer.set_texture_color_mod("font", 128, 128, 128);
+            renderer.draw_str("font", 23 * 8, 0 * 8, &format!("FPS{:2}", self.fps_calc.fps()));
         }
     }
 }
