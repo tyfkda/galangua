@@ -110,6 +110,7 @@ pub enum OwlState {
     TrajAttack,
     CaptureAttack(OwlCaptureAttackPhase),
 }
+#[derive(PartialEq)]
 pub enum OwlCapturingState {
     None,
     Attacking,

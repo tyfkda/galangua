@@ -222,6 +222,14 @@ pub fn move_zako(
 }
 
 #[system(for_each)]
+pub fn animate_zako(
+    enemy: &mut Enemy, _zako: &Zako, sprite: &mut SpriteDrawable,
+    #[resource] game_info: &mut GameInfo,
+) {
+    do_animate_zako(enemy.enemy_type, sprite, game_info.frame_count);
+}
+
+#[system(for_each)]
 #[read_component(Player)]
 #[write_component(TractorBeam)]
 #[write_component(Enemy)]
@@ -237,6 +245,14 @@ pub fn move_owl(
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
     do_move_owl(owl, *entity, speed, formation, eneshot_spawner, sound_queue, game_info, world, commands);
+}
+
+#[system(for_each)]
+pub fn animate_owl(
+    owl: &Owl, sprite: &mut SpriteDrawable,
+    #[resource] game_info: &mut GameInfo,
+) {
+    do_animate_owl(owl, sprite, game_info.frame_count);
 }
 
 #[system(for_each)]

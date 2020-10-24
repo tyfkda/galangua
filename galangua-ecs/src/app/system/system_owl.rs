@@ -27,6 +27,8 @@ use super::system_player::{
 
 const LIFE: u32 = 2;
 
+const OWL_SPRITE_NAMES: [&str; 4] = ["cpp11", "cpp12", "cpp21", "cpp22"];
+
 // Owl
 
 pub fn create_owl(traj: Traj) -> Owl {
@@ -495,6 +497,13 @@ fn start_recapturing(
 
     game_info.start_recapturing();
     game_info.decrement_alive_enemy();
+}
+
+pub fn do_animate_owl(owl: &Owl, sprite: &mut SpriteDrawable, frame_count: u32) {
+    let pat = ((frame_count >> 5) & 1) as usize;
+    let pat = if owl.capturing_state != OwlCapturingState::None { 1 } else { pat };
+    let pat = if owl.life <= 1 { pat + 2 } else { pat };
+    sprite.sprite_name = OWL_SPRITE_NAMES[pat as usize];
 }
 
 // Tractor Beam

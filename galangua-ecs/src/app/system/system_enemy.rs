@@ -22,6 +22,9 @@ use crate::app::resources::{EneShotSpawner, GameInfo, SoundQueue};
 use super::system_effect::*;
 use super::system_owl::set_owl_damage;
 
+const BEE_SPRITE_NAMES: [&str; 2] = ["gopher1", "gopher2"];
+const BUTTERFLY_SPRITE_NAMES: [&str; 2] = ["dman1", "dman2"];
+
 struct Vtable {
     rush_traj_table: &'static [TrajCommand],
 }
@@ -260,6 +263,16 @@ fn calc_zako_point(enemy_type: EnemyType, is_formation: bool) -> u32 {
         }
         _ => { panic!("Illegal"); }
     }
+}
+
+pub fn do_animate_zako(enemy_type: EnemyType, sprite: &mut SpriteDrawable, frame_count: u32) {
+    let pat = ((frame_count >> 5) & 1) as usize;
+    sprite.sprite_name = match enemy_type {
+        EnemyType::Bee => BEE_SPRITE_NAMES[pat],
+        EnemyType::Butterfly => BUTTERFLY_SPRITE_NAMES[pat],
+        EnemyType::CapturedFighter => "rustacean_captured",
+        _ => { panic!("Illegal"); }
+    };
 }
 
 //
