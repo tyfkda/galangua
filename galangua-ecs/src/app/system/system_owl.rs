@@ -664,7 +664,7 @@ fn on_player_captured(
         SpriteDrawable {sprite_name: "rustacean_captured", offset: Vec2I::new(-8, -8)},
     ));
 
-    let mut troops = Troops {members: Default::default()};
+    let mut troops = Troops {members: Default::default(), copy_angle_to_troops: false};
     add_captured_player_to_troops(&mut troops, captured, &Vec2I::new(0, 16 * ONE));
     commands.add_component(owner, troops);
 
@@ -730,7 +730,7 @@ fn choose_troops(
         (FormationIndex(leader_fi.0 + 1, leader_fi.1 + 1), true),
         (FormationIndex(leader_fi.0, leader_fi.1 - 1), false),
     ];
-    let mut troops = Troops { members: Default::default() };
+    let mut troops = Troops { members: Default::default(), copy_angle_to_troops: true };
     let mut i = 0;
     for (enemy, zako, posture, zako_entity) in <(&mut Enemy, &mut Zako, &Posture, Entity)>::query().iter_mut(world) {
         for (index, is_guard) in indices.iter() {
@@ -755,7 +755,9 @@ pub fn update_troops(
     for member in troops.members.iter().flat_map(|x| x) {
         if let Ok(member_pos) = <&mut Posture>::query().get_mut(world, member.entity) {
             member_pos.0 = &pos + &member.offset;
-            member_pos.1 = angle;
+            if troops.copy_angle_to_troops {
+                member_pos.1 = angle;
+            }
         }
     }
 }

@@ -152,6 +152,7 @@ pub struct TractorBeam {
 const MAX_TROOPS: usize = 3;
 pub struct Troops {
     pub members: [Option<Troop>; MAX_TROOPS],
+    pub copy_angle_to_troops: bool,
 }
 pub struct Troop {
     pub entity: Entity,
