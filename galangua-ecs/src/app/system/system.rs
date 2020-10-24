@@ -80,7 +80,7 @@ pub fn move_formation(#[resource] formation: &mut Formation) {
 }
 
 #[system]
-#[read_component(Zako)]
+#[read_component(Enemy)]
 pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manager: &mut AppearanceManager, #[resource] attack_manager: &mut AttackManager, #[resource] formation: &mut Formation, #[resource] game_info: &mut GameInfo, commands: &mut CommandBuffer) {
     if appearance_manager.done {
         return;
@@ -123,8 +123,8 @@ pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manag
 struct SysAppearanceManagerAccessor<'a, 'b>(&'a mut SubWorld<'b>);
 impl<'a, 'b> AppearanceManagerAccessor for SysAppearanceManagerAccessor<'a, 'b> {
     fn is_stationary(&self) -> bool {
-        <&Zako>::query().iter(self.0)
-            .all(|x| x.state == ZakoState::Formation)
+        <&Enemy>::query().iter(self.0)
+            .all(|x| x.is_formation)
     }
 }
 
