@@ -198,6 +198,19 @@ pub fn player_coll_rect() -> CollRect {
     CollRect { offset: Vec2I::new(-4, -4), size: Vec2I::new(8, 8) }
 }
 
+pub fn enum_player_target_pos(world: &SubWorld) -> Vec<Vec2I> {
+    let mut target_pos = Vec::new();
+    for (player, posture) in <(&Player, &Posture)>::query().iter(world) {
+        target_pos.push(posture.0.clone());
+        if let Some(dual) = player.dual {
+            if let Ok(dual_posture) = <&Posture>::query().get(world, dual) {
+                target_pos.push(dual_posture.0.clone());
+            }
+        }
+    }
+    target_pos
+}
+
 // MyShot
 
 pub fn do_fire_myshot(player: &Player, posture: &Posture, entity: Entity, commands: &mut CommandBuffer) -> bool {

@@ -1,6 +1,8 @@
 use legion::*;
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
+use rand::{Rng, SeedableRng};
+use rand_xoshiro::Xoshiro128Plus;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::attack_manager::AttackManager;
@@ -21,6 +23,7 @@ use crate::app::resources::{EneShotSpawner, GameInfo, SoundQueue};
 
 use super::system_effect::*;
 use super::system_owl::set_owl_damage;
+use super::system_player::enum_player_target_pos;
 
 const BEE_SPRITE_NAMES: [&str; 2] = ["gopher1", "gopher2"];
 const BUTTERFLY_SPRITE_NAMES: [&str; 2] = ["dman1", "dman2"];
@@ -394,20 +397,15 @@ impl EnemyBase {
     }
 
     pub fn set_assault(&mut self, speed: &mut Speed, world: &SubWorld) {
-        /*let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-        let target_pos = [
-            Some(*accessor.get_player_pos()),
-            accessor.get_dual_player_pos(),
-        ];
-        let count = target_pos.iter().flat_map(|x| x).count();
-        let target: &Vec2I = target_pos.iter()
-            .flat_map(|x| x).nth(rng.gen_range(0, count)).unwrap();*/
+        let target_pos = enum_player_target_pos(world);
 
-        for (_player, posture) in <(&Player, &Posture)>::query().iter(world) {
-            self.target_pos = posture.0.clone();
-            speed.1 = 0;
-            break;
-        }
+        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let count = target_pos.iter().count();
+        let target: &Vec2I = target_pos.iter()
+            .nth(rng.gen_range(0, count)).unwrap();
+
+        self.target_pos = target.clone();
+        speed.1 = 0;
     }
 }
 

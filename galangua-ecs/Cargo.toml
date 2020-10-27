@@ -8,6 +8,8 @@ edition = "2018"
 
 [dependencies]
 legion = { version = "0.3.1", default-features = false, features = ["codegen"], optional = true }
+rand = { version = "0.7", features = ["wasm-bindgen"] }
+rand_xoshiro = "0.4.0"
 
 galangua-common = { path = "../galangua-common" }
 

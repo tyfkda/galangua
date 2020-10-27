@@ -1,6 +1,8 @@
 use legion::*;
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
+use rand::{Rng, SeedableRng};
+use rand_xoshiro::Xoshiro128Plus;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_manager::AppearanceManager;
@@ -15,7 +17,7 @@ use galangua_common::framework::SystemTrait;
 use galangua_common::util::math::{atan2_lut, calc_velocity, clamp, ANGLE, ONE};
 
 use super::components::*;
-use super::system::system_player::{enable_player_shot, restart_player};
+use super::system::system_player::{enable_player_shot, enum_player_target_pos, restart_player};
 
 const WAIT1: u32 = 60;
 
@@ -344,23 +346,24 @@ impl EneShotSpawner {
 
     fn process_queue(&mut self, game_info: &GameInfo, world: &SubWorld, commands: &mut CommandBuffer) {
         let shot_count = <&EneShot>::query().iter(world).count();
-        let player_pos_opt = <(&Player, &Posture)>::query().iter(world)
-            .find(|_| true)
-            .map(|(_, posture)| posture.0.clone());
-        if let Some(target_pos) = player_pos_opt {
-            for (pos, _i) in self.queue.iter().zip(shot_count..MAX_ENE_SHOT_COUNT) {
-                let d = &target_pos - &pos;
-                let angle = atan2_lut(d.y, -d.x);  // 0=down
-                let limit = ANGLE * ONE * 30 / 360;
-                let angle = clamp(angle, -limit, limit);
-                let vel = calc_velocity(angle + ANGLE * ONE / 2, calc_ene_shot_speed(game_info.stage));
-                commands.push((
-                    EneShot(vel),
-                    Posture(*pos, 0),
-                    CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) },
-                    SpriteDrawable { sprite_name: "ene_shot", offset: Vec2I::new(-2, -4) },
-                ));
-            }
+        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let target_pos = enum_player_target_pos(world);
+        let count = target_pos.iter().count();
+        for (pos, _i) in self.queue.iter().zip(shot_count..MAX_ENE_SHOT_COUNT) {
+            let target: &Vec2I = target_pos.iter()
+                .nth(rng.gen_range(0, count)).unwrap();
+
+            let d = target - &pos;
+            let angle = atan2_lut(d.y, -d.x);  // 0=down
+            let limit = ANGLE * ONE * 30 / 360;
+            let angle = clamp(angle, -limit, limit);
+            let vel = calc_velocity(angle + ANGLE * ONE / 2, calc_ene_shot_speed(game_info.stage));
+            commands.push((
+                EneShot(vel),
+                Posture(*pos, 0),
+                CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) },
+                SpriteDrawable { sprite_name: "ene_shot", offset: Vec2I::new(-2, -4) },
+            ));
         }
     }
 }
