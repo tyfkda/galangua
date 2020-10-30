@@ -278,13 +278,13 @@ fn run_capture_attack(
                 let offset = Vec2I::new(target_pos.x - pos.x, (-32 - (HEIGHT + 8)) * ONE);
                 *pos += &offset;
 
+                game_info.end_capture_attack();
                 if game_info.is_rush() {
                     rush_attack(owl, enemy, posture);
                     sound_queue.push_play_se(CH_ATTACK, SE_ATTACK_START);
                 } else {
                     owl.state = OwlState::MoveToFormation;
                     owl.capturing_state = OwlCapturingState::Failed;
-                    game_info.end_capture_attack();
                 }
             }
         }

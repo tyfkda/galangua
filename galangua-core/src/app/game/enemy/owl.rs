@@ -268,13 +268,13 @@ impl Owl {
             let offset = Vec2I::new(target_pos.x - self.info.pos.x, (-32 - (HEIGHT + 8)) * ONE);
             self.info.pos += &offset;
 
+            accessor.push_event(EventType::EndCaptureAttack);
             if accessor.is_rush() {
                 self.rush_attack();
                 accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
             } else {
                 self.set_state(OwlState::MoveToFormation);
                 self.capturing_state = CapturingState::Failed;
-                accessor.push_event(EventType::EndCaptureAttack);
             }
         }
     }
