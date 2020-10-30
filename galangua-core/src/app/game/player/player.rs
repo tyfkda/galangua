@@ -230,7 +230,7 @@ impl Collidable for Player {
     fn get_collbox(&self) -> Option<CollBox> {
         if self.state == State::Normal {
             Some(CollBox {
-                top_left: &round_vec(&self.pos) - &Vec2I::new(4, 4),
+                top_left: &round_vec(&self.pos) + &Vec2I::new(-4, -4),
                 size: Vec2I::new(8, 8),
             })
         } else {

@@ -58,7 +58,7 @@ impl EnemyInfo {
     //impl Collidable for EnemyBase
     pub(super) fn get_collbox(&self) -> CollBox {
         CollBox {
-            top_left: &round_vec(&self.pos) - &Vec2I::new(6, 6),
+            top_left: &round_vec(&self.pos) + &Vec2I::new(-6, -6),
             size: Vec2I::new(12, 12),
         }
     }

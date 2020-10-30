@@ -30,9 +30,8 @@ impl EneShot {
 
 impl Collidable for EneShot {
     fn get_collbox(&self) -> Option<CollBox> {
-        let pos = round_vec(&self.pos);
         Some(CollBox {
-            top_left: &pos - &Vec2I::new(1, 4),
+            top_left: &round_vec(&self.pos) + &Vec2I::new(-1, -4),
             size: Vec2I::new(1, 8),
         })
     }
