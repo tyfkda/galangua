@@ -1,5 +1,7 @@
 use crate::app::game::EarnedPointType;
 
+pub const FLASH_ENEMY_FRAME: u32 = 2;
+
 pub const FLASH_ENEMY_SPRITE_NAMES: [&str; 4] = [
     "gopher_flash",
     "dman_flash",

@@ -10,6 +10,7 @@ use crate::app::game::player::{MyShot, Player};
 use crate::app::util::unsafe_util::peep;
 
 use galangua_common::app::consts::*;
+use galangua_common::app::game::effect_table::FLASH_ENEMY_FRAME;
 use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, FormationIndex};
@@ -313,7 +314,7 @@ impl GameManager {
                 }
                 EventType::EnemyExplosion(pos, angle, enemy_type) => {
                     self.spawn_effect(Effect::create_flash_enemy(&pos, angle, enemy_type));
-                    self.spawn_effect(Effect::create_enemy_explosion(&pos));
+                    self.spawn_effect(Effect::create_enemy_explosion(&pos, FLASH_ENEMY_FRAME));
                 }
                 EventType::PlayerExplosion(pos) => {
                     self.spawn_effect(Effect::create_player_explosion(&pos));

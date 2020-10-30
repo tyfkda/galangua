@@ -6,7 +6,7 @@ use rand_xoshiro::Xoshiro128Plus;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::attack_manager::AttackManager;
-use galangua_common::app::game::effect_table::to_earned_point_type;
+use galangua_common::app::game::effect_table::{to_earned_point_type, FLASH_ENEMY_FRAME};
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::formation_table::{X_COUNT, Y_COUNT};
 use galangua_common::app::game::star_manager::StarManager;
@@ -114,13 +114,14 @@ pub fn set_enemy_damage(
         }
     };
     if point > 0 {
-        let pos = <&Posture>::query().get(world, entity).unwrap().0;
+        let posture = <&Posture>::query().get(world, entity).unwrap();
 
         if let Some(point_type) = to_earned_point_type(point) {
-            create_earned_piont_effect(point_type, &pos, commands);
+            create_earned_piont_effect(point_type, &posture.0, commands);
         }
 
-        create_enemy_explosion_effect(&pos, commands);
+        create_flash_enemy_effect(&posture.0, posture.1, enemy_type, commands);
+        create_enemy_explosion_effect(&posture.0, FLASH_ENEMY_FRAME, commands);
 
         game_info.add_score(point, sound_queue);
         game_info.decrement_alive_enemy();

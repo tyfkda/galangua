@@ -447,12 +447,8 @@ pub fn coll_check_player_eneshot(
 }
 
 #[system(for_each)]
-pub fn move_sequential_anime(anime: &mut SequentialSpriteAnime, drawable: &mut SpriteDrawable, entity: &Entity, commands: &mut CommandBuffer) {
-    if let Some(sprite_name) = update_seqanime(anime) {
-        drawable.sprite_name = sprite_name;
-    } else {
-        commands.remove(*entity);
-    }
+pub fn move_sequential_anime(anime: &mut SequentialSpriteAnime, drawable: Option<&mut SpriteDrawable>, entity: &Entity, commands: &mut CommandBuffer) {
+    update_seqanime(anime, drawable, *entity, commands);
 }
 
 #[system]

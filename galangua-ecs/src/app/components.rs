@@ -164,7 +164,13 @@ pub struct Troop {
 pub struct EneShot(pub Vec2I);
 
 //
-pub struct SequentialSpriteAnime(pub &'static [&'static str], pub u32, pub u32);
+pub struct SequentialSpriteAnime {
+    pub sprites: &'static [&'static str],
+    pub frame_wait: u32,
+    pub delay: u32,
+    pub offset: Vec2I,
+    pub count: u32,
+}
 
 //
 pub struct SpriteDrawable { pub sprite_name: &'static str, pub offset: Vec2I }
