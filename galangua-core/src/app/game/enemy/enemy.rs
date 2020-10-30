@@ -34,7 +34,7 @@ pub trait Enemy: Collidable {
     fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool);
 }
 
-////////////////////////////////////////////////
+//================================================
 
 pub fn create_enemy(
     enemy_type: EnemyType, pos: &Vec2I, angle: i32, speed: i32,

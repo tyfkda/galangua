@@ -106,7 +106,7 @@ impl RendererTrait for WasmRenderer {
 
     fn set_texture_color_mod(&mut self, _tex_name: &str, _r: u8, _g: u8, _b: u8) {}
 
-    fn set_sprite_texture_color_mod(&mut self, sprite_name: &str, r: u8, g: u8, b: u8) {}
+    fn set_sprite_texture_color_mod(&mut self, _sprite_name: &str, _r: u8, _g: u8, _b: u8) {}
 
     fn draw_str(&mut self, tex_name: &str, x: i32, y: i32, text: &str) {
         let image = self.images.borrow();

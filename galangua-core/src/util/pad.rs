@@ -95,7 +95,7 @@ mod tests {
 
     #[test]
     fn test_trigger() {
-        let mut pad = Pad::new();
+        let mut pad = Pad::default();
         pad.on_key(VKey::Space, true);
         pad.update();
 

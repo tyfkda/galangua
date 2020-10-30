@@ -144,7 +144,7 @@ impl EnemyBase {
         info.vangle = 0;
     }
 
-    //// Update
+    // Update
 
     pub(super) fn update_trajectory(&mut self, info: &mut EnemyInfo, accessor: &mut dyn Accessor) -> bool {
         if let Some(traj) = &mut self.traj {

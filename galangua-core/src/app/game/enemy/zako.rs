@@ -80,7 +80,7 @@ impl Zako {
         self.state = state;
     }
 
-    //// update
+    // update
 
     fn dispatch_update(&mut self, accessor: &mut dyn Accessor) {
         match self.state {
@@ -146,7 +146,7 @@ impl Zako {
         }
     }
 
-    //// start_attack
+    // start_attack
 
     fn start_bee_attack(&mut self) {
         let flip_x = self.info.formation_index.0 >= 5;
@@ -182,7 +182,7 @@ impl Zako {
         self.set_state(ZakoState::Attack(ZakoAttackType::Traj));
     }
 
-    //// set_damage
+    // set_damage
 
     fn bee_set_damage(&mut self) -> DamageResult {
         let point = self.calc_point();
