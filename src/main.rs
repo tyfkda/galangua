@@ -7,9 +7,9 @@ use lazy_static::lazy_static;
 use sdl2::keyboard::Keycode;
 use std::collections::HashMap;
 
-use galangua_core::app::consts::*;
+use galangua_common::app::consts::*;
+use galangua_common::framework::VKey;
 use galangua_core::app::GalanguaApp;
-use galangua_core::framework::VKey;
 
 use crate::sdl::SdlAppFramework;
 use crate::sdl::SdlAudio;

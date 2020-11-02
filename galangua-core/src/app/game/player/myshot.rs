@@ -1,8 +1,8 @@
-use crate::app::consts::*;
-use crate::app::util::collision::{CollBox, Collidable};
-use crate::framework::types::Vec2I;
-use crate::framework::RendererTrait;
-use crate::util::math::{calc_velocity, quantize_angle, round_vec, ONE};
+use galangua_common::app::consts::*;
+use galangua_common::app::util::collision::{CollBox, Collidable};
+use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::RendererTrait;
+use galangua_common::util::math::{calc_velocity, quantize_angle, round_vec, ONE};
 
 const SPRITE_NAME: &str = "myshot";
 

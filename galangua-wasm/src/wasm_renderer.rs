@@ -10,9 +10,9 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{HtmlCanvasElement, HtmlImageElement, Request, RequestInit, RequestMode, Response};
 
-use galangua_core::framework::sprite_sheet::SpriteSheet;
-use galangua_core::framework::types::Vec2I;
-use galangua_core::framework::RendererTrait;
+use galangua_common::framework::sprite_sheet::SpriteSheet;
+use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::RendererTrait;
 
 #[wasm_bindgen]
 pub struct WasmRenderer {

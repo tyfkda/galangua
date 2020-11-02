@@ -1,4 +1,4 @@
-use galangua_core::util::fps_calc::TimerTrait;
+use galangua_common::util::fps_calc::TimerTrait;
 
 const SEC: u64 = 1000;
 

@@ -1,10 +1,11 @@
-use crate::app::consts::*;
+use galangua_common::app::consts::*;
+use galangua_common::app::util::collision::{CollBox, Collidable};
+use galangua_common::framework::types::{Vec2I, ZERO_VEC};
+use galangua_common::framework::RendererTrait;
+use galangua_common::util::math::{calc_velocity, clamp, quantize_angle, round_vec, ANGLE, ONE};
+use galangua_common::util::pad::{Pad, PadBit};
+
 use crate::app::game::manager::EventType;
-use crate::app::util::collision::{CollBox, Collidable};
-use crate::framework::types::{Vec2I, ZERO_VEC};
-use crate::framework::RendererTrait;
-use crate::util::math::{calc_velocity, clamp, quantize_angle, round_vec, ANGLE, ONE};
-use crate::util::pad::{Pad, PadBit};
 
 use super::recaptured_fighter::RecapturedFighter;
 use super::Accessor;

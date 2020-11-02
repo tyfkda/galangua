@@ -3,12 +3,10 @@ use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 use std::cmp::min;
 
-use super::appearance_table::*;
-
-use crate::app::game::enemy::traj::Traj;
-use crate::app::game::enemy::traj_command::TrajCommand;
-use crate::app::game::enemy::{EnemyType, FormationIndex};
-use crate::app::util::unsafe_util::extend_lifetime;
+use crate::app::game::appearance_table::*;
+use crate::app::game::traj::Traj;
+use crate::app::game::traj_command::TrajCommand;
+use crate::app::game::{EnemyType, FormationIndex};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::ONE;
 
@@ -73,7 +71,7 @@ pub struct AppearanceManager {
     wait: u32,
     unit: u32,
     time: u32,
-    pub(super) done: bool,
+    pub done: bool,
     orders: Vec<Info>,
     orders_ptr: &'static [Info],
     captured_fighter: Option<FormationIndex>,
@@ -137,7 +135,7 @@ impl AppearanceManager {
             if self.orders.is_empty() {
                 self.set_orders();
                 // orders is owned by vec, so it lives as long as self and not worry about that.
-                self.orders_ptr = unsafe { extend_lifetime(&self.orders) };
+                self.orders_ptr = unsafe { std::mem::transmute::<&[Info], &'static [Info]>(&self.orders) };
 
                 self.time = 0;
             }

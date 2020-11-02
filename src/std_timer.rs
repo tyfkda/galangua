@@ -1,6 +1,6 @@
 use std::time::{Duration, SystemTime};
 
-use galangua_core::util::fps_calc::TimerTrait;
+use galangua_common::util::fps_calc::TimerTrait;
 
 pub struct StdTimer {
     last_time: SystemTime,

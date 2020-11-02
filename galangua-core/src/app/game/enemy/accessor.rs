@@ -1,9 +1,11 @@
 // Accessor of game information for Enemy.
 
-use super::{Enemy, FormationIndex};
+use super::Enemy;
 
-use crate::app::game::manager::{CaptureState, EventType};
-use crate::framework::types::Vec2I;
+use crate::app::game::manager::EventType;
+
+use galangua_common::app::game::{CaptureState, FormationIndex};
+use galangua_common::framework::types::Vec2I;
 
 pub trait Accessor {
     fn get_player_pos(&self) -> &Vec2I;

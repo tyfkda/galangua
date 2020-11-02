@@ -1,17 +1,19 @@
 use super::enemy::Enemy;
 use super::enemy_base::{EnemyBase, EnemyInfo};
-use super::traj::Traj;
-use super::traj_command::TrajCommand;
-use super::traj_command_table::*;
-use super::{Accessor, DamageResult, EnemyType, FormationIndex};
+use super::{Accessor, DamageResult};
 
-use crate::app::consts::*;
-use crate::app::game::manager::stage::formation_table::Y_COUNT;
 use crate::app::game::manager::EventType;
-use crate::app::util::collision::{CollBox, Collidable};
-use crate::framework::types::{Vec2I, ZERO_VEC};
-use crate::framework::RendererTrait;
-use crate::util::math::{quantize_angle, round_vec};
+
+use galangua_common::app::consts::*;
+use galangua_common::app::game::formation_table::Y_COUNT;
+use galangua_common::app::game::traj::Traj;
+use galangua_common::app::game::traj_command::TrajCommand;
+use galangua_common::app::game::traj_command_table::*;
+use galangua_common::app::game::{EnemyType, FormationIndex};
+use galangua_common::app::util::collision::{CollBox, Collidable};
+use galangua_common::framework::types::{Vec2I, ZERO_VEC};
+use galangua_common::framework::RendererTrait;
+use galangua_common::util::math::{quantize_angle, round_vec};
 
 const BEE_SPRITE_NAMES: [&str; 2] = ["gopher1", "gopher2"];
 const BUTTERFLY_SPRITE_NAMES: [&str; 2] = ["dman1", "dman2"];

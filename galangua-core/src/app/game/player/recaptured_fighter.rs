@@ -1,8 +1,9 @@
-use crate::app::consts::*;
+use galangua_common::app::consts::*;
+use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::RendererTrait;
+use galangua_common::util::math::{clamp, quantize_angle, round_vec, ANGLE, ONE};
+
 use crate::app::game::manager::EventType;
-use crate::framework::types::Vec2I;
-use crate::framework::RendererTrait;
-use crate::util::math::{clamp, quantize_angle, round_vec, ANGLE, ONE};
 
 use super::Accessor;
 

@@ -3,9 +3,8 @@ use rand::seq::SliceRandom;
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
-use super::formation_table::{X_COUNT, Y_COUNT};
-
-use crate::app::game::enemy::FormationIndex;
+use crate::app::game::formation_table::{X_COUNT, Y_COUNT};
+use crate::app::game::FormationIndex;
 
 const MAX_ATTACKER_COUNT: usize = 3;
 const WAIT: u32 = 30;

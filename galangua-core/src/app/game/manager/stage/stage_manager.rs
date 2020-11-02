@@ -1,18 +1,21 @@
-use super::appearance_manager::AppearanceManager;
-use super::appearance_manager::Accessor as AccessorForAppearance;
-use super::attack_manager::AttackManager;
-use super::attack_manager::Accessor as AttackManagerAccessor;
 use super::enemy_manager::EnemyManager;
-use super::formation::Formation;
 
-use crate::app::consts::*;
 use crate::app::game::enemy::enemy::{create_appearance_enemy, Enemy};
-use crate::app::game::enemy::{Accessor, FormationIndex};
-use crate::app::game::manager::{CaptureState, EventType};
-use crate::app::util::collision::CollBox;
+use crate::app::game::enemy::Accessor;
+use crate::app::game::manager::EventType;
 use crate::app::util::unsafe_util::peep;
-use crate::framework::types::Vec2I;
-use crate::framework::RendererTrait;
+
+use galangua_common::app::consts::*;
+use galangua_common::app::game::appearance_manager::Accessor as AccessorForAppearance;
+use galangua_common::app::game::appearance_manager::AppearanceManager;
+use galangua_common::app::game::attack_manager::AttackManager;
+use galangua_common::app::game::attack_manager::Accessor as AttackManagerAccessor;
+use galangua_common::app::game::formation::Formation;
+use galangua_common::app::game::{CaptureState, FormationIndex};
+use galangua_common::app::util::collision::CollBox;
+use galangua_common::framework::types::Vec2I;
+use galangua_common::framework::RendererTrait;
+use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};
 
 #[cfg(debug_assertions)]
 use crate::app::game::enemy::enemy::create_enemy;
@@ -190,8 +193,8 @@ impl StageManager {
 
         for unit in 0..5 {
             for i in 0..8 {
-                let index = super::appearance_table::ORDER[unit * 8 + i];
-                let enemy_type = super::appearance_table::ENEMY_TYPE_TABLE[unit * 2 + (i / 4)];
+                let index = ORDER[unit * 8 + i];
+                let enemy_type = ENEMY_TYPE_TABLE[unit * 2 + (i / 4)];
                 let pos = self.formation.pos(&index);
                 let mut enemy = create_enemy(enemy_type, &pos, 0, 0, &index);
                 enemy.set_to_formation();

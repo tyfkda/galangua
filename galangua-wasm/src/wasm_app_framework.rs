@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
+use galangua_common::framework::{AppTrait, VKey};
 use galangua_core::app::GalanguaApp;
-use galangua_core::framework::{AppTrait, VKey};
 
 use super::wasm_renderer::WasmRenderer;
 use super::wasm_system::WasmSystem;

@@ -1,12 +1,12 @@
 use counted_array::counted_array;
 
-use crate::app::game::enemy::traj_command::TrajCommand;
-use crate::app::game::enemy::traj_command_table::*;
-use crate::app::game::enemy::{EnemyType, FormationIndex};
+use crate::app::game::traj_command::TrajCommand;
+use crate::app::game::traj_command_table::*;
+use crate::app::game::{EnemyType, FormationIndex};
 
 const fn p(x: u8, y: u8) -> FormationIndex { FormationIndex(x, y) }
 
-pub(super) const ORDER: [FormationIndex; 40] = [
+pub const ORDER: [FormationIndex; 40] = [
     p(4, 2), p(5, 2), p(4, 3), p(5, 3),
     p(4, 4), p(5, 4), p(4, 5), p(5, 5),
 
@@ -23,7 +23,7 @@ pub(super) const ORDER: [FormationIndex; 40] = [
     p(0, 4), p(1, 4), p(0, 5), p(1, 5),
 ];
 
-pub(super) const ENEMY_TYPE_TABLE: [EnemyType; 2 * 5] = [
+pub const ENEMY_TYPE_TABLE: [EnemyType; 2 * 5] = [
     EnemyType::Butterfly, EnemyType::Bee,
     EnemyType::Owl, EnemyType::Butterfly,
     EnemyType::Butterfly, EnemyType::Butterfly,
@@ -31,13 +31,13 @@ pub(super) const ENEMY_TYPE_TABLE: [EnemyType; 2 * 5] = [
     EnemyType::Bee, EnemyType::Bee,
 ];
 
-pub(super) struct UnitTableEntry<'a> {
-    pub(super) pat: usize,
-    pub(super) table: &'a [TrajCommand],
-    pub(super) flip_x: bool,
+pub struct UnitTableEntry<'a> {
+    pub pat: usize,
+    pub table: &'a [TrajCommand],
+    pub flip_x: bool,
 }
 
-counted_array!(pub(super) const UNIT_TABLE: [[UnitTableEntry; 5]; _] = [
+counted_array!(pub const UNIT_TABLE: [[UnitTableEntry; 5]; _] = [
     [
         UnitTableEntry { pat: 0, table: &COMMAND_TABLE1, flip_x: false },
         UnitTableEntry { pat: 1, table: &COMMAND_TABLE2, flip_x: false },
@@ -68,7 +68,7 @@ counted_array!(pub(super) const UNIT_TABLE: [[UnitTableEntry; 5]; _] = [
     ],
 ]);
 
-counted_array!(pub(super) const ASSAULT_TABLE: [[u32; 5]; _] = [
+counted_array!(pub const ASSAULT_TABLE: [[u32; 5]; _] = [
     [0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0],
     [1, 0, 0, 1, 1],
@@ -82,7 +82,7 @@ counted_array!(pub(super) const ASSAULT_TABLE: [[u32; 5]; _] = [
     [2, 2, 2, 2, 2],
 ]);
 
-counted_array!(pub(super) const SHOT_ENABLE_TABLE: [[u32; 5]; _] = [
+counted_array!(pub const SHOT_ENABLE_TABLE: [[u32; 5]; _] = [
     [0, 0, 0, 0, 0],
     [3, 4, 4, 4, 4],
     [4, 4, 4, 4, 4],
