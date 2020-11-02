@@ -1,6 +1,6 @@
-use legion::*;
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
+use legion::*;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::attack_manager::AttackManager;
@@ -223,7 +223,7 @@ pub fn do_fire_myshot(player: &Player, posture: &Posture, entity: Entity, comman
         assert!(posture.1 == 0);
         let second = commands.push((
             Posture(&posture.0 + &Vec2I::new(16 * ONE, 0), posture.1),
-            SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)},
+            SpriteDrawable { sprite_name: "myshot", offset: Vec2I::new(-2, -4) },
         ));
         Some(second)
     } else {
@@ -234,7 +234,7 @@ pub fn do_fire_myshot(player: &Player, posture: &Posture, entity: Entity, comman
         MyShot { player_entity: entity, dual },
         posture,
         CollRect { offset: Vec2I::new(-1, -4), size: Vec2I::new(1, 8) },
-        SpriteDrawable {sprite_name: "myshot", offset: Vec2I::new(-2, -4)},
+        SpriteDrawable { sprite_name: "myshot", offset: Vec2I::new(-2, -4) },
     ));
     true
 }

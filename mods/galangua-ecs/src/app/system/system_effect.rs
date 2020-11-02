@@ -1,5 +1,5 @@
-use legion::*;
 use legion::systems::CommandBuffer;
+use legion::*;
 
 use galangua_common::app::game::effect_table::*;
 use galangua_common::app::game::{EarnedPointType, EnemyType};

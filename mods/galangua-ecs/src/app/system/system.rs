@@ -1,12 +1,12 @@
-use legion::*;
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
+use legion::*;
 
 use galangua_common::app::consts::*;
-use galangua_common::app::game::appearance_manager::AppearanceManager;
 use galangua_common::app::game::appearance_manager::Accessor as AppearanceManagerAccessor;
-use galangua_common::app::game::attack_manager::AttackManager;
+use galangua_common::app::game::appearance_manager::AppearanceManager;
 use galangua_common::app::game::attack_manager::Accessor as AttackManagerAccessor;
+use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
@@ -101,7 +101,7 @@ pub fn run_appearance_manager(world: &mut SubWorld, #[resource] appearance_manag
             let posture = Posture(e.pos, 0);
             let speed = Speed(0, 0);
             let coll_rect = CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) };
-            let drawable = SpriteDrawable {sprite_name, offset: Vec2I::new(-8, -8)};
+            let drawable = SpriteDrawable { sprite_name, offset: Vec2I::new(-8, -8) };
             if e.enemy_type != EnemyType::Owl {
                 let base = EnemyBase::new(Some(e.traj));
                 let zako = Zako { base, state: ZakoState::Appearance };
@@ -191,7 +191,7 @@ impl<'a, 'b> AttackManagerAccessor for SysAttackManagerAccessor<'a, 'b> {
             CaptureState::Captured => {
                 Some(FormationIndex(self.1.capture_enemy_fi.0, self.1.capture_enemy_fi.1 - 1))
             }
-            _ => { None }
+            _ => None,
         }
     }
     fn is_enemy_live_at(&self, formation_index: &FormationIndex) -> bool {

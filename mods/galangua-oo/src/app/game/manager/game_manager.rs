@@ -540,7 +540,7 @@ impl AccessorForEnemy for GameManager {
             {
                 Some(FormationIndex(self.capture_enemy_fi.0, self.capture_enemy_fi.1 - 1))
             }
-            _ => { None }
+            _ => None,
         }
     }
 

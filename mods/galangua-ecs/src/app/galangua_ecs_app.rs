@@ -15,8 +15,8 @@ use galangua_common::util::pad::{Pad, PadBit};
 
 use super::components::*;
 use super::resources::*;
-use super::system::*;
 use super::system::system_player::*;
+use super::system::*;
 
 enum AppState {
     Title(Title),

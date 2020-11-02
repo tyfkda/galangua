@@ -1,6 +1,6 @@
-use legion::*;
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
+use legion::*;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::attack_manager::AttackManager;
@@ -661,10 +661,10 @@ fn on_player_captured(
         Posture(pos + &Vec2I::new(0, 8 * ONE), 0),
         Speed(0, 0),
         CollRect { offset: Vec2I::new(-6, -6), size: Vec2I::new(12, 12) },
-        SpriteDrawable {sprite_name: "rustacean_captured", offset: Vec2I::new(-8, -8)},
+        SpriteDrawable { sprite_name: "rustacean_captured", offset: Vec2I::new(-8, -8) },
     ));
 
-    let mut troops = Troops {members: Default::default(), copy_angle_to_troops: false};
+    let mut troops = Troops { members: Default::default(), copy_angle_to_troops: false };
     add_captured_player_to_troops(&mut troops, captured, &Vec2I::new(0, 16 * ONE));
     commands.add_component(owner, troops);
 

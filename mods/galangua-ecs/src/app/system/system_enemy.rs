@@ -1,6 +1,6 @@
-use legion::*;
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
+use legion::*;
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 

@@ -6,8 +6,8 @@ use super::Accessor;
 use crate::app::game::manager::EventType;
 
 use galangua_common::app::consts::*;
-use galangua_common::app::game::traj::Traj;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
+use galangua_common::app::game::traj::Traj;
 use galangua_common::app::game::traj_command::TrajCommand;
 use galangua_common::app::game::FormationIndex;
 use galangua_common::app::util::collision::CollBox;

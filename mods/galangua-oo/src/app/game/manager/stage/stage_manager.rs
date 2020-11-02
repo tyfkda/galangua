@@ -8,14 +8,14 @@ use crate::app::util::unsafe_util::peep;
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_manager::Accessor as AccessorForAppearance;
 use galangua_common::app::game::appearance_manager::AppearanceManager;
-use galangua_common::app::game::attack_manager::AttackManager;
+use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};
 use galangua_common::app::game::attack_manager::Accessor as AttackManagerAccessor;
+use galangua_common::app::game::attack_manager::AttackManager;
 use galangua_common::app::game::formation::Formation;
 use galangua_common::app::game::{CaptureState, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
-use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};
 
 #[cfg(debug_assertions)]
 use crate::app::game::enemy::enemy::create_enemy;

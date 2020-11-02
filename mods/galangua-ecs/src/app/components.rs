@@ -1,7 +1,7 @@
 use legion::*;
 
-use galangua_common::app::game::{EnemyType, FormationIndex};
 use galangua_common::app::game::traj::Traj;
+use galangua_common::app::game::{EnemyType, FormationIndex};
 use galangua_common::framework::types::Vec2I;
 
 //
@@ -173,7 +173,10 @@ pub struct SequentialSpriteAnime {
 }
 
 //
-pub struct SpriteDrawable { pub sprite_name: &'static str, pub offset: Vec2I }
+pub struct SpriteDrawable {
+    pub sprite_name: &'static str,
+    pub offset: Vec2I,
+}
 
 //
 pub struct SpriteColor(pub u8, pub u8, pub u8);
