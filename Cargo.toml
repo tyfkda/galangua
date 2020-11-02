@@ -19,9 +19,9 @@ counted-array = "0.1.2"
 lazy_static = "1.4.0"
 serde_json = "1.0"
 
-galangua-common = { path = "./galangua-common" }
-galangua-ecs = { path = "./galangua-ecs" }
-galangua-oo = { path = "./galangua-oo" }
+galangua-common = { path = "./mods/galangua-common" }
+galangua-ecs = { path = "./mods/galangua-ecs" }
+galangua-oo = { path = "./mods/galangua-oo" }
 
 [dependencies.sdl2]
 version = "0.34.1"
@@ -30,10 +30,10 @@ features = ["image", "unsafe_textures", "mixer"]
 
 [workspace]
 members = [
-    "galangua-common",
-    "galangua-ecs",
-    "galangua-oo",
     "galangua-wasm",
+    "mods/galangua-common",
+    "mods/galangua-ecs",
+    "mods/galangua-oo",
 ]
 exclude = [
     "tools",
