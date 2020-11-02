@@ -65,9 +65,12 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaEcsApp<T, S> {
     }
 
     fn back_to_title(&mut self) {
+        let mut high_score_updated = false;
         if let AppState::Game(game_state) = &mut self.state {
             if let Some(score_holder) = game_state.get_score_holder() {
+                let prev_high_score = self.score_holder.high_score;
                 self.score_holder = score_holder;
+                high_score_updated = self.score_holder.high_score > prev_high_score;
             }
             if let Some(star_manager) = game_state.get_star_manager() {
                 self.star_manager = star_manager.clone();  // Write back.
@@ -78,6 +81,14 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaEcsApp<T, S> {
             #[cfg(debug_assertions)]
             { self.paused = false; }
         }
+
+        if high_score_updated {
+            self.on_high_score_updated();
+        }
+    }
+
+    fn on_high_score_updated(&mut self) {
+        self.system.set_u32(KEY_HIGH_SCORE, self.score_holder.high_score);
     }
 }
 
