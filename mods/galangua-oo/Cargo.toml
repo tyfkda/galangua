@@ -1,5 +1,5 @@
 [package]
-name = "galangua-core"
+name = "galangua-oo"
 version = "0.9.1"
 authors = ["tyfkda <tyfkda@gmail.com>"]
 edition = "2018"

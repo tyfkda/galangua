@@ -9,9 +9,8 @@ use std::collections::HashMap;
 
 use galangua_common::app::consts::*;
 use galangua_common::framework::{AppTrait, VKey};
-use galangua_core::app::GalanguaApp;
-
 use galangua_ecs::app::GalanguaEcsApp;
+use galangua_oo::app::GalanguaApp;
 
 use crate::sdl::SdlAppFramework;
 use crate::sdl::SdlAudio;
