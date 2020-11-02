@@ -161,7 +161,7 @@ fn update_attack_traj(
 ) {
     let result = {
         let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
-        owl.base.update_attack(&<&mut Posture>::query().get_mut(world, entity).unwrap().0, &mut accessor)
+        owl.base.update_attack(&<&mut Posture>::query().get_mut(world, entity).unwrap().0, owl.life > 0, &mut accessor)
      };
      if result {
         // Troops fire bullet, too.

@@ -161,7 +161,7 @@ pub fn do_move_zako(
         ZakoState::Attack(t) => {
             let mut accessor = EneBaseAccessorImpl::new(formation, eneshot_spawner, game_info.stage);
             let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
-            zako.base.update_attack(&posture.0, &mut accessor);
+            zako.base.update_attack(&posture.0, true, &mut accessor);
             match t {
                 ZakoAttackType::BeeAttack => {
                     update_bee_attack(zako, enemy, posture, speed, formation, eneshot_spawner, game_info);
@@ -370,7 +370,7 @@ impl EnemyBase {
         None
     }
 
-    pub fn update_attack<A: EneBaseAccessorTrait>(&mut self, pos: &Vec2I, accessor: &mut A) -> bool {
+    pub fn update_attack<A: EneBaseAccessorTrait>(&mut self, pos: &Vec2I, shot_enable: bool, accessor: &mut A) -> bool {
         self.attack_frame_count += 1;
 
         let stage_no = accessor.get_stage_no();
@@ -380,7 +380,9 @@ impl EnemyBase {
         if self.attack_frame_count <= shot_interval * shot_count &&
             self.attack_frame_count % shot_interval == 0
         {
-            accessor.fire_shot(pos);
+            if shot_enable {
+                accessor.fire_shot(pos);
+            }
             true
         } else {
             false
