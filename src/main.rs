@@ -8,15 +8,24 @@ use sdl2::keyboard::Keycode;
 use std::collections::HashMap;
 
 use galangua_common::app::consts::*;
-use galangua_common::framework::VKey;
+use galangua_common::framework::{AppTrait, VKey};
 use galangua_core::app::GalanguaApp;
+
+use galangua_ecs::app::GalanguaEcsApp;
 
 use crate::sdl::SdlAppFramework;
 use crate::sdl::SdlAudio;
+use crate::sdl::SdlRenderer;
 use crate::std_system::StdSystem;
 use crate::std_timer::StdTimer;
 
 const APP_NAME: &str = "Galangua";
+
+fn run_app<App: AppTrait<SdlRenderer>>(app: App, scale: u32, fullscreen: bool) -> Result<(), String> {
+    let mut framework = SdlAppFramework::new(app, map_key)?;
+    framework.run(APP_NAME,
+                  WIDTH as u32, HEIGHT as u32, scale, fullscreen)
+}
 
 pub fn main() -> Result<(), String> {
     let matches = clap::App::new(APP_NAME)
@@ -34,6 +43,9 @@ pub fn main() -> Result<(), String> {
              .short("s")
              .long("scale")
              .takes_value(true))
+         .arg(clap::Arg::with_name("oo")
+             .help("Run OO version")
+             .long("oo"))
         .get_matches();
 
     let fullscreen = matches.is_present("full");
@@ -43,13 +55,16 @@ pub fn main() -> Result<(), String> {
         3
     };
 
-    let timer = StdTimer::new();
     let audio = SdlAudio::new(CHANNEL_COUNT, BASE_VOLUME);
+    let timer = StdTimer::new();
     let system = StdSystem::new(audio);
-    let app = GalanguaApp::new(timer, system);
-    let mut framework = SdlAppFramework::new(app, map_key)?;
-    framework.run(APP_NAME,
-                  WIDTH as u32, HEIGHT as u32, scale, fullscreen)
+    if matches.is_present("oo") {
+        let app = GalanguaApp::new(timer, system);
+        run_app(app, scale, fullscreen)
+    } else {
+        let app = GalanguaEcsApp::new(timer, system);
+        run_app(app, scale, fullscreen)
+    }
 }
 
 counted_array!(const KEY_MAP_TABLE: [(Keycode, VKey); _] = [

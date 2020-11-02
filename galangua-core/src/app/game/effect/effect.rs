@@ -10,8 +10,6 @@ pub enum Effect {
     RotSprite(RotSprite),
 }
 
-const FLASH_ENEMY_FRAME: u32 = 2;
-
 impl Effect {
     pub fn create_earned_point(point_type: EarnedPointType, pos: &Vec2I) -> Self {
         Effect::SequentialSpriteAnime(
@@ -31,12 +29,12 @@ impl Effect {
                 FLASH_ENEMY_FRAME))
     }
 
-    pub fn create_enemy_explosion(pos: &Vec2I) -> Self {
+    pub fn create_enemy_explosion(pos: &Vec2I, delay: u32) -> Self {
         Effect::SequentialSpriteAnime(
             SequentialSpriteAnime::new(
                 &round_vec(&pos) + &Vec2I::new(-16, -16),
                 &ENEMY_EXPLOSION_SPRITE_TABLE,
-                ENEMY_EXPLOSION_FRAME, 2))
+                ENEMY_EXPLOSION_FRAME, delay))
     }
 
     pub fn create_player_explosion(pos: &Vec2I) -> Self {
@@ -67,14 +65,14 @@ impl Effect {
 pub struct SequentialSpriteAnime {
     pos: Vec2I,
     sprites: &'static [&'static str],
-    delay: i32,
+    delay: u32,
     frame_wait: u32,
     frame: u32,
     count: u32,
 }
 
 impl SequentialSpriteAnime {
-    pub fn new(pos: Vec2I, sprites: &'static [&str], frame_wait: u32, delay: i32) -> Self {
+    pub fn new(pos: Vec2I, sprites: &'static [&str], frame_wait: u32, delay: u32) -> Self {
         Self {
             pos,
             sprites,
@@ -86,7 +84,7 @@ impl SequentialSpriteAnime {
     }
 
     pub fn update(&mut self) -> bool {
-        if self.delay >= 0 {
+        if self.delay > 0 {
             self.delay -= 1;
             return true;
         }
@@ -101,7 +99,7 @@ impl SequentialSpriteAnime {
     }
 
     pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
-        if self.delay >= 0 {
+        if self.delay > 0 {
             return;
         }
 
@@ -133,7 +131,7 @@ impl RotSprite {
 
     pub fn update(&mut self) -> bool {
         self.count += 1;
-        self.count <= self.duration
+        self.count < self.duration
     }
 
     pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {

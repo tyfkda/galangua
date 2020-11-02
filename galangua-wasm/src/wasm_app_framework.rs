@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use galangua_common::framework::{AppTrait, VKey};
-use galangua_core::app::GalanguaApp;
+use galangua_ecs::app::GalanguaEcsApp;
 
 use super::wasm_renderer::WasmRenderer;
 use super::wasm_system::WasmSystem;
@@ -40,7 +40,7 @@ impl WasmAppFramework {
                 set_item_fn.call2(&this, &JsValue::from(key), &JsValue::from(value)).unwrap();
             },
         );
-        let mut app = GalanguaApp::new(timer, system);
+        let mut app = GalanguaEcsApp::new(timer, system);
 
         app.init(&mut renderer);
 
