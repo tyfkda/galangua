@@ -85,7 +85,7 @@ impl EnemyBase {
         }
     }
 
-    pub fn update_attack(&mut self, info: &EnemyInfo, accessor: &mut dyn Accessor) -> bool {
+    pub fn update_attack(&mut self, info: &EnemyInfo, shot_enable: bool, accessor: &mut dyn Accessor) -> bool {
         self.attack_frame_count += 1;
 
         let stage_no = accessor.get_stage_no();
@@ -95,7 +95,9 @@ impl EnemyBase {
         if self.attack_frame_count <= shot_interval * shot_count &&
             self.attack_frame_count % shot_interval == 0
         {
-            accessor.push_event(EventType::EneShot(info.pos));
+            if shot_enable {
+                accessor.push_event(EventType::EneShot(info.pos));
+            }
             true
         } else {
             false

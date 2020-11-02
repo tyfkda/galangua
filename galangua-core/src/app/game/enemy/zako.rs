@@ -106,7 +106,7 @@ impl Zako {
             }
             ZakoState::Formation => { self.info.update_formation(accessor); }
             ZakoState::Attack(t) => {
-                self.base.update_attack(&self.info, accessor);
+                self.base.update_attack(&self.info, true, accessor);
                 match t {
                     ZakoAttackType::BeeAttack => self.update_bee_attack(accessor),
                     ZakoAttackType::Traj => self.update_attack_traj(accessor),

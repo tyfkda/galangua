@@ -355,7 +355,7 @@ impl Owl {
     }
 
     fn update_attack(&mut self, accessor: &mut dyn Accessor) {
-        if self.base.update_attack(&self.info, accessor) {
+        if self.base.update_attack(&self.info, self.life > 0, accessor) {
             for troop_fi in self.troops.iter().flatten() {
                 let pos_opt = accessor.get_enemy_at(troop_fi)
                     .map(|troop| *troop.pos());
