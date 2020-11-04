@@ -161,6 +161,9 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
             }
         }
 
+        renderer.set_texture_color_mod("font", 128, 128, 128);
+        renderer.draw_str("font", 21 * 8, 1 * 8, "OO VER.");
+
         #[cfg(debug_assertions)]
         {
             renderer.set_texture_color_mod("font", 128, 128, 128);
