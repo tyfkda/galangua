@@ -25,8 +25,6 @@ pub struct WasmRenderer {
 #[wasm_bindgen]
 impl WasmRenderer {
     pub fn new(canvas_id: &str) -> Self {
-        web_sys::console::log_1(&format!("WasmRenderer#new, {}", canvas_id).into());
-
         let document = web_sys::window().unwrap().document().unwrap();
         let canvas = document.get_element_by_id(canvas_id).unwrap();
         let canvas: HtmlCanvasElement = canvas
@@ -61,8 +59,6 @@ impl RendererTrait for WasmRenderer {
                 let images = self.images.clone();
                 let image_dup = image.clone();
                 let closure = Closure::once_into_js(move |_event: JsValue| {
-                    web_sys::console::log_1(&format!("Image loaded: {}", &basename).into());
-
                     image_dup.borrow_mut().set_onerror(None);
                     image_dup.borrow_mut().set_onload(None);
 
@@ -72,7 +68,7 @@ impl RendererTrait for WasmRenderer {
                 let cb = closure.as_ref().unchecked_ref();
                 image.borrow_mut().set_onload(Some(cb));
             }
-            {
+            /*{
                 let basename = basename.clone();
                 let closure = Closure::wrap(Box::new(move |_event: JsValue| {
                     web_sys::console::log_1(&format!("Image load failed: {}", &basename).into());
@@ -80,7 +76,7 @@ impl RendererTrait for WasmRenderer {
                 let cb = closure.as_ref().unchecked_ref();
                 image.borrow_mut().set_onerror(Some(cb));
                 closure.forget();
-            }
+            }*/
             image.borrow_mut().set_src(&path);
         }
     }

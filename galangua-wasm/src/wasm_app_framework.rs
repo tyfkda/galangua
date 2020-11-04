@@ -19,8 +19,6 @@ impl WasmAppFramework {
         mut renderer: WasmRenderer, get_now_fn: js_sys::Function,
         get_item_fn: js_sys::Function, set_item_fn: js_sys::Function,
     ) -> Self {
-        web_sys::console::log_1(&"WasmAppFramework#new".into());
-
         let timer = WasmTimer::new(move || {
             let this = JsValue::NULL;
             if let Ok(v) = get_now_fn.call0(&this) {
