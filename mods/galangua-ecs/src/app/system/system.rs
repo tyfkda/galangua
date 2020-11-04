@@ -28,6 +28,7 @@ use super::system_player::*;
 #[system]
 #[write_component(Player)]
 #[write_component(Posture)]
+#[read_component(EneShot)]
 pub fn update_game_controller(
     world: &mut SubWorld,
     #[resource] game_info: &mut GameInfo,

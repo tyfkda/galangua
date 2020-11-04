@@ -104,7 +104,7 @@ impl GameInfo {
                 }
             }
             GameState::Playing => {
-                if self.stage_state == StageState::CLEARED {  // TODO: Check enemy-shots.
+                if self.stage_state == StageState::CLEARED && self.all_destroyed(world) {
                     self.game_state = GameState::StageClear;
                     self.count = 0;
                 }
@@ -157,6 +157,10 @@ impl GameInfo {
             }
             GameState::Finished => {}
         }
+    }
+
+    fn all_destroyed(&self, world: &SubWorld) -> bool {
+        return !<&EneShot>::query().iter(world).any(|_| true);
     }
 
     pub fn can_capture_attack(&self) -> bool {
