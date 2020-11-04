@@ -82,3 +82,15 @@ html, body {
   border-right: 2px solid #c00;
   border-bottom: 2px solid #c00;
 }
+
+#sound-icon-holder {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 2px;
+  padding: 4px;
+  background-color: rgba(0,0,0,0.5);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}

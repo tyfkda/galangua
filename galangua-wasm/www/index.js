@@ -11,6 +11,9 @@ const AUDIO_ASSETS = [
 ]
 const ENALBE_AUDIO = 'assets/audio/se_get_1'
 
+const ICON_SOUND_ON = 'assets/imgs/sound_on.svg'
+const ICON_SOUND_OFF = 'assets/imgs/sound_off.svg'
+
 const CANVAS_ID = 'mycanvas'
 
 window.play_se = function play_se(channel, filename) {
@@ -54,6 +57,16 @@ function setupTouchButtons() {
     // Touch disable
     holder.style.display = 'none'
   }
+
+  const toggleSound = () => {
+    audioManager.toggleEnabled()
+    if (audioManager.enabled)
+      audioManager.playSe(0, ENALBE_AUDIO)
+    document.getElementById('sound-icon').src = audioManager.enabled ? ICON_SOUND_ON : ICON_SOUND_OFF
+  }
+  const soundIconHolder = document.getElementById('sound-icon-holder')
+  soundIconHolder.addEventListener('click', toggleSound)
+  soundIconHolder.addEventListener('touchstart', toggleSound)
 }
 
 function setupResizeListener() {
@@ -129,22 +142,11 @@ const cover = createCoverScreen('Loading...')
 audioManager.createContext(CHANNEL_COUNT)
 audioManager.loadAllAudios(AUDIO_ASSETS)
   .then(() => {
-    cover.innerText = 'Galangua\n\nTouch to start'
-
-    const onClick = () => {
-      audioManager.playSe(0, ENALBE_AUDIO)
-      cover.removeEventListener('click', onClick)
-      cover.removeEventListener('touchstart', onClick)
-      document.body.removeChild(cover)
-
-      setupTouchButtons()
-
-      requestAnimationFrame(loop)
-    }
-    cover.addEventListener('click', onClick)
-    cover.addEventListener('touchstart', onClick, {passive: true})
+    document.body.removeChild(cover)
+    setupTouchButtons()
+    requestAnimationFrame(loop)
   })
 
 document.documentElement.addEventListener('touchend', (event) => {
-  event.preventDefault();
-}, false);
+  event.preventDefault()
+}, false)

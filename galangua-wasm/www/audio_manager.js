@@ -2,6 +2,7 @@ class AudioManager {
   constructor(channelCount) {
     this.audios = {}
     this.audioLoadings = {}
+    this.enabled = false
   }
 
   createContext(channelCount) {
@@ -11,7 +12,16 @@ class AudioManager {
     this.channels = new Array(channelCount)
   }
 
+  toggleEnabled() {
+    this.enabled = !this.enabled
+    if (!this.enabled)
+      this.stopAll()
+  }
+
   playSe(channel, filename) {
+    if (!this.enabled)
+      return
+
     if (filename in this.audios) {
      if (channel < this.channels.length) {
         if (this.channels[channel] != null) {
@@ -29,6 +39,16 @@ class AudioManager {
       this.loadAudio(filename)
         .then(() => this.playSe(channel, filename))
         .catch(err => console.error(`Audio eror: ${err}`))
+    }
+  }
+
+  stopAll() {
+    for (let ch = 0; ch < this.channels.length; ++ch) {
+      const source = this.channels[ch]
+      if (source != null) {
+        source.stop()
+        this.channels[ch] = null
+      }
     }
   }
 
