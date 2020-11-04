@@ -20,6 +20,15 @@ window.play_se = function play_se(channel, filename) {
   audioManager.playSe(channel, filename)
 }
 
+function isTouchDevice() {
+  try {
+    document.createEvent("TouchEvent")
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 function fitCanvas() {
   const canvas = document.getElementById(CANVAS_ID)
   if (canvas.width / canvas.height >= window.innerWidth / window.innerHeight) {
@@ -45,15 +54,13 @@ function setupTouchButtons() {
 
   const holder = document.getElementById('touch-btn-holder')
 
-  try {
-    document.createEvent("TouchEvent")
-
+  if (isTouchDevice()) {
     // Touch enable
     setTouchHandler('left-btn', (down) => framework.on_touch(-1, down))
     setTouchHandler('right-btn', (down) => framework.on_touch(1, down))
     setTouchHandler('shot-btn', (down) => framework.on_touch(100, down))
     holder.style.display = ''
-  } catch (_e) {
+  } else {
     // Touch disable
     holder.style.display = 'none'
   }
@@ -95,7 +102,7 @@ setupResizeListener()
 
 const renderer = WasmRenderer.new(CANVAS_ID)
 const framework = WasmAppFramework.new(
-  renderer,
+  renderer, isTouchDevice(),
   function get_now() {
     return performance.now()
   },

@@ -154,7 +154,7 @@ impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaEc
 
     fn draw(&mut self, renderer: &mut R) {
         match &self.state {
-            AppState::Title(title) => title.draw(&self.star_manager, &self.score_holder, renderer),
+            AppState::Title(title) => title.draw(&self.star_manager, &self.score_holder, self.system.is_touch_device(), renderer),
             AppState::Game(game) => game.draw(renderer),
         }
 
@@ -190,7 +190,7 @@ impl Title {
         None
     }
 
-    fn draw<R: RendererTrait>(&self, star_manager: &StarManager, score_holder: &ScoreHolder, renderer: &mut R) {
+    fn draw<R: RendererTrait>(&self, star_manager: &StarManager, score_holder: &ScoreHolder, is_touch_device: bool, renderer: &mut R) {
         renderer.set_draw_color(0, 0, 0);
         renderer.clear();
 
@@ -200,7 +200,12 @@ impl Title {
         renderer.draw_str("font", 10 * 8, 8 * 8, "GALANGUA");
 
         if self.frame_count & 32 == 0 {
-            renderer.draw_str("font", 2 * 8, 25 * 8, "PRESS SPACE KEY TO START");
+            let msg = if is_touch_device {
+                "PRESS \"SHOT\" TO START"
+            } else {
+                "PRESS SPACE KEY TO START"
+            };
+            renderer.draw_str("font", (28 - msg.len() as i32) / 2 * 8, 25 * 8, msg);
         }
         score_holder.draw(renderer, true)
     }

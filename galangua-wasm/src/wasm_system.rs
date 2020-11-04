@@ -13,16 +13,18 @@ pub struct WasmSystem<
 > {
     get_item: F,
     set_item: G,
+    is_touch_device: bool,
 }
 
 impl<
     F: Fn(&str) -> Option<JsValue>,
     G: Fn(&str, JsValue)
 > WasmSystem<F, G> {
-    pub fn new(get_item: F, set_item: G) -> Self {
+    pub fn new(get_item: F, set_item: G, is_touch_device: bool) -> Self {
         WasmSystem {
             get_item,
             set_item,
+            is_touch_device,
         }
     }
 }
@@ -40,6 +42,8 @@ impl<
     fn set_u32(&mut self, key: &str, value: u32) {
         (self.set_item)(key, JsValue::from(value));
     }
+
+    fn is_touch_device(&self) -> bool { self.is_touch_device }
 
     fn play_se(&mut self, channel: u32, filename: &str) {
         play_se(channel, filename);

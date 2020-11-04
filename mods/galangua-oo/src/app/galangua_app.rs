@@ -144,7 +144,12 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
                 renderer.draw_str("font", 10 * 8, 8 * 8, "GALANGUA");
 
                 if self.frame_count & 32 == 0 {
-                    renderer.draw_str("font", 2 * 8, 25 * 8, "PRESS SPACE KEY TO START");
+                    let msg = if self.system.is_touch_device() {
+                        "PRESS \"SHOT\" TO START"
+                    } else {
+                        "PRESS SPACE KEY TO START"
+                    };
+                    renderer.draw_str("font", (28 - msg.len() as i32) / 2 * 8, 25 * 8, msg);
                 }
                 self.score_holder.draw(renderer, true);
             }

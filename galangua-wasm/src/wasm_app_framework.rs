@@ -16,7 +16,9 @@ pub struct WasmAppFramework {
 #[wasm_bindgen]
 impl WasmAppFramework {
     pub fn new(
-        mut renderer: WasmRenderer, get_now_fn: js_sys::Function,
+        mut renderer: WasmRenderer,
+        is_touch_device: bool,
+        get_now_fn: js_sys::Function,
         get_item_fn: js_sys::Function, set_item_fn: js_sys::Function,
     ) -> Self {
         let timer = WasmTimer::new(move || {
@@ -37,6 +39,7 @@ impl WasmAppFramework {
                 let this = JsValue::NULL;
                 set_item_fn.call2(&this, &JsValue::from(key), &JsValue::from(value)).unwrap();
             },
+            is_touch_device,
         );
         let mut app = GalanguaEcsApp::new(timer, system);
 

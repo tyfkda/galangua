@@ -36,6 +36,8 @@ impl SystemTrait for StdSystem {
         save_map(SAVE_FILE_NAME, &self.map);
     }
 
+    fn is_touch_device(&self) -> bool { false }
+
     fn play_se(&mut self, channel: u32, filename: &str) {
         self.audio.play_se(channel, filename);
     }
