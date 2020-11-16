@@ -58,14 +58,16 @@ impl WasmAppFramework {
     }
 
     pub fn on_touch(&mut self, num: i32, down: bool) {
-        let vkey_opt = match num {
-            -1 => Some(VKey::Left),
-            1 => Some(VKey::Right),
-            100 => Some(VKey::Space),
-            _ => None,
-        };
-        if let Some(vkey) = vkey_opt {
-            self.app.on_key(vkey, down);
+        match num {
+            -1 | 0 | 1 => {
+                let keys = [(-1, VKey::Left), (1, VKey::Right)];
+                for i in 0..keys.len() {
+                    let d = down && keys[i].0 == num;
+                    self.app.on_key(keys[i].1, d);
+                }
+            }
+            100 => self.app.on_key(VKey::Space, down),
+            _ => {}
         }
     }
 

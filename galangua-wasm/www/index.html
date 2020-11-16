@@ -19,8 +19,12 @@
 
     <!-- touch controller -->
     <div id="touch-btn-holder" class="touch-btn-holder clearfix" style="display: none">
-      <div id="left-btn" class="touch-btn move-btn centering non-selectable pull-left" onSelectStart="return false" oncontextmenu='return false;'>←</div
-      ><div id="right-btn" class="touch-btn move-btn centering non-selectable pull-left" onSelectStart="return false" oncontextmenu='return false;'>→</div
+      <div id="stick-area" class="stick-area move-btn centering non-selectable pull-left" onSelectStart="return false" oncontextmenu='return false;'>
+        <div style="position:relative; width:100%; height:100%">
+          <div id="stick-grip" class="stick-grip" style="visibility:hidden"></div>
+          <div class="stick-desc">←　→</div>
+        </div>
+      </div
       ><div id="shot-btn" class="touch-btn shot-btn centering non-selectable pull-right" onSelectStart="return false" oncontextmenu='return false;'>Shot</div>
     </div>
 

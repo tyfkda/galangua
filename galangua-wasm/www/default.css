@@ -67,6 +67,37 @@ html, body {
   background-color: rgba(255,255,255,0.5);
 }
 
+.stick-area {
+  position: relative;
+  width: 160px;
+  height: 80px;
+  margin: 4px;
+  background-color: rgba(0,0,0,0.5);
+  border-radius: 10%;
+  border-width: 2px;
+  border-style: solid;
+  user-select: none;
+}
+.stick-area:active {
+  background-color: rgba(255,255,255,0.5);
+}
+
+.stick-grip {
+  display: inline-block;
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background-color: rgb(255,255,255);
+  border-radius: 50%;
+}
+
+.stick-desc {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .move-btn {
   color: #fff;
   border-top: 2px solid #fff;

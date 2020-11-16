@@ -44,22 +44,88 @@ function disableBounce() {
   document.addEventListener('touchmove', (event) => event.preventDefault(), {passive: false})
 }
 
-function setupTouchButtons() {
-  const setTouchHandler = function(id, callback) {
-    const elem = document.getElementById(id)
-    elem.addEventListener('touchstart', (e) => { /*e.preventDefault();*/ e.stopPropagation(); callback(true); return false; }, {passive: true})
-    elem.addEventListener('touchend', (_) => callback(false))
-    elem.addEventListener('touchleave', (_) => callback(false))
-  }
+function setTouchHandler(id, callback) {
+  const elem = document.getElementById(id)
+  elem.addEventListener('touchstart', (e) => { /*e.preventDefault();*/ e.stopPropagation(); callback(true); return false; }, {passive: true})
+  elem.addEventListener('touchend', (_) => callback(false))
+  elem.addEventListener('touchleave', (_) => callback(false))
+}
 
+function setupTouchButtons() {
   const holder = document.getElementById('touch-btn-holder')
 
   if (isTouchDevice()) {
     // Touch enable
-    setTouchHandler('left-btn', (down) => framework.on_touch(-1, down))
-    setTouchHandler('right-btn', (down) => framework.on_touch(1, down))
     setTouchHandler('shot-btn', (down) => framework.on_touch(100, down))
     holder.style.display = ''
+
+    const stickGrip = document.getElementById('stick-grip')
+    const stickArea = stickGrip.parentNode
+
+    stickArea.addEventListener('touchstart', (event) => {
+      // e.preventDefault()
+      event.stopPropagation()
+
+      if (event.changedTouches == null || event.changedTouches.length <= 0)
+        return
+      const id = event.changedTouches[0].identifier
+
+      stickGrip.style.visibility = 'visible'
+      const areaRect = stickArea.getBoundingClientRect()
+      const gripRect = stickGrip.getBoundingClientRect()
+      const w = gripRect.width
+      const h = gripRect.height
+      const D = areaRect.width / 6
+      const l = areaRect.width / 2 - D
+      const r = areaRect.width / 2 + D
+      let lr = 0
+
+      const findTargetTouch = (e) => {
+        if (e.changedTouches != null) {
+          for (let i = 0; i < e.changedTouches.length; ++i) {
+            const touch = e.changedTouches[i]
+            if (touch.identifier === id)
+              return touch
+          }
+        }
+        return null
+      }
+
+      const updatePosition = (e) => {
+        const touch = findTargetTouch(e)
+        if (touch != null) {
+          const x = Math.min(Math.max(touch.clientX - areaRect.left, 0), areaRect.width)
+          const y = Math.min(Math.max(touch.clientY - areaRect.top, 0), areaRect.height)
+          stickGrip.style.left = `${Math.min(Math.max(x - w / 2, 0), areaRect.width - w)}px`
+          stickGrip.style.top = `${Math.min(Math.max(y - h / 2, 0), areaRect.height - h)}px`
+
+          lr = x <= l ? -1 : x >= r ? 1 : 0
+          framework.on_touch(lr, true)
+        }
+      }
+
+      const move = (e) => {
+        updatePosition(e)
+      }
+      const end = (e) => {
+        const touch = findTargetTouch(e)
+        if (touch == null)
+          return
+
+        document.removeEventListener('touchmove', move)
+        document.removeEventListener('touchend', end)
+        document.removeEventListener('touchcancel', end)
+        stickGrip.style.visibility = 'hidden'
+        framework.on_touch(0, false)
+      }
+      document.addEventListener('touchmove', move)
+      document.addEventListener('touchend', end)
+      document.addEventListener('touchcancel', end)
+
+      updatePosition(event)
+
+      return false
+    }, {passive: true})
   } else {
     // Touch disable
     holder.style.display = 'none'
