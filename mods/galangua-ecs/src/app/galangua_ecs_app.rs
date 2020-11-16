@@ -116,7 +116,10 @@ impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaEc
 
         if self.pressed_key == Some(VKey::Escape) {
             match &self.state {
-                AppState::Title(_title) => { return false; }
+                AppState::Title(_title) => {
+                    self.pressed_key = None;
+                    return false;
+                }
                 _ => self.back_to_title(),
             }
         }
