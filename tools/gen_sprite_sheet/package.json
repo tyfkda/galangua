@@ -6,6 +6,6 @@
     "copy": "mv chr* ../../assets/"
   },
   "devDependencies": {
-    "spritesheet-js": "1.2.6"
+    "spritesheet-js": "https://github.com/krzysztof-o/spritesheet.js.git"
   }
 }
