@@ -1,4 +1,5 @@
-extern crate galangua_ecs;
+//extern crate galangua_ecs;
+extern crate galangua_oo;
 extern crate web_sys;
 
 mod utils;
