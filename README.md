@@ -37,6 +37,7 @@ Galangua
 
   * -s <scale> : Specify window scale (default: 3)
   * -f         : Use fullscreen
+  * -oo        : Run object-oriented version
 
 
 ### Browser version
@@ -48,7 +49,11 @@ Galangua
 #### Build
 
     $ cd galangua-wasm
-    $ wasm-pack build
+    $ make  # wasm-pack build
+    $ make start-server  # Start local server on port 8080
+
+#### Release build
+
     $ cd www
     $ npm install
     $ npm run build
