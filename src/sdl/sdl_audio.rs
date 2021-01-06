@@ -20,7 +20,7 @@ impl SdlAudio {
         if channel < self.channels.len() as u32 {
             let path = format!("{}.ogg", filename);
             let mut chunk = Chunk::from_file(path)
-                .expect("play_se: No music flile");
+                .expect("play_se: No music file");
             chunk.set_volume(self.base_volume);
             sdl2::mixer::Channel::all().play(&chunk, 0)
                 .expect("Play music failed");
