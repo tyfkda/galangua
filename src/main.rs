@@ -28,7 +28,7 @@ fn run_app<App: AppTrait<SdlRenderer>>(app: App, scale: u32, fullscreen: bool) -
 
 pub fn main() -> Result<(), String> {
     let matches = clap::App::new(APP_NAME)
-        .version("0.9.1")
+        .version(VERSION)
         .about("2D shoot'em up game, writen in Rust.
   Move the fighter : Arrow keys (left or right)
   Shoot a bullet   : Space bar

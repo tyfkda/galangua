@@ -1,5 +1,7 @@
 use crate::util::math::ONE;
 
+pub const VERSION: &str = "VER 0.9.1";
+
 pub const WIDTH: i32 = 224;
 pub const HEIGHT: i32 = 288;
 pub const ANGLE_DIV: i32 = 24;

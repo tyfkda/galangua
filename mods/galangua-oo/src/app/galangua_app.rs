@@ -152,6 +152,9 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
                     renderer.draw_str("font", (28 - msg.len() as i32) / 2 * 8, 25 * 8, msg);
                 }
                 self.score_holder.draw(renderer, true);
+
+                renderer.set_texture_color_mod("font", 128, 128, 128);
+                renderer.draw_str("font", WIDTH - (VERSION.len() as i32) * 8, HEIGHT - 1 * 8, VERSION);
             }
             AppState::Game => {
                 self.game_manager.as_mut().unwrap().draw(renderer);
