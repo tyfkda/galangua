@@ -13,6 +13,6 @@ pub fn hsv(h: u32, s: u8, v: u8) -> (u8, u8, u8) {
         2     => (min, max, c),
         3     => (min, c, max),
         4     => (c, min, max),
-        5 | _ => (max, min, c),
+        /*5 |*/ _ => (max, min, c),
     }
 }

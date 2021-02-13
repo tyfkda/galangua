@@ -99,7 +99,7 @@ impl AttackManager {
                             .map(|fi| (fi, false))
                     })
             }
-            0 | 1 | _ => {
+            /*0 | 1 |*/ _ => {
                 self.pick_random(&candidates, &mut [2, 3, 4, 5])
                     .map(|fi| (fi, false))
             }

@@ -278,7 +278,7 @@ impl AppearanceManager {
                 let time = count * STEP_WAIT;
                 Info::new(time, enemy_type, fi, ZERO_VEC, entry.flip_x, entry.table)
             }
-            3 | _ => {
+            /*3 |*/ _ => {
                 let flip = if entry.flip_x { 1 } else { 0 };
                 let side = count & 1;
                 let enemy_type = enemy_types[(side ^ flip) as usize];
