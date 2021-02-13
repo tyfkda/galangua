@@ -7,7 +7,6 @@ use crate::app::game::enemy::Accessor as AccessorForEnemy;
 use crate::app::game::enemy::Enemy;
 use crate::app::game::player::Accessor as AccessorForPlayer;
 use crate::app::game::player::{MyShot, Player};
-use crate::app::util::unsafe_util::peep;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::effect_table::FLASH_ENEMY_FRAME;
@@ -20,6 +19,7 @@ use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::{RendererTrait, SystemTrait};
 use galangua_common::util::math::ONE;
 use galangua_common::util::pad::Pad;
+use galangua_common::util::unsafe_util::peep;
 
 const MYSHOT_COUNT: usize = 2;
 const MAX_EFFECT_COUNT: usize = 16;

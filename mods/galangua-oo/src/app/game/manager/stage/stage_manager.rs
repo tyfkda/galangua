@@ -3,7 +3,6 @@ use super::enemy_manager::EnemyManager;
 use crate::app::game::enemy::enemy::{create_appearance_enemy, Enemy};
 use crate::app::game::enemy::Accessor;
 use crate::app::game::manager::EventType;
-use crate::app::util::unsafe_util::peep;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_manager::Accessor as AccessorForAppearance;
@@ -15,6 +14,7 @@ use galangua_common::app::game::{CaptureState, FormationIndex};
 use galangua_common::app::util::collision::CollBox;
 use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
+use galangua_common::util::unsafe_util::peep;
 
 #[cfg(debug_assertions)]
 use galangua_common::app::game::appearance_table::{ENEMY_TYPE_TABLE, ORDER};

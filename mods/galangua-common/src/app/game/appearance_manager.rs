@@ -9,6 +9,7 @@ use crate::app::game::traj_command::TrajCommand;
 use crate::app::game::{EnemyType, FormationIndex};
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::ONE;
+use crate::util::unsafe_util::extend_lifetime;
 
 const ASSAULT_FORMATION_Y: u8 = 6;
 const UNIT_COUNT: u32 = 5;
@@ -135,7 +136,7 @@ impl AppearanceManager {
             if self.orders.is_empty() {
                 self.set_orders();
                 // orders is owned by vec, so it lives as long as self and not worry about that.
-                self.orders_ptr = unsafe { std::mem::transmute::<&[Info], &'static [Info]>(&self.orders) };
+                self.orders_ptr = unsafe { extend_lifetime(&self.orders) };
 
                 self.time = 0;
             }

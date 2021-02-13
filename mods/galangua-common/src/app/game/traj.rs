@@ -4,6 +4,7 @@ use crate::app::game::traj_command::TrajCommand::*;
 use crate::app::game::FormationIndex;
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{calc_velocity, ANGLE, COS_TABLE, ONE, SIN_TABLE};
+use crate::util::unsafe_util::extend_lifetime;
 
 pub trait Accessor {
     fn get_formation_pos(&self, formation_index: &FormationIndex) -> Vec2I;
@@ -66,7 +67,7 @@ impl Traj {
         fi: FormationIndex,
     ) -> Self {
         // command_table is owned by vec, so it lives as long as self and not worry about that.
-        let command_table = unsafe { std::mem::transmute::<&Vec<TrajCommand>, &'static Vec<TrajCommand>>(&command_table_vec) };
+        let command_table = unsafe { extend_lifetime(&command_table_vec) };
 
         let mut me = Self::new(command_table, offset, flip_x, fi);
         me.command_table_vec = Some(command_table_vec);
