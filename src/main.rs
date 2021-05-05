@@ -3,7 +3,7 @@ mod std_system;
 mod std_timer;
 
 use counted_array::counted_array;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use sdl2::keyboard::Keycode;
 use std::collections::HashMap;
 
@@ -89,15 +89,13 @@ counted_array!(const KEY_MAP_TABLE: [(Keycode, VKey); _] = [
     (Keycode::Num9, VKey::Num9),
 ]);
 
-lazy_static! {
-    static ref KEY_MAP: HashMap<Keycode, VKey> = {
-        let mut m = HashMap::new();
-        for &(keycode, vkey) in KEY_MAP_TABLE.iter() {
-            m.insert(keycode, vkey);
-        }
-        m
-    };
-}
+static KEY_MAP: Lazy<HashMap<Keycode, VKey>> = Lazy::new(|| {
+    let mut m = HashMap::new();
+    for &(keycode, vkey) in KEY_MAP_TABLE.iter() {
+        m.insert(keycode, vkey);
+    }
+    m
+});
 
 fn map_key(keycode: Keycode) -> Option<VKey> {
     KEY_MAP.get(&keycode).copied()
