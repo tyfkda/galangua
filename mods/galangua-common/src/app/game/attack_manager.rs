@@ -121,7 +121,7 @@ impl AttackManager {
     }
 
     fn enum_sides<A: Accessor>(&mut self, accessor: &A) -> [Option<[u8; 2]>; Y_COUNT] {
-        array![|i| {
+        array![i => {
             let is_formation = |j| -> Option<usize> {
                 let fi = FormationIndex(j as u8, i as u8);
                 if accessor.is_enemy_formation_at(&fi) {

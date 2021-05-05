@@ -29,7 +29,7 @@ pub struct EnemyManager {
 impl EnemyManager {
     pub fn new() -> Self {
         Self {
-            enemies: array![None; MAX_ENEMY_COUNT],
+            enemies: array![_ =>None; MAX_ENEMY_COUNT],
             alive_enemy_count: 0,
             shots: Default::default(),
             shot_paused_count: 0,
@@ -38,7 +38,7 @@ impl EnemyManager {
     }
 
     pub fn start_next_stage(&mut self) {
-        self.enemies = array![None; MAX_ENEMY_COUNT];
+        self.enemies = array![_ => None; MAX_ENEMY_COUNT];
         self.alive_enemy_count = 0;
         self.shots = Default::default();
         self.shot_paused_count = 0;
@@ -204,7 +204,7 @@ impl EnemyManager {
 
     #[cfg(debug_assertions)]
     pub fn reset_stable(&mut self) {
-        self.enemies = array![None; MAX_ENEMY_COUNT];
+        self.enemies = array![_ => None; MAX_ENEMY_COUNT];
         self.shots = Default::default();
     }
 }

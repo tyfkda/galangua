@@ -13,14 +13,14 @@ lazy_static! {
         let cx = WIDTH / 2;
         let w = 16;
 
-        array![|j|
+        array![j =>
             cx - ((X_COUNT - 1) as i32) * w / 2 + (j as i32) * w
         ; X_COUNT]
     };
     pub static ref BASE_Y_TABLE: [i32; Y_COUNT] = {
         let h = 16;
 
-        array![|i|
+        array![i =>
             BASE_Y + (i as i32) * h
         ; Y_COUNT]
     };

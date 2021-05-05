@@ -29,7 +29,7 @@ pub struct StarManager {
 impl Default for StarManager {
     fn default() -> Self {
         let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-        let stars = array![|_i|
+        let stars = array![_i =>
             Star {
                 pos: Vec2I::new(rng.gen_range(0, WIDTH) * ONE,
                                 rng.gen_range(-16, HEIGHT) * ONE),
