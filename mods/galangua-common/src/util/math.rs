@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::mem::MaybeUninit;
 use std::ops::Mul;
 
@@ -16,13 +16,10 @@ const ATAN2_TABLE_OFFSET: usize = (ATAN2_N / 2 - 1) * (ATAN2_N / 2 - 2) / 2;
 const ATAN2_TABLE_LEN: usize = (ATAN2_N - 1) * (ATAN2_N - 2) / 2 - ATAN2_TABLE_OFFSET;
 const ATAN2_SCALE: i32 = 8;  // Assume non-diagonal coordinate
 
-lazy_static! {
-    // Integer sin and cos table, table size:256 = 360 degree, 1.0 = 256
-    pub static ref SIN_TABLE: [i32; ANGLE_SIZE] = gen_sin_table(0);
-    pub static ref COS_TABLE: [i32; ANGLE_SIZE] = gen_sin_table(ANGLE_SIZE / 4);
-    // Look up table for atan2.
-    static ref ATAN2_TABLE: [u8; ATAN2_TABLE_LEN] = gen_atan2_table();
-}
+pub static SIN_TABLE: Lazy<[i32; ANGLE_SIZE]> = Lazy::new(|| gen_sin_table(0));
+pub static COS_TABLE: Lazy<[i32; ANGLE_SIZE]> = Lazy::new(|| gen_sin_table(ANGLE_SIZE / 4));
+// Look up table for atan2.
+static ATAN2_TABLE: Lazy<[u8; ATAN2_TABLE_LEN]> = Lazy::new(|| gen_atan2_table());
 
 fn gen_sin_table(phase: usize) -> [i32; ANGLE as usize] {
     let mut table = [0; ANGLE_SIZE];
