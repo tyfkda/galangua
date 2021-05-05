@@ -1,4 +1,3 @@
-use regex::Regex;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -125,10 +124,11 @@ fn convert_size(value: &Value) -> Option<Size> {
 }
 
 fn get_mainname(filename: &str) -> String {
-    let re = Regex::new(r"^(.*)\.\w+").unwrap();
-    re.captures(filename).map_or_else(
-        || filename.to_string(),
-        |caps| caps.get(1).unwrap().as_str().to_string())
+    if let Some(index) = filename.rfind('.') {
+        (&filename[0..index]).to_string()
+    } else {
+        filename.to_string()
+    }
 }
 
 impl Sheet {
