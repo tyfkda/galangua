@@ -4,6 +4,8 @@ use crate::app::game::traj_command::TrajCommand::*;
 use crate::app::game::FormationIndex;
 use crate::framework::types::{Vec2I, ZERO_VEC};
 use crate::util::math::{calc_velocity, ANGLE, COS_TABLE, ONE, SIN_TABLE};
+
+#[cfg(debug_assertions)]
 use crate::util::unsafe_util::extend_lifetime;
 
 pub trait Accessor {
@@ -32,6 +34,7 @@ pub struct Traj {
     shot: Option<u32>,
 
     #[cfg(debug_assertions)]
+    #[allow(dead_code)]
     command_table_vec: Option<Vec<TrajCommand>>,
 }
 
