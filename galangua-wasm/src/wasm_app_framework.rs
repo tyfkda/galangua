@@ -1,8 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use galangua_common::framework::{AppTrait, VKey};
-//use galangua_ecs::app::GalanguaEcsApp;
-use galangua_oo::app::GalanguaApp;
+use galangua_ecs::app::GalanguaEcsApp;
 
 use super::wasm_renderer::WasmRenderer;
 use super::wasm_system::WasmSystem;
@@ -42,7 +41,7 @@ impl WasmAppFramework {
             },
             is_touch_device,
         );
-        let mut app = GalanguaApp::new(timer, system);
+        let mut app = GalanguaEcsApp::new(timer, system);
 
         app.init(&mut renderer);
 
