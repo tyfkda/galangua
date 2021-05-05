@@ -8,8 +8,6 @@ edition = "2018"
 
 [dependencies]
 array-macro = "1.0.4"
-counted-array = "0.1.2"
-lazy_static = "1.4.0"
 rand = { version = "0.7", features = ["wasm-bindgen"] }
 rand_xoshiro = "0.4.0"
 
