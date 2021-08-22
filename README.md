@@ -37,7 +37,7 @@ Galangua
 
   * -s <scale> : Specify window scale (default: 3)
   * -f         : Use fullscreen
-  * -oo        : Run object-oriented version
+  * --oo       : Run object-oriented version
 
 
 ### Browser version
