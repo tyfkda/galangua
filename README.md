@@ -16,6 +16,19 @@ Galangua
 ### Requirement
 
   * Rust, Cargo
+  * SDL2
+
+#### MacOS
+
+  * `brew install sdl2 sdl2_image sdl2_ttf sdl2_mixer`
+  * Set SDL2, SDL2_image, SDL2_mixer lib paths to LIBRARY_PATH environment variable.
+
+```bash
+SDL2=/opt/homebrew/Cellar/sdl2/2.0.X
+SDL2_IMAGE=/opt/homebrew/Cellar/sdl2_image/2.0.X
+SDL2_MIXER=/opt/homebrew/Cellar/sdl2_mixer/2.0.X
+export LIBRARY_PATH="$LIBRARY_PATH:$SDL2/lib:$SDL2_IMAGE/LIB:$SDL2_MIXER/lib"
+```
 
 #### Windows : Install SDL2 libraries
 
