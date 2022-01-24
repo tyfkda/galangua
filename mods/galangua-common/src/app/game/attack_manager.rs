@@ -16,24 +16,13 @@ pub trait Accessor {
     fn is_enemy_formation_at(&self, formation_index: &FormationIndex) -> bool;
 }
 
+#[derive(Default)]
 pub struct AttackManager {
     enable: bool,
     paused: bool,
     wait: u32,
     attackers: [Option<FormationIndex>; MAX_ATTACKER_COUNT],
     cycle: u32,
-}
-
-impl Default for AttackManager {
-    fn default() -> Self {
-        Self {
-            enable: false,
-            paused: false,
-            wait: 0,
-            attackers: Default::default(),
-            cycle: 0,
-        }
-    }
 }
 
 impl AttackManager {

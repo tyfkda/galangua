@@ -36,7 +36,7 @@ impl NewBorned {
             speed,
             fi,
             traj,
-            }
+        }
     }
 }
 
