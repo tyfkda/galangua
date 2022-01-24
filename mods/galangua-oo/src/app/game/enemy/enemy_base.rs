@@ -142,7 +142,7 @@ impl EnemyBase {
         ];
         let count = target_pos.iter().flatten().count();
         let target: &Vec2I = target_pos.iter()
-            .flatten().nth(rng.gen_range(0, count)).unwrap();
+            .flatten().nth(rng.gen_range(0..count)).unwrap();
 
         self.target_pos = *target;
         info.vangle = 0;

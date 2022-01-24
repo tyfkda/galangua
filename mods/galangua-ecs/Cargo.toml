@@ -7,9 +7,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+getrandom = { version = "0.2", features = ["js"] }
 legion = { version = "0.3.1", default-features = false, features = ["codegen"], optional = true }
-rand = { version = "0.7", features = ["wasm-bindgen"] }
-rand_xoshiro = "0.4.0"
+rand = "0.8"
+rand_xoshiro = "0.6.0"
 
 galangua-common = { path = "../galangua-common" }
 

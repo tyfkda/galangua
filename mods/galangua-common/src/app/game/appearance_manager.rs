@@ -233,7 +233,7 @@ impl AppearanceManager {
             for i in 0..assault_count * 2 {
                 let lr = i & 1;
                 let n = self.orders.len() / 2;
-                let index = rng.gen_range(0, n + 1);
+                let index = rng.gen_range(0..(n + 1));
                 self.orders.push(self.orders[lr].clone());
                 // Shift
                 for j in 0..(n - index) {

@@ -148,7 +148,7 @@ impl EnemyManager {
             let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
             let count = target_pos.iter().flatten().count();
             let target: &Vec2I = target_pos.iter()
-                .flatten().nth(rng.gen_range(0, count)).unwrap();
+                .flatten().nth(rng.gen_range(0..count)).unwrap();
             let d = target - pos;
 
             let limit = ANGLE * ONE * 30 / 360;

@@ -14,7 +14,7 @@ opt-level = 'z'  # Optimize for size.
 # cargo strip can reduce binary size: https://github.com/guedou/cargo-strip
 
 [dependencies]
-clap = "2.33.3"
+clap = "3.0"
 counted-array = "0.1.2"
 lazy_static = "1.4.0"
 serde_json = "1.0"
@@ -24,7 +24,7 @@ galangua-ecs = { path = "./mods/galangua-ecs" }
 galangua-oo = { path = "./mods/galangua-oo" }
 
 [dependencies.sdl2]
-version = "0.34.1"
+version = "0.35.1"
 default-features = false
 features = ["image", "unsafe_textures", "mixer"]
 

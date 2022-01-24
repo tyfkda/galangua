@@ -355,7 +355,7 @@ impl EneShotSpawner {
         let count = target_pos.iter().count();
         for (pos, _i) in self.queue.iter().zip(shot_count..MAX_ENE_SHOT_COUNT) {
             let target: &Vec2I = target_pos.iter()
-                .nth(rng.gen_range(0, count)).unwrap();
+                .nth(rng.gen_range(0..count)).unwrap();
 
             let d = target - &pos;
             let angle = atan2_lut(d.y, -d.x);  // 0=down

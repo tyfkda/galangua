@@ -104,7 +104,7 @@ impl AttackManager {
         rows.iter()
             .find_map(|&row| candidates[row as usize].map(|pos| (pos, row)))
             .map(|(pos, row)| {
-                let index = rng.gen_range(0, 2);
+                let index = rng.gen_range(0..2);
                 FormationIndex(pos[index], row as u8)
             })
     }

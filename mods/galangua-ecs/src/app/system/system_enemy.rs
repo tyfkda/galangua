@@ -405,7 +405,7 @@ impl EnemyBase {
         let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
         let count = target_pos.iter().count();
         let target: &Vec2I = target_pos.iter()
-            .nth(rng.gen_range(0, count)).unwrap();
+            .nth(rng.gen_range(0..count)).unwrap();
 
         self.target_pos = target.clone();
         speed.1 = 0;
