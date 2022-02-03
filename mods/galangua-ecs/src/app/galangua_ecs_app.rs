@@ -1,3 +1,4 @@
+use atomic_refcell::AtomicRef;
 use legion::*;
 use std::marker::PhantomData;
 
@@ -301,7 +302,7 @@ impl Game {
             .map(|game_info| game_info.score_holder.clone())
     }
 
-    fn get_star_manager<'a>(&'a self) -> Option<legion::systems::Fetch<'_, StarManager>> {
+    fn get_star_manager<'a>(&'a self) -> Option<AtomicRef<StarManager>> {
         self.resources.get::<StarManager>()
     }
 }
