@@ -162,6 +162,36 @@ function createCoverScreen(title) {
   return cover
 }
 
+class GamepadManager {
+  constructor() {
+    this.isSupported = 'Gamepad' in window
+    this.xdir = 0
+    this.btn = false
+  }
+
+  update() {
+    this.xdir = 0
+    this.btn = false
+
+    if (!this.isSupported)
+      return
+    const gamepads = navigator.getGamepads()
+    if (gamepads.Length < 1)
+      return
+    const gamepad = gamepads[0]
+    if (!gamepad)
+      return
+
+    const THRESHOLD = 0.5
+    const x = gamepad.axes[0]
+    this.xdir = (x < -THRESHOLD) ? -1 : (x > THRESHOLD) ? 1 : 0
+    this.btn = ((gamepad.buttons[0] && gamepad.buttons[0].pressed) ||
+        (gamepad.buttons[1] && gamepad.buttons[1].pressed))
+  }
+}
+
+const gamepadManager = new GamepadManager()
+
 fitCanvas()
 disableBounce()
 setupResizeListener()
@@ -203,6 +233,11 @@ const loop = (function() {
         n = max_skip
         prev = now
       }
+
+      gamepadManager.update()
+      framework.on_joystick_axis(0, gamepadManager.xdir)
+      framework.on_joystick_button(0, gamepadManager.btn)
+
       for (let i = 0; i < n; ++i)
         framework.update()
       framework.draw()

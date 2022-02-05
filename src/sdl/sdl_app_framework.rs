@@ -140,8 +140,8 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
                         self.app.on_key(vkey, false);
                     }
                 }
-                Event::JoyAxisMotion { axis_idx, value: val, .. } => {
-                    let dir = if val > 10_000 { 1 } else if val < -10_000 { -1 } else { 0 };
+                Event::JoyAxisMotion { axis_idx, value, .. } => {
+                    let dir = if value > 10_000 { 1 } else if value < -10_000 { -1 } else { 0 };
                     self.app.on_joystick_axis(axis_idx, dir);
                 }
                 Event::JoyButtonDown { button_idx, .. } => {

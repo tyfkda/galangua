@@ -58,6 +58,14 @@ impl WasmAppFramework {
         }
     }
 
+    pub fn on_joystick_axis(&mut self, axis_index: u8, dir: i8) {
+        self.app.on_joystick_axis(axis_index, dir);
+    }
+
+    pub fn on_joystick_button(&mut self, button_index: u8, down: bool) {
+        self.app.on_joystick_button(button_index, down);
+    }
+
     pub fn on_touch(&mut self, num: i32, down: bool) {
         match num {
             -1 | 0 | 1 => {

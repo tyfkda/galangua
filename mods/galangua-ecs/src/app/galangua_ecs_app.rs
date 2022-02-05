@@ -101,10 +101,12 @@ impl<R: RendererTrait, T: TimerTrait, S: SystemTrait> AppTrait<R> for GalanguaEc
         }
     }
 
-    fn on_joystick_axis(&mut self, _axis_index: u8, _dir: i8) {
+    fn on_joystick_axis(&mut self, axis_index: u8, dir: i8) {
+        self.pad.on_joystick_axis(axis_index, dir);
     }
 
-    fn on_joystick_button(&mut self, _button_index: u8, _down: bool) {
+    fn on_joystick_button(&mut self, button_index: u8, down: bool) {
+        self.pad.on_joystick_button(button_index, down);
     }
 
     fn init(&mut self, renderer: &mut R) {
