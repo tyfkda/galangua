@@ -1,6 +1,5 @@
 use atomic_refcell::AtomicRef;
 use legion::*;
-use std::marker::PhantomData;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_manager::AppearanceManager;
@@ -35,8 +34,6 @@ pub struct GalanguaEcsApp<T: TimerTrait, S: SystemTrait> {
 
     #[cfg(debug_assertions)]
     paused: bool,
-
-    phantom_data: PhantomData<S>,
 }
 
 impl<T: TimerTrait, S: SystemTrait> GalanguaEcsApp<T, S> {
@@ -56,8 +53,6 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaEcsApp<T, S> {
 
             #[cfg(debug_assertions)]
             paused: false,
-
-            phantom_data: PhantomData,
         }
     }
 
