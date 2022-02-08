@@ -86,8 +86,6 @@ pub enum ZakoState {
 pub struct Zako {
     pub base: EnemyBase,
     pub state: ZakoState,
-    //pub traj: Option<Traj>,
-    //pub target_pos: Vec2I,
 }
 
 //
@@ -123,9 +121,6 @@ pub struct Owl {
     pub state: OwlState,
     pub capturing_state: OwlCapturingState,
     pub life: u32,
-    //pub traj: Option<Traj>,
-    //pub target_pos: Vec2I,
-    //pub count: u32,
 }
 
 //
