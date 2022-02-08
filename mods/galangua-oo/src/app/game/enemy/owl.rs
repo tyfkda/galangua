@@ -27,7 +27,6 @@ const OWL_SPRITE_NAMES: [&str; 4] = ["cpp11", "cpp12", "cpp21", "cpp22"];
 
 #[derive(Clone, Copy, PartialEq)]
 pub(super) enum OwlAttackPhase {
-    Traj,
     Capture,
     CaptureBeam,
     NoCaptureGoOut,
@@ -45,7 +44,8 @@ pub(super) enum OwlState {
     MoveToFormation,
     Assault(u32),
     Formation,
-    Attack(OwlAttackPhase),
+    TrajAttack,
+    CaptureAttack(OwlAttackPhase),
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -195,9 +195,9 @@ impl Owl {
                 self.set_state(OwlState::Assault(phase));
             }
             OwlState::Formation => self.info.update_formation(accessor),
-            OwlState::Attack(phase) => {
+            OwlState::TrajAttack => self.update_attack_traj(accessor),
+            OwlState::CaptureAttack(phase) => {
                 match phase {
-                    OwlAttackPhase::Traj => self.update_attack_traj(accessor),
                     OwlAttackPhase::Capture => self.update_attack_capture(accessor),
                     OwlAttackPhase::CaptureBeam => self.update_attack_capture_beam(accessor),
                     OwlAttackPhase::NoCaptureGoOut => self.update_attack_capture_go_out(accessor),
@@ -241,7 +241,7 @@ impl Owl {
             self.tractor_beam = Some(TractorBeam::new(&(&self.info.pos + &Vec2I::new(0, 8 * ONE))));
             accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_TRACTOR_BEAM1));
 
-            self.set_state(OwlState::Attack(OwlAttackPhase::CaptureBeam));
+            self.set_state(OwlState::CaptureAttack(OwlAttackPhase::CaptureBeam));
             self.base.count = 0;
         }
     }
@@ -250,7 +250,7 @@ impl Owl {
         if tractor_beam.closed() {
             self.tractor_beam = None;
             self.info.speed = 5 * ONE / 2;
-            self.set_state(OwlState::Attack(OwlAttackPhase::NoCaptureGoOut));
+            self.set_state(OwlState::CaptureAttack(OwlAttackPhase::NoCaptureGoOut));
         } else if accessor.can_player_capture() &&
                     tractor_beam.can_capture(accessor.get_player_pos())
         {
@@ -258,7 +258,7 @@ impl Owl {
             accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_TRACTOR_BEAM2));
             tractor_beam.start_capture();
             self.capturing_state = CapturingState::BeamTracting;
-            self.set_state(OwlState::Attack(OwlAttackPhase::CaptureStart));
+            self.set_state(OwlState::CaptureAttack(OwlAttackPhase::CaptureStart));
             self.base.count = 0;
         }
     }
@@ -282,7 +282,7 @@ impl Owl {
         if accessor.is_player_capture_completed() {
             self.capturing_state = CapturingState::Captured;
             self.tractor_beam.as_mut().unwrap().close_capture();
-            self.set_state(OwlState::Attack(OwlAttackPhase::CaptureCloseBeam));
+            self.set_state(OwlState::CaptureAttack(OwlAttackPhase::CaptureCloseBeam));
             self.base.count = 0;
         }
     }
@@ -299,7 +299,7 @@ impl Owl {
             accessor.push_event(EventType::CapturePlayerCompleted);
 
             self.copy_angle_to_troops = false;
-            self.set_state(OwlState::Attack(OwlAttackPhase::CaptureDoneWait));
+            self.set_state(OwlState::CaptureAttack(OwlAttackPhase::CaptureDoneWait));
             self.base.count = 0;
         }
     }
@@ -307,7 +307,7 @@ impl Owl {
         self.base.count += 1;
         if self.base.count >= 120 {
             self.info.speed = 5 * ONE / 2;
-            self.set_state(OwlState::Attack(OwlAttackPhase::CaptureDoneBack));
+            self.set_state(OwlState::CaptureAttack(OwlAttackPhase::CaptureDoneBack));
         }
     }
     fn update_attack_capture_back(&mut self, accessor: &mut dyn Accessor) {
@@ -315,7 +315,7 @@ impl Owl {
             self.info.speed = 0;
             self.info.angle = normalize_angle(self.info.angle);
             self.capturing_state = CapturingState::None;
-            self.set_state(OwlState::Attack(OwlAttackPhase::CaptureDonePushUp));
+            self.set_state(OwlState::CaptureAttack(OwlAttackPhase::CaptureDonePushUp));
         }
     }
     fn update_attack_capture_push_up(&mut self, accessor: &mut dyn Accessor) {
@@ -411,7 +411,7 @@ impl Owl {
     fn rush_attack(&mut self) {
         let table = &OWL_RUSH_ATTACK_TABLE;
         self.base.rush_attack(&self.info, table);
-        self.set_state(OwlState::Attack(OwlAttackPhase::Traj));
+        self.set_state(OwlState::TrajAttack)
     }
 }
 
@@ -488,7 +488,7 @@ impl Enemy for Owl {
             *slot = None;
         }
         let flip_x = self.info.formation_index.0 >= (X_COUNT as u8) / 2;
-        let phase = if !capture_attack {
+        if !capture_attack {
             self.capturing_state = CapturingState::None;
             self.copy_angle_to_troops = true;
             self.choose_troops(accessor);
@@ -497,7 +497,7 @@ impl Enemy for Owl {
             traj.set_pos(&self.info.pos);
 
             self.base.traj = Some(traj);
-            OwlAttackPhase::Traj
+            self.set_state(OwlState::TrajAttack);
         } else {
             self.capturing_state = CapturingState::Attacking;
 
@@ -513,10 +513,8 @@ impl Enemy for Owl {
             let player_pos = accessor.get_player_pos();
             self.base.target_pos = Vec2I::new(player_pos.x, PLAYER_Y - 88 * ONE);
 
-            OwlAttackPhase::Capture
+            self.set_state(OwlState::CaptureAttack(OwlAttackPhase::Capture));
         };
-
-        self.set_state(OwlState::Attack(phase));
 
         accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
     }
@@ -535,6 +533,6 @@ impl Enemy for Owl {
     #[cfg(debug_assertions)]
     fn set_table_attack(&mut self, traj_command_vec: Vec<TrajCommand>, flip_x: bool) {
         self.base.set_table_attack(&mut self.info, traj_command_vec, flip_x);
-        self.set_state(OwlState::Attack(OwlAttackPhase::Traj));
+        self.set_state(OwlState::TrajAttack);
     }
 }
