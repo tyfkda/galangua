@@ -23,6 +23,12 @@ pub fn new_player() -> Player {
     }
 }
 
+impl Player {
+    pub fn is_captured(&self) -> bool {
+        self.state == PlayerState::Captured
+    }
+}
+
 pub fn do_move_player(
     player: &mut Player, pad: &Pad, entity: Entity,
     game_info: &mut GameInfo,
@@ -107,7 +113,7 @@ fn set_player_recapture_done(
     dual
 }
 
-pub fn move_capturing_player(player: &mut Player, posture: &mut Posture, target_pos: &Vec2I) -> bool {
+pub fn move_capturing_player(player: &mut Player, posture: &mut Posture, target_pos: &Vec2I) {
     assert!(player.state == PlayerState::Capturing);
     const D: i32 = 1 * ONE;
     let pos = &mut posture.0;
@@ -122,9 +128,6 @@ pub fn move_capturing_player(player: &mut Player, posture: &mut Posture, target_
     if d.x == 0 && d.y == 0 {
         player.state = PlayerState::Captured;
         *angle = 0;
-        true
-    } else {
-        false
     }
 }
 

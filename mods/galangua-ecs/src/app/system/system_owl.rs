@@ -604,7 +604,8 @@ pub fn do_move_tractor_beam(
         Capturing => {
             let player_entity = tractor_beam.capturing_player.unwrap();
             let (player, posture) = <(&mut Player, &mut Posture)>::query().iter_mut(world).find(|_| true).unwrap();
-            if move_capturing_player(player, posture, &(&tractor_beam.pos + &Vec2I::new(0, 8 * ONE))) {
+            move_capturing_player(player, posture, &(&tractor_beam.pos + &Vec2I::new(0, 8 * ONE)));
+            if player.is_captured() {
                 on_player_captured(
                     enemy, &tractor_beam.pos, entity, player_entity, game_info, commands);
                 tractor_beam.state = TractorBeamState::Closing;
