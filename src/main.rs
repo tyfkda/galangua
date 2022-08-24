@@ -20,7 +20,7 @@ use crate::std_timer::StdTimer;
 
 const APP_NAME: &str = "Galangua";
 
-fn run_app<App: AppTrait<SdlRenderer>>(app: App, scale: u32, fullscreen: bool) -> Result<(), String> {
+fn run_app(app: impl AppTrait<SdlRenderer>, scale: u32, fullscreen: bool) -> Result<(), String> {
     let mut framework = SdlAppFramework::new(app, map_key)?;
     framework.run(APP_NAME,
                   WIDTH as u32, HEIGHT as u32, scale, fullscreen)

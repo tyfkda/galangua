@@ -76,7 +76,7 @@ impl StarManager {
         }
     }
 
-    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
+    pub fn draw(&self, renderer: &mut impl RendererTrait) {
         for star in self.stars.iter() {
             if (self.frame_count + star.t) & 31 < 16 {
                 continue;
@@ -114,7 +114,7 @@ struct Star {
 
 const COLOR_TABLE: [u32; 4] = [0, 71, 151, 222];
 
-fn choose_random_color<T: Rng>(rng: &mut T) -> u32 {
+fn choose_random_color(rng: &mut impl Rng) -> u32 {
     let c = rng.gen_range(1..(1 << 6));  // 1 for avoid black.
     let r =  c       & 3;
     let g = (c >> 2) & 3;

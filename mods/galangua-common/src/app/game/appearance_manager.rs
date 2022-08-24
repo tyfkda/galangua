@@ -107,7 +107,7 @@ impl AppearanceManager {
         self.paused = value;
     }
 
-    pub fn update<A: Accessor>(&mut self, accessor: &A) -> Option<Vec<NewBorned>> {
+    pub fn update(&mut self, accessor: &impl Accessor) -> Option<Vec<NewBorned>> {
         if self.done {
             return None;
         }
@@ -115,7 +115,7 @@ impl AppearanceManager {
         self.update_main(accessor)
     }
 
-    fn update_main<A: Accessor>(&mut self, accessor: &A) -> Option<Vec<NewBorned>> {
+    fn update_main(&mut self, accessor: &impl Accessor) -> Option<Vec<NewBorned>> {
         if self.wait > 0 {
             self.wait -= 1;
             return None;

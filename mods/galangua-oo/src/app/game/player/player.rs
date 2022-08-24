@@ -55,7 +55,7 @@ impl Player {
         self.shot_enable = value;
     }
 
-    pub fn update<A: Accessor>(&mut self, pad: &Pad, accessor: &mut A) {
+    pub fn update(&mut self, pad: &Pad, accessor: &mut impl Accessor) {
         match self.state {
             State::Normal => self.update_normal(pad, accessor),
             State::Capturing => self.update_capture(pad, accessor),
@@ -93,7 +93,7 @@ impl Player {
         }
     }
 
-    pub fn update_normal<A: Accessor>(&mut self, pad: &Pad, accessor: &mut A) {
+    pub fn update_normal(&mut self, pad: &Pad, accessor: &mut impl Accessor) {
         if pad.is_pressed(PadBit::L) {
             self.pos.x -= PLAYER_SPEED;
             let left = 8 * ONE;
@@ -111,7 +111,7 @@ impl Player {
         self.fire_bullet(pad, accessor);
     }
 
-    pub fn update_capture<A: Accessor>(&mut self, pad: &Pad, accessor: &mut A) {
+    pub fn update_capture(&mut self, pad: &Pad, accessor: &mut impl Accessor) {
         const D: i32 = 1 * ONE;
         let d = &self.capture_pos - &self.pos;
         self.pos.x += clamp(d.x, -D, D);
@@ -126,14 +126,14 @@ impl Player {
         }
     }
 
-    fn fire_bullet<A: Accessor>(&mut self, pad: &Pad, accessor: &mut A) {
+    fn fire_bullet(&mut self, pad: &Pad, accessor: &mut impl Accessor) {
         if self.shot_enable && pad.is_trigger(PadBit::A) {
             let pos = &self.pos + &calc_velocity(self.angle, 4 * ONE);
             accessor.push_event(EventType::MyShot(pos, self.dual, self.angle));
         }
     }
 
-    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
+    pub fn draw(&self, renderer: &mut impl RendererTrait) {
         match self.state {
             State::Normal | State::EscapeCapturing | State::MoveHomePos => {
                 let pos = round_vec(&self.pos);

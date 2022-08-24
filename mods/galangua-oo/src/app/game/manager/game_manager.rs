@@ -110,7 +110,7 @@ impl GameManager {
         self.state == GameState::Finished
     }
 
-    pub fn update<S: SystemTrait>(&mut self, params: &mut Params, system: &mut S) {
+    pub fn update(&mut self, params: &mut Params, system: &mut impl SystemTrait) {
         self.update_common(params, system);
 
         match self.state {
@@ -201,7 +201,7 @@ impl GameManager {
         }
     }
 
-    fn update_common<S: SystemTrait>(&mut self, params: &mut Params, system: &mut S) {
+    fn update_common(&mut self, params: &mut Params, system: &mut impl SystemTrait) {
         self.update_player(params);
         self.update_myshots();
         self.update_enemies();
@@ -245,7 +245,7 @@ impl GameManager {
         }
     }
 
-    pub fn draw<R: RendererTrait>(&mut self, renderer: &mut R) {
+    pub fn draw(&mut self, renderer: &mut impl RendererTrait) {
         self.player.draw(renderer);
         self.stage_manager.draw(renderer);
         for myshot in self.myshots.iter().flatten() {
@@ -293,7 +293,7 @@ impl GameManager {
         self.event_queue.push(event);
     }
 
-    fn handle_event_queue<S: SystemTrait>(&mut self, params: &mut Params, system: &mut S) {
+    fn handle_event_queue(&mut self, params: &mut Params, system: &mut impl SystemTrait) {
         let mut i = 0;
         while i < self.event_queue.len() {
             match self.event_queue[i] {
@@ -400,7 +400,7 @@ impl GameManager {
         self.event_queue.clear();
     }
 
-    fn add_score<S: SystemTrait>(&mut self, before: u32, add: u32, system: &mut S) {
+    fn add_score(&mut self, before: u32, add: u32, system: &mut impl SystemTrait) {
         let ext = if before < EXTEND_FIRST_SCORE {
             EXTEND_FIRST_SCORE
         } else {
@@ -411,7 +411,7 @@ impl GameManager {
         }
     }
 
-    fn extend_ship<S: SystemTrait>(&mut self, system: &mut S) {
+    fn extend_ship(&mut self, system: &mut impl SystemTrait) {
         self.left_ship += 1;
         system.play_se(CH_JINGLE, SE_EXTEND_SHIP);
     }

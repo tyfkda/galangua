@@ -30,7 +30,7 @@ impl MyShot {
         !out_of_screen(&self.pos)
     }
 
-    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
+    pub fn draw(&self, renderer: &mut impl RendererTrait) {
         let pos = round_vec(&self.pos);
         if self.angle == 0 {
             renderer.draw_sprite(SPRITE_NAME, &(&pos + &Vec2I::new(-2, -4)));

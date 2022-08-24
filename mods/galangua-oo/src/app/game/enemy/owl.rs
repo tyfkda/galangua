@@ -137,8 +137,8 @@ impl Owl {
         });
     }
 
-    fn each_troop<F: Fn(&mut Box<dyn Enemy>, &mut Option<FormationIndex>)>(
-        &mut self, accessor: &mut dyn Accessor, f: F,
+    fn each_troop(
+        &mut self, accessor: &mut dyn Accessor, f: impl Fn(&mut Box<dyn Enemy>, &mut Option<FormationIndex>),
     ) {
         for troop_opt in self.troops.iter_mut().filter(|x| x.is_some()) {
             let fi = troop_opt.as_ref().unwrap();

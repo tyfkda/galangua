@@ -25,7 +25,7 @@ impl ScoreHolder {
         }
     }
 
-    pub fn draw<R: RendererTrait>(&self, renderer: &mut R, show_1up: bool) {
+    pub fn draw(&self, renderer: &mut impl RendererTrait, show_1up: bool) {
         renderer.set_texture_color_mod("font", 255, 0, 0);
         if show_1up {
             renderer.draw_str("font", 2 * 8, 0 * 8, "1UP");

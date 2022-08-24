@@ -32,7 +32,7 @@ impl RecapturedFighter {
         }
     }
 
-    pub(super) fn update<A: Accessor>(&mut self, player_living: bool, accessor: &mut A) {
+    pub(super) fn update(&mut self, player_living: bool, accessor: &mut impl Accessor) {
         const DANGLE: i32 = ANGLE * ONE / ANGLE_DIV;
         const SPEED: i32 = 2 * ONE;
         match self.state {
@@ -61,7 +61,7 @@ impl RecapturedFighter {
         }
     }
 
-    pub(super) fn draw<R: RendererTrait>(&self, renderer: &mut R) {
+    pub(super) fn draw(&self, renderer: &mut impl RendererTrait) {
         let pos = round_vec(&self.pos);
         match self.state {
             State::Rotate => {

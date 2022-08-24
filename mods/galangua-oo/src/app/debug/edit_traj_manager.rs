@@ -69,7 +69,7 @@ impl EditTrajManager {
         self.event_queue.clear();
     }
 
-    pub fn draw<R: RendererTrait>(&mut self, renderer: &mut R, game_manager: &mut GameManager) {
+    pub fn draw(&mut self, renderer: &mut impl RendererTrait, game_manager: &mut GameManager) {
         let stage_manager = game_manager.stage_manager_mut();
         let pos = &(&stage_manager.get_formation_pos(&self.fi) / ONE) + &Vec2I::new(-8, -8);
         renderer.set_draw_color(255, 0, 255);

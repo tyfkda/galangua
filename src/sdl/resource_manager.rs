@@ -12,8 +12,8 @@ impl<T> ResourceManager<T> {
         }
     }
 
-    pub fn load<F: Fn(&str) -> Result<T, String>>(
-        &mut self, base_path: &str, filenames: &[&str], loader: F,
+    pub fn load(
+        &mut self, base_path: &str, filenames: &[&str], loader: impl Fn(&str) -> Result<T, String>,
     ) -> Result<(), String> {
         for filename in filenames {
             let resource = loader(&format!("{}/{}", base_path, filename))?;

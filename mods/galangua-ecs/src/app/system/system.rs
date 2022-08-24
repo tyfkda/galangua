@@ -468,7 +468,7 @@ pub fn move_star(#[resource] star_manager: &mut StarManager) {
     star_manager.update();
 }
 
-pub fn draw_system<R: RendererTrait>(world: &World, resources: &Resources, renderer: &mut R) {
+pub fn draw_system(world: &World, resources: &Resources, renderer: &mut impl RendererTrait) {
     let star_manager = resources.get::<StarManager>().unwrap();
     star_manager.draw(renderer);
 

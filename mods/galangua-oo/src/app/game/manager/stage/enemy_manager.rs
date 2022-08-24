@@ -49,7 +49,7 @@ impl EnemyManager {
         self.shots.iter().all(|x| x.is_none())
     }
 
-    pub fn update<T: Accessor>(&mut self, accessor: &mut T) {
+    pub fn update(&mut self, accessor: &mut impl Accessor) {
         self.frame_count = self.frame_count.wrapping_add(1);
         if self.shot_paused_count > 0 {
             self.shot_paused_count -= 1;
@@ -59,7 +59,7 @@ impl EnemyManager {
         self.update_shots();
     }
 
-    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
+    pub fn draw(&self, renderer: &mut impl RendererTrait) {
         let pat = ((self.frame_count >> 5) & 1) as usize;
         for enemy in self.enemies.iter().rev().flatten() {
             enemy.draw(renderer, pat);
@@ -69,8 +69,8 @@ impl EnemyManager {
         }
     }
 
-    pub fn check_collision<A: Accessor>(
-        &mut self, target: &CollBox, power: u32, accessor: &mut A,
+    pub fn check_collision(
+        &mut self, target: &CollBox, power: u32, accessor: &mut impl Accessor,
     ) -> bool {
         for enemy_opt in self.enemies.iter_mut().filter(|x| x.is_some()) {
             let enemy = enemy_opt.as_mut().unwrap();
@@ -178,7 +178,7 @@ impl EnemyManager {
         self.enemies[index].as_mut()
     }
 
-    fn update_enemies<T: Accessor>(&mut self, accessor: &mut T) {
+    fn update_enemies(&mut self, accessor: &mut impl Accessor) {
         for i in 0..self.enemies.len() {
             if let Some(enemy) = self.enemies[i].as_mut() {
                 if !enemy.update(accessor) {

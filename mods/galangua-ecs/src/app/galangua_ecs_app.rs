@@ -191,7 +191,7 @@ impl Title {
         None
     }
 
-    fn draw<R: RendererTrait>(&self, star_manager: &StarManager, score_holder: &ScoreHolder, is_touch_device: bool, renderer: &mut R) {
+    fn draw(&self, star_manager: &StarManager, score_holder: &ScoreHolder, is_touch_device: bool, renderer: &mut impl RendererTrait) {
         renderer.set_draw_color(0, 0, 0);
         renderer.clear();
 
@@ -273,7 +273,7 @@ impl Game {
         }
     }
 
-    fn update<S: SystemTrait>(&mut self, pad: &Pad, system: &mut S) -> bool {
+    fn update(&mut self, pad: &Pad, system: &mut impl SystemTrait) -> bool {
         self.resources.insert(pad.clone());
 
         self.schedule.execute(&mut self.world, &mut self.resources);
@@ -287,7 +287,7 @@ impl Game {
             .map_or(true, |game_info| game_info.game_state != GameState::Finished)
     }
 
-    fn draw<R: RendererTrait>(&self, renderer: &mut R) {
+    fn draw(&self, renderer: &mut impl RendererTrait) {
         renderer.set_draw_color(0, 0, 0);
         renderer.clear();
 

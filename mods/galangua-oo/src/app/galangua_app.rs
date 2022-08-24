@@ -136,7 +136,7 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
         true
     }
 
-    fn draw_main<R: RendererTrait>(&mut self, renderer: &mut R) {
+    fn draw_main(&mut self, renderer: &mut impl RendererTrait) {
         self.star_manager.draw(renderer);
         match self.state {
             AppState::Title => {

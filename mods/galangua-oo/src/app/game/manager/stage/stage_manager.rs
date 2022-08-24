@@ -62,7 +62,7 @@ impl StageManager {
             self.enemy_manager.all_destroyed()
     }
 
-    pub fn update<T: Accessor>(&mut self, accessor: &mut T) {
+    pub fn update(&mut self, accessor: &mut impl Accessor) {
         self.update_appearance();
         self.update_formation();
         self.update_attackers(accessor);
@@ -70,12 +70,12 @@ impl StageManager {
         self.check_stage_state();
     }
 
-    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
+    pub fn draw(&self, renderer: &mut impl RendererTrait) {
         self.enemy_manager.draw(renderer);
     }
 
-    pub fn check_collision<A: Accessor>(
-        &mut self, target: &CollBox, power: u32, accessor: &mut A,
+    pub fn check_collision(
+        &mut self, target: &CollBox, power: u32, accessor: &mut impl Accessor,
     ) -> bool {
         self.enemy_manager.check_collision(target, power, accessor)
     }
@@ -114,7 +114,7 @@ impl StageManager {
         self.formation.update();
     }
 
-    fn update_attackers<T: Accessor>(&mut self, accessor: &mut T) {
+    fn update_attackers(&mut self, accessor: &mut impl Accessor) {
         let acc = AttackManagerAccessorImpl(accessor);
         let result = self.attack_manager.update(&acc);
         if let Some((fi, capture_attack)) = result {

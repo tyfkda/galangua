@@ -312,7 +312,7 @@ impl EnemyBase {
         }
     }
 
-    pub fn update_trajectory<A: EneBaseAccessorTrait>(&mut self, posture: &mut Posture, vel: &mut Speed, accessor: &mut A) -> bool {
+    pub fn update_trajectory(&mut self, posture: &mut Posture, vel: &mut Speed, accessor: &mut impl EneBaseAccessorTrait) -> bool {
         if let Some(traj) = &mut self.traj {
             let cont = traj.update(&*accessor.traj_accessor());
             posture.0 = traj.pos();
@@ -370,7 +370,7 @@ impl EnemyBase {
         None
     }
 
-    pub fn update_attack<A: EneBaseAccessorTrait>(&mut self, pos: &Vec2I, shot_enable: bool, accessor: &mut A) -> bool {
+    pub fn update_attack(&mut self, pos: &Vec2I, shot_enable: bool, accessor: &mut impl EneBaseAccessorTrait) -> bool {
         self.attack_frame_count += 1;
 
         let stage_no = accessor.get_stage_no();

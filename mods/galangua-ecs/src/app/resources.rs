@@ -391,7 +391,7 @@ impl SoundQueue {
         }
     }
 
-    pub fn flush<S: SystemTrait>(&mut self, system: &mut S) {
+    pub fn flush(&mut self, system: &mut impl SystemTrait) {
         for (channel, filename) in self.queue.iter() {
             system.play_se(*channel, filename);
         }

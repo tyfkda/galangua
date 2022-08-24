@@ -48,7 +48,7 @@ impl StageIndicator {
         false
     }
 
-    pub fn draw<R: RendererTrait>(&self, renderer: &mut R) {
+    pub fn draw(&self, renderer: &mut impl RendererTrait) {
         let mut x = WIDTH - self.width as i32;
         let mut count = self.stage_disp;
         renderer.set_sprite_texture_color_mod(FLAG_INFO_TABLE[FLAG_INFO_TABLE.len() - 1].sprite_name, 255, 255, 255);
