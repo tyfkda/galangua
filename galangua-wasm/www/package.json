@@ -9,7 +9,7 @@
   "scripts": {
     "build": "webpack --config webpack.config.js && cp -r ../../assets dist/",
     "start": "cp -r ../../assets ./ && webpack-dev-server",
-    "deploy": "rm -rf dist ../../docs/* && npm run build && cp -r dist/* ../../docs/"
+    "deploy": "rm -rf dist && npm run build"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,32 @@
+name: Build and deploy WebApp
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install wasm-pack
+      run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+    - name: test
+      run: cargo test --all
+
+    - name: Build .wasm
+      run: make
+      working-directory: ./galangua-wasm
+
+    - name: Build WebApp
+      run: npm ci && npm run deploy
+      working-directory: ./galangua-wasm/www
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: ./galangua-wasm/www/dist
