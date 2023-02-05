@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
+    <title>Galangua</title>
+    <link rel="stylesheet" type="text/css" href="default.css">
+  </head>
+  <body>
+    <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+
+    <div class="canvas-container full-size">
+      <canvas id="mycanvas" class="mycanvas" width="224" height="288"></canvas>
+    </div>
+
+    <div id="sound-icon-holder">
+      <img id="sound-icon" src="assets/imgs/sound_off.svg" width="28" height="28" style="display:block">
+    </div>
+
+    <!-- touch controller -->
+    <div id="touch-btn-holder" class="touch-btn-holder clearfix" style="display: none">
+      <div id="stick-area" class="stick-area move-btn centering non-selectable pull-left" onSelectStart="return false" oncontextmenu='return false;'>
+        <div style="position:relative; width:100%; height:100%">
+          <div id="stick-grip" class="stick-grip" style="visibility:hidden"></div>
+          <div class="stick-desc">←　→</div>
+        </div>
+      </div
+      ><div id="shot-btn" class="touch-btn shot-btn centering non-selectable pull-right" onSelectStart="return false" oncontextmenu='return false;'>Shot</div>
+    </div>
+
+    <script src="./bootstrap.js"></script>
+  </body>
+</html>
