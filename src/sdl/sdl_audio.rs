@@ -19,12 +19,15 @@ impl SdlAudio {
     pub fn play_se(&mut self, channel: u32, filename: &str) {
         if channel < self.channels.len() as u32 {
             let path = format!("{}.ogg", filename);
-            let mut chunk = Chunk::from_file(path)
-                .expect("play_se: No music file");
-            chunk.set_volume(self.base_volume);
-            sdl2::mixer::Channel::all().play(&chunk, 0)
-                .expect("Play music failed");
-            self.channels[channel as usize] = Some(chunk);
+            match Chunk::from_file(path) {
+                Err(err) => println!("{}: {}", err, filename),
+                Ok(mut chunk) => {
+                    chunk.set_volume(self.base_volume);
+                    sdl2::mixer::Channel::all().play(&chunk, 0)
+                        .expect("Play music failed");
+                    self.channels[channel as usize] = Some(chunk);
+                }
+            }
         }
     }
 }
