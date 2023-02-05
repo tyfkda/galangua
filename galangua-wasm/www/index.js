@@ -16,6 +16,8 @@ const ICON_SOUND_OFF = 'assets/imgs/sound_off.svg'
 
 const CANVAS_ID = 'mycanvas'
 
+const LOCAL_STORAGE_PREFIX = 'galangua:'
+
 window.play_se = function play_se(channel, filename) {
   audioManager.playSe(channel, filename)
 }
@@ -203,10 +205,10 @@ const framework = WasmAppFramework.new(
     return performance.now()
   },
   function get_item(key) {
-    return localStorage.getItem(key)
+    return localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${key}`)
   },
   function set_item(key, value) {
-    localStorage.setItem(key, value)
+    localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${key}`, value)
   })
 
 document.addEventListener('keydown', (event) => {
