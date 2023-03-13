@@ -14,7 +14,7 @@ use galangua_common::app::util::collision::{CollBox, Collidable};
 use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{
-    atan2_lut, clamp, diff_angle, normalize_angle, quantize_angle, round_vec,
+    atan2_lut, clamp, diff_angle, normalize_angle,
     ANGLE, ONE};
 
 #[cfg(debug_assertions)]
@@ -454,9 +454,7 @@ impl Enemy for Owl {
         let pat = if self.life <= 1 { pat + 2 } else { pat };
         let sprite = OWL_SPRITE_NAMES[pat as usize];
 
-        let angle = quantize_angle(self.info.angle, ANGLE_DIV);
-        let pos = round_vec(&self.info.pos);
-        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None);
+        self.draw_sprite(renderer, sprite, &Vec2I::new(8, 8));
 
         if let Some(tractor_beam) = &self.tractor_beam {
             tractor_beam.draw(renderer);

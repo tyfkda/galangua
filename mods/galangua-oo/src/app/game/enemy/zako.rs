@@ -13,7 +13,6 @@ use galangua_common::app::game::{EnemyType, FormationIndex};
 use galangua_common::app::util::collision::{CollBox, Collidable};
 use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::framework::RendererTrait;
-use galangua_common::util::math::{quantize_angle, round_vec};
 
 const BEE_SPRITE_NAMES: [&str; 2] = ["gopher1", "gopher2"];
 const BUTTERFLY_SPRITE_NAMES: [&str; 2] = ["dman1", "dman2"];
@@ -231,10 +230,7 @@ impl Enemy for Zako {
             EnemyType::CapturedFighter => "rustacean_captured",
             _ => { panic!("Illegal"); }
         };
-
-        let angle = quantize_angle(self.info.angle, ANGLE_DIV);
-        let pos = round_vec(&self.info.pos);
-        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None);
+        self.draw_sprite(renderer, sprite, &Vec2I::new(8, 8));
     }
 
     fn pos(&self) -> &Vec2I { &self.info.pos }
