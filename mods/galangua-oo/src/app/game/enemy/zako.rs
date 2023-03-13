@@ -1,9 +1,12 @@
+use ambassador::Delegate;
+
 use super::enemy::Enemy;
 use super::enemy_base::{EnemyBase, EnemyInfo, CoordinateTrait, FormationTrait};
 use super::{Accessor, DamageResult};
 
 use crate::app::game::manager::EventType;
 
+use galangua_common::ambassador_impl_Collidable;
 use galangua_common::app::consts::*;
 use galangua_common::app::game::formation_table::Y_COUNT;
 use galangua_common::app::game::traj::Traj;
@@ -57,6 +60,10 @@ pub(super) enum ZakoState {
     Troop,
 }
 
+#[derive(Delegate)]
+#[delegate(Collidable, target="info")]
+#[delegate(CoordinateTrait, target="info")]
+#[delegate(FormationTrait, target="info")]
 pub(super) struct Zako {
     pub(super) enemy_type: EnemyType,
     pub(super) info: EnemyInfo,
@@ -210,20 +217,6 @@ impl Zako {
             _ => { panic!("Illegal"); }
         }
     }
-}
-
-impl Collidable for Zako {
-    fn get_collbox(&self) -> Option<CollBox> { self.info.get_collbox() }
-}
-
-impl CoordinateTrait for Zako {
-    fn pos(&self) -> &Vec2I { &self.info.pos() }
-    fn set_pos(&mut self, pos: &Vec2I) { self.info.set_pos(pos); }
-    fn angle(&self) -> i32 { self.info.angle() }
-}
-
-impl FormationTrait for Zako {
-    fn formation_index(&self) -> &FormationIndex { &self.info.formation_index() }
 }
 
 impl Enemy for Zako {

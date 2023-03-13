@@ -1,3 +1,7 @@
+#![macro_use]
+
+use ambassador::delegatable_trait;
+
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
@@ -26,12 +30,14 @@ impl<'a> TrajAccessor for TrajAccessorImpl<'a> {
     fn get_stage_no(&self) -> u16 { self.accessor.get_stage_no() }
 }
 
+#[delegatable_trait]
 pub trait CoordinateTrait {
     fn pos(&self) -> &Vec2I;
     fn set_pos(&mut self, pos: &Vec2I);
     fn angle(&self) -> i32;
 }
 
+#[delegatable_trait]
 pub trait FormationTrait {
     fn formation_index(&self) -> &FormationIndex;
 }

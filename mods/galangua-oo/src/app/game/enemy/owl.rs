@@ -1,3 +1,5 @@
+use ambassador::Delegate;
+
 use super::enemy::Enemy;
 use super::enemy_base::{EnemyBase, EnemyInfo, CoordinateTrait, FormationTrait};
 use super::tractor_beam::TractorBeam;
@@ -57,6 +59,9 @@ enum CapturingState {
     Failed,
 }
 
+#[derive(Delegate)]
+#[delegate(CoordinateTrait, target="info")]
+#[delegate(FormationTrait, target="info")]
 pub struct Owl {
     pub(super) info: EnemyInfo,
     pub(super) base: EnemyBase,
@@ -423,16 +428,6 @@ impl Collidable for Owl {
             None
         }
     }
-}
-
-impl CoordinateTrait for Owl {
-    fn pos(&self) -> &Vec2I { &self.info.pos() }
-    fn set_pos(&mut self, pos: &Vec2I) { self.info.set_pos(pos); }
-    fn angle(&self) -> i32 { self.info.angle() }
-}
-
-impl FormationTrait for Owl {
-    fn formation_index(&self) -> &FormationIndex { &self.info.formation_index() }
 }
 
 impl Enemy for Owl {

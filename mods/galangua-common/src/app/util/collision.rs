@@ -1,3 +1,5 @@
+use ambassador::delegatable_trait;
+
 use crate::framework::types::Vec2I;
 
 // Collision Box
@@ -34,6 +36,7 @@ fn test_collbox_check_collision() {
 }
 
 // Collidable
+#[delegatable_trait]
 pub trait Collidable {
     fn get_collbox(&self) -> Option<CollBox>;
 }
