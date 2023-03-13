@@ -213,7 +213,7 @@ impl Zako {
 }
 
 impl Collidable for Zako {
-    fn get_collbox(&self) -> Option<CollBox> { Some(self.info.get_collbox()) }
+    fn get_collbox(&self) -> Option<CollBox> { self.info.get_collbox() }
 }
 
 impl Enemy for Zako {

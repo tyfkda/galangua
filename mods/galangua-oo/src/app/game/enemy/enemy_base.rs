@@ -10,7 +10,7 @@ use galangua_common::app::game::traj::Accessor as TrajAccessor;
 use galangua_common::app::game::traj::Traj;
 use galangua_common::app::game::traj_command::TrajCommand;
 use galangua_common::app::game::FormationIndex;
-use galangua_common::app::util::collision::CollBox;
+use galangua_common::app::util::collision::{CollBox, Collidable};
 use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{
     atan2_lut, calc_velocity, clamp, diff_angle, normalize_angle, round_vec, square, ANGLE, ONE, ONE_BIT,
@@ -56,13 +56,14 @@ impl EnemyInfo {
         let ang = ANGLE * ONE / 128;
         self.angle -= clamp(self.angle, -ang, ang);
     }
+}
 
-    //impl Collidable for EnemyBase
-    pub(super) fn get_collbox(&self) -> CollBox {
-        CollBox {
+impl Collidable for EnemyInfo {
+    fn get_collbox(&self) -> Option<CollBox> {
+        Some(CollBox {
             top_left: &round_vec(&self.pos) + &Vec2I::new(-6, -6),
             size: Vec2I::new(12, 12),
-        }
+        })
     }
 }
 

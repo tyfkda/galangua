@@ -418,7 +418,7 @@ impl Owl {
 impl Collidable for Owl {
     fn get_collbox(&self) -> Option<CollBox> {
         if self.life > 0 {
-            Some(self.info.get_collbox())
+            self.info.get_collbox()
         } else {
             None
         }
