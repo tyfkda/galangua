@@ -1,5 +1,5 @@
 use super::enemy::Enemy;
-use super::enemy_base::{EnemyBase, EnemyInfo};
+use super::enemy_base::{EnemyBase, EnemyInfo, CoordinateTrait, FormationTrait};
 use super::tractor_beam::TractorBeam;
 use super::{Accessor, DamageResult};
 
@@ -425,6 +425,16 @@ impl Collidable for Owl {
     }
 }
 
+impl CoordinateTrait for Owl {
+    fn pos(&self) -> &Vec2I { &self.info.pos() }
+    fn set_pos(&mut self, pos: &Vec2I) { self.info.set_pos(pos); }
+    fn angle(&self) -> i32 { self.info.angle() }
+}
+
+impl FormationTrait for Owl {
+    fn formation_index(&self) -> &FormationIndex { &self.info.formation_index() }
+}
+
 impl Enemy for Owl {
     fn update(&mut self, accessor: &mut dyn Accessor) -> bool {
         let prev_pos = self.info.pos;
@@ -461,13 +471,7 @@ impl Enemy for Owl {
         }
     }
 
-    fn pos(&self) -> &Vec2I { &self.info.pos }
-    fn set_pos(&mut self, pos: &Vec2I) { self.info.pos = *pos; }
-    fn angle(&self) -> i32 { self.info.angle }
-
     fn is_formation(&self) -> bool { self.state == OwlState::Formation }
-
-    fn formation_index(&self) -> &FormationIndex { &self.info.formation_index }
 
     fn set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult {
         self.owl_set_damage(power, accessor)

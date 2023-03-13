@@ -26,6 +26,16 @@ impl<'a> TrajAccessor for TrajAccessorImpl<'a> {
     fn get_stage_no(&self) -> u16 { self.accessor.get_stage_no() }
 }
 
+pub trait CoordinateTrait {
+    fn pos(&self) -> &Vec2I;
+    fn set_pos(&mut self, pos: &Vec2I);
+    fn angle(&self) -> i32;
+}
+
+pub trait FormationTrait {
+    fn formation_index(&self) -> &FormationIndex;
+}
+
 pub struct EnemyInfo {
     pub(super) pos: Vec2I,
     pub(super) angle: i32,
@@ -65,6 +75,16 @@ impl Collidable for EnemyInfo {
             size: Vec2I::new(12, 12),
         })
     }
+}
+
+impl CoordinateTrait for EnemyInfo {
+    fn pos(&self) -> &Vec2I { &self.pos }
+    fn set_pos(&mut self, pos: &Vec2I) { self.pos = *pos; }
+    fn angle(&self) -> i32 { self.angle }
+}
+
+impl FormationTrait for EnemyInfo {
+    fn formation_index(&self) -> &FormationIndex { &self.formation_index }
 }
 
 pub struct EnemyBase {

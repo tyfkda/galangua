@@ -1,3 +1,4 @@
+use super::enemy_base::{CoordinateTrait, FormationTrait};
 use super::owl::{Owl, OwlState};
 use super::zako::{Zako, ZakoState};
 use super::{Accessor, DamageResult};
@@ -13,7 +14,7 @@ use galangua_common::util::math::{quantize_angle, round_vec};
 #[cfg(debug_assertions)]
 use galangua_common::app::game::traj_command::TrajCommand;
 
-pub trait Enemy: Collidable {
+pub trait Enemy: Collidable + CoordinateTrait + FormationTrait {
     fn update(&mut self, accessor: &mut dyn Accessor) -> bool;
     fn draw(&self, renderer: &mut dyn RendererTrait, pat: usize);
 
@@ -23,13 +24,7 @@ pub trait Enemy: Collidable {
         renderer.draw_sprite_rot(sprite, &(&pos - center), angle, None);
     }
 
-    fn pos(&self) -> &Vec2I;
-    fn set_pos(&mut self, pos: &Vec2I);
-    fn angle(&self) -> i32;
-
     fn is_formation(&self) -> bool;
-
-    fn formation_index(&self) -> &FormationIndex;
 
     fn set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult;
 
