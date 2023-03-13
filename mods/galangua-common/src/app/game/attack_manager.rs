@@ -123,7 +123,7 @@ impl AttackManager {
             (0..X_COUNT)
                 .find_map(is_formation)
                 .map(|l| {
-                    let r = ((l as usize)..X_COUNT).rev()
+                    let r = (l..X_COUNT).rev()
                         .find_map(is_formation)
                         .unwrap_or(l);
                     [l as u8, r as u8]

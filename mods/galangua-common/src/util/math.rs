@@ -125,7 +125,7 @@ pub fn atan2_lut(mut x: i32, mut y: i32) -> i32 {
         let index = (((x - 1) * (x - 2) / 2) + y - 1) as usize - ATAN2_TABLE_OFFSET;
         table[index] as i32 * (ONE / ATAN2_SCALE)
     } else {
-        (ANGLE * ONE / ATAN2_SCALE) as i32
+        ANGLE * ONE / ATAN2_SCALE
     };
 
     if swapxy { ang = ANGLE * ONE / 4 - ang; }

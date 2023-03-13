@@ -26,8 +26,7 @@ impl SpriteSheet {
 
     pub fn get(&self, key: &str) -> Option<(&Sheet, &str)> {
         self.sheet_map.get(key)
-            .map(|ss| ss.get(key).map(|sheet| (sheet, ss.texture_name.as_str())))
-            .flatten()
+            .and_then(|ss| ss.get(key).map(|sheet| (sheet, ss.texture_name.as_str())))
     }
 }
 
@@ -125,7 +124,7 @@ fn convert_size(value: &Value) -> Option<Size> {
 
 fn get_mainname(filename: &str) -> String {
     if let Some(index) = filename.rfind('.') {
-        (&filename[0..index]).to_string()
+        filename[0..index].to_string()
     } else {
         filename.to_string()
     }

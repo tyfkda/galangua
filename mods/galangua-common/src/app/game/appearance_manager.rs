@@ -186,8 +186,7 @@ impl AppearanceManager {
         let assault_count = ASSAULT_TABLE[min(self.stage as usize, ASSAULT_TABLE.len() - 1)]
             [self.unit as usize] as usize;
 
-        let div;
-        match entry.pat {
+        let div = match entry.pat {
             0 => {
                 let flip = if entry.flip_x { 1 } else { 0 };
                 for count in 0..8 {
@@ -196,7 +195,7 @@ impl AppearanceManager {
                     let info = self.create_info(fi, count);
                     self.orders.push(info);
                 }
-                div = 2;
+                2
             }
             1 => {
                 for count in 0..8 {
@@ -204,7 +203,7 @@ impl AppearanceManager {
                     let info = self.create_info(fi, count);
                     self.orders.push(info);
                 }
-                div = 1;
+                1
             }
             2 => {
                 for count in 0..8 {
@@ -212,7 +211,7 @@ impl AppearanceManager {
                     let info = self.create_info(fi, count);
                     self.orders.push(info);
                 }
-                div = 1;
+                1
             }
             3 => {
                 let flip = if entry.flip_x { 1 } else { 0 };
@@ -222,11 +221,11 @@ impl AppearanceManager {
                     let info = self.create_info(fi, count);
                     self.orders.push(info);
                 }
-                div = 2;
+                2
             }
 
             _ => { panic!("Illegal"); }
-        }
+        };
 
         if assault_count > 0 {
             let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
@@ -315,7 +314,7 @@ fn gen_assault_index(assault_count: u8) -> FormationIndex {
     FormationIndex(x, ASSAULT_FORMATION_Y)
 }
 
-fn recalc_order_time(orders: &mut Vec<Info>, step_wait: u32, div: u32) {
+fn recalc_order_time(orders: &mut [Info], step_wait: u32, div: u32) {
     for (i, order) in orders.iter_mut().enumerate() {
         order.time = step_wait * (i as u32 / div);
     }
