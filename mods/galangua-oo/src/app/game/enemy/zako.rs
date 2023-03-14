@@ -1,9 +1,12 @@
+use ambassador::Delegate;
+
 use super::enemy::Enemy;
-use super::enemy_base::{EnemyBase, EnemyInfo};
+use super::enemy_base::{EnemyBase, EnemyInfo, CoordinateTrait, FormationTrait};
 use super::{Accessor, DamageResult};
 
 use crate::app::game::manager::EventType;
 
+use galangua_common::ambassador_impl_Collidable;
 use galangua_common::app::consts::*;
 use galangua_common::app::game::formation_table::Y_COUNT;
 use galangua_common::app::game::traj::Traj;
@@ -13,7 +16,6 @@ use galangua_common::app::game::{EnemyType, FormationIndex};
 use galangua_common::app::util::collision::{CollBox, Collidable};
 use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::framework::RendererTrait;
-use galangua_common::util::math::{quantize_angle, round_vec};
 
 const BEE_SPRITE_NAMES: [&str; 2] = ["gopher1", "gopher2"];
 const BUTTERFLY_SPRITE_NAMES: [&str; 2] = ["dman1", "dman2"];
@@ -58,6 +60,10 @@ pub(super) enum ZakoState {
     Troop,
 }
 
+#[derive(Delegate)]
+#[delegate(Collidable, target="info")]
+#[delegate(CoordinateTrait, target="info")]
+#[delegate(FormationTrait, target="info")]
 pub(super) struct Zako {
     pub(super) enemy_type: EnemyType,
     pub(super) info: EnemyInfo,
@@ -213,10 +219,6 @@ impl Zako {
     }
 }
 
-impl Collidable for Zako {
-    fn get_collbox(&self) -> Option<CollBox> { Some(self.info.get_collbox()) }
-}
-
 impl Enemy for Zako {
     fn update(&mut self, accessor: &mut dyn Accessor) -> bool {
         self.dispatch_update(accessor);
@@ -231,19 +233,10 @@ impl Enemy for Zako {
             EnemyType::CapturedFighter => "rustacean_captured",
             _ => { panic!("Illegal"); }
         };
-
-        let angle = quantize_angle(self.info.angle, ANGLE_DIV);
-        let pos = round_vec(&self.info.pos);
-        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None);
+        self.draw_sprite(renderer, sprite, &Vec2I::new(8, 8));
     }
 
-    fn pos(&self) -> &Vec2I { &self.info.pos }
-    fn set_pos(&mut self, pos: &Vec2I) { self.info.pos = *pos; }
-    fn angle(&self) -> i32 { self.info.angle }
-
     fn is_formation(&self) -> bool { self.state == ZakoState::Formation }
-
-    fn formation_index(&self) -> &FormationIndex { &self.info.formation_index }
 
     fn set_damage(&mut self, _power: u32, accessor: &mut dyn Accessor) -> DamageResult {
         accessor.push_event(EventType::EnemyExplosion(

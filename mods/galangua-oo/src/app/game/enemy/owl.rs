@@ -1,5 +1,7 @@
+use ambassador::Delegate;
+
 use super::enemy::Enemy;
-use super::enemy_base::{EnemyBase, EnemyInfo};
+use super::enemy_base::{EnemyBase, EnemyInfo, CoordinateTrait, FormationTrait};
 use super::tractor_beam::TractorBeam;
 use super::{Accessor, DamageResult};
 
@@ -14,7 +16,7 @@ use galangua_common::app::util::collision::{CollBox, Collidable};
 use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{
-    atan2_lut, clamp, diff_angle, normalize_angle, quantize_angle, round_vec,
+    atan2_lut, clamp, diff_angle, normalize_angle,
     ANGLE, ONE};
 
 #[cfg(debug_assertions)]
@@ -57,6 +59,9 @@ enum CapturingState {
     Failed,
 }
 
+#[derive(Delegate)]
+#[delegate(CoordinateTrait, target="info")]
+#[delegate(FormationTrait, target="info")]
 pub struct Owl {
     pub(super) info: EnemyInfo,
     pub(super) base: EnemyBase,
@@ -418,7 +423,7 @@ impl Owl {
 impl Collidable for Owl {
     fn get_collbox(&self) -> Option<CollBox> {
         if self.life > 0 {
-            Some(self.info.get_collbox())
+            self.info.get_collbox()
         } else {
             None
         }
@@ -454,22 +459,14 @@ impl Enemy for Owl {
         let pat = if self.life <= 1 { pat + 2 } else { pat };
         let sprite = OWL_SPRITE_NAMES[pat as usize];
 
-        let angle = quantize_angle(self.info.angle, ANGLE_DIV);
-        let pos = round_vec(&self.info.pos);
-        renderer.draw_sprite_rot(sprite, &(&pos + &Vec2I::new(-8, -8)), angle, None);
+        self.draw_sprite(renderer, sprite, &Vec2I::new(8, 8));
 
         if let Some(tractor_beam) = &self.tractor_beam {
             tractor_beam.draw(renderer);
         }
     }
 
-    fn pos(&self) -> &Vec2I { &self.info.pos }
-    fn set_pos(&mut self, pos: &Vec2I) { self.info.pos = *pos; }
-    fn angle(&self) -> i32 { self.info.angle }
-
     fn is_formation(&self) -> bool { self.state == OwlState::Formation }
-
-    fn formation_index(&self) -> &FormationIndex { &self.info.formation_index }
 
     fn set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult {
         self.owl_set_damage(power, accessor)
