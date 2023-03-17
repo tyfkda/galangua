@@ -1,6 +1,6 @@
 use std::ops::Index;
 
-use galangua_common::app::game::{EarnedPointType, EnemyType, FormationIndex};
+use galangua_common::app::game::FormationIndex;
 use galangua_common::framework::types::Vec2I;
 
 pub struct EventQueue {
@@ -36,12 +36,7 @@ impl Index<usize> for EventQueue {
 
 #[derive(Clone)]
 pub enum EventType {
-    MyShot(Vec2I, bool, i32),
     AddScore(u32),
-    EneShot(Vec2I),
-    EarnPointEffect(EarnedPointType, Vec2I),
-    EnemyExplosion(Vec2I, i32, EnemyType),
-    PlayerExplosion(Vec2I),
     DeadPlayer,
     StartCaptureAttack(FormationIndex),
     EndCaptureAttack,

@@ -244,7 +244,7 @@ impl Owl {
             self.info.vangle = 0;
 
             self.tractor_beam = Some(TractorBeam::new(&(&self.info.pos + &Vec2I::new(0, 8 * ONE))));
-            accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_TRACTOR_BEAM1));
+            accessor.play_se(CH_JINGLE, SE_TRACTOR_BEAM1);
 
             self.set_state(OwlState::CaptureAttack(OwlAttackPhase::CaptureBeam));
             self.base.count = 0;
@@ -260,7 +260,7 @@ impl Owl {
                     tractor_beam.can_capture(accessor.get_player_pos())
         {
             accessor.push_event(EventType::CapturePlayer(&self.info.pos + &Vec2I::new(0, 16 * ONE)));
-            accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_TRACTOR_BEAM2));
+            accessor.play_se(CH_JINGLE, SE_TRACTOR_BEAM2);
             tractor_beam.start_capture();
             self.capturing_state = CapturingState::BeamTracting;
             self.set_state(OwlState::CaptureAttack(OwlAttackPhase::CaptureStart));
@@ -276,7 +276,7 @@ impl Owl {
             accessor.push_event(EventType::EndCaptureAttack);
             if accessor.is_rush() {
                 self.rush_attack();
-                accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+                accessor.play_se(CH_ATTACK, SE_ATTACK_START);
             } else {
                 self.set_state(OwlState::MoveToFormation);
                 self.capturing_state = CapturingState::Failed;
@@ -353,7 +353,7 @@ impl Owl {
                 // Rush mode: Continue attacking
                 self.remove_destroyed_troops(accessor);
                 self.rush_attack();
-                accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+                accessor.play_se(CH_ATTACK, SE_ATTACK_START);
             } else {
                 self.set_state(OwlState::MoveToFormation);
             }
@@ -366,7 +366,7 @@ impl Owl {
                 let pos_opt = accessor.get_enemy_at(troop_fi)
                     .map(|troop| *troop.pos());
                 if let Some(pos) = pos_opt {
-                    accessor.push_event(EventType::EneShot(pos));
+                    accessor.spawn_ene_shot(&pos);
                 }
             }
         }
@@ -374,7 +374,7 @@ impl Owl {
 
     fn owl_set_damage(&mut self, power: u32, accessor: &mut dyn Accessor) -> DamageResult {
         if self.life > power {
-            accessor.push_event(EventType::PlaySe(CH_BOMB, SE_DAMAGE));
+            accessor.play_se(CH_BOMB, SE_DAMAGE);
             self.life -= power;
             DamageResult { point: 0, keep_alive_as_ghost: false }
         } else {
@@ -405,8 +405,8 @@ impl Owl {
 
             accessor.pause_enemy_shot(OWL_DESTROY_SHOT_WAIT);
 
-            accessor.push_event(EventType::EnemyExplosion(self.info.pos, self.info.angle, EnemyType::Owl));
-            accessor.push_event(EventType::PlaySe(CH_BOMB, SE_BOMB_ZAKO));
+            self.info.explode(accessor, EnemyType::Owl);
+            accessor.play_se(CH_BOMB, SE_BOMB_ZAKO);
 
             let keep_alive_as_ghost = self.live_troops_exist(accessor);  // To keep moving troops.
             DamageResult { point, keep_alive_as_ghost }
@@ -513,7 +513,7 @@ impl Enemy for Owl {
             self.set_state(OwlState::CaptureAttack(OwlAttackPhase::Capture));
         };
 
-        accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+        accessor.play_se(CH_ATTACK, SE_ATTACK_START);
     }
 
     fn set_to_troop(&mut self) {

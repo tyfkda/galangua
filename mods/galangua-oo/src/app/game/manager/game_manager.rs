@@ -9,7 +9,6 @@ use crate::app::game::player::Accessor as AccessorForPlayer;
 use crate::app::game::player::{MyShot, Player};
 
 use galangua_common::app::consts::*;
-use galangua_common::app::game::effect_table::FLASH_ENEMY_FRAME;
 use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, FormationIndex};
@@ -297,28 +296,9 @@ impl GameManager {
         let mut i = 0;
         while i < self.event_queue.len() {
             match self.event_queue[i] {
-                EventType::MyShot(pos, dual, angle) => {
-                    if self.spawn_myshot(&pos, dual, angle) {
-                        system.play_se(CH_SHOT, SE_MYSHOT);
-                    }
-                }
-                EventType::EneShot(pos) => {
-                    self.spawn_ene_shot(&pos);
-                }
                 EventType::AddScore(add) => {
                     self.add_score(params.score_holder.score, add, system);
                     params.score_holder.add_score(add);
-                }
-                EventType::EarnPointEffect(point_type, pos) => {
-                    self.spawn_effect(Effect::create_earned_point(point_type, &pos));
-                }
-                EventType::EnemyExplosion(pos, angle, enemy_type) => {
-                    self.spawn_effect(Effect::create_flash_enemy(&pos, angle, enemy_type));
-                    self.spawn_effect(Effect::create_enemy_explosion(&pos, FLASH_ENEMY_FRAME));
-                }
-                EventType::PlayerExplosion(pos) => {
-                    self.spawn_effect(Effect::create_player_explosion(&pos));
-                    system.play_se(CH_BOMB, SE_BOMB_PLAYER);
                 }
                 EventType::DeadPlayer => {
                     params.star_manager.set_stop(true);
@@ -416,24 +396,6 @@ impl GameManager {
         system.play_se(CH_JINGLE, SE_EXTEND_SHIP);
     }
 
-    fn spawn_myshot(&mut self, pos: &Vec2I, dual: bool, angle: i32) -> bool {
-        if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
-            *myshot_opt = Some(MyShot::new(pos, dual, angle));
-            true
-        } else {
-            false
-        }
-    }
-
-    fn spawn_ene_shot(&mut self, pos: &Vec2I) {
-        let player_pos = [
-            Some(*self.player.pos()),
-            self.player.dual_pos(),
-        ];
-        let speed = calc_ene_shot_speed(self.stage);
-        self.stage_manager.spawn_shot(pos, &player_pos, speed);
-    }
-
     fn check_collision(&mut self) {
         #[cfg(debug_assertions)]
         if self.state == GameState::EditTraj {
@@ -478,7 +440,8 @@ impl GameManager {
 
                 if hit {
                     let player_pos = if dual { self.player.dual_pos().unwrap() } else { *self.player.pos() };
-                    self.event_queue.push(EventType::PlayerExplosion(player_pos));
+                    self.spawn_effect(Effect::create_player_explosion(&player_pos));
+                    self.play_se(CH_BOMB, SE_BOMB_PLAYER);
                     if self.player.crash(dual) {
                         self.event_queue.push(EventType::DeadPlayer);
                         break;
@@ -491,15 +454,16 @@ impl GameManager {
             }
         }
     }
-
-    fn spawn_effect(&mut self, effect: Effect) {
-        if let Some(slot) = self.effects.iter_mut().find(|x| x.is_none()) {
-            *slot = Some(effect);
-        }
-    }
 }
 
 impl AccessorForPlayer for GameManager {
+    fn spawn_myshot(&mut self, pos: &Vec2I, dual: bool, angle: i32) {
+        if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
+            *myshot_opt = Some(MyShot::new(pos, dual, angle));
+            self.play_se(CH_SHOT, SE_MYSHOT);
+        }
+    }
+
     fn is_no_attacker(&self) -> bool {
         self.stage_manager.is_no_attacker()
     }
@@ -508,6 +472,25 @@ impl AccessorForPlayer for GameManager {
 }
 
 impl AccessorForEnemy for GameManager {
+    fn add_score(&mut self, add: u32) {
+        self.event_queue.push(EventType::AddScore(add));
+    }
+
+    fn spawn_ene_shot(&mut self, pos: &Vec2I) {
+        let player_pos = [
+            Some(*self.player.pos()),
+            self.player.dual_pos(),
+        ];
+        let speed = calc_ene_shot_speed(self.stage);
+        self.stage_manager.spawn_shot(pos, &player_pos, speed);
+    }
+
+    fn spawn_effect(&mut self, effect: Effect) {
+        if let Some(slot) = self.effects.iter_mut().find(|x| x.is_none()) {
+            *slot = Some(effect);
+        }
+    }
+
     fn get_player_pos(&self) -> &Vec2I {
         self.player.pos()
     }
@@ -566,6 +549,10 @@ impl AccessorForEnemy for GameManager {
 
     fn get_stage_no(&self) -> u16 {
         self.stage
+    }
+
+    fn play_se(&mut self, channel: u32, asset_path: &'static str) {
+        self.event_queue.push(EventType::PlaySe(channel, asset_path))
     }
 
     fn push_event(&mut self, event: EventType) { self.do_push_event(event); }

@@ -2,10 +2,10 @@ use array_macro::*;
 use rand::{Rng, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
+use crate::app::game::effect::Effect;
 use crate::app::game::enemy::ene_shot::EneShot;
 use crate::app::game::enemy::enemy::{create_enemy, Enemy};
 use crate::app::game::enemy::Accessor;
-use crate::app::game::manager::EventType;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::effect_table::to_earned_point_type;
@@ -79,10 +79,10 @@ impl EnemyManager {
                     let pos = *enemy.pos();
                     let result = enemy.set_damage(power, accessor);
                     if result.point > 0 {
-                        accessor.push_event(EventType::AddScore(result.point));
+                        accessor.add_score(result.point);
 
                         if let Some(point_type) = to_earned_point_type(result.point) {
-                            accessor.push_event(EventType::EarnPointEffect(point_type, pos));
+                            accessor.spawn_effect(Effect::create_earned_point(point_type, &pos));
                         }
 
                         if !result.keep_alive_as_ghost {

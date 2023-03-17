@@ -7,13 +7,14 @@ use rand_xoshiro::Xoshiro128Plus;
 
 use super::Accessor;
 
-use crate::app::game::manager::EventType;
+use crate::app::game::effect::Effect;
 
 use galangua_common::app::consts::*;
+use galangua_common::app::game::effect_table::FLASH_ENEMY_FRAME;
 use galangua_common::app::game::traj::Accessor as TrajAccessor;
 use galangua_common::app::game::traj::Traj;
 use galangua_common::app::game::traj_command::TrajCommand;
-use galangua_common::app::game::FormationIndex;
+use galangua_common::app::game::{EnemyType, FormationIndex};
 use galangua_common::app::util::collision::{CollBox, Collidable};
 use galangua_common::framework::types::{Vec2I, ZERO_VEC};
 use galangua_common::util::math::{
@@ -72,6 +73,11 @@ impl EnemyInfo {
         let ang = ANGLE * ONE / 128;
         self.angle -= clamp(self.angle, -ang, ang);
     }
+
+    pub(super) fn explode(&mut self, accessor: &mut dyn Accessor, enemy_type: EnemyType) {
+        accessor.spawn_effect(Effect::create_flash_enemy(&self.pos, self.angle, enemy_type));
+        accessor.spawn_effect(Effect::create_enemy_explosion(&self.pos, FLASH_ENEMY_FRAME));
+    }
 }
 
 impl Collidable for EnemyInfo {
@@ -125,7 +131,7 @@ impl EnemyBase {
             self.attack_frame_count % shot_interval == 0
         {
             if shot_enable {
-                accessor.push_event(EventType::EneShot(info.pos));
+                accessor.spawn_ene_shot(&info.pos);
             }
             true
         } else {
@@ -194,7 +200,7 @@ impl EnemyBase {
                 if wait > 0 {
                     self.shot_wait = Some(wait - 1);
                 } else {
-                    accessor.push_event(EventType::EneShot(info.pos));
+                    accessor.spawn_ene_shot(&info.pos);
                     self.shot_wait = None;
                 }
             }

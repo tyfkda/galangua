@@ -2,12 +2,16 @@
 
 use super::Enemy;
 
+use crate::app::game::effect::Effect;
 use crate::app::game::manager::EventType;
 
 use galangua_common::app::game::{CaptureState, FormationIndex};
 use galangua_common::framework::types::Vec2I;
 
 pub trait Accessor {
+    fn add_score(&mut self, add: u32);
+    fn spawn_ene_shot(&mut self, pos: &Vec2I);
+    fn spawn_effect(&mut self, effect: Effect);
     fn get_player_pos(&self) -> &Vec2I;
     fn get_dual_player_pos(&self) -> Option<Vec2I>;
     fn can_player_capture(&self) -> bool;
@@ -21,6 +25,7 @@ pub trait Accessor {
     fn pause_enemy_shot(&mut self, wait: u32);
     fn is_rush(&self) -> bool;
     fn get_stage_no(&self) -> u16;
+    fn play_se(&mut self, channel: u32, asset_path: &'static str);
 
     fn push_event(&mut self, event: EventType);
 }

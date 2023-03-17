@@ -129,7 +129,7 @@ impl Player {
     fn fire_bullet(&mut self, pad: &Pad, accessor: &mut impl Accessor) {
         if self.shot_enable && pad.is_trigger(PadBit::A) {
             let pos = &self.pos + &calc_velocity(self.angle, 4 * ONE);
-            accessor.push_event(EventType::MyShot(pos, self.dual, self.angle));
+            accessor.spawn_myshot(&pos, self.dual, self.angle);
         }
     }
 
