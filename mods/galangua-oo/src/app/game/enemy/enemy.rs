@@ -20,7 +20,7 @@ pub trait Enemy: Collidable + CoordinateTrait + FormationTrait {
 
     fn draw_sprite(&self, renderer: &mut dyn RendererTrait, sprite: &str, center: &Vec2I) {
         let angle = quantize_angle(self.angle(), ANGLE_DIV);
-        let pos = round_vec(&self.pos());
+        let pos = round_vec(self.pos());
         renderer.draw_sprite_rot(sprite, &(&pos - center), angle, None);
     }
 

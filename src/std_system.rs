@@ -51,11 +51,11 @@ fn load_map(filename: &str) -> HashMap<String, Value> {
                     return deserialized;
                 }
                 Err(err) => {
-                    eprintln!("{}", err);
+                    eprintln!("{err}");
                 }
             },
             Err(err) => {
-                eprintln!("{}", err);
+                eprintln!("{err}");
             }
         };
     }
@@ -69,7 +69,7 @@ fn save_map(filename: &str, map: &HashMap<String, Value>) {
             f.write_all(serialized.as_bytes()).expect("Unable to write data");
         }
         Err(message) => {
-            eprintln!("{}", message);
+            eprintln!("{message}");
         }
     }
 }

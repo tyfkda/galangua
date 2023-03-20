@@ -14,7 +14,7 @@ impl Effect {
     pub fn create_earned_point(point_type: EarnedPointType, pos: &Vec2I) -> Self {
         Effect::SequentialSpriteAnime(
             SequentialSpriteAnime::new(
-                &round_vec(&pos) + &Vec2I::new(-8, -4),
+                &round_vec(pos) + &Vec2I::new(-8, -4),
                 &EARNED_POINT_SPRITE_TABLE[point_type as usize],
                 EARNED_POINT_FRAME, 0))
     }
@@ -23,7 +23,7 @@ impl Effect {
         let sprite_name = FLASH_ENEMY_SPRITE_NAMES[enemy_type as usize];
         Effect::RotSprite(
             RotSprite::new(
-                &round_vec(&pos) + &Vec2I::new(-8, -8),
+                &round_vec(pos) + &Vec2I::new(-8, -8),
                 quantize_angle(angle, ANGLE_DIV),
                 sprite_name,
                 FLASH_ENEMY_FRAME))
@@ -32,7 +32,7 @@ impl Effect {
     pub fn create_enemy_explosion(pos: &Vec2I, delay: u32) -> Self {
         Effect::SequentialSpriteAnime(
             SequentialSpriteAnime::new(
-                &round_vec(&pos) + &Vec2I::new(-16, -16),
+                &round_vec(pos) + &Vec2I::new(-16, -16),
                 &ENEMY_EXPLOSION_SPRITE_TABLE,
                 ENEMY_EXPLOSION_FRAME, delay))
     }
@@ -40,7 +40,7 @@ impl Effect {
     pub fn create_player_explosion(pos: &Vec2I) -> Self {
         Effect::SequentialSpriteAnime(
             SequentialSpriteAnime::new(
-                &round_vec(&pos) + &Vec2I::new(-16, -16),
+                &round_vec(pos) + &Vec2I::new(-16, -16),
                 &PLAYER_EXPLOSION_SPRITE_TABLE,
                 PLAYER_EXPLOSION_FRAME, 0))
     }

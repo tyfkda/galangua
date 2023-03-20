@@ -38,9 +38,8 @@ pub struct GalanguaEcsApp<T: TimerTrait, S: SystemTrait> {
 
 impl<T: TimerTrait, S: SystemTrait> GalanguaEcsApp<T, S> {
     pub fn new(timer: T, system: S) -> Self {
-        let high_score = system.get_u32(&KEY_HIGH_SCORE)
-                .or(Some(DEFAULT_HIGH_SCORE))
-                .unwrap();
+        let high_score = system.get_u32(KEY_HIGH_SCORE)
+                .unwrap_or(DEFAULT_HIGH_SCORE);
 
         Self {
             system,
@@ -299,7 +298,7 @@ impl Game {
             .map(|game_info| game_info.score_holder.clone())
     }
 
-    fn get_star_manager<'a>(&'a self) -> Option<AtomicRef<StarManager>> {
+    fn get_star_manager(&self) -> Option<AtomicRef<StarManager>> {
         self.resources.get::<StarManager>()
     }
 }

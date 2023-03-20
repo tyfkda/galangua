@@ -457,7 +457,7 @@ impl Enemy for Owl {
 
         let pat = if self.capturing_state != CapturingState::None { 1 } else { pat };
         let pat = if self.life <= 1 { pat + 2 } else { pat };
-        let sprite = OWL_SPRITE_NAMES[pat as usize];
+        let sprite = OWL_SPRITE_NAMES[pat];
 
         self.draw_sprite(renderer, sprite, &Vec2I::new(8, 8));
 

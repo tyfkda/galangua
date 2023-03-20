@@ -62,7 +62,7 @@ pub fn move_to_formation(posture: &mut Posture, speed: &mut Speed, fi: &Formatio
     let angle = &mut posture.1;
     let spd = &mut speed.0;
     let vangle = &mut speed.1;
-    let diff = &target - &pos;
+    let diff = &target - pos;
     let sq_distance = square(diff.x >> (ONE_BIT / 2)) + square(diff.y >> (ONE_BIT / 2));
     if sq_distance > square(*spd >> (ONE_BIT / 2)) {
         let dlimit: i32 = *spd * 5 / 3;
@@ -201,7 +201,7 @@ pub fn zako_start_attack(zako: &mut Zako, enemy: &mut Enemy, posture: &Posture, 
         EnemyType::Owl => (&OWL_ATTACK_TABLE, ZakoState::Attack(ZakoAttackType::Traj)),
         EnemyType::CapturedFighter => (&OWL_ATTACK_TABLE, ZakoState::Attack(ZakoAttackType::Traj)),
     };
-    let mut traj = Traj::new(table, &ZERO_VEC, flip_x, enemy.formation_index.clone());
+    let mut traj = Traj::new(table, &ZERO_VEC, flip_x, enemy.formation_index);
     traj.set_pos(&posture.0);
 
     zako.base.count = 0;
@@ -403,11 +403,10 @@ impl EnemyBase {
         let target_pos = enum_player_target_pos(world);
 
         let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
-        let count = target_pos.iter().count();
-        let target: &Vec2I = target_pos.iter()
-            .nth(rng.gen_range(0..count)).unwrap();
+        let count = target_pos.len();
+        let target: &Vec2I = target_pos.get(rng.gen_range(0..count)).unwrap();
 
-        self.target_pos = target.clone();
+        self.target_pos = *target;
         speed.1 = 0;
     }
 }

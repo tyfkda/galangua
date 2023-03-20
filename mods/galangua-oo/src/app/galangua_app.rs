@@ -40,9 +40,8 @@ pub struct GalanguaApp<T: TimerTrait, S: SystemTrait> {
 
 impl<T: TimerTrait, S: SystemTrait> GalanguaApp<T, S> {
     pub fn new(timer: T, system: S) -> Self {
-        let high_score = system.get_u32(&KEY_HIGH_SCORE)
-                .or(Some(DEFAULT_HIGH_SCORE))
-                .unwrap();
+        let high_score = system.get_u32(KEY_HIGH_SCORE)
+                .unwrap_or(DEFAULT_HIGH_SCORE);
 
         Self {
             system,

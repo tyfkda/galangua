@@ -62,10 +62,8 @@ pub fn move_player(
 #[read_component(MyShot)]
 pub fn fire_myshot(player: &Player, posture: &Posture, entity: &Entity, world: &mut SubWorld, #[resource] pad: &Pad, #[resource] sound_queue: &mut SoundQueue, commands: &mut CommandBuffer) {
     let shot_count = <&MyShot>::query().iter(world).count();
-    if pad.is_trigger(PadBit::A) && shot_count < 2 {
-        if do_fire_myshot(player, posture, *entity, commands) {
-            sound_queue.push_play_se(CH_SHOT, SE_MYSHOT);
-        }
+    if pad.is_trigger(PadBit::A) && shot_count < 2 && do_fire_myshot(player, posture, *entity, commands) {
+        sound_queue.push_play_se(CH_SHOT, SE_MYSHOT);
     }
 }
 
@@ -143,8 +141,8 @@ pub fn run_attack_manager(world: &mut SubWorld, #[resource] attack_manager: &mut
     };
     if let Some((fi, capture_attack)) = result {
         let get_player_pos = || {
-            for (_player, posture) in <(&Player, &Posture)>::query().iter(world) {
-                return Some(posture.0.clone());
+            if let Some((_player, posture)) = <(&Player, &Posture)>::query().iter(world).next() {
+                return Some(posture.0);
             }
             None
         };
@@ -312,11 +310,11 @@ pub fn coll_check_myshot_enemy(
     let mut colls: Vec<(Entity, Entity)> = Vec::new();
     for (shot, shot_pos, shot_coll_rect, shot_entity) in <(&MyShot, &Posture, &CollRect, Entity)>::query().iter(world) {
         let shot_collboxes = [
-            Some(pos_to_coll_box(&shot_pos.0, &shot_coll_rect)),
-            shot.dual.map(|dual| pos_to_coll_box(&<&Posture>::query().get(world, dual).unwrap().0, &shot_coll_rect)),
+            Some(pos_to_coll_box(&shot_pos.0, shot_coll_rect)),
+            shot.dual.map(|dual| pos_to_coll_box(&<&Posture>::query().get(world, dual).unwrap().0, shot_coll_rect)),
         ];
         let mut hit = false;
-        for shot_collbox in shot_collboxes.iter().flat_map(|x| x) {
+        for shot_collbox in shot_collboxes.iter().flatten() {
             for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
                 let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
                 if shot_collbox.check_collision(&enemy_collbox) {
@@ -363,11 +361,11 @@ pub fn coll_check_player_enemy(
     let mut colls: Vec<(Entity, Vec2I, bool, Entity)> = Vec::new();
     for (player, player_pos, player_coll_rect, player_entity) in <(&Player, &Posture, &CollRect, Entity)>::query().iter(world) {
         let player_poses = [
-            Some(player_pos.0.clone()),
-            player.dual.map(|dual| <&Posture>::query().get(world, dual).unwrap().0.clone()),
+            Some(player_pos.0),
+            player.dual.map(|dual| <&Posture>::query().get(world, dual).unwrap().0),
         ];
-        for (i, pl_pos) in player_poses.iter().flat_map(|x| x).enumerate() {
-            let player_collbox = pos_to_coll_box(&pl_pos, player_coll_rect);
+        for (i, pl_pos) in player_poses.iter().flatten().enumerate() {
+            let player_collbox = pos_to_coll_box(pl_pos, player_coll_rect);
             for (_enemy, enemy_pos, enemy_coll_rect, enemy_entity) in <(&Enemy, &Posture, &CollRect, Entity)>::query().iter(world) {
                 let enemy_collbox = CollBox { top_left: &round_vec(&enemy_pos.0) + &enemy_coll_rect.offset, size: enemy_coll_rect.size };
                 if player_collbox.check_collision(&enemy_collbox) {
@@ -422,11 +420,11 @@ pub fn coll_check_player_eneshot(
     let mut colls: Vec<(Entity, Vec2I, bool)> = Vec::new();
     for (player, player_pos, player_coll_rect, player_entity) in <(&Player, &Posture, &CollRect, Entity)>::query().iter(world) {
         let player_poses = [
-            Some(player_pos.0.clone()),
-            player.dual.map(|dual| <&Posture>::query().get(world, dual).unwrap().0.clone()),
+            Some(player_pos.0),
+            player.dual.map(|dual| <&Posture>::query().get(world, dual).unwrap().0),
         ];
-        for (i, pl_pos) in player_poses.iter().flat_map(|x| x).enumerate() {
-            let player_collbox = pos_to_coll_box(&pl_pos, player_coll_rect);
+        for (i, pl_pos) in player_poses.iter().flatten().enumerate() {
+            let player_collbox = pos_to_coll_box(pl_pos, player_coll_rect);
             for (_eneshot, eneshot_pos, eneshot_coll_rect, eneshot_entity) in <(&EneShot, &Posture, &CollRect, Entity)>::query().iter(world) {
                 let enemy_collbox = CollBox { top_left: &round_vec(&eneshot_pos.0) + &eneshot_coll_rect.offset, size: eneshot_coll_rect.size };
                 if player_collbox.check_collision(&enemy_collbox) {
@@ -477,7 +475,7 @@ pub fn draw_system(world: &World, resources: &Resources, renderer: &mut impl Ren
         let pos = &round_vec(&posture.0) + &drawable.offset;
         let angle = quantize_angle(posture.1, ANGLE_DIV);
 
-        let sprite_color = sprite_color_opt.unwrap_or_else(|| &white);
+        let sprite_color = sprite_color_opt.unwrap_or(&white);
         renderer.set_sprite_texture_color_mod(drawable.sprite_name, sprite_color.0, sprite_color.1, sprite_color.2);
 
         if angle == 0 {

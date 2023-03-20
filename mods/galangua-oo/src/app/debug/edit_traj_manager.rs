@@ -94,7 +94,7 @@ impl EditTrajManager {
     }
 
     fn set_traj_attack(&mut self, game_manager: &mut GameManager, no: u32, flip_x: bool) {
-        let filename = format!("debug/debug_traj{}.txt", no);
+        let filename = format!("debug/debug_traj{no}.txt");
         if let Some(traj_command_vec) = load_traj_command_file(&filename) {
             let stage_manager = game_manager.stage_manager_mut();
             if let Some(enemy) = stage_manager.get_enemy_at_mut(&self.fi) {
@@ -133,7 +133,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                     vec.push(TrajCommand::Pos(ix, iy));
                                     continue;
                                 }
-                                println!("Line {}: number expected", lineno);
+                                println!("Line {lineno}: number expected");
                                 err = true;
                             }
                             "Speed" if words.len() >= 2 => {
@@ -141,7 +141,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                     let ispeed = (speed * one).round() as i32;
                                     vec.push(TrajCommand::Speed(ispeed));
                                 } else {
-                                    println!("Line {}: number expected", lineno);
+                                    println!("Line {lineno}: number expected");
                                     err = true;
                                 }
                             }
@@ -150,7 +150,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                     let iangle = (angle * one).round() as i32;
                                     vec.push(TrajCommand::Angle(iangle));
                                 } else {
-                                    println!("Line {}: number expected", lineno);
+                                    println!("Line {lineno}: number expected");
                                     err = true;
                                 }
                             }
@@ -159,7 +159,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                     let ivangle = (vangle * one).round() as i32;
                                     vec.push(TrajCommand::VAngle(ivangle));
                                 } else {
-                                    println!("Line {}: number expected", lineno);
+                                    println!("Line {lineno}: number expected");
                                     err = true;
                                 }
                             }
@@ -167,7 +167,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                 if let Ok(delay) = words[1].parse::<u32>() {
                                     vec.push(TrajCommand::Delay(delay));
                                 } else {
-                                    println!("Line {}: number expected", lineno);
+                                    println!("Line {lineno}: number expected");
                                     err = true;
                                 }
                             }
@@ -178,7 +178,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                     vec.push(TrajCommand::DestAngle(iangle, iradius));
                                     continue;
                                 }
-                                println!("Line {}: number expected", lineno);
+                                println!("Line {lineno}: number expected");
                                 err = true;
                             }
                             "WaitYG" if words.len() >= 2 => {
@@ -186,7 +186,7 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                     let ivalue = (value * one).round() as i32;
                                     vec.push(TrajCommand::WaitYG(ivalue));
                                 } else {
-                                    println!("Line {}: number expected", lineno);
+                                    println!("Line {lineno}: number expected");
                                     err = true;
                                 }
                             }
@@ -197,14 +197,14 @@ fn load_traj_command_file(filename: &str) -> Option<Vec<TrajCommand>> {
                                     vec.push(TrajCommand::AddPos(ix, iy));
                                     continue;
                                 }
-                                println!("Line {}: number expected", lineno);
+                                println!("Line {lineno}: number expected");
                                 err = true;
                             }
                             "CopyFormationX" => {
                                 vec.push(TrajCommand::CopyFormationX);
                             }
                             _ => {
-                                println!("Line {}: Unhandled, {:?}", lineno, words);
+                                println!("Line {lineno}: Unhandled, {words:?}");
                                 err = true;
                             }
                         }

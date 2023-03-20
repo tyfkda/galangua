@@ -52,10 +52,8 @@ impl RendererTrait for SdlRenderer {
 
     fn set_texture_color_mod(&mut self, tex_name: &str, r: u8, g: u8, b: u8) {
         let color = (r, g, b);
-        if self.tex_color_map.contains_key(tex_name) {
-            if self.tex_color_map[tex_name] == color {
-                return;
-            }
+        if self.tex_color_map.contains_key(tex_name) && self.tex_color_map[tex_name] == color {
+            return;
         }
         self.tex_color_map.insert(tex_name.to_string(), color);
 
@@ -67,10 +65,8 @@ impl RendererTrait for SdlRenderer {
     fn set_sprite_texture_color_mod(&mut self, sprite_name: &str, r: u8, g: u8, b: u8) {
         if let Some((_sheet, tex_name)) = self.sprite_sheet.get(sprite_name) {
             let color = (r, g, b);
-            if self.tex_color_map.contains_key(tex_name) {
-                if self.tex_color_map[tex_name] == color {
-                    return;
-                }
+            if self.tex_color_map.contains_key(tex_name) && self.tex_color_map[tex_name] == color {
+                return;
             }
             self.tex_color_map.insert(tex_name.to_string(), color);
 
@@ -90,7 +86,7 @@ impl RendererTrait for SdlRenderer {
         for c in text.chars() {
             let u: i32 = ((c as i32) - (' ' as i32)) % 16 * 8;
             let v: i32 = ((c as i32) - (' ' as i32)) / 16 * 8;
-            self.canvas.copy(&texture,
+            self.canvas.copy(texture,
                              Some(Rect::new(u, v, 8, 8)),
                              Some(Rect::new(x, y, w, h)))
                 .expect("copy failed");
@@ -105,12 +101,12 @@ impl RendererTrait for SdlRenderer {
 
         let texture = self.texture_manager.get(tex_name)
             .expect("No texture");
-        self.canvas.copy(&texture,
+        self.canvas.copy(texture,
                          Some(Rect::new(sheet.frame.x, sheet.frame.y,
                                         sheet.frame.w, sheet.frame.h)),
                          Some(Rect::new(pos.x, pos.y,
-                                        sheet.frame.w as u32,
-                                        sheet.frame.h as u32)))
+                                        sheet.frame.w,
+                                        sheet.frame.h)))
             .expect("copy failed");
     }
 
@@ -123,12 +119,12 @@ impl RendererTrait for SdlRenderer {
         let texture = self.texture_manager.get(tex_name)
             .expect("No texture");
         let center = center.map(|v| Point::new(v.x, v.y));
-        self.canvas.copy_ex(&texture,
+        self.canvas.copy_ex(texture,
                             Some(Rect::new(sheet.frame.x, sheet.frame.y,
                                            sheet.frame.w, sheet.frame.h)),
                             Some(Rect::new(pos.x, pos.y,
-                                           sheet.frame.w as u32,
-                                           sheet.frame.h as u32)),
+                                           sheet.frame.w,
+                                           sheet.frame.h)),
                             (angle as f64) * (360.0 / 256.0), center, false, false)
             .expect("copy_ex failed");
     }

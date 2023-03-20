@@ -21,7 +21,7 @@ impl TimerTrait for StdTimer {
             return false;
         }
 
-        self.last_time = self.last_time + Duration::from_secs(1);
+        self.last_time += Duration::from_secs(1);
         true
     }
 }

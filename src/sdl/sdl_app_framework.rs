@@ -181,7 +181,7 @@ impl<App: AppTrait<SdlRenderer>> SdlAppFramework<App> {
         let joystick_subsystem = self.sdl_context.joystick()?;
         let available = joystick_subsystem
             .num_joysticks()
-            .map_err(|e| format!("can't enumerate joysticks: {}", e))?;
+            .map_err(|e| format!("can't enumerate joysticks: {e}"))?;
         let joystick = (0..available).find_map(|id| match joystick_subsystem.open(id) {
             Ok(c) => Some(c),
             Err(_e) => None,

@@ -122,7 +122,7 @@ impl EnemyManager {
     }
 
     pub fn spawn_captured_fighter(&mut self, pos: &Vec2I, fi: &FormationIndex) -> bool {
-        let mut enemy = create_enemy(EnemyType::CapturedFighter, &pos, 0, 0, fi);
+        let mut enemy = create_enemy(EnemyType::CapturedFighter, pos, 0, 0, fi);
         enemy.set_to_troop();
         self.spawn(enemy)
     }
@@ -156,7 +156,7 @@ impl EnemyManager {
             let angle = clamp(angle, -limit, limit);
 
             let vel = calc_velocity(angle + ANGLE * ONE / 2, speed);
-            self.shots[index] = Some(EneShot::new(&pos, &vel));
+            self.shots[index] = Some(EneShot::new(pos, &vel));
         }
     }
 

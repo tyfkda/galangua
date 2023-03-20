@@ -24,10 +24,10 @@ use crate::app::game::enemy::enemy::create_enemy;
 
 #[derive(Clone, Copy, PartialEq)]
 enum StageState {
-    APPEARANCE,
-    NORMAL,
-    RUSH,
-    CLEARED,
+    Appearance,
+    Normal,
+    Rush,
+    Cleared,
 }
 
 pub struct StageManager {
@@ -45,7 +45,7 @@ impl StageManager {
             formation: Formation::default(),
             appearance_manager: AppearanceManager::default(),
             attack_manager: AttackManager::default(),
-            stage_state: StageState::APPEARANCE,
+            stage_state: StageState::Appearance,
         }
     }
 
@@ -54,11 +54,11 @@ impl StageManager {
         self.appearance_manager.restart(stage, captured_fighter);
         self.formation.restart();
         self.attack_manager.restart(stage);
-        self.stage_state = StageState::APPEARANCE;
+        self.stage_state = StageState::Appearance;
     }
 
     pub fn all_destroyed(&self) -> bool {
-        self.stage_state == StageState::CLEARED &&
+        self.stage_state == StageState::Cleared &&
             self.enemy_manager.all_destroyed()
     }
 
@@ -96,7 +96,7 @@ impl StageManager {
             }
         }
         if !prev_done && self.appearance_manager.done {
-            self.stage_state = StageState::NORMAL;
+            self.stage_state = StageState::Normal;
             self.formation.done_appearance();
             self.attack_manager.set_enable(true);
         }
@@ -131,13 +131,13 @@ impl StageManager {
     }
 
     fn check_stage_state(&mut self) {
-        if self.stage_state == StageState::APPEARANCE {
+        if self.stage_state == StageState::Appearance {
             return;
         }
 
         let new_state = match self.enemy_manager.alive_enemy_count {
-            n if n == 0               => StageState::CLEARED,
-            n if n <= RUSH_THRESHOLD  => StageState::RUSH,
+            n if n == 0               => StageState::Cleared,
+            n if n <= RUSH_THRESHOLD  => StageState::Rush,
             _                         => self.stage_state,
         };
         if new_state != self.stage_state {
@@ -175,7 +175,7 @@ impl StageManager {
     }
 
     pub fn is_rush(&self) -> bool {
-        self.stage_state == StageState::RUSH
+        self.stage_state == StageState::Rush
     }
 
     // Debug
@@ -191,7 +191,7 @@ impl StageManager {
         self.formation.done_appearance();
         self.attack_manager.restart(stage);
         self.attack_manager.set_enable(false);
-        self.stage_state = StageState::NORMAL;
+        self.stage_state = StageState::Normal;
 
         for unit in 0..5 {
             for i in 0..8 {

@@ -28,7 +28,7 @@ pub fn update_seqanime(anime: &mut SequentialSpriteAnime, drawable: Option<&mut 
     if anime.count >= anime.frame_wait {
         anime.count = 0;
         anime.sprites = &anime.sprites[1..];
-        if anime.sprites.len() == 0 {
+        if anime.sprites.is_empty() {
             commands.remove(entity);
             return;
         }
@@ -54,7 +54,7 @@ pub fn create_flash_enemy_effect(
     let sprite_name = anime_table[0];
     let offset = Vec2I::new(-8, -8);
     commands.push((
-        Posture(pos.clone(), angle),
+        Posture(*pos, angle),
         new_seqanime(anime_table, offset, FLASH_ENEMY_FRAME, 0),
         SpriteDrawable { sprite_name, offset },
     ));
@@ -67,7 +67,7 @@ pub fn create_enemy_explosion_effect(
     let anime_table = &ENEMY_EXPLOSION_SPRITE_TABLE;
     let offset = Vec2I::new(-16, -16);
     commands.push((
-        Posture(pos.clone(), 0),
+        Posture(*pos, 0),
         new_seqanime(anime_table, offset, ENEMY_EXPLOSION_FRAME, delay),
     ));
 }
@@ -79,7 +79,7 @@ pub fn create_player_explosion_effect(
     let sprite_name = anime_table[0];
     let offset = Vec2I::new(-16, -16);
     commands.push((
-        Posture(pos.clone(), 0),
+        Posture(*pos, 0),
         new_seqanime(anime_table, offset, PLAYER_EXPLOSION_FRAME, 0),
         SpriteDrawable { sprite_name, offset },
     ));
@@ -94,7 +94,7 @@ pub fn create_earned_piont_effect(
     let sprite_name = anime_table[0];
     let offset = Vec2I::new(-8, -4);
     commands.push((
-        Posture(pos.clone(), 0),
+        Posture(*pos, 0),
         new_seqanime(anime_table, offset, EARNED_POINT_FRAME, 0),
         SpriteDrawable { sprite_name, offset },
     ));

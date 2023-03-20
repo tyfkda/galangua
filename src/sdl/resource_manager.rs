@@ -16,7 +16,7 @@ impl<T> ResourceManager<T> {
         &mut self, base_path: &str, filenames: &[&str], loader: impl Fn(&str) -> Result<T, String>,
     ) -> Result<(), String> {
         for filename in filenames {
-            let resource = loader(&format!("{}/{}", base_path, filename))?;
+            let resource = loader(&format!("{base_path}/{filename}"))?;
             let key = Path::new(filename).file_stem().unwrap().to_str().unwrap();
             self.map.insert(String::from(key), resource);
         }

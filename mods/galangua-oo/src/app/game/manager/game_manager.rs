@@ -359,7 +359,7 @@ impl GameManager {
                 EventType::RecapturePlayer(fi, angle) => {
                     if let Some(captured_fighter) = self.stage_manager.get_enemy_at(&fi) {
                         let pos = captured_fighter.pos();
-                        self.player.start_recapture_effect(&pos, angle);
+                        self.player.start_recapture_effect(pos, angle);
                         self.stage_manager.remove_enemy(&fi);
                         self.stage_manager.pause_attack(true);
                         system.play_se(CH_JINGLE, SE_RECAPTURE);
@@ -392,7 +392,7 @@ impl GameManager {
                     self.capture_enemy_fi = FormationIndex(0, 0);
                 }
                 EventType::PlaySe(channel, asset_path) => {
-                    system.play_se(channel, &asset_path);
+                    system.play_se(channel, asset_path);
                 }
             }
             i += 1;

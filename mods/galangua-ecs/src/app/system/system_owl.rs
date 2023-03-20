@@ -113,10 +113,10 @@ pub fn owl_start_attack(
     sound_queue: &mut SoundQueue,
     world: &mut SubWorld, commands: &mut CommandBuffer,
 ) {
-    let fi = <&Enemy>::query().get(world, entity).unwrap().formation_index.clone();
+    let fi = <&Enemy>::query().get(world, entity).unwrap().formation_index;
     let flip_x = fi.0 >= (X_COUNT as u8) / 2;
     if !capture_attack {
-        let pos = <&Posture>::query().get(world, entity).unwrap().0.clone();
+        let pos = <&Posture>::query().get(world, entity).unwrap().0;
         choose_troops(entity, &fi, &pos, world, commands);
 
         let posture = <&Posture>::query().get(world, entity).unwrap();
@@ -406,7 +406,7 @@ pub fn set_owl_damage(
         let point = {
             let is_formation = owl.state == OwlState::Formation;
             let guard_count = if let Ok(troops) = <&Troops>::query().get_mut(world, entity) {
-                troops.members.iter().flat_map(|x| x)
+                troops.members.iter().flatten()
                     .filter(|troop| troop.is_guard)
                     .count() as u32
             } else {
@@ -503,14 +503,14 @@ pub fn do_animate_owl(owl: &Owl, sprite: &mut SpriteDrawable, frame_count: u32) 
     let pat = ((frame_count >> 5) & 1) as usize;
     let pat = if owl.capturing_state != OwlCapturingState::None { 1 } else { pat };
     let pat = if owl.life <= 1 { pat + 2 } else { pat };
-    sprite.sprite_name = OWL_SPRITE_NAMES[pat as usize];
+    sprite.sprite_name = OWL_SPRITE_NAMES[pat];
 }
 
 // Tractor Beam
 
 fn create_tractor_beam(pos: &Vec2I) -> TractorBeam {
     TractorBeam {
-        pos: pos.clone(),
+        pos: *pos,
         state: TractorBeamState::Opening,
         count: 0,
         color_count: 0,
@@ -616,9 +616,9 @@ pub fn do_move_tractor_beam(
     update_beam_colors(&tractor_beam.beam_sprites, tractor_beam.color_count, world);
 }
 
-fn update_beam_colors<'a>(beam_sprites: &[Option<Entity>], color_count: u32, world: &mut SubWorld) {
-    for i in 0..beam_sprites.len() {
-        if let Some(entity) = &beam_sprites[i] {
+fn update_beam_colors(beam_sprites: &[Option<Entity>], color_count: u32, world: &mut SubWorld) {
+    for (i, beam_sprite) in beam_sprites.iter().enumerate() {
+        if let Some(entity) = beam_sprite {
             let hue = color_count * 64 + i as u32 * 160;
             let (r, g, b) = hsv(hue, 255, 255);
 
@@ -753,7 +753,7 @@ pub fn update_troops(
     troops: &mut Troops, owner: Entity, _owl: &mut Owl, world: &mut SubWorld,
 ) {
     let &Posture(pos, angle) = <&Posture>::query().get(world, owner).unwrap();
-    for member in troops.members.iter().flat_map(|x| x) {
+    for member in troops.members.iter().flatten() {
         if let Ok(member_pos) = <&mut Posture>::query().get_mut(world, member.entity) {
             member_pos.0 = &pos + &member.offset;
             if troops.copy_angle_to_troops {
@@ -766,7 +766,7 @@ pub fn update_troops(
 fn add_captured_player_to_troops(troops: &mut Troops, captured: Entity, offset: &Vec2I) {
     // On capture attack, must be no troops exists.
     assert!(troops.members[0].is_none());
-    troops.members[0] = Some(Troop { entity: captured, offset: offset.clone(), is_guard: false });
+    troops.members[0] = Some(Troop { entity: captured, offset: *offset, is_guard: false });
 }
 
 fn release_troops(troops: &mut Troops, world: &mut SubWorld) {

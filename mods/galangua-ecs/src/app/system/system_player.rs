@@ -135,10 +135,7 @@ pub fn can_player_fire(player: &Player) -> bool {
     if !player.shot_enable {
         return false;
     }
-    match player.state {
-        PlayerState::Normal | PlayerState::Capturing => true,
-        _ => false
-    }
+    matches!(player.state, PlayerState::Normal | PlayerState::Capturing)
 }
 
 pub fn crash_player(
@@ -151,20 +148,18 @@ pub fn crash_player(
             commands.remove(dual);
         }
         false
+    } else if let Some(dual) = player.dual.take() {
+        let dual_pos = <&Posture>::query().get_mut(world, dual).unwrap().0;
+        commands.remove(dual);
+        let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
+        posture.0 = dual_pos;
+        false
     } else {
-        if let Some(dual) = player.dual.take() {
-            let dual_pos = <&Posture>::query().get_mut(world, dual).unwrap().0.clone();
-            commands.remove(dual);
-            let posture = <&mut Posture>::query().get_mut(world, entity).unwrap();
-            posture.0 = dual_pos;
-            false
-        } else {
-            player.state = PlayerState::Dead;
-            player.count = 0;
-            commands.remove_component::<CollRect>(entity);
-            commands.remove_component::<SpriteDrawable>(entity);
-            true
-        }
+        player.state = PlayerState::Dead;
+        player.count = 0;
+        commands.remove_component::<CollRect>(entity);
+        commands.remove_component::<SpriteDrawable>(entity);
+        true
     }
 }
 
@@ -204,10 +199,10 @@ pub fn player_coll_rect() -> CollRect {
 pub fn enum_player_target_pos(world: &SubWorld) -> Vec<Vec2I> {
     let mut target_pos = Vec::new();
     for (player, posture) in <(&Player, &Posture)>::query().iter(world) {
-        target_pos.push(posture.0.clone());
+        target_pos.push(posture.0);
         if let Some(dual) = player.dual {
             if let Ok(dual_posture) = <&Posture>::query().get(world, dual) {
-                target_pos.push(dual_posture.0.clone());
+                target_pos.push(dual_posture.0);
             }
         }
     }
@@ -244,7 +239,7 @@ pub fn do_fire_myshot(player: &Player, posture: &Posture, entity: Entity, comman
 
 pub fn do_move_myshot(shot: &MyShot, entity: Entity, world: &mut SubWorld, commands: &mut CommandBuffer) {
     let mut cont = false;
-    for e in [Some(entity), shot.dual].iter().flat_map(|x| x) {
+    for e in [Some(entity), shot.dual].iter().flatten() {
         let posture = <&mut Posture>::query().get_mut(world, *e).unwrap();
         let pos = &mut posture.0;
         let angle = &posture.1;

@@ -38,10 +38,10 @@ pub enum GameState {
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum StageState {
-    APPEARANCE,
-    NORMAL,
-    RUSH,
-    CLEARED,
+    Appearance,
+    Normal,
+    Rush,
+    Cleared,
 }
 
 pub struct GameInfo {
@@ -66,7 +66,7 @@ impl GameInfo {
             left_ship: DEFAULT_LEFT_SHIP,
             game_state: GameState::StartStage,
             count: 0,
-            stage_state: StageState::APPEARANCE,
+            stage_state: StageState::Appearance,
             capture_state: CaptureState::NoCapture,
             capture_enemy_fi: FormationIndex(0, 0),
             alive_enemy_count: 0,
@@ -82,7 +82,7 @@ impl GameInfo {
         world: &mut SubWorld, commands: &mut CommandBuffer,
     ) {
         self.frame_count = self.frame_count.wrapping_add(1);
-        self.check_stage_state(&appearance_manager);
+        self.check_stage_state(appearance_manager);
 
         match self.game_state {
             GameState::StartStage => {
@@ -104,7 +104,7 @@ impl GameInfo {
                 }
             }
             GameState::Playing => {
-                if self.stage_state == StageState::CLEARED && self.all_destroyed(world) {
+                if self.stage_state == StageState::Cleared && self.all_destroyed(world) {
                     self.game_state = GameState::StageClear;
                     self.count = 0;
                 }
@@ -265,7 +265,7 @@ impl GameInfo {
     }
 
     pub fn is_rush(&self) -> bool {
-        self.game_state == GameState::Playing && self.stage_state == StageState::RUSH
+        self.game_state == GameState::Playing && self.stage_state == StageState::Rush
     }
 
     pub fn add_score(&mut self, add: u32, sound_queue: &mut SoundQueue) {
@@ -295,20 +295,20 @@ impl GameInfo {
         appearance_manager.restart(stage, captured_fighter);
         attack_manager.restart(stage);
         eneshot_spawner.restart();
-        self.stage_state = StageState::APPEARANCE;
+        self.stage_state = StageState::Appearance;
     }
 
     fn check_stage_state(&mut self, appearance_manager: &AppearanceManager) {
-        if self.stage_state == StageState::APPEARANCE {
+        if self.stage_state == StageState::Appearance {
             if !appearance_manager.done {
                 return;
             }
-            self.stage_state = StageState::NORMAL;
+            self.stage_state = StageState::Normal;
         }
 
         let new_state = match self.alive_enemy_count {
-            n if n == 0               => StageState::CLEARED,
-            n if n <= RUSH_THRESHOLD  => StageState::RUSH,
+            n if n == 0               => StageState::Cleared,
+            n if n <= RUSH_THRESHOLD  => StageState::Rush,
             _                         => self.stage_state,
         };
         if new_state != self.stage_state {
@@ -327,7 +327,7 @@ pub struct EneShotSpawner {
 
 impl EneShotSpawner {
     pub fn push(&mut self, pos: &Vec2I) {
-        self.queue.push(pos.clone());
+        self.queue.push(*pos);
     }
 
     pub fn update(&mut self, game_info: &GameInfo, world: &SubWorld, commands: &mut CommandBuffer) {
@@ -352,12 +352,11 @@ impl EneShotSpawner {
         let shot_count = <&EneShot>::query().iter(world).count();
         let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
         let target_pos = enum_player_target_pos(world);
-        let count = target_pos.iter().count();
+        let count = target_pos.len();
         for (pos, _i) in self.queue.iter().zip(shot_count..MAX_ENE_SHOT_COUNT) {
-            let target: &Vec2I = target_pos.iter()
-                .nth(rng.gen_range(0..count)).unwrap();
+            let target: &Vec2I = target_pos.get(rng.gen_range(0..count)).unwrap();
 
-            let d = target - &pos;
+            let d = target - pos;
             let angle = atan2_lut(d.y, -d.x);  // 0=down
             let limit = ANGLE * ONE * 30 / 360;
             let angle = clamp(angle, -limit, limit);
