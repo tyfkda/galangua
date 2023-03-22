@@ -3,7 +3,7 @@ use galangua_common::framework::types::Vec2I;
 use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{clamp, quantize_angle, round_vec, ANGLE, ONE};
 
-use crate::app::game::manager::EventType;
+use crate::app::game::manager::CaptureEventType;
 
 use super::Accessor;
 
@@ -41,7 +41,7 @@ impl RecapturedFighter {
                 if self.angle >= ANGLE * ONE * 4 && accessor.is_no_attacker() {
                     self.state = State::SlideHorz;
                     self.angle = 0;
-                    accessor.push_event(EventType::MovePlayerHomePos);
+                    accessor.capture_event(CaptureEventType::MovePlayerHomePos);
                 }
             }
             State::SlideHorz => {

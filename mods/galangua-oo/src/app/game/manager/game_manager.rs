@@ -1,6 +1,6 @@
-use super::event_queue::EventQueue;
+use super::event_queue::{EventQueue, EventType, StarEventType};
 use super::stage::stage_manager::StageManager;
-use super::EventType;
+use super::CaptureEventType;
 
 use crate::app::game::effect::Effect;
 use crate::app::game::enemy::Accessor as AccessorForEnemy;
@@ -9,7 +9,6 @@ use crate::app::game::player::Accessor as AccessorForPlayer;
 use crate::app::game::player::{MyShot, Player};
 
 use galangua_common::app::consts::*;
-use galangua_common::app::game::effect_table::FLASH_ENEMY_FRAME;
 use galangua_common::app::game::stage_indicator::StageIndicator;
 use galangua_common::app::game::star_manager::StarManager;
 use galangua_common::app::game::{CaptureState, FormationIndex};
@@ -289,7 +288,7 @@ impl GameManager {
         }
     }
 
-    fn do_push_event(&mut self, event: EventType) {
+    fn push_event(&mut self, event: EventType) {
         self.event_queue.push(event);
     }
 
@@ -297,28 +296,9 @@ impl GameManager {
         let mut i = 0;
         while i < self.event_queue.len() {
             match self.event_queue[i] {
-                EventType::MyShot(pos, dual, angle) => {
-                    if self.spawn_myshot(&pos, dual, angle) {
-                        system.play_se(CH_SHOT, SE_MYSHOT);
-                    }
-                }
-                EventType::EneShot(pos) => {
-                    self.spawn_ene_shot(&pos);
-                }
                 EventType::AddScore(add) => {
                     self.add_score(params.score_holder.score, add, system);
                     params.score_holder.add_score(add);
-                }
-                EventType::EarnPointEffect(point_type, pos) => {
-                    self.spawn_effect(Effect::create_earned_point(point_type, &pos));
-                }
-                EventType::EnemyExplosion(pos, angle, enemy_type) => {
-                    self.spawn_effect(Effect::create_flash_enemy(&pos, angle, enemy_type));
-                    self.spawn_effect(Effect::create_enemy_explosion(&pos, FLASH_ENEMY_FRAME));
-                }
-                EventType::PlayerExplosion(pos) => {
-                    self.spawn_effect(Effect::create_player_explosion(&pos));
-                    system.play_se(CH_BOMB, SE_BOMB_PLAYER);
                 }
                 EventType::DeadPlayer => {
                     params.star_manager.set_stop(true);
@@ -328,68 +308,11 @@ impl GameManager {
                         self.count = 0;
                     }
                 }
-                EventType::StartCaptureAttack(formation_index) => {
-                    self.capture_state = CaptureState::CaptureAttacking;
-                    self.capture_enemy_fi = formation_index;
-                }
-                EventType::EndCaptureAttack => {
-                    self.capture_state = CaptureState::NoCapture;
-                    self.capture_enemy_fi = FormationIndex(0, 0);
-                }
-                EventType::CapturePlayer(capture_pos) => {
-                    params.star_manager.set_capturing(true);
-                    self.stage_manager.pause_attack(true);
-                    self.player.start_capture(&capture_pos);
-                    self.state = GameState::Capturing;
-                    self.capture_state = CaptureState::Capturing;
-                }
-                EventType::CapturePlayerCompleted => {
-                    params.star_manager.set_capturing(false);
-                    self.player.complete_capture();
-                    self.capture_state = CaptureState::Captured;
-                    self.state = GameState::Captured;
-                    self.count = 0;
-                }
-                EventType::CaptureSequenceEnded => {
-                    self.next_player();
-                }
-                EventType::SpawnCapturedFighter(pos, formation_index) => {
-                    self.stage_manager.spawn_captured_fighter(&pos, &formation_index);
-                }
-                EventType::RecapturePlayer(fi, angle) => {
-                    if let Some(captured_fighter) = self.stage_manager.get_enemy_at(&fi) {
-                        let pos = captured_fighter.pos();
-                        self.player.start_recapture_effect(pos, angle);
-                        self.stage_manager.remove_enemy(&fi);
-                        self.stage_manager.pause_attack(true);
-                        system.play_se(CH_JINGLE, SE_RECAPTURE);
-                        self.state = GameState::Recapturing;
-                        self.capture_state = CaptureState::Recapturing;
+                EventType::StarEvent(star_event) => {
+                    match star_event {
+                        StarEventType::Capturing(value) => params.star_manager.set_capturing(value),
+                        StarEventType::Stop(value) => params.star_manager.set_stop(value),
                     }
-                }
-                EventType::MovePlayerHomePos => {
-                    self.player.start_move_home_pos();
-                }
-                EventType::RecaptureEnded(dual) => {
-                    self.stage_manager.pause_attack(false);
-                    self.capture_state = if dual { CaptureState::Dual } else { CaptureState::NoCapture };
-                    self.capture_enemy_fi = FormationIndex(0, 0);
-                    params.star_manager.set_stop(false);
-                    self.state = GameState::Playing;
-                }
-                EventType::EscapeCapturing => {
-                    self.capture_state = CaptureState::NoCapture;
-                    self.capture_enemy_fi = FormationIndex(0, 0);
-                    params.star_manager.set_capturing(false);
-                    self.player.escape_capturing();
-                }
-                EventType::EscapeEnded => {
-                    self.stage_manager.pause_attack(false);
-                    self.state = GameState::Playing;
-                }
-                EventType::CapturedFighterDestroyed => {
-                    self.capture_state = CaptureState::NoCapture;
-                    self.capture_enemy_fi = FormationIndex(0, 0);
                 }
                 EventType::PlaySe(channel, asset_path) => {
                     system.play_se(channel, asset_path);
@@ -398,6 +321,74 @@ impl GameManager {
             i += 1;
         }
         self.event_queue.clear();
+    }
+
+    fn do_capture_event(&mut self, event: CaptureEventType) {
+        match event {
+            CaptureEventType::StartCaptureAttack(formation_index) => {
+                self.capture_state = CaptureState::CaptureAttacking;
+                self.capture_enemy_fi = formation_index;
+            }
+            CaptureEventType::EndCaptureAttack => {
+                self.capture_state = CaptureState::NoCapture;
+                self.capture_enemy_fi = FormationIndex(0, 0);
+            }
+            CaptureEventType::CapturePlayer(capture_pos) => {
+                self.push_event(EventType::StarEvent(StarEventType::Capturing(true)));
+                self.stage_manager.pause_attack(true);
+                self.player.start_capture(&capture_pos);
+                self.state = GameState::Capturing;
+                self.capture_state = CaptureState::Capturing;
+            }
+            CaptureEventType::CapturePlayerCompleted => {
+                self.push_event(EventType::StarEvent(StarEventType::Capturing(false)));
+                self.player.complete_capture();
+                self.capture_state = CaptureState::Captured;
+                self.state = GameState::Captured;
+                self.count = 0;
+            }
+            CaptureEventType::CaptureSequenceEnded => {
+                self.next_player();
+            }
+            CaptureEventType::SpawnCapturedFighter(pos, formation_index) => {
+                self.stage_manager.spawn_captured_fighter(&pos, &formation_index);
+            }
+            CaptureEventType::RecapturePlayer(fi, angle) => {
+                if let Some(captured_fighter) = self.stage_manager.get_enemy_at(&fi) {
+                    let pos = captured_fighter.pos();
+                    self.player.start_recapture_effect(pos, angle);
+                    self.stage_manager.remove_enemy(&fi);
+                    self.stage_manager.pause_attack(true);
+                    self.play_se(CH_JINGLE, SE_RECAPTURE);
+                    self.state = GameState::Recapturing;
+                    self.capture_state = CaptureState::Recapturing;
+                }
+            }
+            CaptureEventType::MovePlayerHomePos => {
+                self.player.start_move_home_pos();
+            }
+            CaptureEventType::RecaptureEnded(dual) => {
+                self.stage_manager.pause_attack(false);
+                self.capture_state = if dual { CaptureState::Dual } else { CaptureState::NoCapture };
+                self.capture_enemy_fi = FormationIndex(0, 0);
+                self.push_event(EventType::StarEvent(StarEventType::Stop(false)));
+                self.state = GameState::Playing;
+            }
+            CaptureEventType::EscapeCapturing => {
+                self.capture_state = CaptureState::NoCapture;
+                self.capture_enemy_fi = FormationIndex(0, 0);
+                self.push_event(EventType::StarEvent(StarEventType::Capturing(false)));
+                self.player.escape_capturing();
+            }
+            CaptureEventType::EscapeEnded => {
+                self.stage_manager.pause_attack(false);
+                self.state = GameState::Playing;
+            }
+            CaptureEventType::CapturedFighterDestroyed => {
+                self.capture_state = CaptureState::NoCapture;
+                self.capture_enemy_fi = FormationIndex(0, 0);
+            }
+        }
     }
 
     fn add_score(&mut self, before: u32, add: u32, system: &mut impl SystemTrait) {
@@ -414,24 +405,6 @@ impl GameManager {
     fn extend_ship(&mut self, system: &mut impl SystemTrait) {
         self.left_ship += 1;
         system.play_se(CH_JINGLE, SE_EXTEND_SHIP);
-    }
-
-    fn spawn_myshot(&mut self, pos: &Vec2I, dual: bool, angle: i32) -> bool {
-        if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
-            *myshot_opt = Some(MyShot::new(pos, dual, angle));
-            true
-        } else {
-            false
-        }
-    }
-
-    fn spawn_ene_shot(&mut self, pos: &Vec2I) {
-        let player_pos = [
-            Some(*self.player.pos()),
-            self.player.dual_pos(),
-        ];
-        let speed = calc_ene_shot_speed(self.stage);
-        self.stage_manager.spawn_shot(pos, &player_pos, speed);
     }
 
     fn check_collision(&mut self) {
@@ -478,7 +451,8 @@ impl GameManager {
 
                 if hit {
                     let player_pos = if dual { self.player.dual_pos().unwrap() } else { *self.player.pos() };
-                    self.event_queue.push(EventType::PlayerExplosion(player_pos));
+                    self.spawn_effect(Effect::create_player_explosion(&player_pos));
+                    self.play_se(CH_BOMB, SE_BOMB_PLAYER);
                     if self.player.crash(dual) {
                         self.event_queue.push(EventType::DeadPlayer);
                         break;
@@ -491,23 +465,43 @@ impl GameManager {
             }
         }
     }
+}
+
+impl AccessorForPlayer for GameManager {
+    fn spawn_myshot(&mut self, pos: &Vec2I, dual: bool, angle: i32) {
+        if let Some(myshot_opt) = self.myshots.iter_mut().find(|x| x.is_none()) {
+            *myshot_opt = Some(MyShot::new(pos, dual, angle));
+            self.play_se(CH_SHOT, SE_MYSHOT);
+        }
+    }
+
+    fn is_no_attacker(&self) -> bool {
+        self.stage_manager.is_no_attacker()
+    }
+
+    fn capture_event(&mut self, event: CaptureEventType) { self.do_capture_event(event); }
+}
+
+impl AccessorForEnemy for GameManager {
+    fn add_score(&mut self, add: u32) {
+        self.event_queue.push(EventType::AddScore(add));
+    }
+
+    fn spawn_ene_shot(&mut self, pos: &Vec2I) {
+        let player_pos = [
+            Some(*self.player.pos()),
+            self.player.dual_pos(),
+        ];
+        let speed = calc_ene_shot_speed(self.stage);
+        self.stage_manager.spawn_shot(pos, &player_pos, speed);
+    }
 
     fn spawn_effect(&mut self, effect: Effect) {
         if let Some(slot) = self.effects.iter_mut().find(|x| x.is_none()) {
             *slot = Some(effect);
         }
     }
-}
 
-impl AccessorForPlayer for GameManager {
-    fn is_no_attacker(&self) -> bool {
-        self.stage_manager.is_no_attacker()
-    }
-
-    fn push_event(&mut self, event: EventType) { self.do_push_event(event); }
-}
-
-impl AccessorForEnemy for GameManager {
     fn get_player_pos(&self) -> &Vec2I {
         self.player.pos()
     }
@@ -568,7 +562,11 @@ impl AccessorForEnemy for GameManager {
         self.stage
     }
 
-    fn push_event(&mut self, event: EventType) { self.do_push_event(event); }
+    fn play_se(&mut self, channel: u32, asset_path: &'static str) {
+        self.event_queue.push(EventType::PlaySe(channel, asset_path))
+    }
+
+    fn capture_event(&mut self, event: CaptureEventType) { self.do_capture_event(event); }
 }
 
 fn calc_ene_shot_speed(stage: u16) -> i32 {

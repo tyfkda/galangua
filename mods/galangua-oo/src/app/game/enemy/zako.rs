@@ -4,7 +4,7 @@ use super::enemy::Enemy;
 use super::enemy_base::{EnemyBase, EnemyInfo, CoordinateTrait, FormationTrait};
 use super::{Accessor, DamageResult};
 
-use crate::app::game::manager::EventType;
+use crate::app::game::manager::CaptureEventType;
 
 use galangua_common::ambassador_impl_Collidable;
 use galangua_common::app::consts::*;
@@ -147,7 +147,7 @@ impl Zako {
                 // Rush mode: Continue attacking
                 let table = VTABLE[self.enemy_type as usize].rush_traj_table;
                 self.base.rush_attack(&self.info, table);
-                accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+                accessor.play_se(CH_ATTACK, SE_ATTACK_START);
             } else {
                 self.set_state(ZakoState::MoveToFormation);
             }
@@ -198,7 +198,7 @@ impl Zako {
     }
 
     fn captured_fighter_set_damage(&mut self, accessor: &mut dyn Accessor) -> DamageResult {
-        accessor.push_event(EventType::CapturedFighterDestroyed);
+        accessor.capture_event(CaptureEventType::CapturedFighterDestroyed);
         let point = self.calc_point();
         DamageResult { point, keep_alive_as_ghost: false }
     }
@@ -239,12 +239,11 @@ impl Enemy for Zako {
     fn is_formation(&self) -> bool { self.state == ZakoState::Formation }
 
     fn set_damage(&mut self, _power: u32, accessor: &mut dyn Accessor) -> DamageResult {
-        accessor.push_event(EventType::EnemyExplosion(
-            self.info.pos, self.info.angle, self.enemy_type));
+        self.info.explode(accessor, self.enemy_type);
         if self.enemy_type == EnemyType::CapturedFighter {
-            accessor.push_event(EventType::PlaySe(CH_JINGLE, SE_BOMB_CAPTURED));
+            accessor.play_se(CH_JINGLE, SE_BOMB_CAPTURED);
         } else {
-            accessor.push_event(EventType::PlaySe(CH_BOMB, SE_BOMB_ZAKO));
+            accessor.play_se(CH_BOMB, SE_BOMB_ZAKO);
         }
         match self.enemy_type {
             EnemyType::Bee | EnemyType::Butterfly => self.bee_set_damage(),
@@ -268,7 +267,7 @@ impl Enemy for Zako {
             _ => { panic!("Illgal"); }
         }
 
-        accessor.push_event(EventType::PlaySe(CH_ATTACK, SE_ATTACK_START));
+        accessor.play_se(CH_ATTACK, SE_ATTACK_START);
     }
 
     fn set_to_troop(&mut self) {
