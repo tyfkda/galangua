@@ -4,7 +4,7 @@ pub unsafe fn peep<'a, T>(t: &T) -> &'a mut T {
     get_mut(get_shared(t))
 }
 
-pub unsafe fn extend_lifetime<'a, T: ?Sized>(t: &'a T) -> &'static T {
+pub unsafe fn extend_lifetime<T: ?Sized>(t: &T) -> &'static T {
     std::mem::transmute::<&T, &'static T>(t)
 }
 
