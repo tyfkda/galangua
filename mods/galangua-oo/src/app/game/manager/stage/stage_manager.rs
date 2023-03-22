@@ -2,7 +2,7 @@ use super::enemy_manager::EnemyManager;
 
 use crate::app::game::enemy::enemy::{create_appearance_enemy, Enemy};
 use crate::app::game::enemy::Accessor;
-use crate::app::game::manager::EventType;
+use crate::app::game::manager::CaptureEventType;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::appearance_manager::Accessor as AccessorForAppearance;
@@ -125,7 +125,7 @@ impl StageManager {
             };
             enemy.start_attack(capture_attack, accessor);
             if capture_attack {
-                accessor.push_event(EventType::StartCaptureAttack(fi));
+                accessor.capture_event(CaptureEventType::StartCaptureAttack(fi));
             }
         }
     }

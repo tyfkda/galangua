@@ -1,4 +1,3 @@
-use crate::app::game::manager::event_queue::EventQueue;
 use crate::app::game::manager::game_manager::GameManager;
 
 use galangua_common::app::game::traj_command::TrajCommand;
@@ -16,7 +15,6 @@ pub struct EditTrajManager {
     no: u32,
     flip_x: bool,
     from_top: bool,
-    event_queue: EventQueue,
 }
 
 impl EditTrajManager {
@@ -26,7 +24,6 @@ impl EditTrajManager {
             no: 0,
             flip_x: false,
             from_top: false,
-            event_queue: EventQueue::new(),
         }
     }
 
@@ -65,8 +62,6 @@ impl EditTrajManager {
         if pressed_key == Some(VKey::T) {
             self.from_top = !self.from_top;
         }
-
-        self.event_queue.clear();
     }
 
     pub fn draw(&mut self, renderer: &mut impl RendererTrait, game_manager: &mut GameManager) {

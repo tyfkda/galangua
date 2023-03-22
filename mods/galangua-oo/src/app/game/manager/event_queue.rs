@@ -1,9 +1,6 @@
 use std::ops::Index;
 
-use galangua_common::app::game::FormationIndex;
-use galangua_common::framework::types::Vec2I;
-
-pub struct EventQueue {
+pub(super) struct EventQueue {
     queue: Vec<EventType>,
 }
 
@@ -35,20 +32,15 @@ impl Index<usize> for EventQueue {
 }
 
 #[derive(Clone)]
-pub enum EventType {
+pub(super) enum EventType {
     AddScore(u32),
     DeadPlayer,
-    StartCaptureAttack(FormationIndex),
-    EndCaptureAttack,
-    CapturePlayer(Vec2I),
-    CapturePlayerCompleted,
-    CaptureSequenceEnded,
-    SpawnCapturedFighter(Vec2I, FormationIndex),
-    RecapturePlayer(FormationIndex, i32),
-    MovePlayerHomePos,
-    RecaptureEnded(bool),  // dual succeeded? (false when player died during recapturing)
-    EscapeCapturing,
-    EscapeEnded,
-    CapturedFighterDestroyed,
+    StarEvent(StarEventType),
     PlaySe(u32, &'static str),
+}
+
+#[derive(Copy, Clone)]
+pub(super) enum StarEventType {
+    Capturing(bool),
+    Stop(bool),
 }

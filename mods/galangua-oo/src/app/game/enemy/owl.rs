@@ -5,7 +5,7 @@ use super::enemy_base::{EnemyBase, EnemyInfo, CoordinateTrait, FormationTrait};
 use super::tractor_beam::TractorBeam;
 use super::{Accessor, DamageResult};
 
-use crate::app::game::manager::EventType;
+use crate::app::game::manager::CaptureEventType;
 
 use galangua_common::app::consts::*;
 use galangua_common::app::game::formation_table::{X_COUNT, Y_COUNT};
@@ -259,7 +259,7 @@ impl Owl {
         } else if accessor.can_player_capture() &&
                     tractor_beam.can_capture(accessor.get_player_pos())
         {
-            accessor.push_event(EventType::CapturePlayer(&self.info.pos + &Vec2I::new(0, 16 * ONE)));
+            accessor.capture_event(CaptureEventType::CapturePlayer(&self.info.pos + &Vec2I::new(0, 16 * ONE)));
             accessor.play_se(CH_JINGLE, SE_TRACTOR_BEAM2);
             tractor_beam.start_capture();
             self.capturing_state = CapturingState::BeamTracting;
@@ -273,7 +273,7 @@ impl Owl {
             let offset = Vec2I::new(target_pos.x - self.info.pos.x, (-32 - (HEIGHT + 8)) * ONE);
             self.info.pos += &offset;
 
-            accessor.push_event(EventType::EndCaptureAttack);
+            accessor.capture_event(CaptureEventType::EndCaptureAttack);
             if accessor.is_rush() {
                 self.rush_attack();
                 accessor.play_se(CH_ATTACK, SE_ATTACK_START);
@@ -295,13 +295,13 @@ impl Owl {
         let tractor_beam = self.tractor_beam.as_ref().unwrap();
         if tractor_beam.closed() {
             let fi = FormationIndex(self.info.formation_index.0, self.info.formation_index.1 - 1);
-            accessor.push_event(EventType::SpawnCapturedFighter(
+            accessor.capture_event(CaptureEventType::SpawnCapturedFighter(
                 &self.info.pos + &Vec2I::new(0, 16 * ONE), fi));
 
             self.add_troop(fi);
 
             self.tractor_beam = None;
-            accessor.push_event(EventType::CapturePlayerCompleted);
+            accessor.capture_event(CaptureEventType::CapturePlayerCompleted);
 
             self.copy_angle_to_troops = false;
             self.set_state(OwlState::CaptureAttack(OwlAttackPhase::CaptureDoneWait));
@@ -340,7 +340,7 @@ impl Owl {
         captured_fighter.set_pos(&pos);
 
         if done {
-            accessor.push_event(EventType::CaptureSequenceEnded);
+            accessor.capture_event(CaptureEventType::CaptureSequenceEnded);
             self.release_troops(accessor);
             self.set_to_formation();
         }
@@ -390,15 +390,15 @@ impl Owl {
                     {
                         let cap_fighter = accessor.get_enemy_at(&cap_fi).unwrap();
                         let angle = cap_fighter.angle();
-                        accessor.push_event(EventType::RecapturePlayer(cap_fi, angle));
+                        accessor.capture_event(CaptureEventType::RecapturePlayer(cap_fi, angle));
                         *slot = None;
                     }
                 }
                 CapturingState::BeamTracting => {
-                    accessor.push_event(EventType::EscapeCapturing);
+                    accessor.capture_event(CaptureEventType::EscapeCapturing);
                 }
                 CapturingState::Attacking | _ => {
-                    accessor.push_event(EventType::EndCaptureAttack);
+                    accessor.capture_event(CaptureEventType::EndCaptureAttack);
                 }
             }
             self.capturing_state = CapturingState::None;

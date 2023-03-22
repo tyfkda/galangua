@@ -5,7 +5,7 @@ use galangua_common::framework::RendererTrait;
 use galangua_common::util::math::{calc_velocity, clamp, quantize_angle, round_vec, ANGLE, ONE};
 use galangua_common::util::pad::{Pad, PadBit};
 
-use crate::app::game::manager::EventType;
+use crate::app::game::manager::CaptureEventType;
 
 use super::recaptured_fighter::RecapturedFighter;
 use super::Accessor;
@@ -65,7 +65,7 @@ impl Player {
                 if self.pos.y >= PLAYER_Y {
                     self.pos.y = PLAYER_Y;
                     self.state = State::Normal;
-                    accessor.push_event(EventType::EscapeEnded);
+                    accessor.capture_event(CaptureEventType::EscapeEnded);
                 }
             }
             State::MoveHomePos => {
@@ -76,7 +76,7 @@ impl Player {
                     self.dual = true;
                     self.state = State::Normal;
                     self.recaptured_fighter = None;
-                    accessor.push_event(EventType::RecaptureEnded(true));
+                    accessor.capture_event(CaptureEventType::RecaptureEnded(true));
                 }
             }
             State::Dead | State::Captured => {}
@@ -88,7 +88,7 @@ impl Player {
                 self.pos.x = CENTER_X;
                 self.state = State::Normal;
                 self.recaptured_fighter = None;
-                accessor.push_event(EventType::RecaptureEnded(false));
+                accessor.capture_event(CaptureEventType::RecaptureEnded(false));
             }
         }
     }

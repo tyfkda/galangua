@@ -4,7 +4,7 @@ use super::enemy::Enemy;
 use super::enemy_base::{EnemyBase, EnemyInfo, CoordinateTrait, FormationTrait};
 use super::{Accessor, DamageResult};
 
-use crate::app::game::manager::EventType;
+use crate::app::game::manager::CaptureEventType;
 
 use galangua_common::ambassador_impl_Collidable;
 use galangua_common::app::consts::*;
@@ -198,7 +198,7 @@ impl Zako {
     }
 
     fn captured_fighter_set_damage(&mut self, accessor: &mut dyn Accessor) -> DamageResult {
-        accessor.push_event(EventType::CapturedFighterDestroyed);
+        accessor.capture_event(CaptureEventType::CapturedFighterDestroyed);
         let point = self.calc_point();
         DamageResult { point, keep_alive_as_ghost: false }
     }

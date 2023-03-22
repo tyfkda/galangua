@@ -3,7 +3,7 @@
 use super::Enemy;
 
 use crate::app::game::effect::Effect;
-use crate::app::game::manager::EventType;
+use crate::app::game::manager::CaptureEventType;
 
 use galangua_common::app::game::{CaptureState, FormationIndex};
 use galangua_common::framework::types::Vec2I;
@@ -27,5 +27,5 @@ pub trait Accessor {
     fn get_stage_no(&self) -> u16;
     fn play_se(&mut self, channel: u32, asset_path: &'static str);
 
-    fn push_event(&mut self, event: EventType);
+    fn capture_event(&mut self, event: CaptureEventType);
 }
