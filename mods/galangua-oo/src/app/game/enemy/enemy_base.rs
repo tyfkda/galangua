@@ -231,7 +231,7 @@ impl EnemyBase {
                     phase = 1;
                 }
             }
-            1 | _ => {
+            /*1 |*/ _ => {
                 if info.pos.y >= (HEIGHT + 8) * ONE {
                     self.disappeared = true;
                     phase = 2;

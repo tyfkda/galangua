@@ -88,7 +88,7 @@ impl TractorBeam {
         const RANGE: i32 = 24 * ONE;
         if self.state == State::Full {
             let dx = pos.x - self.pos.x;
-            return dx >= -RANGE && dx <= RANGE;
+            return (-RANGE..=RANGE).contains(&dx);
         }
         false
     }

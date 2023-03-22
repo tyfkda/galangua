@@ -360,7 +360,7 @@ impl EnemyBase {
                     return Some(1);
                 }
             }
-            1 | _ => {
+            /*1 |*/ _ => {
                 if pos.y >= (HEIGHT + 8) * ONE {
                     commands.remove(entity);
                     game_info.decrement_alive_enemy();

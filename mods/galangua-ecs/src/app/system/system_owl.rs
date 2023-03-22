@@ -230,7 +230,7 @@ fn run_capture_attack(
             } else if *vangle < 0 && d > 0 {
                 d -= ANGLE * ONE;
             }
-            if d >= -DLIMIT && d < DLIMIT {
+            if (-DLIMIT..DLIMIT).contains(&d) {
                 *angle = target_angle;
                 *vangle = 0;
             }

@@ -232,7 +232,7 @@ impl Owl {
         } else if self.info.vangle < 0 && d > 0 {
             d -= ANGLE * ONE;
         }
-        if d >= -DLIMIT && d < DLIMIT {
+        if (-DLIMIT..DLIMIT).contains(&d) {
             self.info.angle = target_angle;
             self.info.vangle = 0;
         }
@@ -397,7 +397,7 @@ impl Owl {
                 CapturingState::BeamTracting => {
                     accessor.capture_event(CaptureEventType::EscapeCapturing);
                 }
-                CapturingState::Attacking | _ => {
+                /*CapturingState::Attacking |*/ _ => {
                     accessor.capture_event(CaptureEventType::EndCaptureAttack);
                 }
             }

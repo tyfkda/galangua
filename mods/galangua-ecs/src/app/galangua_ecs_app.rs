@@ -20,7 +20,7 @@ use super::system::*;
 
 enum AppState {
     Title(Title),
-    Game(Game),
+    Game(Box<Game>),
 }
 
 pub struct GalanguaEcsApp<T: TimerTrait, S: SystemTrait> {
@@ -56,7 +56,7 @@ impl<T: TimerTrait, S: SystemTrait> GalanguaEcsApp<T, S> {
     }
 
     fn start_game(&mut self) {
-        self.state = AppState::Game(Game::new(&self.star_manager, self.score_holder.high_score));
+        self.state = AppState::Game(Box::new(Game::new(&self.star_manager, self.score_holder.high_score)));
     }
 
     fn back_to_title(&mut self) {
