@@ -31,17 +31,6 @@ function isTouchDevice() {
   }
 }
 
-function fitCanvas() {
-  const canvas = document.getElementById(CANVAS_ID)
-  if (canvas.width / canvas.height >= window.innerWidth / window.innerHeight) {
-    canvas.style.width = `100%`
-    canvas.style.height = `${canvas.height * window.innerWidth / canvas.width}px`
-  } else {
-    canvas.style.height = `100%`
-    canvas.style.width = `${canvas.width * window.innerHeight / canvas.height}px`
-  }
-}
-
 function disableBounce() {
   document.addEventListener('touchmove', (event) => event.preventDefault(), {passive: false})
 }
@@ -144,12 +133,6 @@ function setupTouchButtons() {
   soundIconHolder.addEventListener('touchstart', toggleSound)
 }
 
-function setupResizeListener() {
-  window.addEventListener('resize', (_) => {
-    fitCanvas()
-  })
-}
-
 function createCoverScreen(title) {
   const cover = document.createElement('div')
   cover.className = 'centering'
@@ -194,9 +177,7 @@ class GamepadManager {
 
 const gamepadManager = new GamepadManager()
 
-fitCanvas()
 disableBounce()
-setupResizeListener()
 
 const renderer = WasmRenderer.new(CANVAS_ID)
 const framework = WasmAppFramework.new(

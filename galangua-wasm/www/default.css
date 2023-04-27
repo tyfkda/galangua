@@ -45,6 +45,7 @@ html, body {
   display: block;
   margin: 0 auto;
   image-rendering: pixelated;
+  object-fit: contain;
 }
 
 .touch-btn-holder {
