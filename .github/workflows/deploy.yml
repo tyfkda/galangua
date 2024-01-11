@@ -12,9 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Use Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '16.x'
+        node-version: '18.x'
 
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
@@ -23,15 +23,18 @@ jobs:
       run: cd mods/galangua-common && cargo test
 
     - name: Build .wasm
-      run: make
+      run: |
+        wasm-pack --version
+        make
+        ls -l pkg
       working-directory: ./galangua-wasm
 
     - name: Build WebApp
-      run: npm ci && npm run deploy
+      run: npm install && npm run deploy
       working-directory: ./galangua-wasm/www
 
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
+      uses: actions/upload-pages-artifact@v2
       with:
         path: ./galangua-wasm/www/dist
 
@@ -47,4 +50,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@main
+        uses: actions/deploy-pages@v2
