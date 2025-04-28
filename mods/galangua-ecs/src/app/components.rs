@@ -43,7 +43,6 @@ pub enum RecapturedFighterState {
 }
 pub struct RecapturedFighter {
     pub state: RecapturedFighterState,
-    pub count: u32,
     pub player_entity: Entity,
 }
 

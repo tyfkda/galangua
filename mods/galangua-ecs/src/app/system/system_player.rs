@@ -281,7 +281,7 @@ pub fn start_recapture_effect(
     commands: &mut CommandBuffer,
 ) {
     commands.push((
-        RecapturedFighter { state: RecapturedFighterState::Rotate, count: 0, player_entity },
+        RecapturedFighter { state: RecapturedFighterState::Rotate, player_entity },
         Posture(*pos, angle),
         player_sprite(),
     ));
