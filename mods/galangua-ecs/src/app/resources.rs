@@ -1,7 +1,7 @@
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 use legion::*;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
 use galangua_common::app::consts::*;
@@ -350,11 +350,11 @@ impl EneShotSpawner {
 
     fn process_queue(&mut self, game_info: &GameInfo, world: &SubWorld, commands: &mut CommandBuffer) {
         let shot_count = <&EneShot>::query().iter(world).count();
-        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let mut rng = Xoshiro128Plus::from_seed(rand::rng().random());
         let target_pos = enum_player_target_pos(world);
         let count = target_pos.len();
         for (pos, _i) in self.queue.iter().zip(shot_count..MAX_ENE_SHOT_COUNT) {
-            let target: &Vec2I = target_pos.get(rng.gen_range(0..count)).unwrap();
+            let target: &Vec2I = target_pos.get(rng.random_range(0..count)).unwrap();
 
             let d = target - pos;
             let angle = atan2_lut(d.y, -d.x);  // 0=down

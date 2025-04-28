@@ -298,7 +298,7 @@ impl Game {
             .map(|game_info| game_info.score_holder.clone())
     }
 
-    fn get_star_manager(&self) -> Option<AtomicRef<StarManager>> {
+    fn get_star_manager(&self) -> Option<AtomicRef<'_, StarManager>> {
         self.resources.get::<StarManager>()
     }
 }

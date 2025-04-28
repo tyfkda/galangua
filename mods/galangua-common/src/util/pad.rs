@@ -3,7 +3,7 @@ use bitflags::bitflags;
 use crate::framework::VKey;
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Clone, Copy, Default, PartialEq, Eq)]
     pub struct PadBit: u32 {
         const L = 0b00000001;
         const R = 0b00000010;

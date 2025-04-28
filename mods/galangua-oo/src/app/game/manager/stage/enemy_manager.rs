@@ -1,5 +1,5 @@
 use array_macro::*;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
 use crate::app::game::effect::Effect;
@@ -145,10 +145,10 @@ impl EnemyManager {
         }
 
         if let Some(index) = self.shots.iter().position(|x| x.is_none()) {
-            let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+            let mut rng = Xoshiro128Plus::from_seed(rand::rng().random());
             let count = target_pos.iter().flatten().count();
             let target: &Vec2I = target_pos.iter()
-                .flatten().nth(rng.gen_range(0..count)).unwrap();
+                .flatten().nth(rng.random_range(0..count)).unwrap();
             let d = target - pos;
 
             let limit = ANGLE * ONE * 30 / 360;

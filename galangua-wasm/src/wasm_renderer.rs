@@ -111,7 +111,7 @@ impl RendererTrait for WasmRenderer {
             let y = y as f64;
             let w = 8.0;
             let h = 8.0;
-            self.context.set_fill_style(&JsValue::from("rgb(255,0,0)"));
+            self.context.set_fill_style_str("rgb(255,0,0)");
             for c in text.chars() {
                 let u: i32 = ((c as i32) - (' ' as i32)) % 16 * 8;
                 let v: i32 = ((c as i32) - (' ' as i32)) / 16 * 8;
@@ -171,7 +171,7 @@ impl RendererTrait for WasmRenderer {
     }
 
     fn set_draw_color(&mut self, r: u8, g: u8, b: u8) {
-        self.context.set_fill_style(&JsValue::from(format!("rgb({},{},{})", r, g, b)));
+        self.context.set_fill_style_str(&format!("rgb({},{},{})", r, g, b));
     }
 
     fn fill_rect(&mut self, dst: Option<[&Vec2I; 2]>) {
@@ -184,9 +184,9 @@ impl RendererTrait for WasmRenderer {
 }
 
 async fn request(url: String) -> Result<String, String> {
-    let mut opts = RequestInit::new();
-    opts.method("GET");
-    opts.mode(RequestMode::Cors);
+    let opts = RequestInit::new();
+    opts.set_method("GET");
+    opts.set_mode(RequestMode::Cors);
 
     let request = Request::new_with_str_and_init(&url, &opts)
         .or_else(|_| Err(String::from("request init failed")))?;

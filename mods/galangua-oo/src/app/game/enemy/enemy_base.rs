@@ -2,7 +2,8 @@
 
 use ambassador::delegatable_trait;
 
-use rand::{Rng, SeedableRng};
+use rand::RngExt;
+use rand::{SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
 use super::Accessor;
@@ -168,14 +169,14 @@ impl EnemyBase {
     }
 
     pub(super) fn set_assault(&mut self, info: &mut EnemyInfo, accessor: &dyn Accessor) {
-        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let mut rng = Xoshiro128Plus::from_seed(rand::rng().random());
         let target_pos = [
             Some(*accessor.get_player_pos()),
             accessor.get_dual_player_pos(),
         ];
         let count = target_pos.iter().flatten().count();
         let target: &Vec2I = target_pos.iter()
-            .flatten().nth(rng.gen_range(0..count)).unwrap();
+            .flatten().nth(rng.random_range(0..count)).unwrap();
 
         self.target_pos = *target;
         info.vangle = 0;

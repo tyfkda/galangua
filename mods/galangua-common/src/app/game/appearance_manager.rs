@@ -1,5 +1,5 @@
 use rand::seq::SliceRandom;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 use std::cmp::min;
 
@@ -228,11 +228,11 @@ impl AppearanceManager {
         };
 
         if assault_count > 0 {
-            let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+            let mut rng = Xoshiro128Plus::from_seed(rand::rng().random());
             for i in 0..assault_count * 2 {
                 let lr = i & 1;
                 let n = self.orders.len() / 2;
-                let index = rng.gen_range(0..(n + 1));
+                let index = rng.random_range(0..(n + 1));
                 self.orders.push(self.orders[lr].clone());
                 // Shift
                 for j in 0..(n - index) {
@@ -300,7 +300,7 @@ impl AppearanceManager {
         for i in 0..orders.len() {
             nums.push(i);
         }
-        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let mut rng = Xoshiro128Plus::from_seed(rand::rng().random());
         nums.partial_shuffle(&mut rng, count as usize);
 
         for i in 0..count {

@@ -1,7 +1,7 @@
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 use legion::*;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
 use galangua_common::app::consts::*;
@@ -402,9 +402,9 @@ impl EnemyBase {
     pub fn set_assault(&mut self, speed: &mut Speed, world: &SubWorld) {
         let target_pos = enum_player_target_pos(world);
 
-        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let mut rng = Xoshiro128Plus::from_seed(rand::rng().random());
         let count = target_pos.len();
-        let target: &Vec2I = target_pos.get(rng.gen_range(0..count)).unwrap();
+        let target: &Vec2I = target_pos.get(rng.random_range(0..count)).unwrap();
 
         self.target_pos = *target;
         speed.1 = 0;

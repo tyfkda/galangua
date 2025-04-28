@@ -44,7 +44,7 @@ fn gen_atan2_table() -> [u8; ATAN2_TABLE_LEN] {
             let rad = (y as f64).atan2(x as f64);
             let angle = (rad * (((ANGLE * ATAN2_SCALE) as f64) / (2.0 * std::f64::consts::PI)))
                 .round() as u16;
-            let angle = angle.min(std::u8::MAX as u16);  // Clamp, just in case.
+            let angle = angle.min(u8::MAX as u16);  // Clamp, just in case.
             table[i] = MaybeUninit::new(angle as u8);
             i += 1;
         }

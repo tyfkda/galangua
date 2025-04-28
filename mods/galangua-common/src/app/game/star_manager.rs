@@ -1,5 +1,5 @@
 use array_macro::*;
-use rand::{Rng, SeedableRng};
+use rand::{Rng, RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
 use crate::app::consts::*;
@@ -28,12 +28,12 @@ pub struct StarManager {
 
 impl Default for StarManager {
     fn default() -> Self {
-        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let mut rng = Xoshiro128Plus::from_seed(rand::rng().random());
         let stars = array![_i =>
             Star {
-                pos: Vec2I::new(rng.gen_range(0..WIDTH) * ONE,
-                                rng.gen_range(-16..HEIGHT) * ONE),
-                t: rng.gen_range(0..64),
+                pos: Vec2I::new(rng.random_range(0..WIDTH) * ONE,
+                                rng.random_range(-16..HEIGHT) * ONE),
+                t: rng.random_range(0..64),
                 c: choose_random_color(&mut rng),
             }
         ; STAR_COUNT];
@@ -55,23 +55,23 @@ impl StarManager {
         }
 
         let capturing = self.state == State::Capturing;
-        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let mut rng = Xoshiro128Plus::from_seed(rand::rng().random());
         let vy = if capturing { REVERSE_SPEED } else { self.scroll_vel };
         for star in self.stars.iter_mut() {
             let mut y = star.pos.y + vy;
             let mut warp = false;
             if !capturing && y >= HEIGHT * ONE {
-                y = rng.gen_range(-16..-1) * ONE;
+                y = rng.random_range(-16..-1) * ONE;
                 warp = true;
             } else if capturing && y < 0 {
-                y = (HEIGHT + rng.gen_range(1..16)) * ONE;
+                y = (HEIGHT + rng.random_range(1..16)) * ONE;
                 warp = true;
             }
             star.pos.y = y;
             if warp {
-                star.pos.x = rng.gen_range(0..WIDTH) * ONE;
+                star.pos.x = rng.random_range(0..WIDTH) * ONE;
                 star.c = choose_random_color(&mut rng);
-                star.t = rng.gen_range(0..64);
+                star.t = rng.random_range(0..64);
             }
         }
     }
@@ -115,7 +115,7 @@ struct Star {
 const COLOR_TABLE: [u32; 4] = [0, 71, 151, 222];
 
 fn choose_random_color(rng: &mut impl Rng) -> u32 {
-    let c = rng.gen_range(1..(1 << 6));  // 1 for avoid black.
+    let c = rng.random_range(1..(1 << 6));  // 1 for avoid black.
     let r =  c       & 3;
     let g = (c >> 2) & 3;
     let b =  c >> 4;

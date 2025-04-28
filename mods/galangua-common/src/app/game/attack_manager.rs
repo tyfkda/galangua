@@ -1,6 +1,6 @@
 use array_macro::*;
 use rand::seq::SliceRandom;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro128Plus;
 
 use crate::app::game::formation_table::{X_COUNT, Y_COUNT};
@@ -99,12 +99,12 @@ impl AttackManager {
     }
 
     fn pick_random(&mut self, candidates: &[Option<[u8; 2]>; Y_COUNT], rows: &mut [u32]) -> Option<FormationIndex> {
-        let mut rng = Xoshiro128Plus::from_seed(rand::thread_rng().gen());
+        let mut rng = Xoshiro128Plus::from_seed(rand::rng().random());
         rows.shuffle(&mut rng);
         rows.iter()
             .find_map(|&row| candidates[row as usize].map(|pos| (pos, row)))
             .map(|(pos, row)| {
-                let index = rng.gen_range(0..2);
+                let index = rng.random_range(0..2);
                 FormationIndex(pos[index], row as u8)
             })
     }

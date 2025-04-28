@@ -8,10 +8,10 @@ edition = "2018"
 
 [dependencies]
 atomic_refcell = "0.1.6"
-getrandom = { version = "0.2", features = ["js"] }
+getrandom = { version = "0.4", features = ["wasm_js"] }
 legion = { version = "0.4.0", default-features = false, features = ["codegen"], optional = true }
-rand = "0.8"
-rand_xoshiro = "0.6.0"
+rand = "0.10"
+rand_xoshiro = "0.8"
 
 galangua-common = { path = "../galangua-common" }
 
